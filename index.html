@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr" data-tema="otomatik">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Göz Molası — 20·20·20</title>
+<meta name="description" content="Her 20 dakikada bir 20 saniyelik göz molası. Ekranı kapatır, molanın nedenini bilimsel kaynaklarıyla anlatır.">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="ikon-192.png">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Göz Molası">
+<link rel="stylesheet" href="stil.css">
+</head>
+<body data-durum="hazir">
+
+  <!-- ÜST ŞERİT -->
+  <header class="ust">
+    <div class="marka">
+      <img src="ikon-192.png" alt="">
+      <div>
+        Göz Molası
+        <small>20 DAKİKA · 20 SANİYE · 6 METRE</small>
+      </div>
+    </div>
+    <button class="dugme sade yuvarlak" id="temaDugme" title="Temayı değiştir" aria-label="Temayı değiştir">◐</button>
+    <button class="dugme sade yuvarlak" id="ayarDugme" title="Ayarlar" aria-label="Ayarlar">⚙</button>
+  </header>
+
+  <!-- SAYAÇ -->
+  <main class="sayac-kart">
+    <div class="halka-kutu">
+      <svg class="halka" viewBox="0 0 200 200" aria-hidden="true">
+        <circle class="iz"   cx="100" cy="100" r="88"></circle>
+        <circle class="dolu" cx="100" cy="100" r="88" id="halkaDolu"
+                stroke-dasharray="552.9" stroke-dashoffset="552.9"></circle>
+      </svg>
+      <div class="halka-ic">
+        <div class="sure" id="sureYazi">20:00</div>
+        <div class="durum-yazi" id="durumYazi">Hazır</div>
+      </div>
+    </div>
+
+    <div class="sayac-sag">
+      <p id="aciklama" style="margin:0;color:var(--yazi-soluk);font-size:14px;line-height:1.55;max-width:34ch">
+        Başlat’a bas. 20 dakika sonra ekran 20 saniyeliğine kapanacak,
+        bu sırada gözünü 6 metre uzağa çevir.
+      </p>
+      <div class="dugme-sirasi">
+        <button class="dugme ana" id="baslatDugme">▶ Başlat</button>
+        <button class="dugme" id="molaDugme">Şimdi mola ver</button>
+        <button class="dugme sade" id="sifirlaDugme">↺ Sıfırla</button>
+      </div>
+      <button class="dugme sade kucuk" id="bildirimDugme">🔔 Bildirimlere izin ver</button>
+    </div>
+  </main>
+
+  <!-- BUGÜNKÜ DURUM -->
+  <section class="istatistik" aria-label="Bugünkü durum">
+    <div class="kutucuk"><b id="istMola">0</b><span>tamamlanan mola</span></div>
+    <div class="kutucuk"><b id="istAtlanan">0</b><span>atlanan mola</span></div>
+    <div class="kutucuk"><b id="istSure">0 dk</b><span>ekran süresi</span></div>
+  </section>
+
+  <!-- SON 7 GÜN -->
+  <section class="hafta-kart" aria-label="Son 7 gün">
+    <div class="hafta-ust">
+      <h3>Son 7 gün</h3>
+      <span id="seriRozet" class="seri"></span>
+    </div>
+    <div class="hafta-grafik" id="haftaGrafik"></div>
+    <span class="kaynak">Kesikli çizgi günlük hedef: <b id="hedefSayi">8</b> mola</span>
+  </section>
+
+  <!-- ANA EKRANDAKİ BİLGİ KARTI -->
+  <section class="bilgi-kart" id="anaBilgi">
+    <h3 id="anaBilgiBaslik">Yükleniyor…</h3>
+    <p id="anaBilgiMetin"></p>
+    <span class="kaynak" id="anaBilgiKaynak"></span>
+  </section>
+
+  <p class="alt-bilgi">
+    Bu uygulama tıbbi tavsiye değildir. Gözünde sürekli ağrı, bulanık görme veya baş ağrısı
+    varsa göz hekimine görün. · Tüm veriler yalnızca bu cihazda saklanır, hiçbir yere gönderilmez.
+  </p>
+
+  <!-- MOLA ÖNCESİ UYARI BALONU -->
+  <div class="uyari-balon" id="uyariBalon" role="status">
+    <b id="uyariMetin">15 sn sonra göz molası</b>
+    <button class="dugme sade kucuk" id="erteleDugme">5 dk ertele</button>
+  </div>
+
+  <!-- MOLA EKRANI (tam ekran örtü) -->
+  <div class="mola-ekran" id="molaEkran" role="dialog" aria-modal="true"
+       aria-labelledby="molaBaslik" aria-describedby="molaAlt">
+    <h2 class="mola-baslik" id="molaBaslik">Gözünü ekrandan ayır</h2>
+    <p class="mola-alt" id="molaAlt">Odayı, pencereyi, uzaktaki bir noktayı süz. Yaklaşık 6 metre.</p>
+
+    <div class="nefes">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <circle class="iz"   cx="100" cy="100" r="92"></circle>
+        <circle class="dolu" cx="100" cy="100" r="92" id="molaHalka"
+                stroke-dasharray="578" stroke-dashoffset="0"></circle>
+      </svg>
+      <!-- Rehberli egzersiz animasyonu halkanın içinde oynar -->
+      <canvas class="egzersiz-tuval" id="egzersizTuval" aria-hidden="true"></canvas>
+    </div>
+
+    <div class="mola-sayac">
+      <span class="mola-sayi" id="molaSayi">20</span>
+      <span class="mola-sayi-alt">saniye</span>
+    </div>
+
+    <!-- Molanın 4. saniyesinde belirir -->
+    <div class="neden-kart" id="nedenKart">
+      <h4 id="nedenBaslik">Neden?</h4>
+      <p id="nedenMetin"></p>
+      <span class="kaynak" id="nedenKaynak"></span>
+    </div>
+
+    <div class="mola-alt-sira">
+      <button class="dugme gizli" id="atlaDugme"
+              aria-label="Molayı atla — basılı tut">Atlamak için basılı tut</button>
+    </div>
+
+    <p class="gizli-metin" id="ekranOkuyucu" aria-live="polite"></p>
+  </div>
+
+  <!-- AYARLAR -->
+  <dialog class="ayarlar" id="ayarPencere">
+    <div class="ayar-govde">
+      <h2>Ayarlar</h2>
+
+      <div class="satir">
+        <label for="ayCalisma">Çalışma süresi
+          <small>Kaç dakikada bir mola verilsin</small>
+        </label>
+        <input type="number" id="ayCalisma" min="1" max="120" step="1">
+      </div>
+
+      <div class="satir">
+        <label for="ayMola">Mola süresi
+          <small>Saniye cinsinden</small>
+        </label>
+        <input type="number" id="ayMola" min="5" max="600" step="5">
+      </div>
+
+      <div class="satir">
+        <label for="ayUyari">Ön uyarı
+          <small>Molaya kaç saniye kala haber verilsin</small>
+        </label>
+        <input type="number" id="ayUyari" min="0" max="60" step="5">
+      </div>
+
+      <div class="satir">
+        <label for="ayAtla">Mola atlanabilsin
+          <small>Kapatırsan molayı geçemezsin</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayAtla"><i></i></span>
+      </div>
+
+      <div class="satir">
+        <label for="aySes">Uyarı sesi
+          <small>Mola başında ve sonunda kısa bir ses</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="aySes"><i></i></span>
+      </div>
+
+      <div class="satir">
+        <label for="ayOtomatik">Açılışta kendiliğinden başla
+          <small>Uygulama açılır açılmaz sayaç dönmeye başlar</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayOtomatik"><i></i></span>
+      </div>
+
+      <div class="satir">
+        <label for="ayBosta">Boşta durdurma
+          <small>Dokunulmazsa sayaç durur; 5 dk'dan uzun uzak kalırsan baştan sayar</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayBosta"><i></i></span>
+      </div>
+
+      <div class="satir">
+        <label for="ayKilitAlan">Kilit şifresi
+          <small id="kilitDurum">Kapalı — mola atlama ve ayarlar serbest</small>
+        </label>
+        <input type="password" id="ayKilitAlan" inputmode="numeric" autocomplete="off"
+               placeholder="4–8 hane" style="width:110px">
+      </div>
+      <div class="satir" id="kilitDugmeSatir">
+        <span></span>
+        <span style="display:flex;gap:8px">
+          <button type="button" class="dugme kucuk" id="kilitKurDugme">Şifreyi koy</button>
+          <button type="button" class="dugme kucuk gizli" id="kilitKaldirDugme">Şifreyi kaldır</button>
+        </span>
+      </div>
+
+      <div class="satir" style="display:block">
+        <label>Renk teması
+          <small id="temaAdi">Seçince hemen uygulanır</small>
+        </label>
+        <div class="tema-seridi" id="temaSeridi" role="radiogroup" aria-label="Renk teması"></div>
+      </div>
+
+      <div class="satir">
+        <label>Tüm verileri sıfırla
+          <small id="sifirlamaDurum">Ayarlar, sayaçlar ve şifre silinir</small>
+        </label>
+        <button type="button" class="dugme kucuk" id="hepsiniSilDugme">Sıfırla</button>
+      </div>
+
+      <p class="ipucu">
+        <b>Kısayollar:</b> <b>Boşluk</b> başlat/duraklat · <b>M</b> hemen mola · <b>Esc</b> pencereyi kapat.
+        <br><b>Not:</b> Tarayıcı, işletim sistemi ekranını kilitleyemez. Bu uygulama sekmenin
+        tamamını kapatır. Sekme kapalıyken hatırlatma gelmesi için uygulamayı
+        ana ekrana ekleyip açık bırak.
+        <br><b>Şifre hakkında:</b> Şifre, molayı refleksle atlamanı engellemek içindir —
+        cihaz güvenliği değildir. Sekmeyi kapatan ya da tarayıcı verisini silen kişi bu kilidi aşar.
+      </p>
+    </div>
+    <div class="ayar-alt">
+      <button class="dugme sade" id="ayarVazgec">Vazgeç</button>
+      <button class="dugme ana" id="ayarKaydet">Kaydet</button>
+    </div>
+  </dialog>
+
+  <!-- ŞİFRE SORMA -->
+  <dialog class="ayarlar" id="sifrePencere">
+    <form method="dialog" class="ayar-govde" id="sifreForm">
+      <h2 id="sifreBaslik">Şifre gerekli</h2>
+      <p style="margin:0;font-size:14px;color:var(--yazi-soluk)" id="sifreAciklama">
+        Bu işlem kilitli. Devam etmek için şifreni gir.
+      </p>
+      <input type="password" id="sifreAlan" inputmode="numeric" autocomplete="off"
+             style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--cizgi);
+                    background:var(--zemin);color:var(--yazi);font:inherit;
+                    text-align:center;letter-spacing:6px;font-size:20px">
+      <p style="margin:0;font-size:13px;color:#f87171;min-height:18px" id="sifreHata"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="dugme sade" id="sifreVazgec">Vazgeç</button>
+        <button type="submit" class="dugme ana" id="sifreOnay">Onayla</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="bilgiler.js"></script>
+  <script src="egzersiz.js"></script>
+  <script src="cekirdek.js"></script>
+  <script src="arayuz.js"></script>
+</body>
+</html>

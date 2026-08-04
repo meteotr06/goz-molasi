@@ -1,0 +1,11 @@
+﻿# Derleme ciktilari
+masaustu/build/
+masaustu/dist/
+masaustu/__pycache__/
+masaustu/*.spec
+*.exe
+
+# Windows
+Thumbs.db
+desktop.ini
+.claude/

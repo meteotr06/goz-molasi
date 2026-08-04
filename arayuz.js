@@ -1,0 +1,825 @@
+/* ============================================================
+   ARAYÜZ — Motoru ekrana bağlayan katman
+   cekirdek.js'yi hiç değiştirmeden burayı istediğin gibi
+   düzenleyebilirsin.
+   ============================================================ */
+
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const KAYIT_ANAHTARI = 'goz-molasi-v1';
+
+  /* ---------- Öğeler ---------- */
+  const og = {
+    govde: document.body,
+    sure: $('sureYazi'),
+    durum: $('durumYazi'),
+    halka: $('halkaDolu'),
+    aciklama: $('aciklama'),
+    baslat: $('baslatDugme'),
+    mola: $('molaDugme'),
+    sifirla: $('sifirlaDugme'),
+    bildirim: $('bildirimDugme'),
+    tema: $('temaDugme'),
+    ayarAc: $('ayarDugme'),
+
+    istMola: $('istMola'),
+    istAtlanan: $('istAtlanan'),
+    istSure: $('istSure'),
+
+    haftaGrafik: $('haftaGrafik'),
+    seriRozet: $('seriRozet'),
+    hedefSayi: $('hedefSayi'),
+
+    anaBaslik: $('anaBilgiBaslik'),
+    anaMetin: $('anaBilgiMetin'),
+    anaKaynak: $('anaBilgiKaynak'),
+
+    balon: $('uyariBalon'),
+    balonMetin: $('uyariMetin'),
+    ertele: $('erteleDugme'),
+
+    molaEkran: $('molaEkran'),
+    molaBaslik: $('molaBaslik'),
+    molaAlt: $('molaAlt'),
+    molaHalka: $('molaHalka'),
+    molaSayi: $('molaSayi'),
+    egzersizTuval: $('egzersizTuval'),
+    nedenKart: $('nedenKart'),
+    nedenBaslik: $('nedenBaslik'),
+    nedenMetin: $('nedenMetin'),
+    nedenKaynak: $('nedenKaynak'),
+    atla: $('atlaDugme'),
+    okuyucu: $('ekranOkuyucu'),
+
+    pencere: $('ayarPencere'),
+    ayCalisma: $('ayCalisma'),
+    ayMola: $('ayMola'),
+    ayUyari: $('ayUyari'),
+    ayAtla: $('ayAtla'),
+    aySes: $('aySes'),
+    ayBosta: $('ayBosta'),
+    ayOtomatik: $('ayOtomatik'),
+    temaSeridi: $('temaSeridi'),
+    temaAdi: $('temaAdi'),
+    ayarKaydet: $('ayarKaydet'),
+    ayarVazgec: $('ayarVazgec'),
+
+    ayKilitAlan: $('ayKilitAlan'),
+    kilitDurum: $('kilitDurum'),
+    kilitKur: $('kilitKurDugme'),
+    kilitKaldir: $('kilitKaldirDugme'),
+    sifrePencere: $('sifrePencere'),
+    sifreForm: $('sifreForm'),
+    sifreAlan: $('sifreAlan'),
+    sifreHata: $('sifreHata'),
+    sifreAciklama: $('sifreAciklama'),
+    sifreVazgec: $('sifreVazgec'),
+    hepsiniSil: $('hepsiniSilDugme'),
+    sifirlamaDurum: $('sifirlamaDurum'),
+  };
+
+  const CEVRE_ANA  = 2 * Math.PI * 88;   // ana halkanın çevresi
+  const CEVRE_MOLA = 2 * Math.PI * 92;   // mola halkasının çevresi
+  const BOSTA_ESIGI = 90;                // saniye
+
+  /* ---------- Kayıtlı ayarları oku ---------- */
+  let kayit = {};
+  try { kayit = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}'); } catch { kayit = {}; }
+
+  const motor = new MolaMotoru();
+  motor.iceAktar(kayit);
+  let bostaAcik = kayit.bostaAcik !== false;
+  let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
+  if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
+  let tema = kayit.tema || 'otomatik';
+  temaUygula(tema);
+
+  /* ============================================================
+     KİLİT (KATI MOD)
+     Şifre konunca molayı atlamak, duraklatmak, sıfırlamak ve
+     ayarları değiştirmek şifre ister.
+
+     Şifre DÜZ METİN olarak saklanmaz; tuzlanıp özeti (SHA-256)
+     saklanır. Yine de bu bir cihaz güvenliği değildir — amacı
+     refleksle "atla"ya basmayı zorlaştırmak. Bunu kullanıcıya
+     ayarlar penceresinde açıkça yazıyoruz.
+     ============================================================ */
+  let kilitOzeti = kayit.kilitOzeti || null;
+  let kilitTuz = kayit.kilitTuz || null;
+  let yanlisSayisi = 0;
+  let bekletmeBitis = 0;
+  let sifreCoz = null;
+
+  async function ozetle(metin, tuz) {
+    const veri = new TextEncoder().encode(`${tuz}|${metin}`);
+    if (window.crypto?.subtle) {
+      const tampon = await crypto.subtle.digest('SHA-256', veri);
+      return [...new Uint8Array(tampon)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+    // Güvenli bağlam yoksa (örn. dosyaya çift tıklayarak açınca) yedek yöntem.
+    let h = 5381;
+    for (const k of veri) h = ((h * 33) ^ k) >>> 0;
+    return 'yedek' + h.toString(16);
+  }
+
+  function yeniTuz() {
+    const d = new Uint8Array(8);
+    (window.crypto || {}).getRandomValues?.(d);
+    return [...d].map((b) => b.toString(16).padStart(2, '0')).join('') || String(Date.now());
+  }
+
+  /** Şifre sorar. Kilit yoksa doğrudan izin verir. */
+  function sifreSor(aciklama) {
+    if (!kilitOzeti) return Promise.resolve(true);
+
+    const kalanBekleme = Math.ceil((bekletmeBitis - Date.now()) / 1000);
+    og.sifreAciklama.textContent = kalanBekleme > 0
+      ? `Çok fazla yanlış deneme. ${kalanBekleme} saniye bekle.`
+      : aciklama;
+    og.sifreAlan.value = '';
+    og.sifreHata.textContent = '';
+    og.sifreAlan.disabled = kalanBekleme > 0;
+    if (!og.sifrePencere.open) og.sifrePencere.showModal();
+    setTimeout(() => og.sifreAlan.focus(), 30);
+    return new Promise((coz) => { sifreCoz = coz; });
+  }
+
+  function sifreKapat(sonuc) {
+    if (og.sifrePencere.open) og.sifrePencere.close();
+    const c = sifreCoz;
+    sifreCoz = null;
+    c?.(sonuc);
+  }
+
+  og.sifreForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (bekletmeBitis > Date.now()) return;
+    const girilen = og.sifreAlan.value;
+    if (await ozetle(girilen, kilitTuz) === kilitOzeti) {
+      yanlisSayisi = 0;
+      sifreKapat(true);
+    } else {
+      yanlisSayisi++;
+      og.sifreAlan.value = '';
+      if (yanlisSayisi >= 3) {
+        bekletmeBitis = Date.now() + 30000;
+        yanlisSayisi = 0;
+        og.sifreHata.textContent = 'Çok fazla yanlış deneme — 30 saniye bekle.';
+        og.sifreAlan.disabled = true;
+        setTimeout(() => {
+          og.sifreAlan.disabled = false;
+          og.sifreHata.textContent = '';
+          og.sifreAlan.focus();
+        }, 30000);
+      } else {
+        og.sifreHata.textContent = `Şifre yanlış. Kalan deneme: ${3 - yanlisSayisi}`;
+      }
+    }
+  });
+  og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
+  og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  function kilitDurumunuGoster() {
+    const acik = !!kilitOzeti;
+    og.kilitDurum.textContent = acik
+      ? 'Açık — mola atlama, duraklatma ve ayarlar şifreli'
+      : 'Kapalı — mola atlama ve ayarlar serbest';
+    og.kilitKur.textContent = acik ? 'Şifreyi değiştir' : 'Şifreyi koy';
+    og.kilitKaldir.classList.toggle('gizli', !acik);
+    og.atla.textContent = atlaEtiketi();
+    document.title = acik ? '🔒 Göz Molası — 20·20·20' : 'Göz Molası — 20·20·20';
+  }
+
+  og.kilitKur.addEventListener('click', async () => {
+    if (kilitOzeti && !(await sifreSor('Şifreyi değiştirmek için önce mevcut şifreni gir.'))) return;
+    const yeni = (og.ayKilitAlan.value || '').trim();
+    if (!/^\d{4,8}$/.test(yeni)) {
+      og.kilitDurum.textContent = 'Şifre 4–8 rakam olmalı.';
+      og.ayKilitAlan.focus();
+      return;
+    }
+    kilitTuz = yeniTuz();
+    kilitOzeti = await ozetle(yeni, kilitTuz);
+    og.ayKilitAlan.value = '';
+    kilitDurumunuGoster();
+    kaydet();
+  });
+
+  og.kilitKaldir.addEventListener('click', async () => {
+    if (!(await sifreSor('Kilidi kaldırmak için şifreni gir.'))) return;
+    kilitOzeti = null;
+    kilitTuz = null;
+    og.ayKilitAlan.value = '';
+    kilitDurumunuGoster();
+    kaydet();
+  });
+
+  /* ============================================================
+     SES — Tarayıcı, kullanıcı sayfaya dokunmadan ses çaldırmaz.
+     Bu yüzden ilk dokunuşta ses motorunu "uyandırıyoruz".
+     ============================================================ */
+  let sesMotoru = null;
+  function sesiUyandir() {
+    try {
+      sesMotoru ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (sesMotoru.state === 'suspended') sesMotoru.resume();
+    } catch { /* ses yoksa uygulama yine çalışır */ }
+  }
+  document.addEventListener('pointerdown', sesiUyandir, { once: true });
+  document.addEventListener('keydown', sesiUyandir, { once: true });
+
+  function calSes(frekans = 880, sure = 0.5) {
+    if (!motor.ayarlar.sesAcik || !sesMotoru || sesMotoru.state !== 'running') return;
+    const t = sesMotoru.currentTime;
+    const osc = sesMotoru.createOscillator();
+    const kazanc = sesMotoru.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frekans, t);
+    kazanc.gain.setValueAtTime(0.0001, t);
+    kazanc.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    kazanc.gain.exponentialRampToValueAtTime(0.0001, t + sure);
+    osc.connect(kazanc).connect(sesMotoru.destination);
+    osc.start(t);
+    osc.stop(t + sure + 0.05);
+  }
+
+  /* ============================================================
+     EKRAN UYANIK TUTMA — mola ekranı açıkken telefon uyumasın
+     ============================================================ */
+  let uyanikKilit = null;
+  async function uyanikTut() {
+    try { uyanikKilit = await navigator.wakeLock.request('screen'); } catch { uyanikKilit = null; }
+  }
+  function uyanikBirak() {
+    try { uyanikKilit?.release(); } catch {}
+    uyanikKilit = null;
+  }
+
+  /* ============================================================
+     BİLDİRİM — sekme arka plandayken haber verir
+     ============================================================ */
+  function bildirimGonder(baslik, metin) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    navigator.serviceWorker?.ready
+      .then((kayitli) => kayitli.active?.postMessage({ tur: 'bildirim', baslik, metin }))
+      .catch(() => {});
+  }
+
+  og.bildirim.addEventListener('click', async () => {
+    if (!('Notification' in window)) {
+      og.bildirim.textContent = '🔕 Bu tarayıcı bildirim desteklemiyor';
+      return;
+    }
+    // iOS'ta izin isteği MUTLAKA bir dokunuşun içinden çağrılmalı
+    const sonuc = await Notification.requestPermission();
+    bildirimDurumunuGoster(sonuc);
+  });
+
+  function bildirimDurumunuGoster(izin = (window.Notification?.permission)) {
+    if (!('Notification' in window)) { og.bildirim.classList.add('gizli'); return; }
+    if (izin === 'granted') {
+      og.bildirim.textContent = '🔔 Bildirimler açık';
+      og.bildirim.disabled = true;
+    } else if (izin === 'denied') {
+      og.bildirim.textContent = '🔕 Bildirimlere izin verilmedi';
+      og.bildirim.disabled = true;
+    }
+  }
+
+  /* ============================================================
+     GÖRÜNÜM GÜNCELLEME
+     ============================================================ */
+  const DURUM_ADI = {
+    hazir: 'Hazır',
+    calisiyor: 'Çalışıyor',
+    uyari: 'Mola geliyor',
+    mola: 'Mola',
+    duraklatildi: 'Duraklatıldı',
+    bosta: 'Boşta — sayaç durdu',
+  };
+
+  function ss(saniye) {
+    const t = Math.max(0, Math.ceil(saniye));
+    const dk = Math.floor(t / 60);
+    const sn = t % 60;
+    return `${String(dk).padStart(2, '0')}:${String(sn).padStart(2, '0')}`;
+  }
+
+  function ekraniCiz(d) {
+    og.govde.dataset.durum = d.durum;
+    og.durum.textContent = DURUM_ADI[d.durum] || '';
+
+    if (d.durum === 'mola') {
+      og.sure.textContent = `${Math.ceil(d.kalan)}`;
+      og.molaSayi.textContent = Math.ceil(d.kalan);
+      og.molaHalka.style.strokeDashoffset = CEVRE_MOLA * d.ilerleme;
+    } else {
+      og.sure.textContent = ss(d.kalan);
+      og.halka.style.strokeDashoffset = CEVRE_ANA * d.ilerleme;
+    }
+
+    og.baslat.textContent =
+      d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat';
+
+    og.istMola.textContent = d.istatistik.tamamlananMola;
+    og.istAtlanan.textContent = d.istatistik.atlananMola;
+    og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)} dk`;
+
+    haftayiCiz();
+  }
+
+  /* ============================================================
+     SON 7 GÜN + SERİ
+     Grafik her tikte değil, yalnızca veri değişince çizilir.
+     ============================================================ */
+  let haftaImza = null;
+  og.hedefSayi.textContent = GUNLUK_HEDEF;
+
+  function haftayiCiz() {
+    const gunler = Gecmis.sonGunler(7, motor.istatistik);
+    const imza = gunler.map((g) => g.sayi).join(',');
+    if (imza === haftaImza) return;
+    haftaImza = imza;
+
+    const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
+    // Hedef çizgisinin yüksekliği çubuk alanına göre
+    og.haftaGrafik.style.setProperty('--hedef-yuksekligi',
+      `calc(${(GUNLUK_HEDEF / enb) * 100}% - ${(GUNLUK_HEDEF / enb) * 16}px + 18px)`);
+
+    og.haftaGrafik.innerHTML = gunler.map((g) => {
+      const yuzde = enb ? Math.round((g.sayi / enb) * 100) : 0;
+      const siniflar = ['gun'];
+      if (g.sayi >= GUNLUK_HEDEF) siniflar.push('hedefte');
+      if (g.bugunMu) siniflar.push('bugun');
+      return `<div class="${siniflar.join(' ')}">
+                <b>${g.sayi || ''}</b>
+                <i style="height:${Math.max(3, yuzde)}%"></i>
+                <span>${g.bugunMu ? 'Bugün' : g.ad}</span>
+              </div>`;
+    }).join('');
+
+    const s = Gecmis.seri(motor.istatistik);
+    og.seriRozet.textContent = s > 0 ? `🔥 ${s} gün üst üste` : '';
+  }
+
+  /* ---------- Ana ekrandaki bilgi kartı ---------- */
+  let bilgiSirasi = Math.floor(Math.random() * BILGILER.length);
+  function bilgiGoster(hedefBaslik, hedefMetin, hedefKaynak, indeks) {
+    const b = BILGILER[indeks % BILGILER.length];
+    hedefBaslik.textContent = b.baslik;
+    hedefMetin.textContent = b.metin;
+    hedefKaynak.textContent = `Kaynak: ${b.kaynak}`;
+    return b;
+  }
+  bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
+  og.anaBilgiTiklama = $('anaBilgi');
+  og.anaBilgiTiklama.style.cursor = 'pointer';
+  og.anaBilgiTiklama.title = 'Başka bir bilgi göster';
+  og.anaBilgiTiklama.addEventListener('click', () => {
+    bilgiSirasi++;
+    bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
+  });
+
+  /* ============================================================
+     MOLA EKRANI
+     ============================================================ */
+  let nedenZaman = null;
+  let molaAcik = false;
+
+  /* ---------- Rehberli egzersiz ----------
+     Mola ekranı boş bir geri sayım değil: ne yapman gerektiğini
+     gösteren bir animasyon oynuyor. Masaüstü sürümüyle aynı beş
+     egzersiz, aynı sırayla. */
+  let egzersiz = null;
+  let egzersizBaslangic = 0;
+  let egzersizKare = null;
+  let sonYonerge = null;
+
+  // Kullanıcı "hareketi azalt" dediyse animasyon oynatmıyoruz —
+  // tam ekran hareket denge bozukluğu olanlarda rahatsızlık yapar.
+  const hareketAzalt = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+
+  function egzersizRenkleri() {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      vurgu: s.getPropertyValue('--vurgu').trim() || '#7ee0d2',
+      sicak: s.getPropertyValue('--uyari').trim() || '#ffc46b',
+      soluk: s.getPropertyValue('--mola-soluk').trim() || '#c3a8d8',
+      zemin: s.getPropertyValue('--mola-3').trim() || '#2f2154',
+    };
+  }
+
+  function egzersiziBaslat() {
+    const sayac = motor.istatistik.tamamlananMola + motor.istatistik.atlananMola;
+    const Sinif = egzersizSec(sayac);
+    egzersiz = new Sinif(og.egzersizTuval, egzersizRenkleri());
+    egzersizBaslangic = Date.now();
+    sonYonerge = null;
+
+    og.molaBaslik.textContent = Sinif.ad;
+    og.molaAlt.textContent = Sinif.yonerge;
+
+    // İlk kareyi hemen çiz — rAF beklemeden ekranda bir şey olsun
+    try { egzersiz.ciz(0, motor.ayarlar.molaSuresi); } catch {}
+
+    if (hareketAzalt?.matches) {
+      // Hareket hassasiyeti olan kullanıcı: animasyon yok, yazı rehberlik eder
+      return;
+    }
+    const dongu = () => {
+      if (!molaAcik || !egzersiz) return;
+      const gecen = (Date.now() - egzersizBaslangic) / 1000;
+      try {
+        egzersiz.ciz(gecen, motor.ayarlar.molaSuresi);
+        const y = egzersiz.anlikYonerge(gecen);
+        if (y !== sonYonerge) { sonYonerge = y; og.molaAlt.textContent = y; }
+      } catch { egzersiz = null; return; }   // egzersiz çökse bile mola sürsün
+      egzersizKare = requestAnimationFrame(dongu);
+    };
+    egzersizKare = requestAnimationFrame(dongu);
+  }
+
+  function egzersiziDurdur() {
+    if (egzersizKare) cancelAnimationFrame(egzersizKare);
+    egzersizKare = null;
+    egzersiz = null;
+  }
+
+  function molaEkraniAc() {
+    molaAcik = true;
+    og.molaEkran.classList.add('acik');
+    // Doğrudan çağırıyoruz, requestAnimationFrame ile değil:
+    // sekme arka plandayken rAF hiç çalışmıyor ve egzersiz hiç
+    // başlamıyordu. Mola ekranı görünmezken bile başlığın ve
+    // yönergenin doğru olması gerekiyor.
+    egzersiziBaslat();
+
+    // "Neden?" kartı molanın ilk beşte birinde belirsin (20 sn'de 4. saniye).
+    // Önce gözünü ekrandan ayırmasını istiyoruz; hemen okunacak bir şey
+    // versek gözü ekranda tutmuş olurduk. Kısa molalarda gecikme de kısalır.
+    const nedenGecikme = Math.min(4000, motor.ayarlar.molaSuresi * 200);
+    og.nedenKart.classList.remove('gorunur');
+    clearTimeout(nedenZaman);
+    nedenZaman = setTimeout(() => {
+      bilgiSirasi++;
+      const b = bilgiGoster(og.nedenBaslik, og.nedenMetin, og.nedenKaynak, bilgiSirasi);
+      og.nedenBaslik.textContent = `Neden? — ${b.baslik}`;
+      og.nedenKart.classList.add('gorunur');
+      // ana ekrandaki kart da aynı bilgiye dönsün
+      bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
+    }, nedenGecikme);
+
+    // Atla düğmesi ayardan kapalıysa hiç gösterme
+    og.atla.classList.toggle('gizli', !motor.ayarlar.molaAtlanabilir);
+
+    og.okuyucu.textContent = `Mola başladı. ${motor.ayarlar.molaSuresi} saniye boyunca uzağa bak.`;
+    calSes(660, 0.55);
+    uyanikTut();
+    bildirimGonder('Göz molası', 'Gözünü ekrandan ayır, 6 metre uzağa bak.');
+    og.molaEkran.focus?.();
+  }
+
+  function molaEkraniKapat() {
+    molaAcik = false;
+    egzersiziDurdur();
+    og.molaEkran.classList.remove('acik');
+    og.nedenKart.classList.remove('gorunur');
+    clearTimeout(nedenZaman);
+    uyanikBirak();
+    holdIptal();
+  }
+
+  /* ---------- "Basılı tut" ile atlama ----------
+     Tek tıkla atlanabilse refleks olurdu. 800 ms basılı tutmak
+     küçük ama gerçek bir engel: kazara atlamayı bitirir,
+     acil durumda ise seni hapsetmez. */
+  let holdZaman = null;
+  const HOLD_SURE = 800;
+
+  function holdBasla(e) {
+    e.preventDefault();
+    if (holdZaman) return;
+    og.atla.textContent = 'Bırakma…';
+    og.atla.style.transition = `background ${HOLD_SURE}ms linear`;
+    og.atla.style.background = 'rgba(255,255,255,0.34)';
+    holdZaman = setTimeout(async () => {
+      holdIptal();
+      if (await sifreSor('Molayı atlamak için şifre gerekli.')) motor.molayiAtla();
+    }, HOLD_SURE);
+  }
+  function atlaEtiketi() {
+    return kilitOzeti ? 'Atlamak için basılı tut 🔒' : 'Atlamak için basılı tut';
+  }
+  function holdIptal() {
+    clearTimeout(holdZaman);
+    holdZaman = null;
+    og.atla.textContent = atlaEtiketi();
+    og.atla.style.transition = 'background .2s ease';
+    og.atla.style.background = '';
+  }
+  og.atla.addEventListener('pointerdown', holdBasla);
+  og.atla.addEventListener('pointerup', holdIptal);
+  og.atla.addEventListener('pointerleave', holdIptal);
+  og.atla.addEventListener('pointercancel', holdIptal);
+  // Klavye kullanıcısı için: boşluk/enter basılı tutmak da çalışsın
+  og.atla.addEventListener('keydown', (e) => {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) holdBasla(e);
+  });
+  og.atla.addEventListener('keyup', holdIptal);
+
+  /* ============================================================
+     UYARI BALONU
+     ============================================================ */
+  let balonZaman = null;
+  function balonGoster(saniye) {
+    og.balonMetin.textContent = `${Math.ceil(saniye)} sn sonra göz molası`;
+    og.balon.classList.add('acik');
+    calSes(1100, 0.18);
+    bildirimGonder('Mola geliyor', `${Math.ceil(saniye)} saniye sonra göz molası.`);
+    clearTimeout(balonZaman);
+    balonZaman = setTimeout(balonGizle, saniye * 1000);
+  }
+  function balonGizle() {
+    og.balon.classList.remove('acik');
+    clearTimeout(balonZaman);
+  }
+  og.ertele.addEventListener('click', async () => {
+    if (!(await sifreSor('Molayı ertelemek için şifre gerekli.'))) return;
+    motor.ertele(5 * 60);
+    balonGizle();
+  });
+
+  /* ============================================================
+     MOTOR OLAYLARI
+     ============================================================ */
+  motor
+    .uzerine('tik', ekraniCiz)
+    .uzerine('degisti', (d) => { ekraniCiz(d); kaydet(); })
+    .uzerine('uyari', (kalan) => balonGoster(kalan))
+    .uzerine('molaBasladi', () => { balonGizle(); molaEkraniAc(); })
+    .uzerine('molaBitti', () => {
+      // Şifre penceresi açıkken mola kendi kendine bittiyse pencereyi de kapat
+      if (og.sifrePencere.open) sifreKapat(false);
+      molaEkraniKapat();
+      calSes(990, 0.4);
+      og.okuyucu.textContent = 'Mola bitti, devam edebilirsin.';
+      bildirimGonder('Mola bitti', 'Gözlerin dinlendi. Devam edebilirsin.');
+    })
+    .uzerine('dinlenildi', (sn) => {
+      const dk = Math.max(1, Math.round(sn / 60));
+      const mesaj = `${dk} dakika ekrandan uzak kaldın — gözlerin zaten dinlendi, sayaç baştan başladı.`;
+      og.okuyucu.textContent = mesaj;
+      const eski = og.aciklama.textContent;
+      og.aciklama.textContent = mesaj;
+      setTimeout(() => { og.aciklama.textContent = eski; }, 8000);
+    })
+    .uzerine('molaAtlandi', () => {
+      molaEkraniKapat();
+      og.okuyucu.textContent = 'Mola atlandı.';
+    });
+
+  /* ============================================================
+     DÜĞMELER VE KISAYOLLAR
+     ============================================================ */
+  og.baslat.addEventListener('click', async () => {
+    if (motor.durum === 'calisiyor' || motor.durum === 'uyari') {
+      // Durdurmak kilitli; başlatmak her zaman serbest
+      if (await sifreSor('Sayacı duraklatmak için şifre gerekli.')) motor.duraklat();
+    } else if (motor.durum === 'duraklatildi' || motor.durum === 'bosta') {
+      motor.devamEt();
+    } else {
+      motor.basla();
+    }
+  });
+  og.mola.addEventListener('click', () => {
+    if (motor.durum === 'hazir') motor.basla();
+    motor.molayaGec();
+  });
+  og.sifirla.addEventListener('click', async () => {
+    if (await sifreSor('Sayacı sıfırlamak için şifre gerekli.')) motor.sifirla();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    // e.target her zaman bir Element olmayabilir (document olabilir)
+    if (e.target instanceof Element && e.target.matches('input, select, textarea')) return;
+    if (og.pencere.open || og.sifrePencere.open) return;
+    if (e.key === ' ' && !molaAcik) { e.preventDefault(); og.baslat.click(); }
+    if ((e.key === 'm' || e.key === 'M') && !molaAcik) og.mola.click();
+  });
+
+  /* Mola ekranı açıkken Esc ile kaçış yok — atlamak için basılı tutulmalı */
+  document.addEventListener('keydown', (e) => {
+    if (molaAcik && e.key === 'Escape') e.preventDefault();
+  }, true);
+
+  /* ============================================================
+     TEMA
+     ============================================================ */
+  /* Masaüstü sürümüyle aynı beş palet + "sistemle aynı".
+     Renkler CSS'te tanımlı; buradaki değerler sadece seçici dairelerde
+     önizleme göstermek için. */
+  const TEMALAR = [
+    { id: 'otomatik', ad: 'Sistemle aynı', zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
+    { id: 'koyu',     ad: 'Gece moru',     zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
+    { id: 'okyanus',  ad: 'Okyanus',       zemin: '#0a1826', a: '#5fd3e8', b: '#ffb877' },
+    { id: 'orman',    ad: 'Orman',         zemin: '#0f1c17', a: '#8fe08a', b: '#ffd27a' },
+    { id: 'safak',    ad: 'Şafak',         zemin: '#1d1220', a: '#ff9eb5', b: '#ffd08a' },
+    { id: 'acik',     ad: 'Açık (gündüz)', zemin: '#fdf6f0', a: '#0f9b8a', b: '#b06a12' },
+  ];
+  const temaSirasi = TEMALAR.map((t) => t.id);
+
+  function temaSeciciyiKur() {
+    og.temaSeridi.innerHTML = TEMALAR.map((t) => `
+      <button type="button" class="tema-sec" data-tema="${t.id}" role="radio"
+              aria-checked="${t.id === tema}" title="${t.ad}" aria-label="${t.ad}"
+              style="background:${t.zemin}">
+        <i class="nokta1" style="background:${t.a}"></i>
+        <i class="nokta2" style="background:${t.b}"></i>
+      </button>`).join('');
+
+    og.temaSeridi.querySelectorAll('.tema-sec').forEach((d) => {
+      d.addEventListener('click', () => {
+        tema = d.dataset.tema;
+        temaUygula(tema);
+        temaSeciciyiTazele();
+        kaydet();
+      });
+    });
+    temaSeciciyiTazele();
+  }
+
+  function temaSeciciyiTazele() {
+    og.temaSeridi.querySelectorAll('.tema-sec').forEach((d) => {
+      d.setAttribute('aria-checked', d.dataset.tema === tema ? 'true' : 'false');
+    });
+    const s = TEMALAR.find((t) => t.id === tema);
+    og.temaAdi.textContent = s ? s.ad : 'Seçince hemen uygulanır';
+  }
+
+  function temaUygula(t) {
+    document.documentElement.dataset.tema = t;
+    // Tarayıcı çubuğunun rengi de temayla uyumlu olsun
+    const renk = getComputedStyle(document.documentElement)
+      .getPropertyValue('--zemin').trim() || '#141130';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', renk);
+  }
+  og.tema.addEventListener('click', () => {
+    tema = temaSirasi[(temaSirasi.indexOf(tema) + 1) % temaSirasi.length];
+    temaUygula(tema);
+    temaSeciciyiTazele();
+    kaydet();
+  });
+
+  /* ============================================================
+     AYARLAR PENCERESİ
+     ============================================================ */
+  function ayarlariPencereyeYaz() {
+    og.ayCalisma.value = Math.max(1, Math.round(motor.ayarlar.calismaSuresi / 60));
+    og.ayMola.value = motor.ayarlar.molaSuresi;
+    og.ayUyari.value = motor.ayarlar.uyariSuresi;
+    og.ayAtla.checked = motor.ayarlar.molaAtlanabilir;
+    og.aySes.checked = motor.ayarlar.sesAcik;
+    og.ayBosta.checked = bostaAcik;
+    og.ayOtomatik.checked = otomatikBasla;
+    temaSeciciyiTazele();          // tema açılır liste değil, renk daireleri
+    og.ayKilitAlan.value = '';
+    kilitDurumunuGoster();
+  }
+  og.ayarAc.addEventListener('click', () => { ayarlariPencereyeYaz(); og.pencere.showModal(); });
+  og.ayarVazgec.addEventListener('click', () => og.pencere.close());
+  og.ayarKaydet.addEventListener('click', async () => {
+    if (!(await sifreSor('Ayarları değiştirmek için şifre gerekli.'))) return;
+
+    const dk = Math.min(120, Math.max(1, +og.ayCalisma.value || 20));
+    const ml = Math.min(600, Math.max(5, +og.ayMola.value || 20));
+    let uy = Math.min(60, Math.max(0, +og.ayUyari.value || 0));
+    if (uy >= dk * 60) uy = 0;              // uyarı, çalışmadan uzun olamaz
+
+    motor.ayarlar.calismaSuresi = dk * 60;
+    motor.ayarlar.molaSuresi = ml;
+    motor.ayarlar.uyariSuresi = uy;
+    motor.ayarlar.molaAtlanabilir = og.ayAtla.checked;
+    motor.ayarlar.sesAcik = og.aySes.checked;
+    bostaAcik = og.ayBosta.checked;
+    otomatikBasla = og.ayOtomatik.checked;
+    motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
+    // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
+
+    og.aciklama.textContent =
+      `Başlat’a bas. ${dk} dakika sonra ekran ${ml} saniyeliğine kapanacak, ` +
+      'bu sırada gözünü 6 metre uzağa çevir.';
+
+    if (motor.durum !== 'hazir') motor.sifirla();
+    kaydet();
+    og.pencere.close();
+  });
+
+  /* ---------- Tüm verileri sıfırla ----------
+     Şifreni unutursan buradan çıkarsın. Kilitliyken yine şifre ister;
+     şifreyi de bilmiyorsan tarayıcının "site verilerini temizle"
+     seçeneği kalır — bunu OKU.md'de açıkça yazdık. */
+  let silmeOnayi = false;
+  let silmeZaman = null;
+  og.hepsiniSil.addEventListener('click', async () => {
+    if (!silmeOnayi) {
+      if (!(await sifreSor('Verileri silmek için şifre gerekli.'))) return;
+      silmeOnayi = true;
+      og.hepsiniSil.textContent = 'Emin misin? Tekrar bas';
+      og.sifirlamaDurum.textContent = 'Bu işlem geri alınamaz.';
+      clearTimeout(silmeZaman);
+      silmeZaman = setTimeout(() => {
+        silmeOnayi = false;
+        og.hepsiniSil.textContent = 'Sıfırla';
+        og.sifirlamaDurum.textContent = 'Ayarlar, sayaçlar ve şifre silinir';
+      }, 6000);
+      return;
+    }
+    clearTimeout(silmeZaman);
+    silindi = true;
+    try { localStorage.removeItem(KAYIT_ANAHTARI); } catch {}
+    location.reload();
+  });
+
+  /* ============================================================
+     KAYIT — ayarlar, istatistik ve sayacın bitiş anı
+     ============================================================ */
+  let silindi = false;   // sıfırlamadan sonra kayıt geri yazılmasın
+
+  function kaydet() {
+    if (silindi) return;
+    // Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
+    try {
+      Gecmis.gunuIsle(motor.istatistik.gun || Gecmis.gunAdi(), motor.istatistik);
+    } catch {}
+    try {
+      localStorage.setItem(KAYIT_ANAHTARI, JSON.stringify({
+        ...motor.disaAktar(),
+        bostaAcik,
+        otomatikBasla,
+        tema,
+        kilitOzeti,
+        kilitTuz,
+        kayitAni: Date.now(),
+      }));
+    } catch {}
+  }
+  setInterval(kaydet, 15000);
+  window.addEventListener('pagehide', kaydet);
+
+  /* ============================================================
+     HAREKET TAKİBİ — cihaz kullanılmıyorsa sayaç dursun
+     ============================================================ */
+  ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach((olay) =>
+    window.addEventListener(olay, () => motor.hareketVar(), { passive: true })
+  );
+
+  /* ============================================================
+     ARKA PLAN SORUNU
+     Tarayıcı, arka plandaki sekmenin zamanlayıcısını yavaşlatır.
+     Bizim motor Date.now() farkı kullandığı için süre şaşmaz;
+     sekmeye dönüldüğünde bir kez elle tetikleyip yakalatıyoruz.
+     ============================================================ */
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      motor.hareketVar();
+      motor.tik();
+      ekraniCiz(motor.anlikDurum());
+    }
+  });
+  window.addEventListener('pageshow', () => { motor.tik(); ekraniCiz(motor.anlikDurum()); });
+
+  /* ============================================================
+     AÇILIŞ
+     ============================================================ */
+  og.aciklama.textContent =
+    `Başlat’a bas. ${Math.round(motor.ayarlar.calismaSuresi / 60)} dakika sonra ekran ` +
+    `${motor.ayarlar.molaSuresi} saniyeliğine kapanacak, bu sırada gözünü 6 metre uzağa çevir.`;
+
+  ekraniCiz(motor.anlikDurum());
+  bildirimDurumunuGoster();
+  kilitDurumunuGoster();
+  temaSeciciyiKur();
+
+  /* Açılışta kendiliğinden başla.
+     Sekme kapalıyken geçen süreyi mola yağmuruna çevirmiyoruz;
+     temiz bir 20 dakikayla başlıyoruz.
+
+     "Cihaza bakılmaya başlandığında başlasın" isteği burada
+     iki parçayla karşılanıyor:
+       1) Uygulama açılır açılmaz sayaç döner (bu satır),
+       2) Kimse dokunmuyorsa 90 sn sonra sayaç kendini durdurur ve
+          ilk dokunuşta yeniden başlar (motor.hareketVar).
+     Yani bilgisayar açıkken sen yokken sayaç boşa dönmez. */
+  const oncedenCalisiyordu =
+    kayit.durum === 'calisiyor' || kayit.durum === 'uyari' || kayit.durum === 'mola';
+  if (otomatikBasla || oncedenCalisiyordu) motor.basla();
+
+  // Hata ayıklama / test için: konsoldan molaMotoru.ayarlar ile oynayabilirsin
+  window.molaMotoru = motor;
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();

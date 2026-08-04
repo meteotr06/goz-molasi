@@ -1,0 +1,647 @@
+/* ============================================================
+   STİL — Göz Molası
+   Renkler tek yerde (:root) tanımlı. Birini değiştirince
+   tüm uygulama değişir. Açık/koyu tema desteklenir.
+   ============================================================ */
+
+/* Renk seçimi bilinçli:
+   Mola ekranı KOYU kalır — amaç gözü dinlendirmek, parlak bir ekran
+   tam tersini yapar. Ama gri/siyah değil: gece mavisinden mora, oradan
+   sıcak bir şafak tonuna giden bir gökyüzü. Vurgular sıcak (kehribar)
+   ve nane yeşili; tek başına soğuk mavi klinik hissi veriyordu. */
+:root {
+  --zemin:       #141130;
+  --zemin-2:     #1c1840;
+  --kart:        #241f4d;
+  --kart-2:      #2c2659;
+  --cizgi:       #3a3268;
+  --yazi:        #f2ecff;
+  --yazi-soluk:  #a99bd0;
+  --vurgu:       #7ee0d2;   /* nane */
+  --vurgu-koyu:  #0d2b28;
+  --uyari:       #ffc46b;   /* kehribar */
+  --mola:        #ffc46b;
+  --mercan:      #ff8f7a;
+  --golge:       0 14px 38px rgba(8, 4, 30, 0.5);
+  --yuvarlak:    18px;
+
+  /* Mola ekranının gökyüzü gradyanı — her temada koyu kalır */
+  --mola-1: #0c1533; --mola-2: #1b1a46; --mola-3: #2f2154;
+  --mola-4: #4a2a56; --mola-5: #6b3350;
+  --mola-yazi: #fdf3ff; --mola-soluk: #c3a8d8;
+}
+
+/* Sistem açık temadaysa ve kullanıcı elle koyu seçmediyse */
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema="koyu"]) {
+    --zemin:      #fdf6f0;   /* sıcak krem */
+    --zemin-2:    #f7ebf3;
+    --kart:       #ffffff;
+    --kart-2:     #f7f2fb;
+    --cizgi:      #e6d9e8;
+    --yazi:       #241a3d;
+    --yazi-soluk: #6b5b85;
+    --vurgu:      #0f9b8a;
+    --vurgu-koyu: #0d2b28;
+    --uyari:      #b06a12;
+    --mola:       #b06a12;
+    --mercan:     #d1543c;
+    --golge:      0 12px 32px rgba(90, 50, 110, 0.13);
+  }
+}
+
+/* ============================================================
+   TEMALAR — masaüstü sürümüyle aynı beş palet.
+   Mola ekranı her temada KOYU kalır: amaç gözü dinlendirmek,
+   parlak bir ekran tam tersini yapar.
+   ============================================================ */
+:root[data-tema="okyanus"] {
+  --zemin: #0a1826;  --zemin-2: #102538;  --kart: #16304a;  --kart-2: #1d3d5c;
+  --cizgi: #28527a;  --yazi: #e9f4ff;     --yazi-soluk: #93b6d4;
+  --vurgu: #5fd3e8;  --vurgu-koyu: #062330; --uyari: #ffb877; --mola: #ffb877;
+  --mercan: #ff9b7a;
+  --mola-1: #04121f; --mola-2: #0a2338; --mola-3: #123a52; --mola-4: #1b5266; --mola-5: #2d6b6e;
+  --mola-yazi: #eaf7ff; --mola-soluk: #9dc6dd;
+}
+:root[data-tema="orman"] {
+  --zemin: #0f1c17;  --zemin-2: #152a22;  --kart: #1b382c;  --kart-2: #224638;
+  --cizgi: #2f5c48;  --yazi: #ecf7f0;     --yazi-soluk: #9ec4ae;
+  --vurgu: #8fe08a;  --vurgu-koyu: #0a2312; --uyari: #ffd27a; --mola: #ffd27a;
+  --mercan: #ffab6b;
+  --mola-1: #08150f; --mola-2: #0e251a; --mola-3: #163a27; --mola-4: #245139; --mola-5: #40643a;
+  --mola-yazi: #f0fbf2; --mola-soluk: #a8ceb6;
+}
+:root[data-tema="safak"] {
+  --zemin: #1d1220;  --zemin-2: #2a1729;  --kart: #361d33;  --kart-2: #43253d;
+  --cizgi: #5a3450;  --yazi: #ffeef4;     --yazi-soluk: #d3a4bb;
+  --vurgu: #ff9eb5;  --vurgu-koyu: #3a0d1e; --uyari: #ffd08a; --mola: #ffd08a;
+  --mercan: #ffab8f;
+  --mola-1: #150a16; --mola-2: #2a1226; --mola-3: #472034; --mola-4: #6b3140; --mola-5: #8f4a44;
+  --mola-yazi: #fff2f6; --mola-soluk: #dbb0c2;
+}
+
+/* Kullanıcı ayarlardan elle açık tema seçtiyse */
+:root[data-tema="acik"] {
+  --zemin:      #fdf6f0;
+  --zemin-2:    #f7ebf3;
+  --kart:       #ffffff;
+  --kart-2:     #f7f2fb;
+  --cizgi:      #e6d9e8;
+  --yazi:       #241a3d;
+  --yazi-soluk: #6b5b85;
+  --vurgu:      #0f9b8a;
+  --vurgu-koyu: #0d2b28;
+  --uyari:      #b06a12;
+  --mola:       #b06a12;
+  --mercan:     #d1543c;
+  --golge:      0 12px 32px rgba(90, 50, 110, 0.13);
+  /* Açık tema seçilse bile mola ekranı koyu kalır: göz dinlenecek */
+  --mola-1: #101a33; --mola-2: #1d2a4d; --mola-3: #2f3d63;
+  --mola-4: #455073; --mola-5: #5c6482;
+  --mola-yazi: #f4f8ff; --mola-soluk: #b9c6e0;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background:
+    radial-gradient(900px 520px at 12% -6%, color-mix(in srgb, var(--vurgu) 16%, transparent), transparent 70%),
+    radial-gradient(900px 520px at 88% 4%, color-mix(in srgb, var(--uyari) 14%, transparent), transparent 70%),
+    radial-gradient(1100px 600px at 50% -10%, var(--zemin-2), transparent 70%),
+    var(--zemin);
+  background-attachment: fixed;
+  color: var(--yazi);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;          /* mobil tarayıcı çubuğunu hesaba katar */
+  padding: 18px 16px 32px;
+  gap: 16px;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------------- Üst şerit ---------------- */
+.ust {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.marka {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-right: auto;
+}
+.marka img { width: 30px; height: 30px; border-radius: 8px; }
+.marka small {
+  display: block;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--yazi-soluk);
+  letter-spacing: 0.6px;
+}
+
+/* ---------------- Düğmeler ---------------- */
+.dugme {
+  appearance: none;
+  border: 1px solid var(--cizgi);
+  background: var(--kart);
+  color: var(--yazi);
+  font: inherit;
+  font-weight: 600;
+  padding: 11px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;            /* parmakla rahat basılsın */
+}
+.dugme:hover { border-color: var(--vurgu); }
+.dugme:active { transform: scale(0.97); }
+.dugme:focus-visible { outline: 3px solid var(--vurgu); outline-offset: 2px; }
+.dugme.ana {
+  background: var(--vurgu);
+  border-color: var(--vurgu);
+  color: #001a16;              /* açık temada da 4.5:1 kontrastı geçsin */
+}
+/* İkincil, dar düğmeler — yine de parmakla basılabilir kalsın */
+.dugme.kucuk { padding: 9px 14px; min-height: 40px; font-size: 13px; }
+.dugme.sade { background: transparent; }
+.dugme.yuvarlak { padding: 11px; width: 44px; justify-content: center; }
+
+/* ---------------- Sayaç kartı ---------------- */
+.sayac-kart {
+  width: 100%;
+  max-width: 720px;
+  background: linear-gradient(155deg, var(--kart-2), var(--kart) 60%);
+  border: 1px solid var(--cizgi);
+  border-radius: 28px;
+  box-shadow: var(--golge);
+  padding: 28px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.halka-kutu { position: relative; width: min(66vw, 260px); aspect-ratio: 1; }
+/* Halkanın arkasında yumuşak ışık — düz zemin cansız duruyordu */
+.halka-kutu::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--vurgu) 26%, transparent), transparent 68%);
+  pointer-events: none;
+}
+.halka { width: 100%; height: 100%; transform: rotate(-90deg); }
+.halka .iz   { fill: none; stroke: var(--cizgi); stroke-width: 10; }
+.halka .dolu {
+  fill: none;
+  stroke: var(--vurgu);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s linear, stroke 0.4s ease;
+}
+body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
+
+.halka-ic {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.sure {
+  font-size: clamp(38px, 12vw, 56px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.durum-yazi {
+  font-size: 13px;
+  color: var(--yazi-soluk);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-weight: 600;
+}
+
+.dugme-sirasi { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* ---------------- İstatistik ---------------- */
+.istatistik {
+  width: 100%;
+  max-width: 720px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.kutucuk {
+  background: linear-gradient(160deg, var(--kart-2), var(--kart));
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak);
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(8, 4, 30, 0.22);
+}
+.kutucuk b {
+  display: block;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.4px;
+}
+.kutucuk span { font-size: 12px; color: var(--yazi-soluk); }
+
+/* ---------------- Son 7 gün ---------------- */
+.hafta-kart {
+  width: 100%;
+  max-width: 720px;
+  background: linear-gradient(160deg, var(--kart-2), var(--kart));
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak);
+  padding: 16px 18px 14px;
+  box-shadow: 0 4px 14px rgba(8, 4, 30, 0.22);
+}
+.hafta-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.hafta-ust h3 { margin: 0; font-size: 15px; }
+.seri { font-size: 13px; font-weight: 700; color: var(--vurgu); white-space: nowrap; }
+
+.hafta-grafik {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  align-items: end;
+  height: 118px;
+  padding-top: 16px;
+}
+/* Hedef çizgisi — yüksekliği JS ayarlar */
+.hafta-grafik::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--hedef-yuksekligi, 50%);
+  border-top: 1px dashed var(--yazi-soluk);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.gun { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.gun i {
+  display: block;
+  width: 100%;
+  max-width: 34px;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--cizgi);
+  min-height: 3px;
+  transition: height 0.4s ease;
+}
+.gun.hedefte i { background: var(--vurgu); }
+.gun.bugun i    { background: var(--uyari); }
+.gun.bugun.hedefte i { background: var(--vurgu); }
+.gun b { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--yazi-soluk); }
+.gun span { font-size: 11px; color: var(--yazi-soluk); }
+.gun.bugun span { color: var(--yazi); font-weight: 700; }
+
+/* ---------------- Bilgi kartı (ana ekran) ---------------- */
+.bilgi-kart {
+  width: 100%;
+  max-width: 720px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-left: 4px solid var(--vurgu);
+  border-radius: var(--yuvarlak);
+  padding: 16px 18px;
+}
+.bilgi-kart h3 { margin: 0 0 6px; font-size: 15px; }
+.bilgi-kart p  { margin: 0; font-size: 14px; line-height: 1.55; color: var(--yazi-soluk); }
+.kaynak { display: block; margin-top: 8px; font-size: 11.5px; color: var(--yazi-soluk); opacity: 0.85; }
+
+/* ---------------- Uyarı balonu ---------------- */
+.uyari-balon {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 140%);
+  z-index: 40;
+  background: var(--kart);
+  border: 1px solid var(--uyari);
+  border-radius: 999px;
+  box-shadow: var(--golge);
+  padding: 12px 14px 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  max-width: calc(100vw - 24px);
+}
+.uyari-balon.acik { transform: translate(-50%, 0); }
+.uyari-balon b { font-size: 14px; white-space: nowrap; }
+
+/* ---------------- MOLA EKRANI ---------------- */
+.mola-ekran {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  text-align: center;
+  /* Gece mavisinden mora, oradan şafak tonuna — masaüstü sürümüyle
+     aynı gradyan. Siyah değil ama yine de koyu: göz dinlenecek.
+     Renkler temaya göre değişir, koyuluk hep aynı kalır. */
+  background:
+    radial-gradient(60% 45% at 50% 48%,
+      color-mix(in srgb, var(--vurgu) 14%, transparent), transparent 70%),
+    linear-gradient(170deg, var(--mola-1) 0%, var(--mola-2) 28%,
+      var(--mola-3) 55%, var(--mola-4) 80%, var(--mola-5) 100%);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  color: var(--mola-yazi);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s;
+}
+.mola-ekran.acik { opacity: 1; visibility: visible; }
+
+.mola-baslik {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 700;
+  margin: 0;
+}
+.mola-alt {
+  margin: 0;
+  color: var(--mola-soluk);
+  font-size: clamp(14px, 3.6vw, 17px);
+  max-width: 30ch;
+  line-height: 1.5;
+}
+
+/* Nefes dairesi — 20 sn boyunca yavaşça büyüyüp küçülür */
+.nefes {
+  position: relative;
+  width: min(58vw, 220px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.nefes::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(126, 224, 210, 0.34), rgba(255, 196, 107, 0.10) 55%, transparent 72%);
+  animation: nefesAl 10s ease-in-out infinite;
+}
+.nefes svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.nefes .iz   { fill: none; stroke: rgba(255, 255, 255, 0.12); stroke-width: 6; }
+.nefes .dolu {
+  fill: none;
+  stroke: var(--mola);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s linear;
+}
+/* Egzersiz animasyonu halkanın içinde oynar */
+.egzersiz-tuval {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Geri sayım halkanın altında — merkez egzersize ait */
+.mola-sayac {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: -6px;
+}
+.mola-sayi {
+  font-size: clamp(34px, 9vw, 50px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.mola-sayi-alt {
+  font-size: 12px;
+  color: var(--mola-soluk);
+  letter-spacing: 1px;
+}
+
+@keyframes nefesAl {
+  0%, 100% { transform: scale(0.86); opacity: 0.75; }
+  50%      { transform: scale(1.06); opacity: 1; }
+}
+
+/* Molanın birkaç saniye sonrasında beliren "neden" kartı */
+.neden-kart {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  padding: 16px 20px;
+  max-width: 560px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.neden-kart.gorunur { opacity: 1; transform: translateY(0); }
+.neden-kart h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--mola);
+}
+.neden-kart p { margin: 0; font-size: 15px; line-height: 1.6; }
+.neden-kart .kaynak { color: var(--mola-soluk); }
+
+.mola-alt-sira { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; min-height: 44px; }
+.mola-ekran .dugme {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #eaf4ff;
+}
+.gizli { display: none !important; }
+
+/* ---------------- Ayarlar penceresi ---------------- */
+dialog.ayarlar {
+  border: 1px solid var(--cizgi);
+  background: var(--kart);
+  color: var(--yazi);
+  border-radius: 22px;
+  padding: 0;
+  width: min(460px, calc(100vw - 32px));
+  box-shadow: var(--golge);
+}
+dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(3px); }
+.ayar-govde { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.ayar-govde h2 { margin: 0; font-size: 18px; }
+.satir { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.satir label { font-size: 14px; }
+.satir small { display: block; color: var(--yazi-soluk); font-size: 12px; margin-top: 2px; }
+.satir input[type="number"] {
+  width: 90px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cizgi);
+  background: var(--zemin);
+  color: var(--yazi);
+  font: inherit;
+  text-align: center;
+}
+.satir select {
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cizgi);
+  background: var(--zemin);
+  color: var(--yazi);
+  font: inherit;
+}
+.anahtar { position: relative; width: 50px; height: 28px; flex: none; }
+.anahtar input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.anahtar i {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--cizgi);
+  transition: background 0.2s ease;
+}
+.anahtar i::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+.anahtar input:checked + i { background: var(--vurgu); }
+.anahtar input:checked + i::after { transform: translateX(22px); }
+.anahtar input:focus-visible + i { outline: 3px solid var(--vurgu); outline-offset: 2px; }
+
+/* ---------------- Tema seçici (renk daireleri) ----------------
+   Açılır listede renkleri göremiyorsun; parmakla da zor. Bunun yerine
+   her temanın kendi renklerini gösteren dokunmatik daireler. */
+.tema-seridi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.tema-sec {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--cizgi);
+  cursor: pointer;
+  overflow: hidden;
+  flex: none;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.tema-sec:active { transform: scale(0.92); }
+.tema-sec[aria-checked="true"] {
+  border-color: var(--vurgu);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vurgu) 35%, transparent);
+}
+.tema-sec i {
+  position: absolute;
+  border-radius: 50%;
+}
+.tema-sec i.nokta1 { inset: 20% 42% 42% 20%; }
+.tema-sec i.nokta2 { inset: 46% 18% 20% 44%; }
+.tema-sec[aria-checked="true"]::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ayar-alt { display: flex; gap: 10px; justify-content: flex-end; padding: 0 22px 22px; }
+.ipucu {
+  font-size: 12px;
+  color: var(--yazi-soluk);
+  line-height: 1.5;
+  background: var(--zemin);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+/* ---------------- Alt bilgi ---------------- */
+.alt-bilgi {
+  font-size: 12px;
+  color: var(--yazi-soluk);
+  text-align: center;
+  max-width: 620px;
+  line-height: 1.6;
+}
+.alt-bilgi a { color: var(--vurgu); }
+
+/* ---------------- Erişilebilirlik ---------------- */
+/* Hareket hassasiyeti olan kullanıcılar için tüm animasyonları kes */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .nefes::before { transform: scale(1); opacity: 0.9; }
+}
+
+/* Ekran okuyucuya okunur ama görünmez */
+.gizli-metin {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------- Geniş ekran ---------------- */
+@media (min-width: 780px) {
+  body { padding-top: 34px; gap: 20px; }
+  .sayac-kart { flex-direction: row; padding: 30px 34px; gap: 34px; }
+  .halka-kutu { width: 240px; flex: none; }
+  .sayac-sag { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; text-align: left; flex: 1; }
+  .sayac-sag .dugme-sirasi { justify-content: flex-start; }
+}
+@media (max-width: 779px) {
+  .sayac-sag { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
+}
