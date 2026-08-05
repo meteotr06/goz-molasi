@@ -1,6 +1,6 @@
-/* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
+﻿/* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v6';
+const SURUM = 'goz-molasi-v7';
 
 const DOSYALAR = [
   './',

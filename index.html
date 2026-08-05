@@ -17,6 +17,35 @@
 </head>
 <body data-durum="hazir">
 
+  <!-- İLK ZİYARETTE: uygulama olarak kurma daveti -->
+  <div class="kurulum-serit gizli" id="kurulumSerit" role="region" aria-label="Uygulama olarak kur">
+    <img src="ikon-192.png" alt="" class="kurulum-ikon">
+    <div class="kurulum-yazi">
+      <b id="kurulumBaslik">Uygulama olarak kur</b>
+      <span id="kurulumAciklama">Ana ekranına ekle, internetsiz de çalışsın</span>
+    </div>
+    <button class="dugme ana kucuk" id="kurulumEvet">Kur</button>
+    <button class="kurulum-kapat" id="kurulumHayir" aria-label="Kapat">✕</button>
+  </div>
+
+  <!-- iOS için adım adım anlatım -->
+  <dialog class="ayarlar" id="iosPencere">
+    <div class="ayar-govde">
+      <h2>Ana ekrana ekle</h2>
+      <ol class="ios-adim">
+        <li>Safari'nin altındaki <b>Paylaş</b> düğmesine bas
+          <span class="ios-simge">⬆️</span> (kare içinde yukarı ok)</li>
+        <li>Listeyi aşağı kaydır, <b>“Ana Ekrana Ekle”</b> seç</li>
+        <li>Sağ üstten <b>Ekle</b> de</li>
+      </ol>
+      <p class="ipucu">Artık normal bir uygulama gibi açılır, internet olmadan da
+        çalışır ve tarayıcı çubuğu görünmez.</p>
+    </div>
+    <div class="ayar-alt">
+      <button class="dugme ana" id="iosTamam">Anladım</button>
+    </div>
+  </dialog>
+
   <!-- ÜST ŞERİT -->
   <header class="ust">
     <div class="marka">

@@ -762,6 +762,56 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   padding: 10px 12px;
 }
 
+/* ---------------- Kurulum şeridi ----------------
+   Linke tıklayan kişi bunun kurulabilir bir uygulama olduğunu
+   bilmiyor. Tarayıcının kendi kurulum çubuğu telefonda çoğu
+   zaman görünmüyor, o yüzden kendi davetimizi gösteriyoruz. */
+.kurulum-serit {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--yuvarlak);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--vurgu) 20%, var(--kart)),
+    var(--kart));
+  border: 1px solid color-mix(in srgb, var(--vurgu) 45%, transparent);
+  box-shadow: var(--golge);
+  animation: seritGir 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+@keyframes seritGir {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kurulum-ikon { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.kurulum-yazi { flex: 1; min-width: 0; }
+.kurulum-yazi b { display: block; font-size: 14px; }
+.kurulum-yazi span { display: block; font-size: 12px; color: var(--yazi-soluk); margin-top: 2px; }
+.kurulum-kapat {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--yazi-soluk);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  flex: none;
+}
+.kurulum-kapat:hover { background: var(--kart-2); color: var(--yazi); }
+
+.ios-adim { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.9; }
+.ios-adim li { margin-bottom: 6px; }
+.ios-simge { font-size: 15px; }
+
+@media (max-width: 420px) {
+  .kurulum-yazi span { display: none; }   /* dar ekranda tek satır kalsın */
+}
+
 /* ---------------- Reklam alanı ----------------
    Sadece ana ekranda. Mola ekranında reklam YOK — orada amaç
    gözünü ekrandan ayırman. Kutu, içerikten net ayrılsın diye

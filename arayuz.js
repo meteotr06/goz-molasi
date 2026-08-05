@@ -310,44 +310,89 @@
      telefonda çoğu zaman görünmüyor ya da kapatılıyor.
      ============================================================ */
   let kurulumOlayi = null;
+  const serit = $('kurulumSerit');
+  const iosPencere = $('iosPencere');
+  const KURULUM_KAPATILDI = 'goz-molasi-kurulum-kapatildi';
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();               // tarayıcının kendi çubuğunu bekletiyoruz
-    kurulumOlayi = e;
-    og.kur.classList.remove('gizli');
+  /** Zaten uygulama olarak açıldıysa hiçbir davet gösterme */
+  const uygulamaKipi = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+
+  const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const android = /android/i.test(navigator.userAgent);
+
+  function kurulumKapatildiMi() {
+    try { return localStorage.getItem(KURULUM_KAPATILDI) === 'evet'; } catch { return false; }
+  }
+
+  function seridiGoster(baslik, aciklama, dugmeYazi) {
+    if (uygulamaKipi || kurulumKapatildiMi()) return;
+    $('kurulumBaslik').textContent = baslik;
+    $('kurulumAciklama').textContent = aciklama;
+    $('kurulumEvet').textContent = dugmeYazi;
+    serit.classList.remove('gizli');
+  }
+
+  function seridiGizle(kalici = false) {
+    serit.classList.add('gizli');
+    if (kalici) { try { localStorage.setItem(KURULUM_KAPATILDI, 'evet'); } catch {} }
+  }
+
+  $('kurulumHayir').addEventListener('click', () => seridiGizle(true));
+  $('iosTamam').addEventListener('click', () => iosPencere.close());
+
+  $('kurulumEvet').addEventListener('click', async () => {
+    if (kurulumOlayi) {
+      kurulumOlayi.prompt();
+      const { outcome } = await kurulumOlayi.userChoice;
+      kurulumOlayi = null;
+      if (outcome === 'accepted') seridiGizle(true);
+      return;
+    }
+    if (iOS) { iosPencere.showModal(); return; }
+    // Masaüstü: tarayıcının kurulum simgesini göster
+    $('kurulumAciklama').textContent =
+      'Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas';
+    $('kurulumAciklama').style.color = 'var(--vurgu)';
   });
 
-  og.kur.addEventListener('click', async () => {
-    if (!kurulumOlayi) return;
-    og.kur.disabled = true;
-    kurulumOlayi.prompt();
-    const { outcome } = await kurulumOlayi.userChoice;
-    kurulumOlayi = null;
-    og.kur.classList.add('gizli');
-    if (outcome !== 'accepted') og.kur.disabled = false;
+  /* Android/Chrome/Edge: tarayıcı "bu kurulabilir" dediğinde */
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();               // kendi davetimizi gösteriyoruz
+    kurulumOlayi = e;
+    og.kur.classList.remove('gizli');
+    seridiGoster('Uygulama olarak kur',
+                 'Ana ekranına ekle, internetsiz de çalışsın', 'Kur');
   });
 
   window.addEventListener('appinstalled', () => {
     og.kur.classList.add('gizli');
     kurulumOlayi = null;
+    seridiGizle(true);
   });
 
-  /** Zaten uygulama olarak açıldıysa kurulum düğmesini hiç gösterme */
-  const uygulamaKipi = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
+  og.kur.addEventListener('click', () => $('kurulumEvet').click());
   if (uygulamaKipi) og.kur.classList.add('gizli');
 
-  /* iPhone'da beforeinstallprompt yok; Safari'de elle eklemek gerekiyor.
-     Kullanıcıya ne yapacağını söylemezsek "kurulamıyor" sanıyor. */
-  const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  /* iPhone'da beforeinstallprompt YOK — hiç tetiklenmez.
+     Beklersek kullanıcı kurulabileceğini hiç öğrenemez. */
   if (iOS && !uygulamaKipi) {
-    og.kur.textContent = '⬇ Ana ekrana nasıl eklerim?';
+    og.kur.textContent = '⬇ Ana ekrana ekle';
     og.kur.classList.remove('gizli');
-    og.kur.addEventListener('click', () => {
-      alert('Safari’de alttaki Paylaş düğmesine (kare ve yukarı ok) bas, '
-          + 'sonra "Ana Ekrana Ekle" seç.\n\n'
-          + 'Uygulama gibi açılır, çevrimdışı da çalışır.');
-    });
+    seridiGoster('Ana ekrana ekle',
+                 'Uygulama gibi açılsın, internetsiz de çalışsın', 'Nasıl?');
+  }
+
+  /* Masaüstü tarayıcılarda beforeinstallprompt gecikebilir ya da hiç
+     gelmeyebilir. 3 saniye sonra hâlâ gelmediyse yine de haber ver. */
+  if (!iOS && !android && !uygulamaKipi) {
+    setTimeout(() => {
+      if (!kurulumOlayi && serit.classList.contains('gizli')) {
+        seridiGoster('Uygulama olarak kurulabilir',
+                     'Tarayıcı çubuğu olmadan, kendi penceresinde çalışır',
+                     'Nasıl?');
+      }
+    }, 3000);
   }
 
   /* Ana ekran kısayolundan "Şimdi mola ver" ile açıldıysa */
