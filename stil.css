@@ -838,6 +838,23 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 }
 .reklam-alani ins { max-width: 100%; }
 
+/* Önizleme kutusu — gerçek reklam değil, yerleşimi göstermek için */
+.reklam-sahte {
+  display: grid;
+  place-items: center;
+  min-height: 90px;
+  border-radius: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--cizgi) 35%, transparent) 0 10px,
+    transparent 10px 20px);
+  border: 1px dashed var(--cizgi);
+}
+.reklam-sahte-ic { text-align: center; padding: 12px; }
+.reklam-sahte-ic b { display: block; font-size: 14px; color: var(--yazi); }
+.reklam-sahte-ic span { display: block; font-size: 12px; color: var(--yazi-soluk); margin-top: 3px; }
+.reklam-sahte-ic small { display: block; font-size: 11px; color: var(--yazi-soluk); margin-top: 6px; opacity: .8; }
+
 /* ---------------- Alt bilgi ---------------- */
 .alt-bilgi {
   font-size: 12px;

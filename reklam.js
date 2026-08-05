@@ -45,6 +45,13 @@ const REKLAM = {
   // Sıklığı Google ayarlar; kullanıcıyı boğmaz.
   OTOMATIK: false,
 
+  /* ÖNİZLEME KİPİ
+     Onay gelmeden reklamın nerede ve ne kadar yer kaplayacağını
+     görmek için. Sahte bir kutu çizer, Google'a hiç istek gitmez.
+     Adrese ?reklam=onizleme eklersen de açılır — yayındaki siteyi
+     bozmadan denemek için. */
+  ONIZLEME: false,
+
   // Reklamsız sürüm satın alanlar için (ileride)
   REKLAMSIZ_ANAHTARI: 'goz-molasi-reklamsiz',
 };
@@ -92,9 +99,49 @@ async function otomatikReklamlariAc() {
 }
 
 
+/** Önizleme: sahte reklam kutusu çizer. Google'a hiç istek gitmez.
+    Amaç, onay beklerken yerleşimi görebilmek. */
+function onizlemeCiz(kap) {
+  kap.classList.remove('gizli');
+  kap.innerHTML = `
+    <span class="reklam-etiket">Reklam · ÖNİZLEME</span>
+    <div class="reklam-sahte">
+      <div class="reklam-sahte-ic">
+        <b>Reklam buraya gelecek</b>
+        <span>728 × 90 · yatay görüntülü reklam</span>
+        <small>Bu sahte bir kutu. Google onayı gelince gerçek reklam görünecek.</small>
+      </div>
+    </div>`;
+}
+
+
+/** Reklam durumunu tek bakışta gösterir (konsoldan çağır). */
+function reklamDurumu() {
+  const d = {
+    aktif: REKLAM.AKTIF,
+    onizleme: REKLAM.ONIZLEME || new URLSearchParams(location.search).get('reklam') === 'onizleme',
+    otomatikVignette: REKLAM.OTOMATIK,
+    yayinci: REKLAM.YAYINCI || '(boş)',
+    birim: REKLAM.BIRIM || '(boş)',
+    reklamsizSurum: reklamsizMi(),
+    sayfadaKutu: !!document.getElementById('reklamAlani'),
+    dolduruldu: !!document.querySelector('ins.adsbygoogle[data-ad-status="filled"]'),
+    googleIstegi: performance.getEntriesByType('resource')
+      .filter((x) => /googlesyndication|doubleclick/.test(x.name)).length,
+  };
+  console.table(d);
+  return d;
+}
+
+
 /** Ana ekrandaki banner. Kapalıysa alanı tamamen kaldırır —
     boş gri kutu bırakmak arayüzü çirkinleştirir. */
 async function reklamiKur(kap) {
+  const onizleme = REKLAM.ONIZLEME
+    || new URLSearchParams(location.search).get('reklam') === 'onizleme';
+
+  if (onizleme && kap) { onizlemeCiz(kap); return; }
+
   if (!REKLAM.AKTIF || !REKLAM.YAYINCI || reklamsizMi()) {
     if (kap) kap.remove();
     return;
@@ -124,6 +171,9 @@ async function reklamiKur(kap) {
   }
 }
 
+// Konsoldan durumu görmek için: reklamDurumu()
+if (typeof window !== 'undefined') window.reklamDurumu = reklamDurumu;
+
 if (typeof module !== 'undefined') {
-  module.exports = { REKLAM, reklamiKur, reklamsizMi, otomatikReklamlariAc };
+  module.exports = { REKLAM, reklamiKur, reklamsizMi, otomatikReklamlariAc, reklamDurumu };
 }
