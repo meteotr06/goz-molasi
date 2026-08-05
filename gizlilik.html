@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gizlilik Politikası — Göz Molası</title>
+<meta name="description" content="Göz Molası uygulamasının gizlilik politikası: hangi veriler saklanır, nerede saklanır, kimlerle paylaşılır.">
+<meta name="theme-color" content="#141130">
+<link rel="icon" href="ikon-192.png">
+<link rel="stylesheet" href="stil.css">
+<style>
+  body { display: block; max-width: 780px; margin: 0 auto; }
+  .metin { line-height: 1.75; font-size: 15px; }
+  .metin h1 { font-size: 26px; margin: 24px 0 6px; }
+  .metin h2 { font-size: 18px; margin: 30px 0 8px; color: var(--vurgu); }
+  .metin p, .metin li { color: var(--yazi); }
+  .metin ul { padding-left: 22px; }
+  .metin li { margin-bottom: 6px; }
+  .metin .tarih { color: var(--yazi-soluk); font-size: 13px; }
+  .metin a { color: var(--vurgu); }
+  .kutu {
+    background: var(--kart); border: 1px solid var(--cizgi);
+    border-left: 4px solid var(--vurgu);
+    border-radius: var(--yuvarlak); padding: 14px 18px; margin: 18px 0;
+  }
+  .geri { display: inline-block; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main class="metin">
+  <h1>Gizlilik Politikası</h1>
+  <p class="tarih">Göz Molası — 20·20·20 · Son güncelleme: 5 Ağustos 2026</p>
+
+  <div class="kutu">
+    <b>Kısacası:</b> Bu uygulama sana ait hiçbir veriyi sunucuya göndermez.
+    Ayarların ve sayaçların yalnızca kendi cihazında, tarayıcının deposunda
+    tutulur. Hesap açman gerekmez, e-posta veya isim sorulmaz.
+  </div>
+
+  <h2>Hangi veriler saklanıyor?</h2>
+  <p>Yalnızca uygulamanın çalışması için gerekenler, <b>yalnızca senin cihazında</b>
+     (tarayıcının <code>localStorage</code> alanında):</p>
+  <ul>
+    <li>Ayarların: çalışma ve mola süresi, ön uyarı, tema, ses ve titreşim tercihi,
+        çalışma saatleri</li>
+    <li>Günlük sayaçlar: tamamlanan mola sayısı, atlanan mola sayısı, ekran süresi</li>
+    <li>Son 120 günün özeti: gün başına mola sayısı (7 gün grafiği ve seri için)</li>
+    <li>Kilit şifresi koyduysan: şifrenin kendisi değil, geri döndürülemez
+        <b>özeti</b> (PBKDF2-HMAC-SHA256)</li>
+  </ul>
+
+  <h2>Hangi veriler saklanmıyor?</h2>
+  <ul>
+    <li>Adın, e-postan, telefon numaran veya herhangi bir kimlik bilgisi</li>
+    <li>Konumun</li>
+    <li>Hangi siteleri gezdiğin, hangi uygulamaları kullandığın</li>
+    <li>Kameran veya mikrofonun — bu uygulama bunlara hiç erişmez</li>
+  </ul>
+
+  <h2>Veriler nereye gidiyor?</h2>
+  <p>Hiçbir yere. Bu uygulamanın sunucusu yok. Site <b>GitHub Pages</b> üzerinde
+     duruyor; GitHub, tüm web siteleri gibi erişim kayıtları (IP adresi, tarayıcı
+     bilgisi) tutabilir. Bu kayıtlara bizim erişimimiz yok.
+     GitHub'ın politikası:
+     <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement"
+        rel="noopener" target="_blank">GitHub Gizlilik Bildirimi</a>.</p>
+
+  <h2>Çerezler ve reklamlar</h2>
+  <p>Uygulamanın kendisi çerez kullanmaz.</p>
+  <p>İleride bu sitede <b>Google AdSense</b> reklamları gösterilebilir. Gösterildiği
+     takdirde:</p>
+  <ul>
+    <li>Google ve iş ortakları, sana daha uygun reklam göstermek için çerez
+        kullanabilir.</li>
+    <li>Google'ın reklam çerezi kullanımı,
+        <a href="https://policies.google.com/technologies/ads" rel="noopener"
+           target="_blank">Google Reklam Politikaları</a> kapsamındadır.</li>
+    <li>Kişiselleştirilmiş reklamları
+        <a href="https://adssettings.google.com" rel="noopener" target="_blank">Google
+        Reklam Ayarları</a> üzerinden kapatabilirsin.</li>
+    <li>Reklamlar <b>yalnızca ana ekranda</b> gösterilir. Mola ekranında reklam
+        gösterilmez — molanın amacı gözünü ekrandan ayırmandır.</li>
+  </ul>
+
+  <h2>Bildirimler</h2>
+  <p>Bildirim izni verirsen, hatırlatmalar <b>tamamen cihazında</b> oluşturulur.
+     Bildirim göndermek için hiçbir sunucuya bağlanılmaz.</p>
+
+  <h2>Verilerini silme</h2>
+  <p>Uygulama içinden: <b>Ayarlar → Tüm verileri sıfırla</b>. Bu, yukarıdaki her şeyi
+     kalıcı olarak siler. Tarayıcının "site verilerini temizle" seçeneği de aynı işi
+     yapar. Uygulamayı ana ekrandan kaldırırsan veriler de gider.</p>
+
+  <h2>Çocuklar</h2>
+  <p>Uygulama çocuklar için özel olarak tasarlanmadı ve hiç kimseden yaş bilgisi
+     istemiyor. Hiçbir kişisel veri toplamadığı için çocuklar da güvenle
+     kullanabilir.</p>
+
+  <h2>Sağlıkla ilgili uyarı</h2>
+  <p>Bu uygulama <b>tıbbi bir cihaz veya tavsiye değildir</b>. İçindeki bilgiler
+     yayımlanmış çalışmalara dayanır ve her kartın kaynağı belirtilmiştir; ancak
+     hiçbir sağlık iddiasında bulunulmaz. Gözünde sürekli ağrı, bulanık görme veya
+     baş ağrısı varsa bir göz hekimine görün.</p>
+
+  <h2>Değişiklikler</h2>
+  <p>Bu politika değişirse yukarıdaki tarih güncellenir. Kaynak kodun tamamı
+     açıktır ve geçmişi
+     <a href="https://github.com/meteotr06/goz-molasi" rel="noopener" target="_blank">GitHub'da</a>
+     görülebilir — yani ne saklandığını sözümüze güvenmek zorunda değilsin,
+     koddan doğrulayabilirsin.</p>
+
+  <h2>İletişim</h2>
+  <p>Soru veya talebin için:
+     <a href="https://github.com/meteotr06/goz-molasi/issues" rel="noopener"
+        target="_blank">GitHub üzerinden</a> yazabilirsin.</p>
+
+  <a class="dugme geri" href="./index.html">← Uygulamaya dön</a>
+</main>
+</body>
+</html>
