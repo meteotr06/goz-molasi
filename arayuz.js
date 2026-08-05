@@ -21,6 +21,7 @@
     mola: $('molaDugme'),
     sifirla: $('sifirlaDugme'),
     bildirim: $('bildirimDugme'),
+    kur: $('kurDugme'),
     tema: $('temaDugme'),
     ayarAc: $('ayarDugme'),
 
@@ -300,6 +301,58 @@
       og.bildirim.textContent = '🔕 Bildirimlere izin verilmedi';
       og.bildirim.disabled = true;
     }
+  }
+
+  /* ============================================================
+     UYGULAMA OLARAK KURMA
+     Tarayıcı "bu sayfa kurulabilir" dediğinde düğmeyi gösteriyoruz.
+     Kendi düğmemiz olması önemli: tarayıcının kendi kurulum çubuğu
+     telefonda çoğu zaman görünmüyor ya da kapatılıyor.
+     ============================================================ */
+  let kurulumOlayi = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();               // tarayıcının kendi çubuğunu bekletiyoruz
+    kurulumOlayi = e;
+    og.kur.classList.remove('gizli');
+  });
+
+  og.kur.addEventListener('click', async () => {
+    if (!kurulumOlayi) return;
+    og.kur.disabled = true;
+    kurulumOlayi.prompt();
+    const { outcome } = await kurulumOlayi.userChoice;
+    kurulumOlayi = null;
+    og.kur.classList.add('gizli');
+    if (outcome !== 'accepted') og.kur.disabled = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    og.kur.classList.add('gizli');
+    kurulumOlayi = null;
+  });
+
+  /** Zaten uygulama olarak açıldıysa kurulum düğmesini hiç gösterme */
+  const uygulamaKipi = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (uygulamaKipi) og.kur.classList.add('gizli');
+
+  /* iPhone'da beforeinstallprompt yok; Safari'de elle eklemek gerekiyor.
+     Kullanıcıya ne yapacağını söylemezsek "kurulamıyor" sanıyor. */
+  const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (iOS && !uygulamaKipi) {
+    og.kur.textContent = '⬇ Ana ekrana nasıl eklerim?';
+    og.kur.classList.remove('gizli');
+    og.kur.addEventListener('click', () => {
+      alert('Safari’de alttaki Paylaş düğmesine (kare ve yukarı ok) bas, '
+          + 'sonra "Ana Ekrana Ekle" seç.\n\n'
+          + 'Uygulama gibi açılır, çevrimdışı da çalışır.');
+    });
+  }
+
+  /* Ana ekran kısayolundan "Şimdi mola ver" ile açıldıysa */
+  if (new URLSearchParams(location.search).get('eylem') === 'mola') {
+    setTimeout(() => { motor.basla(); motor.molayaGec(); }, 400);
   }
 
   /* ============================================================

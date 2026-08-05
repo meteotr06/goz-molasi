@@ -1,19 +1,31 @@
 {
   "name": "Göz Molası — 20·20·20",
   "short_name": "Göz Molası",
-  "description": "Her 20 dakikada 20 saniyelik göz molası. Ekranı kilitler, neden gerektiğini anlatır.",
+  "description": "Her 20 dakikada 20 saniyelik göz molası. Rehberli göz egzersizleri, kaynaklı bilgiler, 5 renk teması.",
   "lang": "tr",
   "dir": "ltr",
+  "id": "/goz-molasi/",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
-  "categories": ["health", "productivity", "lifestyle"],
+  "background_color": "#141130",
+  "theme_color": "#141130",
+  "categories": ["health", "productivity", "lifestyle", "medical"],
+  "prefer_related_applications": false,
   "icons": [
     { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "ikon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "ikon-maskeli.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Şimdi mola ver",
+      "short_name": "Mola",
+      "description": "Beklemeden 20 saniyelik göz molası başlat",
+      "url": "./index.html?eylem=mola",
+      "icons": [{ "src": "ikon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

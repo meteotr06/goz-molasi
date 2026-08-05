@@ -112,6 +112,15 @@ body {
     radial-gradient(1100px 600px at 50% -10%, var(--zemin-2), transparent 70%),
     var(--zemin);
   background-attachment: fixed;
+  /* Telefonun çentiği/alt çubuğu içeriği kesmesin */
+  padding-top: max(18px, env(safe-area-inset-top));
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  /* Uygulama gibi dursun: metin seçimi ve sürükleyerek yenileme kapalı */
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: contain;
   color: var(--yazi);
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -739,6 +748,17 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
     transition-duration: 0.001ms !important;
   }
   .nefes::before { transform: scale(1); opacity: 0.9; }
+}
+
+/* Yazı seçimi gereken yerlerde geri aç — bilgi kartını kopyalamak isteyebilir */
+.bilgi-kart, .neden-kart, .alt-bilgi, .ozet-kart, .ipucu {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Uygulama olarak açıldığında (tarayıcı çubuğu yokken) üstte biraz nefes */
+@media (display-mode: standalone) {
+  body { padding-top: max(24px, env(safe-area-inset-top)); }
 }
 
 /* Ekran okuyucuya okunur ama görünmez */

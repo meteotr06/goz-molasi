@@ -54,6 +54,11 @@ VARSAYILAN = {
     "uzun_mola_esigi_dk": 120,
     "uzun_mola_dk": 5,
     "tam_ekranda_sor": True,
+    # Çalışma saatleri: bu aralığın dışında hatırlatma gelmez.
+    # Gece 23:00'te ders çalışan biri sabah 9'da mola istemez.
+    "saatler_acik": False,
+    "bas_saat": "09:00",
+    "bit_saat": "18:00",
     "analiz_izni": None,      # None = henüz sorulmadı
     "ses": True,
     "tema": "gece",
@@ -99,6 +104,31 @@ def ayarlari_yaz(ayar):
 
 def simdi_saniye():
     return time.time()
+
+
+def saat_uygun_mu(ayar, simdi=None):
+    """Şu an çalışma saatleri içinde miyiz?
+
+    Bitiş saati başlangıçtan küçükse gece yarısını aşan vardiya sayılır
+    (örn. 22:00 — 04:00).
+    """
+    if not ayar.get("saatler_acik"):
+        return True
+    simdi = simdi or time.localtime()
+
+    def dakika(metin):
+        try:
+            saat, dk = str(metin).split(":")
+            return int(saat) * 60 + int(dk)
+        except Exception:
+            return 0
+
+    su = simdi.tm_hour * 60 + simdi.tm_min
+    bas = dakika(ayar.get("bas_saat", "09:00"))
+    bit = dakika(ayar.get("bit_saat", "18:00"))
+    if bas == bit:
+        return True                      # 24 saat
+    return (bas <= su < bit) if bas < bit else (su >= bas or su < bit)
 
 
 def kilit_kaydi(ayar):
@@ -1062,6 +1092,17 @@ class Uygulama:
             self.kok.after(250, self._tik)
             return
 
+        # Çalışma saatleri dışındaysak sayaç işlemez
+        if not saat_uygun_mu(self.ayar):
+            if self.durum != "saat_disi":
+                self.durum = "saat_disi"
+            self._ciz(self.ayar["calisma_dk"] * 60)
+            self.kok.after(1000, self._tik)
+            return
+        if self.durum == "saat_disi":
+            self.durum = "calisiyor"
+            self.hedef = simdi + self.ayar["calisma_dk"] * 60
+
         # Kullanıcı elle duraklattıysa (film, sunum) sayaç işlemez
         if self.duraklatildi_mi():
             self._ciz(self.ayar["calisma_dk"] * 60)
@@ -1160,7 +1201,15 @@ class Uygulama:
         self.t.itemconfigure(self.halka_yay, extent=-359.9 * oran, outline=renk)
         self._yay_uclarini_ciz(oran, renk)
 
-        if self.duraklatildi_mi():
+        if self.durum == "saat_disi":
+            self.t.itemconfigure(self.sure_yazi, text="—")
+            self.t.itemconfigure(self.durum_yazi, text="Çalışma saati dışı", fill=P["soluk"])
+            self.t.itemconfigure(self.halka_yay, extent=-359.9, outline=P["cizgi"])
+            self._yay_uclarini_ciz(0, P["cizgi"])
+            self.t.itemconfigure(self.ipucu_yazi,
+                                 text="%s–%s arasında hatırlatır"
+                                      % (self.ayar["bas_saat"], self.ayar["bit_saat"]))
+        elif self.duraklatildi_mi():
             kalan_dk = max(1, int((self.duraklama_bitis - time.time()) / 60) + 1)
             self.t.itemconfigure(self.sure_yazi, text="—")
             self.t.itemconfigure(self.durum_yazi, text="Duraklatıldı", fill=P["sicak"])
@@ -1519,6 +1568,33 @@ class Uygulama:
             tk.Label(f, text=aciklama, font=("Segoe UI", 8), fg=P["soluk"],
                      bg=P["kart"], wraplength=380, justify="left").pack(anchor="w", padx=24)
 
+        # ---------- Çalışma saatleri ----------
+        saatler = tk.BooleanVar(value=bool(self.ayar.get("saatler_acik")))
+        sf2 = tk.Frame(p, bg=P["kart"])
+        sf2.pack(fill="x", padx=26, pady=(10, 2))
+        tk.Checkbutton(sf2, text="Çalışma saatleri", variable=saatler,
+                       font=("Segoe UI", 10), fg=P["yazi"], bg=P["kart"],
+                       selectcolor=P["zemin"], activebackground=P["kart"],
+                       activeforeground=P["yazi"], relief="flat",
+                       highlightthickness=0).pack(anchor="w")
+        tk.Label(sf2, text="Bu aralığın dışında hatırlatma gelmez (22:00–04:00 gibi "
+                           "gece vardiyası da olur)",
+                 font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
+                 wraplength=380, justify="left").pack(anchor="w", padx=24)
+        saat_satiri = tk.Frame(p, bg=P["kart"])
+        saat_satiri.pack(fill="x", padx=50, pady=(4, 6))
+        bas_alan = tk.Entry(saat_satiri, width=7, font=("Segoe UI", 11), justify="center",
+                            bg=P["zemin"], fg=P["yazi"], insertbackground=P["yazi"],
+                            relief="flat")
+        bas_alan.insert(0, self.ayar.get("bas_saat", "09:00"))
+        bas_alan.pack(side="left", ipady=4)
+        tk.Label(saat_satiri, text="  —  ", fg=P["soluk"], bg=P["kart"]).pack(side="left")
+        bit_alan = tk.Entry(saat_satiri, width=7, font=("Segoe UI", 11), justify="center",
+                            bg=P["zemin"], fg=P["yazi"], insertbackground=P["yazi"],
+                            relief="flat")
+        bit_alan.insert(0, self.ayar.get("bit_saat", "18:00"))
+        bit_alan.pack(side="left", ipady=4)
+
         kutu("Uyarı sesi", "Mola başında ve sonunda yumuşak bir çan sesi", sesli)
         kutu("Tam ekranda izin iste", "Sunum/video varsa molayı ertelemeyi teklif eder", tam_ekran)
         kutu("Program analizi", "Hangi programda ne kadar kaldığını sayar. Pencere "
@@ -1607,6 +1683,14 @@ class Uygulama:
             self.ayar["analiz_izni"] = bool(analiz.get())
             self.ayar["ses"] = bool(sesli.get())
             self.ayar["bekci"] = bool(bekci.get())
+            self.ayar["saatler_acik"] = bool(saatler.get())
+            import re as _re
+            for alan, anahtar, varsayilan in ((bas_alan, "bas_saat", "09:00"),
+                                              (bit_alan, "bit_saat", "18:00")):
+                deger = alan.get().strip()
+                # Hatalı yazımda varsayılana dön — bozuk saat sessizce
+                # tüm hatırlatmaları kapatabilirdi
+                self.ayar[anahtar] = deger if _re.match(r"^\d{1,2}:\d{2}$", deger) else varsayilan
             ayarlari_yaz(self.ayar)
             self.hedef = time.time() + self.ayar["calisma_dk"] * 60
             self._bekciyi_kur()
