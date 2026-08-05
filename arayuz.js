@@ -64,6 +64,19 @@
     temaSeridi: $('temaSeridi'),
     temaAdi: $('temaAdi'),
     hazirSureler: $('hazirSureler'),
+    ayCalismaDeger: $('ayCalismaDeger'),
+    ayMolaDeger: $('ayMolaDeger'),
+    ayUyariDeger: $('ayUyariDeger'),
+    sureOzeti: $('sureOzeti'),
+    ayUzunMola: $('ayUzunMola'),
+    uzunMolaAyar: $('uzunMolaAyar'),
+    ayUzunSure: $('ayUzunSure'),
+    ayUzunSureDeger: $('ayUzunSureDeger'),
+    uzunMolaNe: $('uzunMolaNe'),
+    aySaatler: $('aySaatler'),
+    saatAyar: $('saatAyar'),
+    ayBasSaat: $('ayBasSaat'),
+    ayBitSaat: $('ayBitSaat'),
     ayarKaydet: $('ayarKaydet'),
     ayarVazgec: $('ayarVazgec'),
 
@@ -299,6 +312,7 @@
     mola: 'Mola',
     duraklatildi: 'Duraklatıldı',
     bosta: 'Boşta — sayaç durdu',
+    saatDisi: 'Çalışma saati dışı',
   };
 
   function ss(saniye) {
@@ -662,18 +676,73 @@
     hazirSureleriTazele();
   }
 
-  /** Elle girilen değer hazır seçeneklerden birine uyuyorsa onu işaretle */
+  /** Kaydırıcı değerlerini, hazır seçim işaretini ve özeti tazele */
   function hazirSureleriTazele() {
     const dk = +og.ayCalisma.value;
     const sn = +og.ayMola.value;
+    const uy = +og.ayUyari.value;
+
+    og.ayCalismaDeger.textContent = `${dk} dk`;
+    og.ayMolaDeger.textContent = sn >= 60
+      ? (sn % 60 === 0 ? `${sn / 60} dk` : `${Math.floor(sn / 60)} dk ${sn % 60} sn`)
+      : `${sn} sn`;
+    og.ayUyariDeger.textContent = uy === 0 ? 'kapalı' : `${uy} sn`;
+
     og.hazirSureler.querySelectorAll('.sure-sec').forEach((d) => {
       const s = SURE_SECENEKLERI[+d.dataset.i];
       d.setAttribute('aria-pressed', (s.dk === dk && s.sn === sn) ? 'true' : 'false');
     });
+
+    ozetiYaz(dk, sn);
+    uzunMolayiTazele();
   }
 
-  og.ayCalisma.addEventListener('input', hazirSureleriTazele);
-  og.ayMola.addEventListener('input', hazirSureleriTazele);
+  /** Seçilen süreler günde ne demek? Sonucu görmeden ayar yapmak zor. */
+  function ozetiYaz(dk, sn) {
+    const saat = 8;
+    const molaSayisi = Math.floor((saat * 60) / dk);
+    const toplamSn = molaSayisi * sn;
+    const toplam = toplamSn >= 60
+      ? `${Math.round(toplamSn / 60)} dakika`
+      : `${toplamSn} saniye`;
+
+    let not = '';
+    if (dk > 30) {
+      not = '<span class="uyari-notu">⚠ 30 dakikadan seyrek molanın faydası azalıyor. ' +
+            'Amerikan Optometri Birliği 20 dakika öneriyor.</span>';
+    } else if (sn < 15) {
+      not = '<span class="uyari-notu">⚠ 15 saniyeden kısa mola gözün odak kasının ' +
+            'gevşemesine yetmeyebilir.</span>';
+    } else if (dk <= 10) {
+      not = '<span class="uyari-notu">Sık mola: 2023 çalışması 10 dakikayı destekliyor, ' +
+            'ama işini bölebilir.</span>';
+    }
+
+    og.sureOzeti.innerHTML =
+      `8 saatlik bir günde <b>${molaSayisi} mola</b> · toplam <b>${toplam}</b> göz dinlenmesi` + not;
+  }
+
+  function uzunMolayiTazele() {
+    const acik = og.ayUzunMola.checked;
+    og.uzunMolaAyar.classList.toggle('gizli', !acik);
+    const dk = +og.ayUzunSure.value;
+    og.ayUzunSureDeger.textContent = `${dk} dk`;
+    og.uzunMolaNe.textContent =
+      `2 saat kesintisiz çalışınca ${dk} dakikalık uzun mola önerilir. Zorlama yok, sorar.`;
+  }
+
+  function saatleriTazele() {
+    og.saatAyar.classList.toggle('gizli', !og.aySaatler.checked);
+  }
+
+  ['input', 'change'].forEach((olay) => {
+    og.ayCalisma.addEventListener(olay, hazirSureleriTazele);
+    og.ayMola.addEventListener(olay, hazirSureleriTazele);
+    og.ayUyari.addEventListener(olay, hazirSureleriTazele);
+    og.ayUzunSure.addEventListener(olay, uzunMolayiTazele);
+  });
+  og.ayUzunMola.addEventListener('change', uzunMolayiTazele);
+  og.aySaatler.addEventListener('change', saatleriTazele);
 
   function temaSeciciyiKur() {
     og.temaSeridi.innerHTML = TEMALAR.map((t) => `
@@ -728,6 +797,13 @@
     og.aySes.checked = motor.ayarlar.sesAcik;
     og.ayBosta.checked = bostaAcik;
     og.ayOtomatik.checked = otomatikBasla;
+    og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
+    og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
+    og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayBasSaat.value = motor.ayarlar.basSaat;
+    og.ayBitSaat.value = motor.ayarlar.bitSaat;
+    saatleriTazele();
+
     temaSeciciyiTazele();          // tema açılır liste değil, renk daireleri
     hazirSureleriTazele();
     og.ayKilitAlan.value = '';
@@ -738,8 +814,8 @@
   og.ayarKaydet.addEventListener('click', async () => {
     if (!(await sifreSor('Ayarları değiştirmek için şifre gerekli.'))) return;
 
-    const dk = Math.min(120, Math.max(1, +og.ayCalisma.value || 20));
-    const ml = Math.min(600, Math.max(5, +og.ayMola.value || 20));
+    const dk = Math.min(90, Math.max(1, +og.ayCalisma.value || 20));
+    const ml = Math.min(180, Math.max(5, +og.ayMola.value || 20));
     let uy = Math.min(60, Math.max(0, +og.ayUyari.value || 0));
     if (uy >= dk * 60) uy = 0;              // uyarı, çalışmadan uzun olamaz
 
@@ -751,6 +827,11 @@
     bostaAcik = og.ayBosta.checked;
     otomatikBasla = og.ayOtomatik.checked;
     motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
+    motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
+    motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
+    motor.ayarlar.saatlerAcik = og.aySaatler.checked;
+    motor.ayarlar.basSaat = og.ayBasSaat.value || '09:00';
+    motor.ayarlar.bitSaat = og.ayBitSaat.value || '18:00';
     // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
 
     og.aciklama.textContent =

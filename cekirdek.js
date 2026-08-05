@@ -24,6 +24,13 @@ const VARSAYILAN_AYARLAR = {
 
   uzunMolaEsigi: 7200,      // saniye — 2 saat kesintisiz çalışma (AOA risk eşiği)
   uzunMolaSuresi: 300,      // saniye — 5 dakika
+  uzunMolaAcik: false,      // uzun mola önerilsin mi
+
+  // Çalışma saatleri: bu aralığın dışında hatırlatma gelmez.
+  // Gece 23:00'te ders çalışan biri sabah 9'da mola istemez.
+  saatlerAcik: false,
+  basSaat: '09:00',
+  bitSaat: '18:00',
 };
 
 class MolaMotoru {
@@ -145,6 +152,21 @@ class MolaMotoru {
 
     const simdi = Date.now();
 
+    // Çalışma saatleri dışındaysak sayaç işlemez.
+    // (Mola başladıysa onu yarıda kesmiyoruz.)
+    if (this.durum !== 'mola' && !this.saatUygunMu()) {
+      if (this.durum !== 'saatDisi') {
+        this.kalanDondurulmus = this.kalanSaniye();
+        this.durum = 'saatDisi';
+        this._duyur('degisti', this.anlikDurum());
+      }
+      return;
+    }
+    if (this.durum === 'saatDisi') {
+      // Çalışma saati başladı — temiz bir süreyle başla
+      this._asamayaGec('calisiyor', this.ayarlar.calismaSuresi);
+    }
+
     // Cihaz kullanılmıyorsa sayacı boşuna işletme.
     // (Kahve molasındayken "mola ver" demek en sinir bozucu şey.)
     if (this.durum === 'calisiyor' || this.durum === 'uyari') {
@@ -180,7 +202,8 @@ class MolaMotoru {
         this._duyur('molaBitti', this.istatistik);
 
         // 2 saati aşan kesintisiz çalışma varsa uzun mola ÖNER (zorlama yok)
-        if (this.istatistik.kesintisizSure >= this.ayarlar.uzunMolaEsigi) {
+        if (this.ayarlar.uzunMolaAcik &&
+            this.istatistik.kesintisizSure >= this.ayarlar.uzunMolaEsigi) {
           this._duyur('uzunMolaOnerisi', Math.round(this.istatistik.kesintisizSure));
         }
         this._asamayaGec('calisiyor', this.ayarlar.calismaSuresi);
@@ -191,6 +214,22 @@ class MolaMotoru {
     }
 
     this._duyur('tik', this.anlikDurum());
+  }
+
+  /** Şu an çalışma saatleri içinde miyiz?
+      Bitiş saati başlangıçtan küçükse gece yarısını aşan vardiya sayılır
+      (örn. 22:00 — 04:00). */
+  saatUygunMu(simdi = new Date()) {
+    if (!this.ayarlar.saatlerAcik) return true;
+    const dk = (s) => {
+      const [a, b] = String(s || '0:0').split(':').map(Number);
+      return (a || 0) * 60 + (b || 0);
+    };
+    const su = simdi.getHours() * 60 + simdi.getMinutes();
+    const bas = dk(this.ayarlar.basSaat);
+    const bit = dk(this.ayarlar.bitSaat);
+    if (bas === bit) return true;                 // 24 saat
+    return bas < bit ? (su >= bas && su < bit) : (su >= bas || su < bit);
   }
 
   /* ---------- Yardımcılar ---------- */

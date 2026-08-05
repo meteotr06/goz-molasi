@@ -141,26 +141,64 @@
         <div class="hazir-sureler" id="hazirSureler"></div>
       </div>
 
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayCalisma">Çalışma süresi</label>
+          <output for="ayCalisma" id="ayCalismaDeger">20 dk</output>
+        </div>
+        <input type="range" id="ayCalisma" min="1" max="90" step="1" value="20">
+        <small>Kaç dakikada bir mola verilsin</small>
+      </div>
+
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayMola">Mola süresi</label>
+          <output for="ayMola" id="ayMolaDeger">20 sn</output>
+        </div>
+        <input type="range" id="ayMola" min="5" max="180" step="5" value="20">
+        <small>Ekranın kaç saniye kapalı kalacağı</small>
+      </div>
+
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayUyari">Ön uyarı</label>
+          <output for="ayUyari" id="ayUyariDeger">15 sn</output>
+        </div>
+        <input type="range" id="ayUyari" min="0" max="60" step="5" value="15">
+        <small>Molaya kaç saniye kala haber verilsin (0 = uyarma)</small>
+      </div>
+
+      <!-- Seçilen süreler günde ne demek? -->
+      <div class="ozet-kart" id="sureOzeti"></div>
+
       <div class="satir">
-        <label for="ayCalisma">Çalışma süresi
-          <small>Kaç dakikada bir mola verilsin</small>
+        <label for="ayUzunMola">Uzun mola
+          <small id="uzunMolaAciklama">Uzun çalışmadan sonra daha uzun bir mola</small>
         </label>
-        <input type="number" id="ayCalisma" min="1" max="120" step="1"
-               inputmode="numeric">
+        <span class="anahtar"><input type="checkbox" id="ayUzunMola"><i></i></span>
+      </div>
+      <div class="kaydirici gizli" id="uzunMolaAyar">
+        <div class="kaydirici-ust">
+          <label for="ayUzunSure">Uzun mola süresi</label>
+          <output for="ayUzunSure" id="ayUzunSureDeger">5 dk</output>
+        </div>
+        <input type="range" id="ayUzunSure" min="1" max="20" step="1" value="5">
+        <small id="uzunMolaNe"></small>
       </div>
 
       <div class="satir">
-        <label for="ayMola">Mola süresi
-          <small>Saniye cinsinden</small>
+        <label for="aySaatler">Çalışma saatleri
+          <small>Bu saatlerin dışında hatırlatma gelmez</small>
         </label>
-        <input type="number" id="ayMola" min="5" max="600" step="5" inputmode="numeric">
+        <span class="anahtar"><input type="checkbox" id="aySaatler"><i></i></span>
       </div>
-
-      <div class="satir">
-        <label for="ayUyari">Ön uyarı
-          <small>Molaya kaç saniye kala haber verilsin</small>
-        </label>
-        <input type="number" id="ayUyari" min="0" max="60" step="5">
+      <div class="satir gizli" id="saatAyar">
+        <label for="ayBasSaat">Saat aralığı</label>
+        <span style="display:flex;gap:8px;align-items:center">
+          <input type="time" id="ayBasSaat" value="09:00">
+          <span style="color:var(--yazi-soluk)">—</span>
+          <input type="time" id="ayBitSaat" value="18:00">
+        </span>
       </div>
 
       <div class="satir">
