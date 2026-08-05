@@ -19,9 +19,11 @@
    ============================================================ */
 
 const REKLAM = {
-  AKTIF: false,                    // numaraları girmeden true yapma
-  YAYINCI: '',                     // örn: 'ca-pub-1234567890123456'
-  BIRIM: '',                       // örn: '9876543210'
+  // Site onaylanıp reklam birimi oluşturulunca true yap.
+  // Onay gelmeden açarsan boş yer görünür, kullanıcıyı rahatsız eder.
+  AKTIF: false,
+  YAYINCI: 'ca-pub-4471538043632173',   // hesap numarası — hazır
+  BIRIM: '',                            // reklam birimi numarası — AdSense onayından sonra
 
   // Reklamsız sürüm satın alanlar için (ileride)
   REKLAMSIZ_ANAHTARI: 'goz-molasi-reklamsiz',
