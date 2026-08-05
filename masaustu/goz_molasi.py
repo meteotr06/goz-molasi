@@ -1432,6 +1432,54 @@ class Uygulama:
 
         alanlar = {}
 
+        # ---------- Hazır süreler ----------
+        # Sayı kutusuna elle yazmak yerine tek tıkla seçim.
+        SURELER = [
+            (20, 20, "20 dk · 20 sn", "Klasik 20-20-20 kuralı"),
+            (10, 20, "10 dk · 20 sn", "2023 çalışması bunu öneriyor"),
+            (30, 30, "30 dk · 30 sn", "Daha seyrek, daha uzun"),
+            (45, 60, "45 dk · 1 dk", "Odak bloğu sevenler için"),
+        ]
+        tk.Label(p, text="Hazır süreler", font=("Segoe UI", 10), fg=P["yazi"],
+                 bg=P["kart"]).pack(padx=26, anchor="w")
+        tk.Label(p, text="Kendine uyanı seç, istersen aşağıdan elle değiştir",
+                 font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"]).pack(padx=26, anchor="w")
+
+        izgara = tk.Frame(p, bg=P["kart"])
+        izgara.pack(fill="x", padx=26, pady=(8, 6))
+        sure_dugmeleri = []
+
+        def sure_uygula(dk, sn):
+            alanlar["calisma_dk"].delete(0, "end"); alanlar["calisma_dk"].insert(0, dk)
+            alanlar["mola_sn"].delete(0, "end"); alanlar["mola_sn"].insert(0, sn)
+            alanlar["uyari_sn"].delete(0, "end")
+            alanlar["uyari_sn"].insert(0, max(5, min(15, int(dk * 60 * 0.02))))
+            sureleri_tazele()
+
+        def sureleri_tazele():
+            try:
+                dk = int(float(alanlar["calisma_dk"].get()))
+                sn = int(float(alanlar["mola_sn"].get()))
+            except (ValueError, KeyError):
+                return
+            for d, (sdk, ssn, _, _) in zip(sure_dugmeleri, SURELER):
+                secili = (sdk == dk and ssn == sn)
+                d.configure(bg=gor.karistir(P["kart2"], P["vurgu"], 0.28) if secili
+                            else P["kart2"],
+                            fg=P["yazi"])
+
+        for i, (dk, sn, ad, notu) in enumerate(SURELER):
+            d = tk.Button(izgara, text="%s\n%s" % (ad, notu), justify="left",
+                          font=("Segoe UI", 9), bg=P["kart2"], fg=P["yazi"],
+                          activebackground=gor.karistir(P["kart2"], "#ffffff", 0.12),
+                          relief="flat", bd=0, padx=10, pady=8, cursor="hand2",
+                          anchor="w", width=22,
+                          command=(lambda a=dk, b=sn: sure_uygula(a, b)))
+            d.grid(row=i // 2, column=i % 2, sticky="ew", padx=3, pady=3)
+            sure_dugmeleri.append(d)
+        izgara.columnconfigure(0, weight=1)
+        izgara.columnconfigure(1, weight=1)
+
         def satir(etiket, aciklama, anahtar):
             f = tk.Frame(p, bg=P["kart"])
             f.pack(fill="x", padx=26, pady=5)
@@ -1446,11 +1494,13 @@ class Uygulama:
                          relief="flat")
             e.insert(0, str(self.ayar[anahtar]))
             e.pack(side="right", ipady=5, padx=(10, 0))
+            e.bind("<KeyRelease>", lambda ev: sureleri_tazele())
             alanlar[anahtar] = e
 
         satir("Çalışma süresi", "Kaç dakikada bir mola verilsin", "calisma_dk")
         satir("Mola süresi", "Saniye cinsinden", "mola_sn")
         satir("Ön uyarı", "Molaya kaç saniye kala haber verilsin", "uyari_sn")
+        sureleri_tazele()          # açılışta hangi hazır süre seçili göster
         satir("Uzun mola eşiği", "Kaç dakika kesintisizden sonra uzun mola önerilsin", "uzun_mola_esigi_dk")
         satir("Uzun mola süresi", "Dakika", "uzun_mola_dk")
 

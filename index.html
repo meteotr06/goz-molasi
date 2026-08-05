@@ -134,18 +134,26 @@
     <div class="ayar-govde">
       <h2>Ayarlar</h2>
 
+      <div class="satir" style="display:block">
+        <label>Hazır süreler
+          <small>Kendine uyanı seç, istersen aşağıdan elle değiştir</small>
+        </label>
+        <div class="hazir-sureler" id="hazirSureler"></div>
+      </div>
+
       <div class="satir">
         <label for="ayCalisma">Çalışma süresi
           <small>Kaç dakikada bir mola verilsin</small>
         </label>
-        <input type="number" id="ayCalisma" min="1" max="120" step="1">
+        <input type="number" id="ayCalisma" min="1" max="120" step="1"
+               inputmode="numeric">
       </div>
 
       <div class="satir">
         <label for="ayMola">Mola süresi
           <small>Saniye cinsinden</small>
         </label>
-        <input type="number" id="ayMola" min="5" max="600" step="5">
+        <input type="number" id="ayMola" min="5" max="600" step="5" inputmode="numeric">
       </div>
 
       <div class="satir">

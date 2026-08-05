@@ -63,6 +63,7 @@
     ayOtomatik: $('ayOtomatik'),
     temaSeridi: $('temaSeridi'),
     temaAdi: $('temaAdi'),
+    hazirSureler: $('hazirSureler'),
     ayarKaydet: $('ayarKaydet'),
     ayarVazgec: $('ayarVazgec'),
 
@@ -630,6 +631,50 @@
   ];
   const temaSirasi = TEMALAR.map((t) => t.id);
 
+  /* ============================================================
+     HAZIR SÜRELER
+     Telefonda sayı kutusuna elle yazmak zahmetli. Sık kullanılan
+     dörtlü tek dokunuşla seçiliyor; elle değiştirme de duruyor.
+     ============================================================ */
+  const SURE_SECENEKLERI = [
+    { dk: 20, sn: 20, ad: '20 dk · 20 sn', not: 'Klasik 20-20-20 kuralı' },
+    { dk: 10, sn: 20, ad: '10 dk · 20 sn', not: '2023 çalışması bunu öneriyor' },
+    { dk: 30, sn: 30, ad: '30 dk · 30 sn', not: 'Daha seyrek, daha uzun' },
+    { dk: 45, sn: 60, ad: '45 dk · 1 dk', not: 'Odak bloğu sevenler için' },
+  ];
+
+  function hazirSureleriKur() {
+    og.hazirSureler.innerHTML = SURE_SECENEKLERI.map((s, i) => `
+      <button type="button" class="sure-sec" data-i="${i}" aria-pressed="false">
+        <b>${s.ad}</b><span>${s.not}</span>
+      </button>`).join('');
+
+    og.hazirSureler.querySelectorAll('.sure-sec').forEach((d) => {
+      d.addEventListener('click', () => {
+        const s = SURE_SECENEKLERI[+d.dataset.i];
+        og.ayCalisma.value = s.dk;
+        og.ayMola.value = s.sn;
+        // Ön uyarı mola süresinden uzun olmasın
+        og.ayUyari.value = Math.min(15, Math.max(5, Math.round(s.dk * 60 * 0.02)));
+        hazirSureleriTazele();
+      });
+    });
+    hazirSureleriTazele();
+  }
+
+  /** Elle girilen değer hazır seçeneklerden birine uyuyorsa onu işaretle */
+  function hazirSureleriTazele() {
+    const dk = +og.ayCalisma.value;
+    const sn = +og.ayMola.value;
+    og.hazirSureler.querySelectorAll('.sure-sec').forEach((d) => {
+      const s = SURE_SECENEKLERI[+d.dataset.i];
+      d.setAttribute('aria-pressed', (s.dk === dk && s.sn === sn) ? 'true' : 'false');
+    });
+  }
+
+  og.ayCalisma.addEventListener('input', hazirSureleriTazele);
+  og.ayMola.addEventListener('input', hazirSureleriTazele);
+
   function temaSeciciyiKur() {
     og.temaSeridi.innerHTML = TEMALAR.map((t) => `
       <button type="button" class="tema-sec" data-tema="${t.id}" role="radio"
@@ -684,6 +729,7 @@
     og.ayBosta.checked = bostaAcik;
     og.ayOtomatik.checked = otomatikBasla;
     temaSeciciyiTazele();          // tema açılır liste değil, renk daireleri
+    hazirSureleriTazele();
     og.ayKilitAlan.value = '';
     kilitDurumunuGoster();
   }
@@ -801,6 +847,7 @@
   bildirimDurumunuGoster();
   kilitDurumunuGoster();
   temaSeciciyiKur();
+  hazirSureleriKur();
 
   /* Açılışta kendiliğinden başla.
      Sekme kapalıyken geçen süreyi mola yağmuruna çevirmiyoruz;

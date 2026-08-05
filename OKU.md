@@ -1,5 +1,9 @@
 # Göz Molası — 20·20·20
 
+**📱 Telefon/tablet:** https://meteotr06.github.io/goz-molasi/
+**💻 Bilgisayar:** `Goz Molasi.exe` (bu klasörde)
+
+
 Her **20 dakikada** bir, **20 saniye** boyunca ekranı kapatan; bu sırada gözünü
 **6 metre** uzağa çevirmeni isteyen bir mola uygulaması.
 Molanın birkaç saniyesinde, molanın *neden* gerektiğini kaynağıyla anlatır.
@@ -211,12 +215,41 @@ silmen yeter.
 
 ## 2. Telefon / tablet / diğer cihazlar
 
-1. Bilgisayarda `Telefona Sunucu Ac.bat` çalıştır.
-2. Bilgisayarın yerel IP'sini öğren: komut satırında `ipconfig` → "IPv4 Adresi".
-3. Telefonun tarayıcısında `http://<o-ip>:8451` adresini aç.
-4. Tarayıcı menüsünden **Ana ekrana ekle** de. Artık normal bir uygulama gibi açılır.
+### 🌐 YAYINDA — hiçbir kurulum gerekmez
 
-Her yerden açmak istersen: klasörü olduğu gibi GitHub Pages'e yükle.
+```
+https://meteotr06.github.io/goz-molasi/
+```
+
+Telefonun tarayıcısında bu adresi aç, menüden **Ana ekrana ekle** de.
+Artık normal bir uygulama gibi açılıyor. Bilgisayarın açık olmasına gerek yok.
+
+### Neden yerel sunucu yerine internet?
+
+Tarayıcılar bazı özellikleri **sadece https:// üzerinden** veriyor. Bilgisayardaki
+`http://192.168.1.x:8451` adresi "güvenli bağlam" sayılmıyor ve şunlar çalışmıyor:
+
+| Özellik | `http://` yerel IP | `https://` yayın |
+|---|---|---|
+| Çevrimdışı çalışma (service worker) | ❌ | ✅ |
+| Ana ekrana ekleme (PWA) | ❌ | ✅ |
+| Ekranı uyanık tutma | ❌ | ✅ |
+| Güçlü şifre saklama (crypto.subtle) | ❌ zayıf yönteme düşer | ✅ |
+| Bildirimler | kısmi | ✅ |
+
+Bu yüzden telefonda **yayındaki adresi** kullan. `Telefona Sunucu Ac.bat` sadece
+geliştirme/deneme için duruyor.
+
+### Güncelleme yayınlama
+
+Dosyaları değiştirdikten sonra:
+
+```bash
+cd "D:\Projeler\05 Ekran koruması" && git add -A && git commit -m "guncelleme" && git push
+```
+
+1–2 dakika içinde yayına çıkar. `sw.js` içindeki `SURUM` satırını da artırırsan
+telefonlardaki önbellek kesin yenilenir.
 
 ### Web sürümünde neler var?
 
@@ -348,7 +381,6 @@ baş ağrısı varsa göz hekimine görün.
 
 - Web sürümünde **uzun mola** ve **süreli duraklatma** (masaüstünde var).
 - **Haftalık HTML rapor** dışa aktarma.
-- **GitHub Pages'e yayınlama**.
 
 ---
 

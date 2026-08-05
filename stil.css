@@ -548,6 +548,37 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .anahtar input:checked + i::after { transform: translateX(22px); }
 .anahtar input:focus-visible + i { outline: 3px solid var(--vurgu); outline-offset: 2px; }
 
+/* ---------------- Hazır süre seçenekleri ----------------
+   Sayı kutusuna elle yazmak telefonda zahmetli. Sık kullanılan
+   dörtlüyü tek dokunuşla seçilebilir yapıyoruz. */
+.hazir-sureler {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.sure-sec {
+  appearance: none;
+  border: 1px solid var(--cizgi);
+  background: var(--kart-2);
+  color: var(--yazi);
+  font: inherit;
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  min-height: 58px;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.12s ease;
+}
+.sure-sec:active { transform: scale(0.97); }
+.sure-sec b { display: block; font-size: 14px; }
+.sure-sec span { display: block; font-size: 11px; color: var(--yazi-soluk); margin-top: 2px; }
+.sure-sec[aria-pressed="true"] {
+  border-color: var(--vurgu);
+  background: color-mix(in srgb, var(--vurgu) 16%, var(--kart-2));
+}
+.sure-sec[aria-pressed="true"] b::after { content: "  ✓"; color: var(--vurgu); }
+
 /* ---------------- Tema seçici (renk daireleri) ----------------
    Açılır listede renkleri göremiyorsun; parmakla da zor. Bunun yerine
    her temanın kendi renklerini gösteren dokunmatik daireler. */
