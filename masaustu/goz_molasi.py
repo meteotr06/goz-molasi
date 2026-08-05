@@ -1428,11 +1428,43 @@ class Uygulama:
         if not self.izin_al("Ayarları açmak için şifreni gir."):
             return
 
-        p = tk.Toplevel(self.kok)
-        p.title("Ayarlar")
-        p.configure(bg=P["kart"])
-        p.resizable(False, False)
-        p.attributes("-topmost", True)
+        pencere = tk.Toplevel(self.kok)
+        pencere.title("Ayarlar")
+        pencere.configure(bg=P["kart"])
+        pencere.attributes("-topmost", True)
+
+        # ---------------------------------------------------------------
+        # KAYDIRILABİLİR GÖVDE
+        # Ayarlar büyüdükçe pencere 1490 piksele çıktı, ekran ise 1200.
+        # Kaydet düğmesi ekranın altında kalıyor ve tıklanamıyordu:
+        # kullanıcı değeri değiştiriyor ama kaydedemiyordu.
+        # Çözüm: içerik kayar, düğmeler altta SABİT durur.
+        # ---------------------------------------------------------------
+        alt_cerceve = tk.Frame(pencere, bg=P["kart"])
+        alt_cerceve.pack(side="bottom", fill="x")
+
+        dis = tk.Frame(pencere, bg=P["kart"])
+        dis.pack(side="top", fill="both", expand=True)
+
+        tuval = tk.Canvas(dis, bg=P["kart"], highlightthickness=0, bd=0)
+        cubuk = tk.Scrollbar(dis, orient="vertical", command=tuval.yview)
+        tuval.configure(yscrollcommand=cubuk.set)
+        cubuk.pack(side="right", fill="y")
+        tuval.pack(side="left", fill="both", expand=True)
+
+        p = tk.Frame(tuval, bg=P["kart"])          # içerik buraya paketlenir
+        ic_pencere = tuval.create_window((0, 0), window=p, anchor="nw")
+
+        def _govde_olcu(_=None):
+            tuval.configure(scrollregion=tuval.bbox("all"))
+            tuval.itemconfigure(ic_pencere, width=tuval.winfo_width())
+        p.bind("<Configure>", _govde_olcu)
+        tuval.bind("<Configure>", _govde_olcu)
+
+        def _tekerlek(olay):
+            tuval.yview_scroll(int(-olay.delta / 120), "units")
+        pencere.bind_all("<MouseWheel>", _tekerlek)
+        pencere.bind("<Destroy>", lambda e: pencere.unbind_all("<MouseWheel>"))
 
         tk.Label(p, text="Ayarlar", font=("Segoe UI", 15, "bold"),
                  fg=P["yazi"], bg=P["kart"]).pack(padx=26, pady=(20, 10), anchor="w")
@@ -1443,28 +1475,33 @@ class Uygulama:
         tk.Label(p, text="Seçince hemen uygulanır", font=("Segoe UI", 8),
                  fg=P["soluk"], bg=P["kart"]).pack(padx=26, anchor="w")
 
-        tema_seridi = tk.Canvas(p, height=52, bg=P["kart"], highlightthickness=0)
+        # Tema sayısı arttı; tek sıraya sığmıyor, satırlara bölüyoruz
+        SUTUN = 5
+        satir_sayisi = (len(gor.tema_listesi()) + SUTUN - 1) // SUTUN
+        tema_seridi = tk.Canvas(p, height=56 * satir_sayisi, bg=P["kart"],
+                                highlightthickness=0)
         tema_seridi.pack(fill="x", padx=26, pady=(8, 4))
 
         def temayi_sec(ad):
-            p.destroy()
+            pencere.destroy()
             self.temayi_degistir(ad)
             self.kok.after(60, self.ayarlari_ac)   # yeni renklerle tekrar aç
 
         for i, (anahtar, gorunen_ad) in enumerate(gor.tema_listesi()):
             t = gor.TEMALAR[anahtar]
-            x = 6 + i * 60
+            x = 6 + (i % SUTUN) * 60
+            y = 2 + (i // SUTUN) * 56
             secili = (anahtar == self.ayar.get("tema"))
             etiket = "tema_%s" % anahtar
             if secili:
-                tema_seridi.create_oval(x - 4, 2, x + 44, 50,
+                tema_seridi.create_oval(x - 4, y, x + 44, y + 48,
                                         outline=t["panel"]["vurgu"], width=2)
             # Temanın üç ana rengini gösteren küçük daire
-            tema_seridi.create_oval(x, 6, x + 40, 46, fill=t["panel"]["zemin"],
+            tema_seridi.create_oval(x, y + 4, x + 40, y + 44, fill=t["panel"]["zemin"],
                                     outline=t["panel"]["cizgi"], tags=etiket)
-            tema_seridi.create_oval(x + 8, 14, x + 24, 30, fill=t["panel"]["vurgu"],
+            tema_seridi.create_oval(x + 8, y + 12, x + 24, y + 28, fill=t["panel"]["vurgu"],
                                     outline="", tags=etiket)
-            tema_seridi.create_oval(x + 20, 24, x + 32, 36, fill=t["panel"]["sicak"],
+            tema_seridi.create_oval(x + 20, y + 22, x + 32, y + 34, fill=t["panel"]["sicak"],
                                     outline="", tags=etiket)
             tema_seridi.tag_bind(etiket, "<Button-1>",
                                  lambda e, a=anahtar: temayi_sec(a))
@@ -1633,10 +1670,10 @@ class Uygulama:
                 kilit_durum.configure(text="Şifre 4–12 rakam olmalı.")
                 return
             if self.kilitli_mi() and not self.izin_al(
-                    "Şifreyi değiştirmek için önce mevcut şifreni gir.", ust=p):
+                    "Şifreyi değiştirmek için önce mevcut şifreni gir.", ust=pencere):
                 return
             kilit_durum.configure(text="Şifre hazırlanıyor…")
-            p.update_idletasks()
+            pencere.update_idletasks()
             self.ayar["kilit"] = kl.ozet_uret(yeni)
             self.ayar["kilit_ozeti"] = None
             self.ayar["kilit_tuz"] = None
@@ -1648,7 +1685,7 @@ class Uygulama:
                      % (kl.sifre_gucu(yeni) or "?"))
 
         def sifre_kaldir():
-            if not self.izin_al("Kilidi kaldırmak için şifreni gir.", ust=p):
+            if not self.izin_al("Kilidi kaldırmak için şifreni gir.", ust=pencere):
                 return
             self.ayar["kilit"] = None
             self.ayar["kilit_ozeti"] = None
@@ -1670,15 +1707,41 @@ class Uygulama:
                  font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
                  wraplength=400, justify="left").pack(padx=26, pady=(8, 0), anchor="w")
 
+        # Hatalı giriş olursa kullanıcı görsün — eskiden sessizce hiçbir şey
+        # olmuyordu ve "ayar kaydedilmiyor" gibi görünüyordu.
+        hata_yazi = tk.Label(alt_cerceve, text="", font=("Segoe UI", 9),
+                             fg="#ff8f7a", bg=P["kart"], wraplength=380)
+
         def kaydet():
-            try:
-                self.ayar["calisma_dk"] = max(1, min(180, float(alanlar["calisma_dk"].get())))
-                self.ayar["mola_sn"] = max(5, min(600, int(float(alanlar["mola_sn"].get()))))
-                self.ayar["uyari_sn"] = max(0, min(60, int(float(alanlar["uyari_sn"].get()))))
-                self.ayar["uzun_mola_esigi_dk"] = max(10, min(600, int(float(alanlar["uzun_mola_esigi_dk"].get()))))
-                self.ayar["uzun_mola_dk"] = max(1, min(60, int(float(alanlar["uzun_mola_dk"].get()))))
-            except ValueError:
-                return
+            SINIRLAR = (
+                ("calisma_dk", "Çalışma süresi", 1, 180),
+                ("mola_sn", "Mola süresi", 5, 600),
+                ("uyari_sn", "Ön uyarı", 0, 60),
+                ("uzun_mola_esigi_dk", "Uzun mola eşiği", 10, 600),
+                ("uzun_mola_dk", "Uzun mola süresi", 1, 60),
+            )
+            yeni = {}
+            for anahtar, ad, enaz, encok in SINIRLAR:
+                ham = alanlar[anahtar].get().strip().replace(",", ".")
+                try:
+                    deger = float(ham)
+                except ValueError:
+                    hata_yazi.configure(
+                        text="“%s” alanına sayı yazmalısın (%s yazılmış)." % (ad, ham or "boş"))
+                    hata_yazi.pack(pady=(6, 0))
+                    alanlar[anahtar].focus_set()
+                    return
+                if not (enaz <= deger <= encok):
+                    hata_yazi.configure(
+                        text="“%s” %d ile %d arasında olmalı (%g yazılmış)."
+                             % (ad, enaz, encok, deger))
+                    hata_yazi.pack(pady=(6, 0))
+                    alanlar[anahtar].focus_set()
+                    return
+                yeni[anahtar] = deger if anahtar == "calisma_dk" else int(deger)
+
+            hata_yazi.pack_forget()
+            self.ayar.update(yeni)
             self.ayar["tam_ekranda_sor"] = bool(tam_ekran.get())
             self.ayar["analiz_izni"] = bool(analiz.get())
             self.ayar["ses"] = bool(sesli.get())
@@ -1694,17 +1757,32 @@ class Uygulama:
             ayarlari_yaz(self.ayar)
             self.hedef = time.time() + self.ayar["calisma_dk"] * 60
             self._bekciyi_kur()
-            p.destroy()
+            pencere.destroy()
 
-        af = tk.Frame(p, bg=P["kart"])
-        af.pack(pady=18)
-        dugme(af, "Vazgeç", p.destroy).pack(side="left", padx=6)
+        # Düğmeler kayan alanın DIŞINDA — hep görünür kalsınlar
+        tk.Frame(alt_cerceve, bg=P["cizgi"], height=1).pack(fill="x")
+        af = tk.Frame(alt_cerceve, bg=P["kart"])
+        af.pack(pady=14)
+        dugme(af, "Vazgeç", pencere.destroy).pack(side="left", padx=6)
         dugme(af, "Kaydet", kaydet, ana_mi=True).pack(side="left", padx=6)
 
-        p.update_idletasks()
-        g, y = p.winfo_width(), p.winfo_height()
-        p.geometry("+%d+%d" % ((p.winfo_screenwidth() - g) // 2,
-                               max(0, (p.winfo_screenheight() - y) // 2)))
+        # ---------------------------------------------------------------
+        # BOYUT: içerik ne kadar uzun olursa olsun pencere ekranı aşmasın.
+        # Aşarsa Kaydet düğmesi görünmez olur ve ayar kaydedilemez.
+        # ---------------------------------------------------------------
+        pencere.update_idletasks()
+        ekran_g = pencere.winfo_screenwidth()
+        ekran_y = pencere.winfo_screenheight()
+
+        istenen_g = p.winfo_reqwidth() + self.ol(22)      # kaydırma çubuğu payı
+        istenen_y = p.winfo_reqheight() + af.winfo_reqheight() + self.ol(30)
+
+        gen = min(istenen_g, ekran_g - self.ol(60))
+        yuk = min(istenen_y, ekran_y - self.ol(90))       # görev çubuğuna pay
+        pencere.geometry("%dx%d+%d+%d" % (
+            gen, yuk, (ekran_g - gen) // 2, max(0, (ekran_y - yuk) // 2)))
+        pencere.minsize(self.ol(360), self.ol(320))
+        _govde_olcu()
 
     def calistir(self):
         self.kok.mainloop()

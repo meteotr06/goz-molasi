@@ -80,6 +80,39 @@
   --mola-yazi: #fff2f6; --mola-soluk: #dbb0c2;
 }
 
+:root[data-tema="gunbatimi"] {
+  --zemin: #231318;  --zemin-2: #31191c;  --kart: #3d2124;  --kart-2: #4b292a;
+  --cizgi: #653a37;  --yazi: #fff0ea;     --yazi-soluk: #d5a89b;
+  --vurgu: #ffb08a;  --vurgu-koyu: #3a1508; --uyari: #ffd68a; --mola: #ffd68a;
+  --mercan: #ff8f6b;
+  --mola-1: #190b10; --mola-2: #30141a; --mola-3: #542323; --mola-4: #7d3a2c; --mola-5: #a55a36;
+  --mola-yazi: #fff4ec; --mola-soluk: #dcb1a0;
+}
+:root[data-tema="buz"] {
+  --zemin: #0d1620;  --zemin-2: #13212e;  --kart: #1a2c3d;  --kart-2: #22384c;
+  --cizgi: #2f4d68;  --yazi: #eaf4fb;     --yazi-soluk: #9db8cc;
+  --vurgu: #a8dcf0;  --vurgu-koyu: #08202c; --uyari: #ffd9a0; --mola: #ffd9a0;
+  --mercan: #ffb38a;
+  --mola-1: #060e16; --mola-2: #0d1c28; --mola-3: #16303f; --mola-4: #204558; --mola-5: #365e6f;
+  --mola-yazi: #f0f9ff; --mola-soluk: #a9c6d8;
+}
+:root[data-tema="lavanta"] {
+  --zemin: #181530;  --zemin-2: #211c42;  --kart: #2b2454;  --kart-2: #352c66;
+  --cizgi: #463b80;  --yazi: #f0ecff;     --yazi-soluk: #b0a4dc;
+  --vurgu: #c0a9ff;  --vurgu-koyu: #1b0d3d; --uyari: #ffd28f; --mola: #ffd28f;
+  --mercan: #ffa8c4;
+  --mola-1: #0f0c22; --mola-2: #1b1640; --mola-3: #2d245e; --mola-4: #443577; --mola-5: #61478a;
+  --mola-yazi: #f6f2ff; --mola-soluk: #bfb0e4;
+}
+:root[data-tema="komur"] {
+  --zemin: #141416;  --zemin-2: #1c1c1f;  --kart: #242427;  --kart-2: #2e2e32;
+  --cizgi: #3d3d42;  --yazi: #f0f0f2;     --yazi-soluk: #a5a5ad;
+  --vurgu: #d8d8de;  --vurgu-koyu: #151517; --uyari: #c8b48a; --mola: #c8b48a;
+  --mercan: #c99a80;
+  --mola-1: #0a0a0b; --mola-2: #161618; --mola-3: #232326; --mola-4: #323236; --mola-5: #434349;
+  --mola-yazi: #f4f4f6; --mola-soluk: #adadb5;
+}
+
 /* Kullanıcı ayarlardan elle açık tema seçtiyse */
 :root[data-tema="acik"] {
   --zemin:      #fdf6f0;
@@ -728,6 +761,32 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   border-radius: 12px;
   padding: 10px 12px;
 }
+
+/* ---------------- Reklam alanı ----------------
+   Sadece ana ekranda. Mola ekranında reklam YOK — orada amaç
+   gözünü ekrandan ayırman. Kutu, içerikten net ayrılsın diye
+   soluk ve etiketli; kullanıcı neye baktığını bilsin. */
+.reklam-alani {
+  width: 100%;
+  max-width: 720px;
+  min-height: 90px;
+  border: 1px dashed var(--cizgi);
+  border-radius: var(--yuvarlak);
+  padding: 10px 12px 12px;
+  background: color-mix(in srgb, var(--kart) 55%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.reklam-etiket {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--yazi-soluk);
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+.reklam-alani ins { max-width: 100%; }
 
 /* ---------------- Alt bilgi ---------------- */
 .alt-bilgi {

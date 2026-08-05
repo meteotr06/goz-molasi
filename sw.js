@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v5';
+const SURUM = 'goz-molasi-v6';
 
 const DOSYALAR = [
   './',
@@ -10,6 +10,7 @@ const DOSYALAR = [
   './arayuz.js',
   './bilgiler.js',
   './egzersiz.js',
+  './reklam.js',
   './manifest.json',
   './ikon-192.png',
   './ikon-512.png',

@@ -694,7 +694,11 @@
     { id: 'okyanus',  ad: 'Okyanus',       zemin: '#0a1826', a: '#5fd3e8', b: '#ffb877' },
     { id: 'orman',    ad: 'Orman',         zemin: '#0f1c17', a: '#8fe08a', b: '#ffd27a' },
     { id: 'safak',    ad: 'Şafak',         zemin: '#1d1220', a: '#ff9eb5', b: '#ffd08a' },
-    { id: 'acik',     ad: 'Açık (gündüz)', zemin: '#fdf6f0', a: '#0f9b8a', b: '#b06a12' },
+    { id: 'gunbatimi',ad: 'Gün batımı',    zemin: '#231318', a: '#ffb08a', b: '#ffd68a' },
+    { id: 'buz',      ad: 'Buz',           zemin: '#0d1620', a: '#a8dcf0', b: '#ffd9a0' },
+    { id: 'lavanta',  ad: 'Lavanta',       zemin: '#181530', a: '#c0a9ff', b: '#ffd28f' },
+    { id: 'komur',    ad: 'Kömür (renksiz)', zemin: '#141416', a: '#d8d8de', b: '#c8b48a' },
+    { id: 'acik',     ad: 'Açık (gündüz)', zemin: '#fdf6f0', a: '#0a6d62', b: '#8f540c' },
   ];
   const temaSirasi = TEMALAR.map((t) => t.id);
 
@@ -999,6 +1003,9 @@
 
   // Hata ayıklama / test için: konsoldan molaMotoru.ayarlar ile oynayabilirsin
   window.molaMotoru = motor;
+
+  // Reklam alanı — numaralar girilmemişse kendini tamamen kaldırır
+  try { reklamiKur($('reklamAlani')); } catch {}
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});
