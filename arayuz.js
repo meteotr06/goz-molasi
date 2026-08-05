@@ -63,6 +63,9 @@
     aySes: $('aySes'),
     ayBosta: $('ayBosta'),
     ayOtomatik: $('ayOtomatik'),
+    ayTitresim: $('ayTitresim'),
+    ayArkaPlan: $('ayArkaPlan'),
+    arkaPlanNot: $('arkaPlanNot'),
     temaSeridi: $('temaSeridi'),
     temaAdi: $('temaAdi'),
     hazirSureler: $('hazirSureler'),
@@ -108,6 +111,8 @@
   motor.iceAktar(kayit);
   let bostaAcik = kayit.bostaAcik !== false;
   let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
+  let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
+  let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
   if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
   let tema = kayit.tema || 'otomatik';
   temaUygula(tema);
@@ -259,6 +264,48 @@
     osc.connect(kazanc).connect(sesMotoru.destination);
     osc.start(t);
     osc.stop(t + sure + 0.05);
+  }
+
+  /* ============================================================
+     TİTREŞİM — telefonda sesten daha güvenilir.
+     Telefon sessizdeyken ses duyulmaz ama titreşim hissedilir.
+     ============================================================ */
+  function titret(desen) {
+    if (!titresimAcik || !navigator.vibrate) return;
+    try { navigator.vibrate(desen); } catch {}
+  }
+
+  /* ============================================================
+     ARKA PLANDA ÇALIŞMAYA DEVAM
+     Tarayıcılar arka plandaki sekmenin zamanlayıcısını yavaşlatır,
+     telefon kilitlenince tamamen dondurur. Sekmede SES ÇALIYORSA
+     tarayıcı onu "işitilebilir" sayar ve kısmayı uygulamaz.
+     Bu yüzden duyulmayan bir ses döngüsü çalıyoruz.
+
+     Pil tüketir; bu yüzden varsayılan KAPALI ve kullanıcıya
+     ne olduğunu açıkça yazıyoruz.
+     ============================================================ */
+  let sessizSes = null;
+
+  function arkaPlanKipi(ac) {
+    if (ac) {
+      if (sessizSes) return;
+      try {
+        sesiUyandir();
+        if (!sesMotoru) return;
+        // Neredeyse tamamen sessiz ama "ses çalıyor" sayılan bir sinyal
+        const osc = sesMotoru.createOscillator();
+        const kazanc = sesMotoru.createGain();
+        osc.frequency.value = 30;              // duyulmayacak kadar alçak
+        kazanc.gain.value = 0.0001;            // duyulmayacak kadar kısık
+        osc.connect(kazanc).connect(sesMotoru.destination);
+        osc.start();
+        sessizSes = { osc, kazanc };
+      } catch { sessizSes = null; }
+    } else if (sessizSes) {
+      try { sessizSes.osc.stop(); sessizSes.osc.disconnect(); } catch {}
+      sessizSes = null;
+    }
   }
 
   /* ============================================================
@@ -617,6 +664,7 @@
 
     og.okuyucu.textContent = `Mola başladı. ${motor.ayarlar.molaSuresi} saniye boyunca uzağa bak.`;
     calSes(660, 0.55);
+    titret([120, 80, 120]);         // iki kısa: "dur"
     uyanikTut();
     bildirimGonder('Göz molası', 'Gözünü ekrandan ayır, 6 metre uzağa bak.');
     og.molaEkran.focus?.();
@@ -705,6 +753,7 @@
       if (og.sifrePencere.open) sifreKapat(false);
       molaEkraniKapat();
       calSes(990, 0.4);
+      titret(200);                  // tek uzun: "devam"
       og.okuyucu.textContent = 'Mola bitti, devam edebilirsin.';
       bildirimGonder('Mola bitti', 'Gözlerin dinlendi. Devam edebilirsin.');
     })
@@ -927,6 +976,14 @@
     og.aySes.checked = motor.ayarlar.sesAcik;
     og.ayBosta.checked = bostaAcik;
     og.ayOtomatik.checked = otomatikBasla;
+    og.ayTitresim.checked = titresimAcik;
+    og.ayArkaPlan.checked = arkaPlanAcik;
+    // Desteklenmiyorsa boşuna umut verme
+    if (!navigator.vibrate) {
+      og.ayTitresim.disabled = true;
+      og.ayTitresim.closest('.satir').querySelector('small').textContent =
+        'Bu cihaz titreşimi desteklemiyor';
+    }
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
@@ -956,6 +1013,9 @@
     motor.ayarlar.sesAcik = og.aySes.checked;
     bostaAcik = og.ayBosta.checked;
     otomatikBasla = og.ayOtomatik.checked;
+    titresimAcik = og.ayTitresim.checked;
+    arkaPlanAcik = og.ayArkaPlan.checked;
+    arkaPlanKipi(arkaPlanAcik);
     motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
     motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
     motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
@@ -1015,6 +1075,8 @@
         ...motor.disaAktar(),
         bostaAcik,
         otomatikBasla,
+        titresimAcik,
+        arkaPlanAcik,
         tema,
         kilitOzeti,
         kilitTuz,
@@ -1077,6 +1139,24 @@
 
   // Hata ayıklama / test için: konsoldan molaMotoru.ayarlar ile oynayabilirsin
   window.molaMotoru = motor;
+
+  // Kaydedilmiş arka plan tercihini uygula (ses ancak dokunuştan sonra açılır)
+  if (arkaPlanAcik) {
+    document.addEventListener('pointerdown', () => arkaPlanKipi(true), { once: true });
+  }
+
+  /* Telefonda tarayıcı, ekran kilitlenince zamanlayıcıyı donduruyor.
+     Bunu söylemezsek kullanıcı "hatırlatmadı, bozuk" sanıyor. */
+  if (/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    const not = document.createElement('span');
+    not.className = 'kaynak';
+    not.style.display = 'block';
+    not.style.marginTop = '8px';
+    not.textContent = 'Telefonda: uygulama açıkken hatırlatır. Ekran kilitliyken '
+      + 'tarayıcılar sayacı dondurur — bu bir telefon sınırı, uygulama hatası değil. '
+      + 'Ayarlardan “Arka planda çalışmaya devam et” bunu büyük ölçüde çözer.';
+    document.querySelector('.alt-bilgi')?.appendChild(not);
+  }
 
   // Reklam alanı — numaralar girilmemişse kendini tamamen kaldırır
   try { reklamiKur($('reklamAlani')); } catch {}
