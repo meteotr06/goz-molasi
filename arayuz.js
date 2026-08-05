@@ -23,6 +23,7 @@
     bildirim: $('bildirimDugme'),
     kur: $('kurDugme'),
     tema: $('temaDugme'),
+    paylas: $('paylasDugme'),
     ayarAc: $('ayarDugme'),
 
     istMola: $('istMola'),
@@ -302,6 +303,33 @@
       og.bildirim.disabled = true;
     }
   }
+
+  /* ============================================================
+     PAYLAŞ
+     Telefonda cihazın kendi paylaşım penceresi açılır (WhatsApp,
+     Telegram…). Masaüstünde o pencere yok, linki panoya kopyalıyoruz.
+     ============================================================ */
+  const PAYLASIM = {
+    title: 'Göz Molası — 20·20·20',
+    text: 'Her 20 dakikada 20 saniyelik göz molası hatırlatıyor, molada ne yapman '
+        + 'gerektiğini gösteriyor. Kurulum yok:',
+    url: 'https://meteotr06.github.io/goz-molasi/',
+  };
+
+  og.paylas.addEventListener('click', async () => {
+    if (navigator.share) {
+      try { await navigator.share(PAYLASIM); return; } catch { /* iptal etti */ return; }
+    }
+    try {
+      await navigator.clipboard.writeText(`${PAYLASIM.text} ${PAYLASIM.url}`);
+      const eski = og.paylas.textContent;
+      og.paylas.textContent = '✓';
+      og.paylas.title = 'Link kopyalandı';
+      setTimeout(() => { og.paylas.textContent = eski; og.paylas.title = 'Paylaş'; }, 1800);
+    } catch {
+      prompt('Linki kopyala:', PAYLASIM.url);
+    }
+  });
 
   /* ============================================================
      UYGULAMA OLARAK KURMA
@@ -937,8 +965,8 @@
     // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
 
     og.aciklama.textContent =
-      `Başlat’a bas. ${dk} dakika sonra ekran ${ml} saniyeliğine kapanacak, ` +
-      'bu sırada gözünü 6 metre uzağa çevir.';
+      `Sayaç çalışıyor. ${dk} dakika sonra ekran ${ml} saniyeliğine kapanacak, ` +
+      'bu sırada gözünü 6 metre uzağa çevir. Bilgisayara dokunmazsan sayaç durur.';
 
     if (motor.durum !== 'hazir') motor.sifirla();
     kaydet();
@@ -1023,8 +1051,9 @@
      AÇILIŞ
      ============================================================ */
   og.aciklama.textContent =
-    `Başlat’a bas. ${Math.round(motor.ayarlar.calismaSuresi / 60)} dakika sonra ekran ` +
-    `${motor.ayarlar.molaSuresi} saniyeliğine kapanacak, bu sırada gözünü 6 metre uzağa çevir.`;
+    `Sayaç çalışıyor. ${Math.round(motor.ayarlar.calismaSuresi / 60)} dakika sonra ekran ` +
+    `${motor.ayarlar.molaSuresi} saniyeliğine kapanacak, bu sırada gözünü 6 metre uzağa çevir. ` +
+    'Cihaza dokunmazsan sayaç kendini durdurur.';
 
   ekraniCiz(motor.anlikDurum());
   bildirimDurumunuGoster();
