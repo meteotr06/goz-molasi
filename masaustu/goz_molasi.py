@@ -44,6 +44,7 @@ def kaynak_yolu(ad):
 KAYIT_KLASOR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "GozMolasi")
 AYAR_DOSYA = os.path.join(KAYIT_KLASOR, "ayarlar.json")
 IST_DOSYA = os.path.join(KAYIT_KLASOR, "istatistik.json")
+DURUM_DOSYA = os.path.join(KAYIT_KLASOR, "durum.json")
 
 VARSAYILAN = {
     "calisma_dk": 20,
@@ -612,7 +613,9 @@ class Uygulama:
         self.ayar = ayarlari_oku()
         gor.tema_uygula(self.ayar.get("tema", "gece"))
         self.durum = "calisiyor"
-        self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+        # Sayacı kaldığı yerden sürdür. Eskiden her açılışta sıfırdan
+        # başlıyordu: programı aç-kapa yapan biri hiç mola almıyordu.
+        self.hedef = self._sayaci_geri_yukle()
         self.dondurulmus = None
         self.mola_ekrani = None
         self.balon = None
@@ -730,6 +733,41 @@ class Uygulama:
             self._ciz(self.hedef - time.time())
 
     # ---------------- Kayıt ----------------
+    def _sayaci_geri_yukle(self):
+        """Program kapanırken kalan süreyi geri yükler.
+
+        Eskiden her açılışta sayaç sıfırdan başlıyordu; programı aç-kapa
+        yapan biri hiç mola almıyordu. Kurallar:
+          • Kapalı kaldığı süre dinlenme eşiğinden uzunsa (varsayılan 5 dk)
+            gözler zaten dinlenmiştir — temiz bir süre başlar.
+          • Hedef henüz geçmemişse kaldığı yerden devam eder.
+          • Hedef kapalıyken geçtiyse mola yağmuru yapmayız, temiz başlarız.
+        """
+        tam = time.time() + self.ayar["calisma_dk"] * 60
+        try:
+            with open(DURUM_DOSYA, "r", encoding="utf-8-sig") as f:
+                d = json.load(f)
+        except Exception:
+            return tam
+
+        kapali_kalan = time.time() - float(d.get("kayit_ani", 0))
+        if kapali_kalan < 0 or kapali_kalan > self.ayar["dinlenme_esigi_sn"]:
+            return tam
+
+        kalan = float(d.get("hedef", 0)) - time.time()
+        if 0 < kalan <= self.ayar["calisma_dk"] * 60:
+            return time.time() + kalan
+        return tam
+
+    def _sayaci_kaydet(self):
+        try:
+            os.makedirs(KAYIT_KLASOR, exist_ok=True)
+            with open(DURUM_DOSYA, "w", encoding="utf-8") as f:
+                json.dump({"hedef": self.hedef, "kayit_ani": time.time(),
+                           "durum": self.durum}, f)
+        except Exception:
+            pass
+
     def _istatistik_oku(self):
         try:
             with open(IST_DOSYA, "r", encoding="utf-8-sig") as f:
@@ -746,6 +784,7 @@ class Uygulama:
                 json.dump(self.ist, f, ensure_ascii=False, indent=2)
         except Exception:
             pass
+        self._sayaci_kaydet()
         # Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
         try:
             gcm.gunu_isle(KAYIT_KLASOR, self.ist.get("gun", time.strftime("%Y-%m-%d")),
@@ -1013,6 +1052,7 @@ class Uygulama:
         self.duraklama_bitis = 0
         self.durum = "calisiyor"
         self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+        self._sayaci_kaydet()
         if self.tepsi:
             self.tepsi.menuyu_tazele()
 
@@ -1024,6 +1064,7 @@ class Uygulama:
         if not self.izin_al("Programı kapatmak için şifreni gir."):
             return
         self._istatistik_yaz()
+        self._sayaci_kaydet()
         ayarlari_yaz(self.ayar)
         # Bekçiye "bu kapanış düzgün, karışma" de
         kl.temiz_cikis_isaretle(KAYIT_KLASOR)
@@ -1076,6 +1117,10 @@ class Uygulama:
 
         self.durum = "calisiyor"
         self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+        # Hedef DEĞİŞTİKTEN sonra kaydet. Önce kaydedersek diske eski
+        # hedef yazılıyor ve program o anda kapatılırsa sayaç yanlış
+        # (geçmiş) bir değerle geri yükleniyordu.
+        self._sayaci_kaydet()
 
         if not iptal and self.ist["kesintisiz_sn"] >= self.ayar["uzun_mola_esigi_dk"] * 60:
             self.kok.after(400, self._uzun_mola_sor)
