@@ -60,6 +60,7 @@ VARSAYILAN = {
     "bas_saat": "09:00",
     "bit_saat": "18:00",
     "analiz_izni": None,      # None = henüz sorulmadı
+    "acilis_izni": None,      # None = henüz sorulmadı (açılışta başlasın mı)
     "ses": True,
     "tema": "gece",
     "kilit": None,            # {"yontem","tur","tuz","ozet"} — düz metin ASLA
@@ -662,6 +663,7 @@ class Uygulama:
 
         self._sekme_sec("programlar")
         self._analiz_izni_sor_gerekirse()
+        self._acilis_izni_sor_gerekirse()
         self._bekciyi_kur()
         ses.onceden_hazirla()
 
@@ -909,6 +911,49 @@ class Uygulama:
                      P["soluk"], yt))
 
     # ---------------- İzin ----------------
+    def _acilis_izni_sor_gerekirse(self):
+        """Windows açılışında başlamak için İZİN ister.
+
+        Eskiden bu ayrı bir .bat ile, kullanıcıya hiç sorulmadan
+        yapılıyordu. Kendi başına başlayan bir program, kullanıcının
+        haberi olmadan başlamamalı.
+        """
+        if self.ayar.get("acilis_izni") is not None:
+            return
+        # Zaten kuruluysa sorma; sorup cevap alamazsak var olanı bozarız
+        if kl.acilista_baslar_mi():
+            self.ayar["acilis_izni"] = True
+            ayarlari_yaz(self.ayar)
+            return
+
+        def sor():
+            gecen = kl.acilistan_beri_saniye()
+            ek = ""
+            if gecen > 600:
+                ek = ("\n\nBu arada: bilgisayarın %s açık ama ben yeni başladım. "
+                      "O süre sayılmadı — kapalıyken hiçbir şey ölçemem, "
+                      "açılışta başlamamın sebebi bu."
+                      % sure_okunakli(gecen))
+
+            cevap = Soru(
+                self.kok, "Bilgisayar açılınca başlayayım mı?",
+                "Molaların düzenli gelmesi için programın açık olması gerekiyor. "
+                "İzin verirsen Windows her açıldığında arka planda kendim başlarım "
+                "— pencere açılmaz, sadece saatin yanında simge durur." + ek +
+                "\n\nHayır dersen molalar yalnızca programı elle açtığında çalışır. "
+                "Bu ayarı istediğin an değiştirebilirsin.",
+                evet_yazi="İzin veriyorum", hayir_yazi="Hayır, elle açarım",
+                geri_sayim=90, varsayilan=False)
+            izin = bool(cevap.bekle())
+            self.ayar["acilis_izni"] = izin
+            # Sadece EVET denince kur. Hayır/cevapsızda hiçbir şey silme —
+            # daha önce kurulmuş bir ayarı bozmamalıyız.
+            if izin:
+                kl.acilista_baslat(True)
+            ayarlari_yaz(self.ayar)
+
+        self.kok.after(2600, sor)      # analiz izninden sonra sorsun
+
     def _analiz_izni_sor_gerekirse(self):
         if self.ayar.get("analiz_izni") is not None:
             return
@@ -1632,6 +1677,24 @@ class Uygulama:
         bit_alan.insert(0, self.ayar.get("bit_saat", "18:00"))
         bit_alan.pack(side="left", ipady=4)
 
+        # ---------- Açılışta başlatma ----------
+        acilis = tk.BooleanVar(value=kl.acilista_baslar_mi())
+        af2 = tk.Frame(p, bg=P["kart"])
+        af2.pack(fill="x", padx=26, pady=(10, 2))
+        tk.Checkbutton(af2, text="Windows açılınca kendim başla", variable=acilis,
+                       font=("Segoe UI", 10), fg=P["yazi"], bg=P["kart"],
+                       selectcolor=P["zemin"], activebackground=P["kart"],
+                       activeforeground=P["yazi"], relief="flat",
+                       highlightthickness=0).pack(anchor="w")
+        gecen_sure = kl.acilistan_beri_saniye()
+        acilis_not = ("Arka planda başlar, pencere açılmaz. Program KAPALIYKEN "
+                      "hiçbir şey ölçemez — açılışta başlamasının sebebi bu.")
+        if gecen_sure > 600 and not kl.acilista_baslar_mi():
+            acilis_not += ("\nBilgisayarın %s açık; bu sürenin tamamı sayılmadı."
+                           % sure_okunakli(gecen_sure))
+        tk.Label(af2, text=acilis_not, font=("Segoe UI", 8), fg=P["soluk"],
+                 bg=P["kart"], wraplength=380, justify="left").pack(anchor="w", padx=24)
+
         kutu("Uyarı sesi", "Mola başında ve sonunda yumuşak bir çan sesi", sesli)
         kutu("Tam ekranda izin iste", "Sunum/video varsa molayı ertelemeyi teklif eder", tam_ekran)
         kutu("Program analizi", "Hangi programda ne kadar kaldığını sayar. Pencere "
@@ -1747,6 +1810,10 @@ class Uygulama:
             self.ayar["ses"] = bool(sesli.get())
             self.ayar["bekci"] = bool(bekci.get())
             self.ayar["saatler_acik"] = bool(saatler.get())
+            # Açılışta başlatma: kısayolu ekle/kaldır
+            if bool(acilis.get()) != kl.acilista_baslar_mi():
+                kl.acilista_baslat(bool(acilis.get()))
+            self.ayar["acilis_izni"] = bool(acilis.get())
             import re as _re
             for alan, anahtar, varsayilan in ((bas_alan, "bas_saat", "09:00"),
                                               (bit_alan, "bit_saat", "18:00")):

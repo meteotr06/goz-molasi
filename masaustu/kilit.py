@@ -84,6 +84,162 @@ def sifre_gucu(sifre):
 # ----------------------------------------------------------------------
 # Bekçi süreç
 # ----------------------------------------------------------------------
+def baslangic_kisayolu():
+    """Windows Başlangıç klasöründeki kısayolun tam yolu."""
+    return os.path.join(
+        os.environ.get("APPDATA", ""),
+        r"Microsoft\Windows\Start Menu\Programs\Startup", "Goz Molasi.lnk")
+
+
+KAYIT_ADI = "GozMolasi"
+RUN_ANAHTARI = r"Software\Microsoft\Windows\CurrentVersion\Run"
+ONAY_ANAHTARI = (r"Software\Microsoft\Windows\CurrentVersion\Explorer"
+                 r"\StartupApproved\Run")
+
+
+def _hedef_yol():
+    """Açılışta çalıştırılacak dosya."""
+    if getattr(sys, "frozen", False):
+        return sys.executable
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "goz_molasi.py")
+
+
+def _komut():
+    hedef = _hedef_yol()
+    if hedef.lower().endswith(".py"):
+        # pythonw: konsol penceresi açılmasın
+        yorumlayici = sys.executable.replace("python.exe", "pythonw.exe")
+        return '"%s" "%s"' % (yorumlayici, hedef)
+    return '"%s"' % hedef
+
+
+def kayit_var_mi():
+    """Kayıt defterinde açılış kaydımız var mı?"""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_ANAHTARI) as a:
+            winreg.QueryValueEx(a, KAYIT_ADI)
+        return True
+    except Exception:
+        return False
+
+
+def kayit_etkin_mi():
+    """Windows, 'Başlangıç uygulamaları' listesinden kapatmış mı?
+
+    Görev Yöneticisi -> Başlangıç sekmesinden kapatılan girdiler burada
+    işaretleniyor. Kayıt yerinde durur ama Windows çalıştırmaz — kullanıcı
+    'kısayol var ama açılmıyor' der.
+    """
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, ONAY_ANAHTARI) as a:
+            deger, _ = winreg.QueryValueEx(a, KAYIT_ADI)
+            return deger[0] in (2, 6)      # 2/6 = etkin, 3 = devre dışı
+    except Exception:
+        return True                         # kayıt yoksa engellenmemiş demektir
+
+
+def kayit_kur(ac):
+    """Kayıt defteri ile açılışta başlatma (yönetici gerekmez).
+
+    Başlangıç klasörü neden tek başına yetmiyor?
+      • Bazı temizleyiciler klasörü boşaltıyor
+      • Kısayol dosyası bozulabiliyor
+      • Program D: sürücüsünde; kısayol hedefi kaybolabiliyor
+    Kayıt defteri girdisi bunlardan etkilenmiyor. Görev Zamanlayıcı
+    daha da sağlam olurdu ama yönetici yetkisi istiyor — programın
+    yönetici olarak çalışması gerekmemeli.
+    """
+    try:
+        import winreg
+        if not ac:
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_ANAHTARI, 0,
+                                    winreg.KEY_SET_VALUE) as a:
+                    winreg.DeleteValue(a, KAYIT_ADI)
+            except FileNotFoundError:
+                pass
+            return True
+
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN_ANAHTARI) as a:
+            winreg.SetValueEx(a, KAYIT_ADI, 0, winreg.REG_SZ, _komut())
+
+        # Windows daha önce kapatmışsa tekrar etkinleştir
+        if not kayit_etkin_mi():
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, ONAY_ANAHTARI, 0,
+                                    winreg.KEY_SET_VALUE) as a:
+                    winreg.SetValueEx(a, KAYIT_ADI, 0, winreg.REG_BINARY,
+                                      bytes([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+            except Exception:
+                pass
+        return kayit_var_mi()
+    except Exception:
+        return False
+
+
+def acilista_baslar_mi():
+    """İkisinden biri varsa ve engellenmemişse açılışta başlar."""
+    return (kayit_var_mi() or os.path.exists(baslangic_kisayolu())) and kayit_etkin_mi()
+
+
+def acilista_baslat(ac):
+    """Windows açılışında otomatik başlatmayı aç/kapat.
+
+    İKİ YÖNTEM BİRDEN kuruyoruz:
+      1) Kayıt defteri Run girdisi (asıl — silinmeye dayanıklı)
+      2) Başlangıç klasörü kısayolu (yedek)
+    İkisi de tetiklense bile ikinci kopya açılmaz; tek örnek koruması
+    (tek_ornek_al) devrede.
+    """
+    kayit_kur(ac)                       # asıl yöntem
+
+    yol = baslangic_kisayolu()
+    try:
+        if not ac:
+            if os.path.exists(yol):
+                os.remove(yol)
+            return True
+
+        hedef = _hedef_yol()
+        klasor = os.path.dirname(hedef)
+
+        # Kısayolu PowerShell'e oluşturtuyoruz; saf Python'da .lnk yazmak
+        # COM arayüzü gerektiriyor ve ek kütüphane istiyor.
+        betik = (
+            "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('%s');"
+            "$s.TargetPath = '%s';"
+            "$s.WorkingDirectory = '%s';"
+            "$s.WindowStyle = 7;"
+            "$s.Description = 'Goz Molasi - her 20 dakikada goz molasi';"
+            "$s.Save()"
+        ) % (yol.replace("'", "''"), hedef.replace("'", "''"),
+             klasor.replace("'", "''"))
+
+        subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", betik],
+            creationflags=0x08000000, timeout=20, check=False)
+        return os.path.exists(yol)
+    except Exception:
+        return False
+
+
+def acilistan_beri_saniye():
+    """Bilgisayar kaç saniyedir açık?
+
+    Program açılışta başlamadıysa, o süre boyunca hiçbir şey
+    ölçemedik. Kullanıcıya bunu dürüstçe söylemek için kullanılıyor.
+    """
+    try:
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        k32.GetTickCount64.restype = ctypes.c_ulonglong
+        return k32.GetTickCount64() / 1000.0
+    except Exception:
+        return 0.0
+
+
 def surec_yasiyor_mu(pid):
     """Süreç GERÇEKTEN çalışıyor mu?
 
