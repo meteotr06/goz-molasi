@@ -494,6 +494,31 @@
     }, 3000);
   }
 
+  /* ACİL SIFIRLAMA — adrese ?sifirla=1 eklenince
+     Şifresini unutan kullanıcı için son çıkış. Sessizce silmiyor;
+     ne olacağını söyleyip onay alıyor, yoksa birine gönderilen bir
+     link ayarlarını silebilirdi. */
+  if (new URLSearchParams(location.search).get('sifirla') === '1') {
+    setTimeout(() => {
+      const onay = confirm(
+        ['SIFIRLAMA',
+         '',
+         'Şifre, ayarlar, sayaçlar ve 7 günlük geçmiş silinecek.',
+         'Uygulama ilk günkü haline dönecek.',
+         '',
+         'Devam edilsin mi?'].join('
+'));
+      if (!onay) return;
+      silindi = true;
+      try {
+        localStorage.removeItem(KAYIT_ANAHTARI);
+        localStorage.removeItem('goz-molasi-gecmis');
+        localStorage.removeItem('goz-molasi-kurulum-kapatildi');
+      } catch {}
+      location.replace(location.pathname);
+    }, 300);
+  }
+
   /* Ana ekran kısayolundan "Şimdi mola ver" ile açıldıysa */
   if (new URLSearchParams(location.search).get('eylem') === 'mola') {
     setTimeout(() => { motor.basla(); motor.molayaGec(); }, 400);
