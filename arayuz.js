@@ -127,6 +127,21 @@
      refleksle "atla"ya basmayı zorlaştırmak. Bunu kullanıcıya
      ayarlar penceresinde açıkça yazıyoruz.
      ============================================================ */
+  /* TEK SEFERLİK KİLİT SIFIRLAMA
+     Geliştirme sırasında bazı tarayıcılarda test şifresi kaldı ve
+     kullanıcı ayarlara giremez oldu. Bu sürüm, daha önce kalmış her
+     şifreyi bir kez temizler. Kullanıcı isterse yeniden koyabilir.
+     Damga bir kez yazılır; sonraki açılışlarda tekrar silmez. */
+  const KILIT_SIFIRLAMA_DAMGASI = 'v1-agustos-2026';
+  if (kayit.kilitSifirlandi !== KILIT_SIFIRLAMA_DAMGASI) {
+    kayit.kilitOzeti = null;
+    kayit.kilitTuz = null;
+    kayit.kilitSifirlandi = KILIT_SIFIRLAMA_DAMGASI;
+    try {
+      localStorage.setItem(KAYIT_ANAHTARI, JSON.stringify(kayit));
+    } catch {}
+  }
+
   let kilitOzeti = kayit.kilitOzeti || null;
   let kilitTuz = kayit.kilitTuz || null;
   let yanlisSayisi = 0;
@@ -506,8 +521,7 @@
          'Şifre, ayarlar, sayaçlar ve 7 günlük geçmiş silinecek.',
          'Uygulama ilk günkü haline dönecek.',
          '',
-         'Devam edilsin mi?'].join('
-'));
+         'Devam edilsin mi?'].join('\n'));
       if (!onay) return;
       silindi = true;
       try {
@@ -1129,6 +1143,7 @@
         tema,
         kilitOzeti,
         kilitTuz,
+        kilitSifirlandi: KILIT_SIFIRLAMA_DAMGASI,
         kayitAni: Date.now(),
       }));
     } catch {}
