@@ -199,6 +199,30 @@
       }
     }
   });
+  /* ŞİFREMİ UNUTTUM
+     Web'de şifreyi gizli tutmanın bir sınırı var: kullanıcı zaten
+     tarayıcı ayarlarından site verisini silip kilidi kaldırabiliyor.
+     Sıfırlamayı şifrenin arkasına saklamak güvenlik katmıyor, sadece
+     dürüst kullanıcıyı kilitli bırakıyor. O yüzden açık bir çıkış yolu
+     veriyoruz — ama ne olacağını net söyleyerek. */
+  $('sifreUnuttum').addEventListener('click', () => {
+    const onay = confirm(
+      ['Şifreni sıfırlamanın tek yolu tüm verileri silmek.',
+       '',
+       'Silinecekler: şifre, ayarların, bugünkü sayaçlar ve 7 günlük geçmiş.',
+       'Uygulama ilk günkü haline döner.',
+       '',
+       'Devam edilsin mi?'].join('\n'));
+    if (!onay) return;
+    silindi = true;
+    try {
+      localStorage.removeItem(KAYIT_ANAHTARI);
+      localStorage.removeItem('goz-molasi-gecmis');
+      localStorage.removeItem('goz-molasi-kurulum-kapatildi');
+    } catch {}
+    location.reload();
+  });
+
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
 
