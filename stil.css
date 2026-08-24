@@ -145,11 +145,6 @@ body {
     radial-gradient(1100px 600px at 50% -10%, var(--zemin-2), transparent 70%),
     var(--zemin);
   background-attachment: fixed;
-  /* Telefonun çentiği/alt çubuğu içeriği kesmesin */
-  padding-top: max(18px, env(safe-area-inset-top));
-  padding-bottom: max(32px, env(safe-area-inset-bottom));
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
   /* Uygulama gibi dursun: metin seçimi ve sürükleyerek yenileme kapalı */
   -webkit-user-select: none;
   user-select: none;
@@ -161,7 +156,13 @@ body {
   flex-direction: column;
   align-items: center;
   min-height: 100dvh;          /* mobil tarayıcı çubuğunu hesaba katar */
-  padding: 18px 16px 32px;
+  /* Telefonun çentiği ve alt çubuğu içeriği kesmesin.
+     DİKKAT: bu satırlar kısayol `padding`ten SONRA gelmeli, yoksa
+     kısayol bunları eziyor ve çentik koruması hiç çalışmıyor. */
+  padding: max(18px, env(safe-area-inset-top))
+           max(16px, env(safe-area-inset-right))
+           max(32px, env(safe-area-inset-bottom))
+           max(16px, env(safe-area-inset-left));
   gap: 16px;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -533,6 +534,10 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 .gizli { display: none !important; }
 
 /* ---------------- Ayarlar penceresi ---------------- */
+/* Ayar penceresi ekrandan uzun olabiliyor (temalar, hazır süreler,
+   kaydırıcılar, çalışma saatleri, şifre...). Gövde kaysın ama
+   Kaydet/Vazgeç HEP GÖRÜNSÜN — yoksa kullanıcı düğmeyi bulamıyor
+   ve "ayar kaydedilmiyor" sanıyor. */
 dialog.ayarlar {
   border: 1px solid var(--cizgi);
   background: var(--kart);
@@ -540,10 +545,25 @@ dialog.ayarlar {
   border-radius: 22px;
   padding: 0;
   width: min(460px, calc(100vw - 32px));
+  max-height: min(88dvh, 900px);
   box-shadow: var(--golge);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+dialog.ayarlar[open] { display: flex; }
 dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(3px); }
-.ayar-govde { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.ayar-govde {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+}
 .ayar-govde h2 { margin: 0; font-size: 18px; }
 .satir { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .satir label { font-size: 14px; }
@@ -752,7 +772,16 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-.ayar-alt { display: flex; gap: 10px; justify-content: flex-end; padding: 0 22px 22px; }
+.ayar-alt {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 22px;
+  border-top: 1px solid var(--cizgi);
+  background: var(--kart);
+  flex: none;                 /* kaymaz, hep altta durur */
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
 .ipucu {
   font-size: 12px;
   color: var(--yazi-soluk);
