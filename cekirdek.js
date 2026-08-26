@@ -301,6 +301,12 @@ class MolaMotoru {
     this.asamaBaslangic = Date.now();
     this.hedefZaman = this.asamaBaslangic + saniye * 1000;
     this.kalanDondurulmus = null;
+    // Kalp atışı BURADA başlıyor, yalnızca basla() içinde değil.
+    // Önceden yalnızca basla() başlatıyordu; sayaç kayıttan geri
+    // yüklendiğinde basla() çalışmadığı için kalp atışı hiç
+    // başlamıyor, sayaç ekranda duruyor gibi görünüp mola HİÇ
+    // gelmiyordu. Sayfayı yenileyen herkes bundan etkileniyordu.
+    this._kalpAtisiBaslat();
     if (yeniDurum === 'mola') this._duyur('molaBasladi', this.anlikDurum());
     this._duyur('degisti', this.anlikDurum());
   }
@@ -390,6 +396,7 @@ class MolaMotoru {
 
     const kalan = (hedef - simdi) / 1000;
     if (kalan > 0 && kalan <= this.ayarlar.calismaSuresi) {
+      this._kalpAtisiBaslat();
       this.hedefZaman = hedef;
       this.durum = veri.durum === 'duraklatildi' ? 'duraklatildi' : 'calisiyor';
       if (this.durum === 'duraklatildi') this.kalanDondurulmus = kalan;
@@ -398,6 +405,7 @@ class MolaMotoru {
     }
     // Hedef kapalıyken geçmiş: kısa kapanmaysa molayı kaçırma
     if (kalan <= 0 && kapaliKalan <= 60) {
+      this._kalpAtisiBaslat();
       this.hedefZaman = simdi + 25000;
       this.durum = 'calisiyor';
       this.sonHareket = simdi;

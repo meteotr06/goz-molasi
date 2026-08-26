@@ -35,6 +35,9 @@ const SOZLUK = {
   'tamamlanan mola': 'breaks taken',
   'atlanan mola': 'breaks skipped',
   'takip edilen süre': 'time tracked',
+  'bu sekmede geçen süre': 'time in this tab',
+  'Bu sayaç sekme açıldığından beri işler. Bilgisayarın açık olduğu her anı ölçmek için Windows sürümünü kullan.':
+    'This counter runs from the moment the tab opened. To measure every minute your computer is on, use the Windows version.',
   'cihaz başında süre': 'time at device',
   'Son 7 gün': 'Last 7 days',
   'Bugünkü durum': 'Today',

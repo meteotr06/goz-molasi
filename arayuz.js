@@ -923,11 +923,14 @@
                            + CS(' dk', ' min');
     // Etiket dürüst olsun: izin yoksa bu sayı cihazın değil, sekmenin süresi
     if (og.istSureEtiket) {
+      // "takip edilen süre" yanıltıyordu: kullanıcı 4 saattir
+      // bilgisayarda ama sekme 6 dakika önce açıldıysa 6 dk yazıyor
+      // ve "saymamış" sanılıyor. Etiket ne ölçtüğünü açıkça söylüyor.
       og.istSureEtiket.textContent = C(etkinlikDedektoru
-        ? 'cihaz başında süre' : 'takip edilen süre');
+        ? 'cihaz başında süre' : 'bu sekmede geçen süre');
       og.sureKutucuk.title = etkinlikDedektoru
-        ? 'Cihaz etkinliği izniyle ölçülüyor — sekme arka plandayken de sayar.'
-        : 'Bu sayaç yalnızca uygulama açıkken işler. Ayarlardan "Cihaz etkinliğini izle"yi açarsan arka planda da sayar.';
+        ? C('Cihaz etkinliği izniyle ölçülüyor — sekme arka plandayken de sayar.')
+        : C('Bu sayaç sekme açıldığından beri işler. Bilgisayarın açık olduğu her anı ölçmek için Windows sürümünü kullan.');
     }
 
     haftayiCiz();

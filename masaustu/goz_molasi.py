@@ -702,6 +702,7 @@ class Uygulama:
         self.mola_ekrani = None
         self.balon = None
         self.uzun_mola_mi = False
+        self.baslangic_ani = time.time()
         self.kilit_gorundu = False
         self.kart_sirasi = 0
         self.bilgi_no = random.randrange(len(BILGILER) or 1)
@@ -1070,6 +1071,20 @@ class Uygulama:
             ke, o(780), anchor="w",
             text="Pencereyi kapatmak programı kapatmaz — saatin yanında çalışmaya devam eder.",
             fill=gor.karistir(P["zemin"], P["soluk"], 0.7), font=(yt, 8))
+
+        # "ARKA PLANDA ÇALIŞIYORUM" ŞERİDİ
+        # Kullanıcının haklı şikâyeti: program saatlerdir çalışıp ölçüyor
+        # ama hiçbir yerde göründüğüne dair iz yok — Windows 11 yeni tepsi
+        # simgelerini taşma okunun altına saklıyor. Pencere açıldığında ilk
+        # görülecek şey, arka planda ne kadar ölçtüğü olmalı.
+        og.yuvarlak(self.t, ke, o(92), G - 2 * ke, o(50),
+                    gor.karistir(P["zemin"], P["vurgu"], 0.14), r=o(12))
+        self.arka_serit = self.t.create_text(
+            ke + o(16), o(109), anchor="w", text="",
+            fill=P["yazi"], font=(yt, 9, "bold"))
+        self.arka_serit_alt = self.t.create_text(
+            ke + o(16), o(127), anchor="w", text="",
+            fill=P["soluk"], font=(yt, 8))
         kapat_g = o(130)
         self.dugmeler.append(
             og.Dugme(self.t, G - ke - kapat_g, o(766), kapat_g, o(30), "Programı kapat",
@@ -1150,7 +1165,54 @@ class Uygulama:
         else:
             self.kok.iconify()
 
+    def _arka_seridi_tazele(self):
+        """Pencere açıldığında "arka planda ne kadar süredir ölçüyorum"
+        bilgisini yaz. Kullanıcı programın çalıştığını başka türlü
+        göremiyor; Windows tepsi simgesini saklıyor."""
+        try:
+            self.t.itemconfigure(
+                self.arka_serit,
+                text="Arka planda çalışıyorum — bugün %s ölçtüm"
+                     % sure_okunakli(self.ist.get("ekran_sn", 0)))
+            if self.tepsi_gizli_mi():
+                alt = ("Simge Windows tarafından gizleniyor. Saatin yanındaki "
+                       "^ okuna tıklayıp simgeyi aşağı sürüklersen hep görünür.")
+            else:
+                acik = time.time() - getattr(self, "baslangic_ani", time.time())
+                alt = ("%s önce açıldım · pencereyi kapatsan da saymaya "
+                       "devam ediyorum" % sure_okunakli(acik))
+            self.t.itemconfigure(self.arka_serit_alt, text=alt)
+        except Exception:
+            pass
+
+    def tepsi_gizli_mi(self):
+        """Windows tepsi simgesini gizliyor mu?
+
+        Windows 11 yeni simgeleri varsayılan olarak taşma okunun altına
+        koyuyor; IsPromoted=1 olmadıkça görünmüyorlar.
+        """
+        try:
+            import winreg
+            yol = "Control Panel" + chr(92) + "NotifyIconSettings"
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, yol) as k:
+                for i in range(winreg.QueryInfoKey(k)[0]):
+                    with winreg.OpenKey(k, winreg.EnumKey(k, i)) as alt:
+                        try:
+                            p = winreg.QueryValueEx(alt, "ExecutablePath")[0]
+                        except FileNotFoundError:
+                            continue
+                        if "Goz Molasi" not in p:
+                            continue
+                        try:
+                            return winreg.QueryValueEx(alt, "IsPromoted")[0] != 1
+                        except FileNotFoundError:
+                            return True          # ayarlanmamis = gizli
+        except Exception:
+            pass
+        return False
+
     def pencereyi_goster(self):
+        self._arka_seridi_tazele()
         try:
             self.kok.deiconify()
             self.kok.state("normal")

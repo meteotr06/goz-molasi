@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v53';
+const SURUM = 'goz-molasi-v55';
 
 const DOSYALAR = [
   './',
@@ -61,7 +61,9 @@ self.addEventListener('fetch', (e) => {
       if (cevap && cevap.ok) onbellek.put(e.request, cevap.clone());
       return cevap;
     } catch {
-      return (await onbellek.match(e.request))
+      // ignoreSearch: dosya adreslerinde ?s=v55 gibi sürüm etiketi var.
+      // Tam eşleşme aransa çevrimdışı yedek hiç bulunamazdı.
+      return (await onbellek.match(e.request, { ignoreSearch: true }))
         || (await onbellek.match('./index.html'))
         || new Response('Çevrimdışı', { status: 503 });
     }
