@@ -450,6 +450,12 @@ class MolaEkrani:
         # Geri sayım: tam süreden başlar, 1'in altına inmez
         gosterilecek = min(int(self.toplam), int(kalan) + 1)
         self.t.itemconfigure(self.sayi, text=str(gosterilecek))
+
+        # Son üç saniyede haber ver — mola aniden bitince ekrana
+        # dönmek sarsıcı oluyordu.
+        if kalan <= 3:
+            self.t.itemconfigure(self.sayi, fill=gor.KEHRIBAR)
+            self.t.itemconfigure(self.yonerge_yazi, text="Az kaldı — hazırlan")
         self.t.itemconfigure(self.yay, extent=-359.9 * max(0.0, kalan / self.toplam))
 
         self._nefes_ciz(gecen)

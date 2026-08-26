@@ -61,10 +61,20 @@ class Egzersiz:
 
 
 class UzagaBak(Egzersiz):
-    """Merkezdeki nokta küçülür, halkalar dışarı doğru açılır.
+    """Merkezdeki nokta küçülür, halkalar dışarı doğru açılır —
+    sonra HEPSİ SÖNER.
 
-    Göz, açılan halkaları takip ederken kendiliğinden 'uzağa' odaklanır.
-    20-20-20 kuralının asıl egzersizi bu; en sık gösterilen o yüzden.
+    TASARIM KARARI: önceki hâli çelişkiliydi. Yönerge "pencereden
+    dışarı bak" diyor ama ekranda 20 saniye boyunca izlenecek bir
+    animasyon oynuyordu. Bakma dediğin kişiye bakacak bir şey vermek
+    uygulamanın bütün amacını çürütüyor.
+
+    Yeni davranış: ilk 3 saniyede halkalar gözü merkezden dışarı
+    yönlendiriyor, sonra animasyon sönüyor. Geriye bakılacak bir şey
+    kalmıyor — mola ekranı bilerek sıkıcılaşıyor.
+
+    Göz kırpma ve yakın-uzak egzersizleri izlenmeyi GEREKTİRDİĞİ için
+    onlar sönmüyor.
     """
 
     ad = "Uzağa bak"
@@ -79,19 +89,31 @@ class UzagaBak(Egzersiz):
                                         outline="", tags=self.etiket)
 
     def guncelle(self, gecen, toplam):
-        # Nokta yavaşça küçülür: "uzaklaşıyor"
+        # 3. saniyeden sonra sön, 4,5.'de tamamen kaybol
+        sonme = 1.0 - min(1.0, max(0.0, (gecen - 3.0) / 1.5))
+        if sonme <= 0.01:
+            for h in self.halkalar:
+                self.t.itemconfigure(h, outline=self.zemin)
+            self.t.itemconfigure(self.nokta, fill=self.zemin)
+            return
+
+        # Nokta küçülür: "uzaklaşıyor". Aralık genişletildi
+        # (0.22-0.14 çok silikti), geri çekilme artık okunuyor.
         oran = min(1.0, gecen / max(0.001, toplam))
-        p = self.r * (0.22 - 0.14 * oran)
+        p = max(1.0, self.r * (0.20 - 0.17 * min(1.0, oran * 3)))
         self.t.coords(self.nokta, self.mx - p, self.my - p, self.mx + p, self.my + p)
+        self.t.itemconfigure(self.nokta, fill=gor.karistir(
+            self.zemin, self.vurgu, sonme))
 
         # Halkalar 3 saniyelik döngüyle dışarı açılır
         for i, h in enumerate(self.halkalar):
             evre = ((gecen / 3.0) + i / 3.0) % 1.0
-            r = self.r * (0.22 + 0.72 * evre)
+            r = self.r * (0.18 + 0.78 * evre)
             self.t.coords(h, self.mx - r, self.my - r, self.mx + r, self.my + r)
-            # Dışa gittikçe soluklaşsın
+            # Dışa gittikçe soluklaşsın; sönme çarpanıyla birlikte
             self.t.itemconfigure(h, outline=gor.karistir(
-                self.zemin, self.vurgu, max(0.05, 1.0 - evre) * 0.85))
+                self.zemin, self.vurgu,
+                max(0.04, (1.0 - evre) ** 1.6) * 0.8 * sonme))
 
 
 class GozKirp(Egzersiz):

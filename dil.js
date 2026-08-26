@@ -72,6 +72,7 @@ const SOZLUK = {
 
   /* ---- Mola ekranı ---- */
   'Gözünü ekrandan ayır': 'Look away from the screen',
+  'Az kaldı — hazırlan': 'Almost done — get ready',
   'Odayı, pencereyi, uzaktaki bir noktayı süz. Yaklaşık 6 metre.':
     'Gaze at the room, the window, something far away. About 6 metres.',
   'saniye': 'seconds',

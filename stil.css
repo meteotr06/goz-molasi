@@ -1322,3 +1322,22 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   border-radius: 8px;
 }
 .alt-bilgi a:hover, .alt-bilgi a:focus-visible { background: var(--kart-2); }
+
+/* ---- Molanın son üç saniyesi ----
+   Mola aniden bitince ekrana dönmek sarsıcı oluyordu. Son üç
+   saniyede halka yumuşakça parlıyor: bakmıyor olsan bile göz ucuyla
+   fark ediliyor, "bitiyor" hissi veriyor. */
+.mola-ekran.bitmek-uzere .nefes .dolu {
+  animation: molaBitiyor 1s ease-in-out infinite;
+}
+@keyframes molaBitiyor {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.mola-ekran.bitmek-uzere .mola-sayi {
+  transition: color .4s ease;
+  color: var(--mola);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mola-ekran.bitmek-uzere .nefes .dolu { animation: none; opacity: .7; }
+}

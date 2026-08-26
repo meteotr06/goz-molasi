@@ -50,28 +50,50 @@ class UzagaBak extends Egzersiz {
   static ad = 'Uzağa bak';
   static yonerge = 'Pencereden dışarı ya da odanın en uzak köşesine bak';
 
+  /* TASARIM KARARI — bu egzersiz KENDİNİ SİLİYOR.
+
+     Önceki hâli çelişkiliydi: yönerge "pencereden dışarı bak" diyor
+     ama ekranda izlenecek bir animasyon oynuyordu. Bakma dediğin
+     kişiye bakacak bir şey vermek, uygulamanın bütün amacını
+     çürütüyor.
+
+     Yeni davranış: ilk ~3 saniyede halkalar dışa açılıp gözü
+     merkezden uzağa yönlendiriyor, sonra animasyon sönüyor. Geriye
+     bakılacak bir şey kalmıyor — mola ekranı bilerek sıkıcılaşıyor.
+
+     Diğer egzersizler (göz kırp, yakın-uzak) izlenmeyi GEREKTİRİYOR,
+     onlar sönmüyor. */
   ciz(gecen, toplam) {
     this._hazirla();
     const c = this.c;
-    // Dışa açılan halkalar: göz onları takip ederken uzağa odaklanır
+
+    // İlk 3 saniyeden sonra sön; 4,5. saniyede tamamen kaybol
+    const sonme = 1 - Math.min(1, Math.max(0, (gecen - 3) / 1.5));
+    if (sonme <= 0.01) return;
+
+    // Dışa açılan halkalar: gözü merkezden dışarı yönlendiriyor.
+    // Uzaklaşma hissi için kalınlık da inceliyor.
     for (let i = 0; i < 3; i++) {
       const evre = ((gecen / 3) + i / 3) % 1;
-      const r = this.r * (0.22 + 0.78 * evre);
+      const r = this.r * (0.18 + 0.82 * evre);
       c.beginPath();
       c.arc(this.mx, this.my, r, 0, Math.PI * 2);
       c.strokeStyle = this.renk.vurgu;
-      c.globalAlpha = Math.max(0.05, 1 - evre) * 0.8;
-      c.lineWidth = 2;
+      c.globalAlpha = Math.max(0.04, (1 - evre) ** 1.6) * 0.75 * sonme;
+      c.lineWidth = 2.6 * (1 - evre * 0.65);
       c.stroke();
     }
-    c.globalAlpha = 1;
-    // Merkez nokta yavaşça küçülür: "uzaklaşıyor"
+
+    // Merkez nokta küçülür: "uzaklaşıyor". Aralık genişletildi
+    // (0.22-0.14 çok siliktı), böylece geri çekilme okunuyor.
+    c.globalAlpha = sonme;
     const oran = Math.min(1, gecen / Math.max(0.001, toplam));
-    const p = this.r * (0.22 - 0.14 * oran);
+    const p = this.r * (0.20 - 0.17 * Math.min(1, oran * 3));
     c.beginPath();
-    c.arc(this.mx, this.my, p, 0, Math.PI * 2);
+    c.arc(this.mx, this.my, Math.max(1, p), 0, Math.PI * 2);
     c.fillStyle = this.renk.vurgu;
     c.fill();
+    c.globalAlpha = 1;
   }
 }
 

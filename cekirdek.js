@@ -59,6 +59,7 @@ class MolaMotoru {
 
     this.dinleyiciler = {};   // olay adı -> [fonksiyon]
     this._zamanlayici = null;
+    this._isci = null;      // arka planda kısılmayan kalp atışı
   }
 
   /* ---------- Olay sistemi (arayüz buradan haber alır) ---------- */
@@ -73,11 +74,54 @@ class MolaMotoru {
   /* ---------- Kontrol ---------- */
   basla() {
     this._asamayaGec('calisiyor', this.ayarlar.calismaSuresi);
-    if (!this._zamanlayici) {
-      // 250ms: göze akıcı gelir, pili yormaz.
-      this._zamanlayici = setInterval(() => this.tik(), 250);
-    }
+    this._kalpAtisiBaslat();
     this._duyur('basladi');
+  }
+
+  /** Kalp atışını başlat.
+
+      NEDEN WORKER? Tarayıcı, arka plandaki sekmenin setInterval'ini
+      dakikada bire kadar yavaşlatıyor. Ölçtüm: sekme arka plandayken
+      sayaç sıfıra ulaştığı hâlde mola bitmiyordu — 20 saniyelik mola
+      bir dakikaya kadar uzayabiliyor.
+
+      Bu tam da uygulamanın tasarlandığı durum: "gözünü ekrandan ayır"
+      dediğimiz kişi başka pencereye geçiyor, sekme arka plana düşüyor.
+      Molanın zamanında bitmesi şart.
+
+      Worker'lar bu kısıtlamaya tabi değil. Worker kurulamazsa
+      (eski tarayıcı, katı güvenlik ayarı) setInterval'e düşüyoruz —
+      o zaman mola geç bitebilir ama çalışmaya devam eder. */
+  _kalpAtisiBaslat() {
+    if (this._zamanlayici || this._isci) return;
+
+    try {
+      const kod = 'let z=null;onmessage=e=>{' +
+                  'if(e.data==="dur"){clearInterval(z);z=null;return;}' +
+                  'if(!z)z=setInterval(()=>postMessage(1),250);};';
+      const url = URL.createObjectURL(new Blob([kod], { type: 'text/javascript' }));
+      this._isci = new Worker(url);
+      URL.revokeObjectURL(url);
+      this._isci.onmessage = () => this.tik();
+      this._isci.postMessage('basla');
+      return;
+    } catch {
+      this._isci = null;
+    }
+
+    // 250ms: göze akıcı gelir, pili yormaz.
+    this._zamanlayici = setInterval(() => this.tik(), 250);
+  }
+
+  _kalpAtisiDurdur() {
+    if (this._isci) {
+      try { this._isci.postMessage('dur'); this._isci.terminate(); } catch {}
+      this._isci = null;
+    }
+    if (this._zamanlayici) {
+      clearInterval(this._zamanlayici);
+      this._zamanlayici = null;
+    }
   }
 
   duraklat() {

@@ -909,6 +909,14 @@
     og.baslat.textContent =
       C(d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat');
 
+    // Molanın son üç saniyesi. Burada da yapıyoruz çünkü egzersiz
+    // döngüsü requestAnimationFrame ile sürülüyor ve o arka plan
+    // sekmesinde duruyor; sekmeye dönüldüğünde işaret doğru olsun.
+    if (og.molaEkran) {
+      og.molaEkran.classList.toggle(
+        'bitmek-uzere', d.durum === 'mola' && d.kalan <= 3);
+    }
+
     og.istMola.textContent = d.istatistik.tamamlananMola;
     og.istAtlanan.textContent = d.istatistik.atlananMola;
     og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)}`
@@ -1087,8 +1095,15 @@
       const gecen = (Date.now() - egzersizBaslangic) / 1000;
       try {
         egzersiz.ciz(gecen, motor.ayarlar.molaSuresi);
-        const y = egzersiz.anlikYonerge(gecen);
+        // Son üç saniyede haber ver: mola aniden bitince ekrana dönmek
+        // sarsıcı oluyordu. Bakmadan da duyulsun diye metin değil,
+        // ekranın kendisi hazırlık yapıyor.
+        const kalanSn = motor.ayarlar.molaSuresi - gecen;
+        const y = kalanSn <= 3 && kalanSn > 0
+          ? C('Az kaldı — hazırlan')
+          : egzersiz.anlikYonerge(gecen);
         if (y !== sonYonerge) { sonYonerge = y; og.molaAlt.textContent = y; }
+        og.molaEkran.classList.toggle('bitmek-uzere', kalanSn <= 3);
       } catch { egzersiz = null; return; }   // egzersiz çökse bile mola sürsün
       egzersizKare = requestAnimationFrame(dongu);
     };
@@ -1157,7 +1172,7 @@
   function molaEkraniKapat() {
     molaAcik = false;
     egzersiziDurdur();
-    og.molaEkran.classList.remove('acik');
+    og.molaEkran.classList.remove('acik', 'bitmek-uzere');
     og.nedenKart.classList.remove('gorunur');
     clearTimeout(nedenZaman);
     uyanikBirak();
