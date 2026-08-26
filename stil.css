@@ -1135,3 +1135,46 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   .mola-alt { display: none; }
   .nefes { width: min(40vw, 24dvh, 150px); }
 }
+
+/* ---- Dokunma hedefleri ----
+   Ölçüm: mobilde (375px) şehir arama kutusu 21px, "Konumumu kullan"
+   düğmesi 40px yüksekliğindeydi. Parmakla basılabilir en küçük ölçü
+   44px (WCAG 2.5.5 / Apple ve Google kılavuzları aynı sayıyı veriyor). */
+.dugme.kucuk { min-height: 44px; }
+.satir input[type="search"],
+.satir input[type="password"],
+.satir input[type="text"],
+#sehirAlan {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  background: var(--zemin);
+  color: var(--yazi);
+  font: inherit;
+}
+.satir input[type="search"]:focus-visible,
+.satir input[type="password"]:focus-visible,
+#sehirAlan:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; }
+
+/* ---- Sayaç kartının sağ sütunu ----
+   Ölçülen sorun: açıklamadaki max-width:34ch (257px) bütün sütunu
+   boğuyordu; düğme sırası da o genişliğe sıkışıp sarıyor, "Sıfırla"
+   tek başına alta düşüyordu. Düğme sırası artık sütunun tamamını
+   kullanıyor, metin biraz daha geniş. */
+.sayac-aciklama {
+  margin: 0;
+  color: var(--yazi-soluk);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 42ch;
+}
+.sayac-sag .dugme-sirasi { width: 100%; }
+.dugme-sirasi.ikincil { gap: 8px; }
+
+.hafta-not {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--yazi-soluk);
+}

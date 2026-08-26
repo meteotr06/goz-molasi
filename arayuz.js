@@ -84,6 +84,7 @@
     arkaPlanNot: $('arkaPlanNot'),
     temaSeridi: $('temaSeridi'),
     ayCanlilik: $('ayCanlilik'),
+    ayCanlilikDeger: $('ayCanlilikDeger'),
     canlilikDurum: $('canlilikDurum'),
     temaAdi: $('temaAdi'),
     hazirSureler: $('hazirSureler'),
@@ -793,6 +794,7 @@
     const s = Gecmis.seri(motor.istatistik);
     og.seriRozet.textContent = s > 0 ? `🔥 ${s} gün üst üste` : '';
     og.haftaGrafik.innerHTML = '';
+    og.haftaGrafik.parentElement.querySelector('.hafta-not')?.remove();
 
     // Hiç mola yoksa yedi tane 3 piksellik kütük göstermek bozuk duruyor
     if (toplam === 0) {
@@ -805,8 +807,16 @@
       return;
     }
 
-    const ortalama = Math.round((toplam / 7) * 10) / 10;
-    og.haftaOzet.textContent = `${toplam} mola · günde ortalama ${ortalama}`;
+    // Kaç günde veri var? Tek günlük veriyle grafik teknik olarak
+    // doğru ama görsel olarak bomboş duruyor: hedef 8, bugün 1 ise
+    // çubuk %12 yükseklikte kalıyor ve kart 240 piksel boşluk oluyor.
+    const doluGun = gunler.filter((g) => g.sayi > 0).length;
+    if (doluGun <= 1) {
+      og.haftaOzet.textContent = `Bugün ${toplam} mola · geçmiş birikiyor`;
+    } else {
+      const ortalama = Math.round((toplam / 7) * 10) / 10;
+      og.haftaOzet.textContent = `${toplam} mola · günde ortalama ${ortalama}`;
+    }
 
     const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
 
@@ -846,6 +856,15 @@
     cizgi.className = 'hedef-cizgi';
     cizgi.style.setProperty('--hedef-oran', GUNLUK_HEDEF / enb);
     og.haftaGrafik.appendChild(cizgi);
+
+    // Tek günlük veriyle grafik boş görünüyor; ne olduğunu söyleyelim
+    if (doluGun <= 1) {
+      const not = document.createElement('p');
+      not.className = 'hafta-not';
+      not.textContent = 'Grafik her gün biraz daha dolacak. '
+                      + `Kesikli çizgi günlük hedef: ${GUNLUK_HEDEF} mola.`;
+      og.haftaGrafik.after(not);
+    }
   }
 
   /* ---------- Ana ekrandaki bilgi kartı ---------- */
@@ -1157,6 +1176,7 @@
     if (kaydet) { try { localStorage.setItem(CANLILIK_ANAHTAR, String(yuzde)); } catch {} }
     if (og.canlilikDurum) {
       const ad = yuzde <= 75 ? 'Sakin' : yuzde >= 130 ? 'Canlı' : 'Dengeli';
+      if (og.ayCanlilikDeger) og.ayCanlilikDeger.textContent = `${ad} · %${yuzde}`;
       const destek = CSS.supports('color', 'oklch(from white l c h)');
       og.canlilikDurum.textContent = destek
         ? `${ad} (%${yuzde}) — yazı okunaklılığı değişmez, sadece renklerin doygunluğu`
@@ -1375,8 +1395,8 @@
     // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
 
     og.aciklama.textContent =
-      `Sayaç çalışıyor. ${dk} dakika sonra ekran ${ml} saniyeliğine kapanacak, ` +
-      'bu sırada gözünü 6 metre uzağa çevir. Bilgisayara dokunmazsan sayaç durur.';
+      `${dk} dakikada bir ekran ${ml} saniyeliğine kapanır. ` +
+      'O sırada 6 metre uzağa bak.';
 
     if (motor.durum !== 'hazir') motor.sifirla();
     kaydet();
@@ -1537,9 +1557,8 @@
      AÇILIŞ
      ============================================================ */
   og.aciklama.textContent =
-    `Sayaç çalışıyor. ${Math.round(motor.ayarlar.calismaSuresi / 60)} dakika sonra ekran ` +
-    `${motor.ayarlar.molaSuresi} saniyeliğine kapanacak, bu sırada gözünü 6 metre uzağa çevir. ` +
-    'Cihaza dokunmazsan sayaç kendini durdurur.';
+    `${Math.round(motor.ayarlar.calismaSuresi / 60)} dakikada bir ekran ` +
+    `${motor.ayarlar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
 
   ekraniCiz(motor.anlikDurum());
   bildirimDurumunuGoster();

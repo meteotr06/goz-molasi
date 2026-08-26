@@ -117,16 +117,18 @@
     </div>
 
     <div class="sayac-sag">
-      <p id="aciklama" style="margin:0;color:var(--yazi-soluk);font-size:14px;line-height:1.55;max-width:34ch">
+      <p id="aciklama" class="sayac-aciklama">
         Başlat’a bas. 20 dakika sonra ekran 20 saniyeliğine kapanacak,
         bu sırada gözünü 6 metre uzağa çevir.
       </p>
+      <!-- Birincil eylemler. Sıfırla buraya konunca üç düğme 363px
+           tutuyor, sağ sütun ise 257px — alta sarıp hizasız duruyordu. -->
       <div class="dugme-sirasi">
         <button class="dugme ana" id="baslatDugme">▶ Başlat</button>
         <button class="dugme" id="molaDugme">Şimdi mola ver</button>
-        <button class="dugme sade" id="sifirlaDugme">↺ Sıfırla</button>
       </div>
-      <div class="dugme-sirasi" style="gap:8px">
+      <div class="dugme-sirasi ikincil">
+        <button class="dugme sade kucuk" id="sifirlaDugme">↺ Sıfırla</button>
         <button class="dugme sade kucuk" id="bildirimDugme">🔔 Bildirimlere izin ver</button>
         <button class="dugme ana kucuk gizli" id="kurDugme">⬇ Uygulama olarak kur</button>
       </div>
@@ -387,10 +389,11 @@
         </span>
       </div>
 
-      <div class="satir" style="display:block">
-        <label for="ayCanlilik">Canlılık
-          <small id="canlilikDurum">Renklerin doygunluğu — yazı okunaklılığı değişmez</small>
-        </label>
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayCanlilik">Canlılık</label>
+          <output for="ayCanlilik" id="ayCanlilikDeger">Dengeli</output>
+        </div>
         <input type="range" id="ayCanlilik" min="60" max="150" step="5" value="100"
                list="canlilikNoktalari">
         <datalist id="canlilikNoktalari">
@@ -398,6 +401,7 @@
           <option value="100" label="Dengeli"></option>
           <option value="150" label="Canlı"></option>
         </datalist>
+        <small id="canlilikDurum">Renklerin doygunluğu — yazı okunaklılığı değişmez</small>
       </div>
 
       <div class="satir" style="display:block">
