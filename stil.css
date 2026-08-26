@@ -1377,3 +1377,70 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   padding: 12px 14px;
 }
 .masaustu-not a { color: var(--vurgu); }
+
+/* Telefonda kart yerine kucuk etiket: bes kart dar ekranda cok yer kapliyordu
+   (Muhasebe'de sayfanin %30'u). Baglantilar ayni, sadece gorunum kompakt. */
+@media (max-width: 719px) {
+  .diger-uyg, .diger-izgara { display: block !important; }
+  .diger-uyg > a, .diger-izgara > a {
+    display: inline-block; padding: 12px 15px; margin: 0 6px 7px 0;
+    border-radius: 999px; min-height: 0;
+  }
+  .diger-uyg > a span, .diger-izgara > a span { display: none; }
+  .diger-uyg > a b, .diger-izgara > a b { font-size: 13px; font-weight: 500; }
+}
+
+/* ---- Web mi Windows mu karşılaştırması ----
+   Kapalıyken tek satır, açılınca tam tablo. Bilgi karar noktasında
+   lazım ama ana ekranı kalabalıklaştırmamalı. */
+.karsilastirma {
+  width: 100%;
+  max-width: 720px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak);
+  overflow: hidden;
+}
+.karsilastirma summary {
+  padding: 14px 18px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--yazi);
+  list-style: none;
+}
+.karsilastirma summary::-webkit-details-marker { display: none; }
+.karsilastirma summary::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--yazi-soluk);
+  transition: transform .2s ease;
+}
+.karsilastirma[open] summary::after { transform: rotate(180deg); }
+.karsilastirma summary:hover { background: var(--kart-2); }
+.karsilastirma-ic {
+  padding: 0 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.karsilastirma-ic p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--yazi-soluk); }
+.karsilastirma-ic p b { color: var(--yazi); }
+.tablo-kaydir { overflow-x: auto; }
+.karsilastirma table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.karsilastirma th, .karsilastirma td {
+  text-align: left; padding: 9px 12px;
+  border-bottom: 1px solid var(--cizgi);
+}
+.karsilastirma th {
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--yazi-soluk); font-weight: 600; white-space: nowrap;
+}
+.karsilastirma tbody tr:last-child td { border-bottom: 0; }
+.karsilastirma td.evet  { color: var(--vurgu); font-weight: 600; }
+.karsilastirma td.hayir { color: var(--yazi-soluk); }
+.kucuk-not { font-size: 12.5px !important; line-height: 1.6; }
+.karsilastirma .dugme { align-self: flex-start; }

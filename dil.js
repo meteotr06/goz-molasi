@@ -242,6 +242,36 @@ const SOZLUK = {
   /* ---- Alt bilgi ---- */
   'Göz sağlığı rehberi': 'Eye health guide',
   'Windows sürümü': 'Windows version',
+  'Web sürümü mü, Windows sürümü mü? Farkları':
+    'Web version or Windows version? The differences',
+  'İkisi de ücretsiz ve aynı işi yapıyor. Fark, tarayıcının yapabildikleriyle ilgili:':
+    'Both are free and do the same job. The difference is what a browser is able to do:',
+  'tarayıcı, sekmesi kapalıyken hiçbir şey ölçemez':
+    'a browser cannot measure anything while its tab is closed',
+  '— bu bir ayar değil, teknik bir sınır. Hiçbir izin bunu değiştirmiyor.':
+    '— that is not a setting but a technical limit. No permission changes it.',
+  'Kurulum': 'Installation',
+  'yok': 'none',
+  'indir, çalıştır': 'download and run',
+  'Sekme kapalıyken ölçer mi': 'Measures while the tab is closed',
+  'Bilgisayar açılışında başlar mı': 'Starts when the computer starts',
+  'Hangi programda ne kadar durduğun': 'Time spent in each program',
+  'Şifreyle kapanma koruması': 'PIN lock against closing',
+  'Telefonda çalışır mı': 'Works on phones',
+  'Kendiliğinden güncellenir mi': 'Updates itself',
+  'evet': 'yes',
+  'hayır': 'no',
+  'yeniden indirilir': 'download again',
+  'Zararlı olduğu anlamına gelmez —': 'That does not mean it is harmful —',
+  'Ek bilgi': 'More info',
+  'Yine de çalıştır': 'Run anyway',
+  'ile açılır. Kaynak kodun tamamı açık, istersen kendin derleyebilirsin.':
+    'opens it. The full source is public; you can build it yourself.',
+  'Windows sürümü imzalı olmadığı için ilk açılışta':
+    'Because the Windows version is unsigned, the first launch shows',
+  '“Windows bilgisayarınızı korudu”': '“Windows protected your PC”',
+  'uyarısı çıkar.': '.',
+  '⬇ Windows sürümünü indir': '⬇ Download the Windows version',
   'Tarayıcı, sekmesi kapalıyken hiçbir şey ölçemez — hiçbir izin bunu değiştirmiyor. Bilgisayarın açık olduğu her an ölçüm yapılmasını istiyorsan':
     'A browser cannot measure anything while its tab is closed — no permission changes that. If you want measurement whenever your computer is on, use the',
   'kullan: açılışta başlar, tepside durur, cihazın tamamını ölçer.':
