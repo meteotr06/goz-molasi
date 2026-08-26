@@ -547,10 +547,10 @@ dialog.ayarlar {
   width: min(460px, calc(100vw - 32px));
   max-height: min(88dvh, 900px);
   box-shadow: var(--golge);
-  display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+dialog.ayarlar:not([open]) { display: none; }
 dialog.ayarlar[open] { display: flex; }
 dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(3px); }
 .ayar-govde {
@@ -938,3 +938,17 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 @media (max-width: 779px) {
   .sayac-sag { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
 }
+
+/* ---- Ayarlardaki şehir arama sonuçları ---- */
+.sehir-sonuc { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.sehir-sonuc:empty { margin-top: 0; }
+.sehir-secenek {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--cizgi); border-radius: 12px;
+  background: var(--zemin); color: var(--yazi);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.sehir-secenek:hover, .sehir-secenek:focus-visible { border-color: var(--vurgu); }
+.sehir-secenek b { font-size: 14px; }
+.sehir-secenek span { font-size: 12px; color: var(--yazi-soluk); }

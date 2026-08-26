@@ -307,6 +307,22 @@
       </div>
 
       <div class="satir">
+        <label for="ayHava">Molalarda hava durumu
+          <small id="havaDurum">Kapalı — molalarda yalnızca göz bilgisi gösterilir</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayHava"><i></i></span>
+      </div>
+      <div class="satir gizli" id="havaKonumSatir" style="display:block">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button type="button" class="dugme kucuk" id="konumBulDugme">Konumumu kullan</button>
+          <button type="button" class="dugme kucuk gizli" id="konumSilDugme">Konumu unut</button>
+        </div>
+        <input type="search" id="sehirAlan" autocomplete="off"
+               placeholder="ya da şehir ara — örn. İzmir, Berlin" style="width:100%">
+        <div id="sehirSonuc" class="sehir-sonuc"></div>
+      </div>
+
+      <div class="satir">
         <label for="ayKilitAlan">Kilit şifresi
           <small id="kilitDurum">Kapalı — mola atlama ve ayarlar serbest</small>
         </label>
@@ -375,6 +391,7 @@
   <script src="egzersiz.js"></script>
   <script src="reklam.js"></script>
   <script src="cekirdek.js"></script>
+  <script src="mola_icerik.js"></script>
   <script src="arayuz.js"></script>
 </body>
 </html>

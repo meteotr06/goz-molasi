@@ -387,24 +387,9 @@ class MolaEkrani:
         self.p.after(200, self._tik)
 
     def _acil_cikis_iste(self):
-        """Acil çıkış istendi. Şifre varsa sorulur."""
-        self.acil_sorulyor = True
-        try:
-            # Şifre penceresi mola ekranının üstünde açılmalı
-            izin = self.uyg.izin_al(
-                "Molayı erken bitirmek için şifreni gir.\n"
-                "Şifreyi bilmiyorsan molanın bitmesini bekle — %d saniye sürüyor."
-                % self.uyg.ayar["mola_sn"], ust=self.p)
-        except Exception:
-            izin = False
-        self.acil_sorulyor = False
-
-        if izin:
-            self.uyg.mola_bitti(iptal=True)
-        else:
-            self.p.attributes("-topmost", True)
-            self.p.lift()
-            self.p.after(200, self._tik)
+        """Acil çıkış istendi. Şifre SORULMAZ —
+        şifre yalnızca programı kapatırken sorulur."""
+        self.uyg.mola_bitti(iptal=True)
 
     def kapat(self):
         try:
@@ -1037,9 +1022,7 @@ class Uygulama:
 
     def duraklat(self, dakika):
         """Belirli bir süre mola verme (film, sunum, toplantı).
-        Kilit varsa şifre ister — yoksa kilidin anlamı kalmaz."""
-        if not self.izin_al("Molaları duraklatmak için şifreni gir."):
-            return
+        Şifre sorulmaz: şifre yalnızca kapatırken sorulur."""
         self.duraklama_bitis = time.time() + dakika * 60
         self.durum = "duraklatildi"
         if self.balon:
@@ -1515,8 +1498,8 @@ class Uygulama:
 
     # ---------------- Ayarlar penceresi ----------------
     def ayarlari_ac(self):
-        if not self.izin_al("Ayarları açmak için şifreni gir."):
-            return
+        # Şifre sorulmaz. Kilidin tek görevi programın kapatılmasını
+        # engellemek; "şifreyi kaldır" zaten ayrıca şifre ister.
 
         pencere = tk.Toplevel(self.kok)
         pencere.title("Ayarlar")

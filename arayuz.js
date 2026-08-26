@@ -49,6 +49,13 @@
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
+    ayHava: $('ayHava'),
+    havaDurum: $('havaDurum'),
+    havaKonumSatir: $('havaKonumSatir'),
+    konumBulDugme: $('konumBulDugme'),
+    konumSilDugme: $('konumSilDugme'),
+    sehirAlan: $('sehirAlan'),
+    sehirSonuc: $('sehirSonuc'),
     nedenBaslik: $('nedenBaslik'),
     nedenMetin: $('nedenMetin'),
     nedenKaynak: $('nedenKaynak'),
@@ -240,6 +247,82 @@
 
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  /* ============================================================
+     MOLALARDA HAVA DURUMU
+     Konum tarayıcıdan ya da şehir aramasıyla alınır. Konum yoksa
+     hava kartı sıraya hiç girmez; molalar eskisi gibi çalışır.
+     ============================================================ */
+  const HAVA_ACIK_ANAHTAR = 'goz-molasi-hava-acik';
+  let havaAcik = (() => {
+    try { return localStorage.getItem(HAVA_ACIK_ANAHTAR) !== '0'; } catch { return true; }
+  })();
+
+  MolaIcerik.havaAyarla(havaAcik);
+
+  function havaDurumunuGoster(mesaj) {
+    const konum = MolaIcerik.konumOku();
+    og.havaKonumSatir.classList.toggle('gizli', !og.ayHava.checked);
+    og.konumSilDugme.classList.toggle('gizli', !konum);
+    if (mesaj) { og.havaDurum.textContent = mesaj; return; }
+    if (!og.ayHava.checked) {
+      og.havaDurum.textContent = 'Kapalı — molalarda yalnızca göz bilgisi gösterilir';
+    } else if (konum) {
+      og.havaDurum.textContent = (konum.ad ? konum.ad + ' · ' : '') +
+        'her birkaç molada bir hava durumu gösterilir';
+    } else {
+      og.havaDurum.textContent = 'Açık — önce konum ver ya da şehir ara';
+    }
+  }
+
+  og.ayHava.addEventListener('change', () => havaDurumunuGoster());
+
+  og.konumBulDugme.addEventListener('click', async () => {
+    og.konumBulDugme.disabled = true;
+    havaDurumunuGoster('Konum alınıyor…');
+    const s = await MolaIcerik.konumuBul();
+    og.konumBulDugme.disabled = false;
+    havaDurumunuGoster(s.hata || null);
+  });
+
+  og.konumSilDugme.addEventListener('click', () => {
+    MolaIcerik.konumSil();
+    og.sehirAlan.value = '';
+    og.sehirSonuc.innerHTML = '';
+    havaDurumunuGoster('Konum unutuldu.');
+  });
+
+  // Yazarken her tuşta ağa çıkmayalım — 350 ms bekle
+  let sehirZaman = 0;
+  og.sehirAlan.addEventListener('input', () => {
+    clearTimeout(sehirZaman);
+    const q = og.sehirAlan.value;
+    if (q.trim().length < 2) { og.sehirSonuc.innerHTML = ''; return; }
+    sehirZaman = setTimeout(async () => {
+      const liste = await MolaIcerik.sehirAra(q);
+      og.sehirSonuc.innerHTML = '';
+      if (!liste.length) {
+        og.sehirSonuc.textContent = 'Sonuç yok.';
+        return;
+      }
+      liste.forEach((y) => {
+        const d = document.createElement('button');
+        d.type = 'button';
+        d.className = 'sehir-secenek';
+        d.innerHTML = '';
+        const ad = document.createElement('b'); ad.textContent = y.ad;
+        const alt = document.createElement('span'); alt.textContent = y.alt;
+        d.append(ad, alt);
+        d.addEventListener('click', () => {
+          MolaIcerik.sehirSec(y);
+          og.sehirSonuc.innerHTML = '';
+          og.sehirAlan.value = '';
+          havaDurumunuGoster(y.ad + ' seçildi.');
+        });
+        og.sehirSonuc.appendChild(d);
+      });
+    }, 350);
+  });
 
   function kilitDurumunuGoster() {
     const acik = !!kilitOzeti;
@@ -713,13 +796,31 @@
     const nedenGecikme = Math.min(4000, motor.ayarlar.molaSuresi * 200);
     og.nedenKart.classList.remove('gorunur');
     clearTimeout(nedenZaman);
-    nedenZaman = setTimeout(() => {
-      bilgiSirasi++;
-      const b = bilgiGoster(og.nedenBaslik, og.nedenMetin, og.nedenKaynak, bilgiSirasi);
-      og.nedenBaslik.textContent = `Neden? — ${b.baslik}`;
+    nedenZaman = setTimeout(async () => {
+      // Her molada FARKLI TÜRDE kart: göz bilgisi, hava durumu,
+      // kişisel özet, pratik ipucu. Sırayı MolaIcerik tutuyor.
+      let k = null;
+      try { k = await MolaIcerik.sonraki(motor.istatistik); } catch {}
+      if (!k) {                                   // en kötü ihtimalde eski davranış
+        bilgiSirasi++;
+        k = { tur: 'bilgi', ...BILGILER[bilgiSirasi % BILGILER.length] };
+      }
+      // Mola bu arada bittiyse kartı hiç açma
+      if (!molaAcik) return;
+
+      og.nedenBaslik.textContent = `${MolaIcerik.ETIKET[k.tur] || 'Neden?'} — ${k.baslik}`;
+      og.nedenMetin.textContent = k.metin;
+      og.nedenKaynak.textContent = k.kaynak ? `Kaynak: ${k.kaynak}` : '';
+      og.nedenKart.dataset.tur = k.tur;
       og.nedenKart.classList.add('gorunur');
-      // ana ekrandaki kart da aynı bilgiye dönsün
-      bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
+
+      // Ana ekrandaki kart göz bilgisi kalsın — orada hava durumu
+      // göstermek sayfanın amacını bulanıklaştırıyor.
+      if (k.tur === 'bilgi') {
+        og.anaBaslik.textContent = k.baslik;
+        og.anaMetin.textContent = k.metin;
+        og.anaKaynak.textContent = k.kaynak ? `Kaynak: ${k.kaynak}` : '';
+      }
     }, nedenGecikme);
 
     // Atla düğmesi ayardan kapalıysa hiç gösterme
@@ -758,7 +859,7 @@
     og.atla.style.background = 'rgba(255,255,255,0.34)';
     holdZaman = setTimeout(async () => {
       holdIptal();
-      if (await sifreSor('Molayı atlamak için şifre gerekli.')) motor.molayiAtla();
+      motor.molayiAtla();
     }, HOLD_SURE);
   }
   function atlaEtiketi() {
@@ -798,7 +899,6 @@
     clearTimeout(balonZaman);
   }
   og.ertele.addEventListener('click', async () => {
-    if (!(await sifreSor('Molayı ertelemek için şifre gerekli.'))) return;
     motor.ertele(5 * 60);
     balonGizle();
   });
@@ -838,8 +938,7 @@
      ============================================================ */
   og.baslat.addEventListener('click', async () => {
     if (motor.durum === 'calisiyor' || motor.durum === 'uyari') {
-      // Durdurmak kilitli; başlatmak her zaman serbest
-      if (await sifreSor('Sayacı duraklatmak için şifre gerekli.')) motor.duraklat();
+      motor.duraklat();
     } else if (motor.durum === 'duraklatildi' || motor.durum === 'bosta') {
       motor.devamEt();
     } else {
@@ -851,7 +950,7 @@
     motor.molayaGec();
   });
   og.sifirla.addEventListener('click', async () => {
-    if (await sifreSor('Sayacı sıfırlamak için şifre gerekli.')) motor.sifirla();
+    motor.sifirla();
   });
 
   document.addEventListener('keydown', (e) => {
@@ -1050,6 +1149,8 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayHava.checked = havaAcik;
+    havaDurumunuGoster();
     og.ayBasSaat.value = motor.ayarlar.basSaat;
     og.ayBitSaat.value = motor.ayarlar.bitSaat;
     saatleriTazele();
@@ -1062,7 +1163,9 @@
   og.ayarAc.addEventListener('click', () => { ayarlariPencereyeYaz(); og.pencere.showModal(); });
   og.ayarVazgec.addEventListener('click', () => og.pencere.close());
   og.ayarKaydet.addEventListener('click', async () => {
-    if (!(await sifreSor('Ayarları değiştirmek için şifre gerekli.'))) return;
+    havaAcik = og.ayHava.checked;
+    try { localStorage.setItem(HAVA_ACIK_ANAHTAR, havaAcik ? '1' : '0'); } catch {}
+    MolaIcerik.havaAyarla(havaAcik);
 
     const dk = Math.min(90, Math.max(1, +og.ayCalisma.value || 20));
     const ml = Math.min(180, Math.max(5, +og.ayMola.value || 20));
