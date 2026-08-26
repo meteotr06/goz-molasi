@@ -213,6 +213,53 @@
          gen < 50 || document.documentElement.scrollWidth <= gen + 1,
          gen < 50 ? 'ölçülemedi (pencere gizli)'
                   : `${document.documentElement.scrollWidth} / ${gen}`);
+    /* BAGLANTI VERILEN HER DOSYA GERCEKTEN VAR MI?
+       Betikler, stiller, ikonlar, manifest icerigi ve manifest
+       kisayollari. Bir kez yasandi: index.html arayuz.js'i cagiriyordu,
+       dosya yoktu; sayfa aciliyor ama hicbir dugme calismiyordu.
+
+       `../` ile baslayanlar DENETLENMIYOR. Onlar kardes uygulamalarin
+       adresleri (../hesap/, ../muhasebe/...) ve yalnizca CANLI sitede
+       var; yerel sunucu bu klasoru servis ettigi icin hepsi 404 doner.
+       Yerelde denetlemek her koguda bes yanlis alarm demek olurdu -
+       yanlis alarm veren sinama, bir sure sonra bakilmayan sinamadir.
+       Onlar canlida curl ile olculdu: bes adres de 200. (K-20) */
+    {
+      const adresler = new Set();
+      const ekleAdres = (u) => {
+        if (!u) return;
+        if (/^(https?:|data:|mailto:|#)/.test(u)) return;
+        if (u.startsWith('../')) return;      // kardes uygulama
+        adresler.add(u.split('#')[0]);
+      };
+      document.querySelectorAll('script[src]').forEach((o) => ekleAdres(o.getAttribute('src')));
+      document.querySelectorAll('link[href]').forEach((o) => ekleAdres(o.getAttribute('href')));
+      document.querySelectorAll('img[src]').forEach((o) => ekleAdres(o.getAttribute('src')));
+      document.querySelectorAll('a[href]').forEach((o) => ekleAdres(o.getAttribute('href')));
+      try {
+        const m = await (await fetch('manifest.json?k=' + Date.now(),
+                                     { cache: 'no-store' })).json();
+        (m.icons || []).forEach((i) => ekleAdres(i.src));
+        (m.shortcuts || []).forEach((s) => {
+          ekleAdres(s.url);
+          (s.icons || []).forEach((i) => ekleAdres(i.src));
+        });
+        ekleAdres(m.start_url);
+      } catch { adresler.add('manifest.json'); }
+
+      const kirikDosya = [];
+      for (const u of adresler) {
+        try {
+          const c = await fetch(u, { method: 'HEAD', cache: 'no-store' });
+          if (!c.ok) kirikDosya.push(u + ' (' + c.status + ')');
+        } catch (e) { kirikDosya.push(u + ' (' + e.message + ')'); }
+      }
+      ekle('sağlık', 'bağlantı verilen her dosya var',
+           kirikDosya.length === 0,
+           kirikDosya.length ? kirikDosya.join(', ').slice(0, 70)
+                             : `${adresler.size} adres denendi`);
+    }
+
     const kirik = [...document.querySelectorAll('a[href^="#"]')]
       .filter(a => { try { return !document.querySelector(a.getAttribute('href')); } catch { return true; } });
     ekle('sağlık', 'kırık iç bağlantı yok', kirik.length === 0, `${kirik.length} tane`);

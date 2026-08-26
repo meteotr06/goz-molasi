@@ -26,6 +26,8 @@ NASIL
 ÇALIŞTIRMA
   python sinama_zaman.py
 """
+import io
+import os
 import sys
 import time as gercek_zaman
 
@@ -264,6 +266,60 @@ def main():
     # Gercek klasore dokunuldu mu? Guvenmek yetmez, olculur.
     for s in sinama_yalitim.dogrula():
         hatalar.append(s)
+
+    # =================================================================
+    print("--- 6) UYKU / UYANMA ---")
+    # =================================================================
+    # Windows'ta bilgisayar uyurken monotonik saat ilerlemez ama duvar
+    # saati ilerler. Bizim sicrama yakalayicimiz tam bu farka bakiyor.
+    # Beklenen davranis: KALAN SURE korunur. Kisi uyurken ekrana
+    # bakmiyordu; molasini hak etmis sayilmaz, ama molasi da
+    # kaybolmamali.
+    saat = SahteSaat(an(2026, 8, 26, 14, 0))
+    gm.time = saat
+    u = SahteUygulama(saat)
+    u.hedef = saat.time() + 12 * 60
+    saat.saati_kaydir(2 * 3600)      # 2 saat uyku: duvar ilerledi, mono durdu
+    u.tik()
+    kalan = u.hedef - saat.time()
+    kontrol("2 saatlik uykudan sonra kalan süre korunuyor",
+            abs(kalan - 12 * 60) < 3,
+            "kalan %.1f dk (12 olmalı)" % (kalan / 60))
+
+    saat.ilerle(60)                  # uyandi, normal akis
+    u.tik()
+    kalan = u.hedef - saat.time()
+    kontrol("uyandıktan sonra sayaç normal işliyor",
+            abs(kalan - 11 * 60) < 3,
+            "kalan %.1f dk (11 olmalı)" % (kalan / 60))
+
+    # =================================================================
+    print("--- 7) İLK AÇILIŞ / VERİ SİLİNMİŞ ---")
+    # =================================================================
+    # Yalıtım sayesinde geçici klasör BOŞ; gerçek ilk açılış durumu.
+    saat = SahteSaat(an(2026, 8, 26, 10, 0))
+    gm.time = saat
+    try:
+        hedef = gm.Uygulama._sayaci_geri_yukle(
+            SahteUygulama(saat))
+        temiz = abs((hedef - saat.time()) - 20 * 60) < 2
+    except Exception as e:
+        hedef, temiz = None, False
+        hatalar.append("veri yokken sayaç geri yükleme çöktü: %r" % e)
+    kontrol("durum dosyası yokken temiz 20 dk başlıyor", temiz,
+            "%.1f dk" % ((hedef - saat.time()) / 60) if hedef else "çöktü")
+
+    # Bozuk JSON
+    bozuk = os.path.join(os.path.dirname(gm.DURUM_DOSYA), "durum.json")
+    try:
+        io.open(bozuk, "w", encoding="utf-8").write("{bozuk json")
+        u2 = SahteUygulama(saat)
+        hedef2 = gm.Uygulama._sayaci_geri_yukle(u2)
+        saglam = abs((hedef2 - saat.time()) - 20 * 60) < 2
+    except Exception as e:
+        saglam = False
+        hatalar.append("bozuk durum dosyasında çöktü: %r" % e)
+    kontrol("bozuk durum dosyası çökertmiyor", saglam)
 
     if hatalar:
         print("\nBASARISIZ - %d sorun:" % len(hatalar))

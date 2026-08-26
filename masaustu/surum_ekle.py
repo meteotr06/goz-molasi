@@ -46,3 +46,12 @@ for ad in SAYFALAR:
     if n:
         io.open(yol, "w", encoding="utf-8", newline="\n").write(yeni)
     print("  %-14s %d bağlantı" % (ad, n))
+
+# Damga kaydını bırak: damga_denetle.py bir dosya değişip SURUM aynı
+# kaldıysa bunu görüp derlemeyi durduruyor.
+try:
+    import damga_denetle
+    damga_denetle.kaydet()
+    print("  damga kaydı güncellendi")
+except Exception as e:
+    print("  damga kaydı yazılamadı:", e)

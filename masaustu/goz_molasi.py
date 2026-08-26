@@ -288,7 +288,11 @@ def sayi_oku(metin, varsayilan=None):
     sınır koymamış oluyor; kimse fark etmiyor çünkü ekranda hata yok.
 
     Kurallar:
-      • Hem "." hem "," varsa: "." binlik, "," ondalık  (1.500,50)
+      • Hem "." hem "," varsa: **SONDAKİ ondalıktır**, öteki binlik.
+        1.500,50 -> 1500,50   (Türkçe yazım)
+        1,500.50 -> 1500,50   (İngilizce yazım)
+        İlk yazımda "nokta hep binliktir" demiştim; İngilizce yazımı
+        1,5005 okuyordu — 1000 kat hata, hem de sessiz.
       • Yalnız "," varsa: ondalık                        (90,5)
       • Yalnız "." varsa ve arkasında TAM ÜÇ rakam varsa: binlik
         (1.500 -> 1500). Aksi hâlde ondalık               (90.5)
@@ -300,7 +304,11 @@ def sayi_oku(metin, varsayilan=None):
         return varsayilan
     nokta, virgul = "." in m, "," in m
     if nokta and virgul:
-        m = m.replace(".", "").replace(",", ".")
+        # Hangisi SONDA ise ondalık odur; öteki binlik ayracı.
+        if m.rfind(",") > m.rfind("."):
+            m = m.replace(".", "").replace(",", ".")
+        else:
+            m = m.replace(",", "")
     elif virgul:
         m = m.replace(",", ".")
     elif nokta:
