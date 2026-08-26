@@ -110,7 +110,16 @@
 
   /* ---------- 4. DİL ---------- */
   {
-    const turkceMi = (t) => /[çğıöşüÇĞİÖŞÜ]/.test(t);
+    /* OZEL ADLAR Turkce harf tasir ama cevrilmez.
+       "Türkiye" ulkenin INGILIZCEDEKI resmi adi; sinama onu
+       "cevrilmemis Turkce metin" sayip yanlis alarm veriyordu.
+       Yanlis alarm veren sinama, bir sure sonra bakilmayan sinamadir. */
+    const OZEL_ADLAR = ['Türkiye', 'Göz Molası'];
+    const turkceMi = (t) => {
+      let m = t;
+      for (const ad of OZEL_ADLAR) m = m.split(ad).join('');
+      return /[çğıöşüÇĞİÖŞÜ]/.test(m);
+    };
     /* Uygulama ADLARI ozel addir, cevrilmez: "Hesap Araclari",
        "Kur Pusulasi", "Haftalik Planlayici"... Sinama bunlari
        "cevrilmemis Turkce metin" sayiyordu ve her calismada iki
@@ -230,6 +239,43 @@
     ekle('sağlık', 'hidden olan her şey gerçekten gizli',
          gizliAmaGorunen.length === 0,
          gizliAmaGorunen.map((o) => o.id || o.className).join(',').slice(0, 60));
+
+    /* SAYFA HANGI KODU CALISTIRIYOR? — kanarya
+
+       "38/38 gecti" demeden once sorulmasi gereken soru: test HANGI
+       kodu olctu? Sayfa betikleri sabit bir ?s=v.. damgasiyla
+       yukluyor. Tarayici onbellekten ESKI kopyayi verirse, sinama
+       artik var olmayan bir surumu "gecti" diye olcer ve biz
+       duzelttigimizi saniriz.
+
+       Olctum: bu projede servis iscisi "once ag" + cache:'no-cache'
+       calisiyor, damga artirilmasa bile guncel dosya geliyor. Ama
+       bunu bir kez olcup gecmek yetmez - servis iscisi degisirse
+       sessizce bozulur. O yuzden her calismada kontrol ediliyor.
+
+       Yontem: veri dosyalarini TAZE cekip (no-store) icindeki kayit
+       sayisini, sayfada YUKLU olan diziyle karsilastir. Ayrilirsa
+       sayfa eski kod calistiriyor demektir ve asagidaki butun
+       sonuclar supheli. */
+    {
+      const say = (metin) => (metin.match(/^\s*baslik:/gm) || []).length;
+      const denetle = async (dosya, dizi, ad) => {
+        try {
+          const taze = await (await fetch(dosya + '?kanarya=' + Date.now(),
+                                          { cache: 'no-store' })).text();
+          const diskte = say(taze);
+          const yuklu = Array.isArray(dizi) ? dizi.length : -1;
+          ekle('sağlık', `sayfa güncel ${ad} kodunu çalıştırıyor`,
+               diskte > 0 && diskte === yuklu,
+               `diskte ${diskte}, sayfada ${yuklu}`);
+        } catch (e) {
+          ekle('sağlık', `sayfa güncel ${ad} kodunu çalıştırıyor`, false,
+               'ölçülemedi: ' + e.message);
+        }
+      };
+      await denetle('dunya.js', typeof DUNYA !== 'undefined' ? DUNYA : null, 'dunya.js');
+      await denetle('bilgiler.js', typeof BILGILER !== 'undefined' ? BILGILER : null, 'bilgiler.js');
+    }
 
     /* SURUM DAMGASI TUTUYOR MU?
        sw.js icindeki SURUM ile HTML'deki ?s=v.. etiketleri ayni olmali.

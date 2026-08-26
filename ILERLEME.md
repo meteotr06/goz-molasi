@@ -15,10 +15,43 @@ bir yol çıkmaz çıkınca burayı güncelle.
 
 | | |
 |---|---|
-| Web | https://meteotr06.github.io/goz-molasi/ · servis işçisi **v76** |
-| Windows | kodda **1.1** · GitHub Releases'te **v1.0** ⚠️ |
+| Web | yerelde **v79** · YAYINDA **v73** (K-25: kullanıcı yokken push yok) |
+| Windows | ⚠️ **exe KAYNAKTAN ESKİ** — aşağı bak · Releases **v1.0** |
 | Depo | github.com/meteotr06/goz-molasi · dal `main` |
-| Sınama | masaüstü **5 takım** · web **38 senaryo** |
+| Sınama | masaüstü **6 takım** · web **41 senaryo** |
+
+---
+
+## ⚠️ Şu anki durum — okumadan devam etme
+
+**exe kaynaktan ESKİ.** Son derleme 26 Ağustos ~21:53. Ondan sonra
+şunlar eklendi ve **exe'ye girmedi**: sızıntı yalıtımı, `saat_oku()`
+doğrulaması, saat alanlarının sessizce varsayılana dönmemesi.
+
+Neden derlemedim: `DERLE.bat` sonunda **uygulamayı açıyor**. Kullanıcı
+"bana bulaşmasın" dedi ve program kapalı tutuluyor. Sınamayı bozup
+derlemek yerine derlemeyi hiç yapmadım.
+
+Kullanıcı "aç" dediğinde: `DERLE.bat` — sınamaları koşar, derler,
+exe'nin gerçekten açıldığını dener, sonra açar.
+
+**Yerelde 1 commit push edilmedi** (K-25: kullanıcı başında değilken
+dışarıya bir şey gitmez).
+
+### Bugün yaşanan kaza — tekrarlamasın
+
+Bir sınama kullanıcının **gerçek** `ayarlar.json` dosyasına yazdı:
+`kip=aile`, sınama şifresi, 60 dakikalık günlük sınır. O günkü ekran
+süresi 339 dakikaydı; engel ekranı kalıcı açıldı ve **bilgisayar
+kullanılamaz hâle geldi**.
+
+Sebebi: sahte uygulama nesnesi yalnızca METOTLARI eziyordu, modül
+düzeyindeki `ayarlari_yaz()` açıktı. Çözüm `sinama_yalitim.py` +
+`sinama_sizinti.py`. Ayrıntısı aşağıda.
+
+Ayrıca: o sırada alınan yedek **temiz hâli değil kirli hâli** tutuyor.
+Ürün klasöründen çıkarıldı. **"Yedek" adı temiz olduğu anlamına
+gelmez** — içini aç, bak.
 
 ---
 
@@ -31,7 +64,16 @@ bir yol çıkmaz çıkınca burayı güncelle.
   Sebebi: bir keresinde "başarıyla derlendi" diyen sürüm hiç açılmadı.
 - `sinama_veri.py` · `sinama_aile.py` · `sinama_yerlesim.py` (16 tema ×
   3 ölçek) · `sinama_acilis.py`
-- Web: `sinama.js` 38 senaryo.
+- Web: `sinama.js` 41 senaryo.
+- **`sinama_yalitim.py`** — sınamalar kullanıcının verisine yazamaz.
+  Yolları geçiciye çevirir VE yazan modül fonksiyonlarını susturur;
+  ikisi birden, çünkü tek başına biri unutulunca kaza oldu. Bittiğinde
+  gerçek klasörün parmak izini karşılaştırıp dokunulmadığını KANITLAR.
+- **`sinama_sizinti.py`** — her sınamayı ayrı süreçte koşup gerçek
+  klasörün önce/sonra parmak izini karşılaştırır. Takımda İLK sırada:
+  sızan bir sınama, diğerlerinin sonucunu da şüpheli yapar.
+  Ölçüldü: dördü de temiz. Denetçinin kendisi de kasten ihlalle
+  sınandı (5/5 yakalıyor).
 - `sinama_zaman.py` — sahte saatle 22 senaryo: gece yarısı, saat
   geri/ileri alma, yaz-kış saati, uzun oturum. Üç sessiz hata bu
   sınamayla bulundu.
@@ -124,6 +166,28 @@ değil.
 
 Bu yüzden uygulama hiçbir yerde "kırılmaz" demiyor. Amaç engellemek
 değil, **sınırı görünür kılmak**.
+
+## Ölçüldü — varsayılmadı
+
+### Servis işçisi eski kod servis ediyor mu? **Hayır**
+Başka projelerde sınamalar eski koda bakıp "geçti" diyordu. Bende ölçtüm:
+`dunya.js`'e sürüm damgasını **artırmadan** bir kayıt ekledim, sayfa
+19 kayıt yükledi — güncel kodu okudu. Sebebi: servis işçisi "önce ağ" +
+`cache: 'no-cache'`.
+
+Bir kez ölçüp geçmek yetmez; servis işçisi değişirse sessizce bozulur.
+`sinama.js` artık her çalışmada veri dosyalarını taze çekip sayfadaki
+dizilerle karşılaştırıyor ("diskte 18, sayfada 18"). Ayrılırsa bütün
+sonuçlar şüpheli sayılır.
+
+### `type="number"` Türkçe sayı tuzağı? **Yok**
+Web tarafında sayı girdisi kullanılmıyor; kaydırıcı ve saat girdisi var.
+
+### Aile kipinin canlı ortamda atlatılması? **ÖLÇÜLEMEDİ**
+Tam ekran kilit, kullanıcının kendi oturumunda sınanmaz — bir kez
+denendi ve bilgisayarı kilitledi. Ayrı hesap ya da sanal makine yok.
+Mantık `sinama_aile.py` ve `sinama_zaman.py` ile ölçülüyor; gerçek
+ortamda **denenmedi**. Sınanmamış olmak, kullanıcıyı kilitlemekten iyi.
 
 ## Denendi, olmadı — tekrar araştırma
 
