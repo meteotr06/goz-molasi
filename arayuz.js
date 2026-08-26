@@ -50,6 +50,7 @@
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
+    kipDugmeler: $('kipDugmeler'),
     tanitimKart: $('tanitimKart'),
     tanitimMetin: $('tanitimMetin'),
     tanitimGoster: $('tanitimGoster'),
@@ -264,6 +265,81 @@
 
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  /* ============================================================
+     KİPLER
+
+     Rakiplerin kullanıcılarının yıllardır istediği ama hiçbirinde
+     olmayan şey. Stretchly'de bunun için açık bir istek var: insanlar
+     yaptıkları işe göre farklı mola düzeni istiyor ve her seferinde
+     ayarlara girip elle değiştirmekten şikâyetçi.
+
+     Kip, ayarların TAMAMINI değil yalnızca zamanlamayla ilgili
+     olanları değiştiriyor. Tema, canlılık, hava durumu gibi kişisel
+     tercihler kipten kipe taşınıyor — onlar "ne yaptığına" bağlı değil.
+     ============================================================ */
+  const KIPLER = [
+    // Çalışma kipi uygulamanın VARSAYILANIYLA birebir aynı olmalı;
+    // yoksa yeni kullanıcıda hiçbir kip seçili görünmüyor.
+    { id: 'calisma', ad: 'Çalışma', not: '20 dk · 20 sn',
+      ayar: { calismaSuresi: 1200, molaSuresi: 20, uyariSuresi: 15,
+              molaAtlanabilir: false, sesAcik: true, uzunMolaAcik: false } },
+    { id: 'ders', ad: 'Ders', not: '25 dk · 30 sn',
+      ayar: { calismaSuresi: 1500, molaSuresi: 30, uyariSuresi: 15,
+              molaAtlanabilir: false, sesAcik: true, uzunMolaAcik: true } },
+    { id: 'toplanti', ad: 'Toplantı', not: 'sessiz, seyrek',
+      ayar: { calismaSuresi: 3600, molaSuresi: 20, uyariSuresi: 0,
+              molaAtlanabilir: true, sesAcik: false, uzunMolaAcik: false } },
+    { id: 'film', ad: 'Film · oyun', not: 'neredeyse hiç',
+      ayar: { calismaSuresi: 5400, molaSuresi: 20, uyariSuresi: 0,
+              molaAtlanabilir: true, sesAcik: false, uzunMolaAcik: false } },
+  ];
+
+  /** Şu anki ayarlar hangi kipe uyuyor? Hiçbirine uymuyorsa null —
+      kullanıcı elle ayar yaptıysa hiçbir kip seçili görünmemeli. */
+  function acikKip() {
+    const bul = KIPLER.find((k) =>
+      Object.keys(k.ayar).every((alan) => motor.ayarlar[alan] === k.ayar[alan]));
+    return bul ? bul.id : null;
+  }
+
+  function kipleriTazele() {
+    const simdiki = acikKip();
+    og.kipDugmeler.querySelectorAll('.kip-sec').forEach((d) => {
+      d.setAttribute('aria-pressed', String(d.dataset.kip === simdiki));
+    });
+  }
+
+  function kipiUygula(k) {
+    Object.assign(motor.ayarlar, k.ayar);
+    kaydet();
+    // Sayaç yeni süreyle baştan başlasın; yarım kalmış eski süreyle
+    // devam etmek kafa karıştırıyor.
+    if (motor.durum !== 'mola') motor.sifirla();
+    og.aciklama.textContent =
+      `${Math.round(k.ayar.calismaSuresi / 60)} dakikada bir ekran ` +
+      `${k.ayar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
+    og.okuyucu.textContent = `${k.ad} kipine geçildi.`;
+    kipleriTazele();
+    ekraniCiz(motor.anlikDurum());
+  }
+
+  function kipleriKur() {
+    og.kipDugmeler.innerHTML = '';
+    KIPLER.forEach((k) => {
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.className = 'kip-sec';
+      d.dataset.kip = k.id;
+      d.setAttribute('aria-pressed', 'false');
+      const ad = document.createElement('b'); ad.textContent = k.ad;
+      const not = document.createElement('span'); not.textContent = k.not;
+      d.append(ad, not);
+      d.addEventListener('click', () => kipiUygula(k));
+      og.kipDugmeler.appendChild(d);
+    });
+    kipleriTazele();
+  }
 
   /* ============================================================
      İLK AÇILIŞ TANITIMI
@@ -1471,6 +1547,7 @@
 
     if (motor.durum !== 'hazir') motor.sifirla();
     kaydet();
+    kipleriTazele();
     og.pencere.close();
   });
 
@@ -1632,6 +1709,7 @@
     `${motor.ayarlar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
 
   ekraniCiz(motor.anlikDurum());
+  kipleriKur();
   tanitimiKurGerekirse();
   bildirimDurumunuGoster();
   kilitDurumunuGoster();
