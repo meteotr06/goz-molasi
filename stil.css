@@ -963,3 +963,38 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .neden-kart[data-tur="kalite"] { border-left-color: #9ae6a0; }
 .neden-kart[data-tur="ozet"]   { border-left-color: #ffd479; }
 .neden-kart[data-tur="ipucu"]  { border-left-color: #d2a8ff; }
+
+/* ---- Mola bitişi kartı ----
+   Mola biter bitmez belirir, 14 saniye sonra kendiliğinden solar.
+   Yapılan işi görünür kılmak için: "bugün 7. molan" demek,
+   sayacın sıfırlanmasından çok daha somut. */
+.bitis-kart {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 14px; padding: 12px 14px;
+  border: 1px solid var(--cizgi); border-left: 3px solid var(--vurgu);
+  border-radius: 14px; background: var(--kart);
+  opacity: 0; transform: translateY(-6px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.bitis-kart[hidden] { display: none; }
+.bitis-kart.gorunur { opacity: 1; transform: translateY(0); }
+.bitis-tik {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--vurgu) 22%, transparent);
+  color: var(--vurgu);
+}
+.bitis-yazi { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bitis-yazi b { font-size: 15px; }
+.bitis-yazi span { font-size: 13px; color: var(--yazi-soluk); }
+.bitis-kapat {
+  margin-left: auto; flex: none;
+  width: 44px; height: 44px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--yazi-soluk);
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+.bitis-kapat:hover, .bitis-kapat:focus-visible { color: var(--yazi); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bitis-kart { transition: none; }
+}

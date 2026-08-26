@@ -49,6 +49,10 @@
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
+    bitisKart: $('bitisKart'),
+    bitisBaslik: $('bitisBaslik'),
+    bitisAlt: $('bitisAlt'),
+    bitisKapat: $('bitisKapat'),
     ayHava: $('ayHava'),
     havaDurum: $('havaDurum'),
     havaKonumSatir: $('havaKonumSatir'),
@@ -247,6 +251,51 @@
 
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  /* ============================================================
+     MOLA BİTİŞİ KARTI
+     Mola biter bitmez ana ekranda birkaç saniye görünür.
+     Reklam İÇERMEZ: birden beliren reklam AdSense ihlalidir ve
+     zaten molanın hemen ardından reklam göstermek uygulamayı
+     çürütür. Reklam sayfadaki sabit yerinde durmaya devam eder.
+     ============================================================ */
+  const BITIS_SURE = 14000;
+  let bitisZaman = 0;
+
+  function bitisKartiniGoster(istatistik, atlandiMi = false) {
+    const bugun = (istatistik && istatistik.tamamlananMola) | 0;
+    const seri = Gecmis.seri(istatistik);
+
+    og.bitisBaslik.textContent = atlandiMi ? 'Mola atlandı' : 'Mola tamam';
+
+    const parcalar = [];
+    if (!atlandiMi && bugun > 0) parcalar.push(`Bugün ${bugun}. molan`);
+    if (seri >= 2) parcalar.push(`${seri} gündür üst üste`);
+    const dk = Math.max(1, Math.round(motor.ayarlar.calismaSuresi / 60));
+    parcalar.push(`sonraki mola ${dk} dakika sonra`);
+    og.bitisAlt.textContent = parcalar.join(' · ');
+
+    og.bitisKart.hidden = false;
+    // hidden kalkar kalkmaz sınıf eklersek geçiş çalışmaz: aynı karede
+    // display:none'dan çıkıyor, tarayıcı başlangıç değerini görmüyor.
+    // requestAnimationFrame KULLANMIYORUZ — sekme arka plandayken hiç
+    // çalışmıyor ve kart sonsuza kadar opaklık 0'da kalıyordu (kutu
+    // yer kaplıyor ama görünmüyor). Zorunlu yeniden akış (reflow)
+    // arka planda da çalışır.
+    void og.bitisKart.offsetHeight;
+    og.bitisKart.classList.add('gorunur');
+
+    clearTimeout(bitisZaman);
+    bitisZaman = setTimeout(bitisKartiniGizle, BITIS_SURE);
+  }
+
+  function bitisKartiniGizle() {
+    clearTimeout(bitisZaman);
+    og.bitisKart.classList.remove('gorunur');
+    setTimeout(() => { og.bitisKart.hidden = true; }, 400);
+  }
+
+  og.bitisKapat.addEventListener('click', bitisKartiniGizle);
 
   /* ============================================================
      MOLALARDA HAVA DURUMU
@@ -919,6 +968,7 @@
       titret(200);                  // tek uzun: "devam"
       og.okuyucu.textContent = 'Mola bitti, devam edebilirsin.';
       bildirimGonder('Mola bitti', 'Gözlerin dinlendi. Devam edebilirsin.');
+      bitisKartiniGoster(motor.istatistik);
     })
     .uzerine('dinlenildi', (sn) => {
       const dk = Math.max(1, Math.round(sn / 60));
@@ -931,6 +981,7 @@
     .uzerine('molaAtlandi', () => {
       molaEkraniKapat();
       og.okuyucu.textContent = 'Mola atlandı.';
+      bitisKartiniGoster(motor.istatistik, true);
     });
 
   /* ============================================================
@@ -1326,7 +1377,7 @@
   }
 
   // Reklam alanı — numaralar girilmemişse kendini tamamen kaldırır
-  try { reklamiKur($('reklamAlani')); } catch {}
+  try { tumReklamlariKur(); } catch {}
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});

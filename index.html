@@ -111,6 +111,26 @@
     </div>
   </main>
 
+  <!-- MOLA BİTİŞİ KARTI
+       Mola biter bitmez birkaç saniye görünür, sonra kendiliğinden solar.
+       Amacı: yapılan işi görünür kılmak. Molayı tamamlamak soyut bir şey;
+       "bugün 7. molan, 4 gündür üst üste" demek onu somutlaştırıyor.
+       İÇİNE REKLAM KONMAZ — birden beliren reklam AdSense'te ihlal. -->
+  <section class="bitis-kart" id="bitisKart" hidden aria-live="polite">
+    <div class="bitis-tik" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="2.6"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    </div>
+    <div class="bitis-yazi">
+      <b id="bitisBaslik">Mola tamam</b>
+      <span id="bitisAlt"></span>
+    </div>
+    <button type="button" class="bitis-kapat" id="bitisKapat" aria-label="Kapat">×</button>
+  </section>
+
   <!-- BUGÜNKÜ DURUM -->
   <section class="istatistik" aria-label="Bugünkü durum">
     <div class="kutucuk"><b id="istMola">0</b><span>tamamlanan mola</span></div>
@@ -138,7 +158,8 @@
 
   <!-- Reklam alanı — SADECE ana ekran. Mola ekranına asla konmaz.
        Numaralar reklam.js'te boşsa bu kutu tamamen kaldırılır. -->
-  <aside class="reklam-alani gizli" id="reklamAlani" aria-label="Reklam"></aside>
+  <aside class="reklam-alani gizli" id="reklamAlani"
+         data-birim="ana" data-bicim="horizontal" aria-label="Reklam"></aside>
 
   <p class="alt-bilgi">
     Bu uygulama tıbbi tavsiye değildir. Gözünde sürekli ağrı, bulanık görme veya baş ağrısı

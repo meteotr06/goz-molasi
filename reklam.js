@@ -39,7 +39,24 @@ const REKLAM = {
   AKTIF: false,
 
   YAYINCI: 'ca-pub-4471538043632173',   // hesap numarası — hazır
-  BIRIM: '',                            // banner birimi — onaydan sonra
+
+  /* Reklam birimleri. AdSense'te her yerleşim için AYRI birim
+     oluşturursun; böylece hangisinin kazandırdığını görebilirsin.
+     Onay gelince buraya numaraları yapıştır — başka bir şey gerekmez.
+
+     ana         : ana ekran, sayaçların altı (yatay)
+     rehberUst   : rehber yazısının başı (yatay)
+     rehberOrta  : rehber yazısının ortası (yazı arası — en iyi tıklanan)
+     rehberAlt   : rehber yazısının sonu (kare) */
+  BIRIMLER: {
+    ana: '',
+    rehberUst: '',
+    rehberOrta: '',
+    rehberAlt: '',
+  },
+
+  // Eski tek-birim ayarı — geriye dönük uyum için duruyor
+  BIRIM: '',
 
   // Otomatik Reklamlar: Vignette (araya giren) dahil.
   // Sıklığı Google ayarlar; kullanıcıyı boğmaz.
@@ -101,17 +118,38 @@ async function otomatikReklamlariAc() {
 
 /** Önizleme: sahte reklam kutusu çizer. Google'a hiç istek gitmez.
     Amaç, onay beklerken yerleşimi görebilmek. */
+const OLCU_YAZI = {
+  horizontal: '728 × 90 · yatay görüntülü reklam',
+  rectangle: '300 × 250 · kare görüntülü reklam',
+  fluid: 'yazı arası · genişliğe uyar',
+  auto: 'otomatik · ekrana uyar',
+};
+
 function onizlemeCiz(kap) {
+  const bicim = kap.dataset.bicim || 'horizontal';
   kap.classList.remove('gizli');
-  kap.innerHTML = `
-    <span class="reklam-etiket">Reklam · ÖNİZLEME</span>
-    <div class="reklam-sahte">
-      <div class="reklam-sahte-ic">
-        <b>Reklam buraya gelecek</b>
-        <span>728 × 90 · yatay görüntülü reklam</span>
-        <small>Bu sahte bir kutu. Google onayı gelince gerçek reklam görünecek.</small>
-      </div>
-    </div>`;
+  kap.innerHTML = '';
+
+  const etiket = document.createElement('span');
+  etiket.className = 'reklam-etiket';
+  etiket.textContent = 'Reklam · ÖNİZLEME';
+
+  const kutu = document.createElement('div');
+  kutu.className = 'reklam-sahte';
+  kutu.dataset.bicim = bicim;
+
+  const ic = document.createElement('div');
+  ic.className = 'reklam-sahte-ic';
+  const b1 = document.createElement('b');
+  b1.textContent = 'Reklam buraya gelecek';
+  const s1 = document.createElement('span');
+  s1.textContent = OLCU_YAZI[bicim] || bicim;
+  const s2 = document.createElement('small');
+  s2.textContent = 'Sahte kutu — Googleye istek gitmiyor. Birim: '
+                 + (kap.dataset.birim || 'ana');
+  ic.append(b1, s1, s2);
+  kutu.appendChild(ic);
+  kap.append(etiket, kutu);
 }
 
 
@@ -122,9 +160,10 @@ function reklamDurumu() {
     onizleme: REKLAM.ONIZLEME || new URLSearchParams(location.search).get('reklam') === 'onizleme',
     otomatikVignette: REKLAM.OTOMATIK,
     yayinci: REKLAM.YAYINCI || '(boş)',
-    birim: REKLAM.BIRIM || '(boş)',
+    birimler: Object.entries(REKLAM.BIRIMLER || {})
+      .map(([k, v]) => k + '=' + (v || '(boş)')).join(' · '),
     reklamsizSurum: reklamsizMi(),
-    sayfadaKutu: !!document.getElementById('reklamAlani'),
+    sayfadaKutuSayisi: document.querySelectorAll('.reklam-alani').length,
     dolduruldu: !!document.querySelector('ins.adsbygoogle[data-ad-status="filled"]'),
     googleIstegi: performance.getEntriesByType('resource')
       .filter((x) => /googlesyndication|doubleclick/.test(x.name)).length,
@@ -134,8 +173,17 @@ function reklamDurumu() {
 }
 
 
-/** Ana ekrandaki banner. Kapalıysa alanı tamamen kaldırır —
-    boş gri kutu bırakmak arayüzü çirkinleştirir. */
+/** Bir reklam kutusunu kurar.
+
+    Kutu HTML'de şöyle işaretlenir:
+      <aside class="reklam-alani gizli" data-birim="rehberOrta"
+             data-bicim="fluid"></aside>
+
+    data-birim  : REKLAM.BIRIMLER içindeki anahtar
+    data-bicim  : horizontal | rectangle | fluid | auto
+
+    Numara girilmemişse kutu tamamen kaldırılır — boş gri dikdörtgen
+    bırakmak hem çirkin hem de AdSense'in hoşlanmadığı bir şey. */
 async function reklamiKur(kap) {
   const onizleme = REKLAM.ONIZLEME
     || new URLSearchParams(location.search).get('reklam') === 'onizleme';
@@ -151,17 +199,29 @@ async function reklamiKur(kap) {
   otomatikReklamlariAc();
 
   if (!kap) return;
-  if (!REKLAM.BIRIM) { kap.remove(); return; }
+
+  const anahtar = kap.dataset.birim || 'ana';
+  const bicim = kap.dataset.bicim || 'horizontal';
+  const numara = (REKLAM.BIRIMLER && REKLAM.BIRIMLER[anahtar]) || REKLAM.BIRIM;
+  if (!numara) { kap.remove(); return; }
 
   kap.classList.remove('gizli');
-  kap.innerHTML = `
-    <span class="reklam-etiket">Reklam</span>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="${REKLAM.YAYINCI}"
-         data-ad-slot="${REKLAM.BIRIM}"
-         data-ad-format="horizontal"
-         data-full-width-responsive="true"></ins>`;
+  kap.innerHTML = '';
+
+  const etiket = document.createElement('span');
+  etiket.className = 'reklam-etiket';
+  etiket.textContent = 'Reklam';
+
+  const ins = document.createElement('ins');
+  ins.className = 'adsbygoogle';
+  ins.style.display = 'block';
+  ins.dataset.adClient = REKLAM.YAYINCI;
+  ins.dataset.adSlot = numara;
+  ins.dataset.adFormat = bicim;
+  if (bicim === 'fluid') ins.dataset.adLayout = 'in-article';
+  else ins.dataset.fullWidthResponsive = 'true';
+
+  kap.append(etiket, ins);
 
   try {
     await adsenseYukle();
@@ -171,9 +231,22 @@ async function reklamiKur(kap) {
   }
 }
 
+
+/** Sayfadaki BÜTÜN reklam kutularını kurar.
+    Her sayfada tek satır çağırmak yeter: tumReklamlariKur() */
+function tumReklamlariKur(kok = document) {
+  kok.querySelectorAll('.reklam-alani').forEach((k) => {
+    try { reklamiKur(k); } catch {}
+  });
+}
+
 // Konsoldan durumu görmek için: reklamDurumu()
-if (typeof window !== 'undefined') window.reklamDurumu = reklamDurumu;
+if (typeof window !== 'undefined') {
+  window.reklamDurumu = reklamDurumu;
+  window.tumReklamlariKur = tumReklamlariKur;
+}
 
 if (typeof module !== 'undefined') {
-  module.exports = { REKLAM, reklamiKur, reklamsizMi, otomatikReklamlariAc, reklamDurumu };
+  module.exports = { REKLAM, reklamiKur, tumReklamlariKur, reklamsizMi,
+                     otomatikReklamlariAc, reklamDurumu };
 }
