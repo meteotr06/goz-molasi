@@ -139,7 +139,9 @@
   let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
   if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
-  let tema = kayit.tema || 'otomatik';
+  // İlk açılışta beyaz. Ana ekranın aydınlık olması mola ekranıyla
+  // çelişmiyor: mola ekranı her temada koyu kalıyor.
+  let tema = kayit.tema || 'beyaz';
   temaUygula(tema);
 
   /* ============================================================
@@ -1290,6 +1292,7 @@
      Renkler CSS'te tanımlı; buradaki değerler sadece seçici dairelerde
      önizleme göstermek için. */
   const TEMALAR = [
+    { id: 'beyaz',    ad: 'Beyaz',          zemin: '#ffffff', a: '#0f8c78', b: '#9a6410' },
     { id: 'otomatik', ad: 'Sistemle aynı', zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
     { id: 'koyu',     ad: 'Gece moru',     zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
     { id: 'dinginlik',ad: 'Dinginlik',     zemin: '#102830', a: '#8fd8c8', b: '#f0cfa0' },
@@ -1302,6 +1305,9 @@
     { id: 'kiraz',    ad: 'Kiraz',         zemin: '#1a0f14', a: '#ff9aa8', b: '#ffcf8a' },
     { id: 'bakir',    ad: 'Bakır',         zemin: '#191512', a: '#e8b478', b: '#f5d49a' },
     { id: 'komur',    ad: 'Kömür (renksiz)', zemin: '#141416', a: '#d8d8de', b: '#c8b48a' },
+    { id: 'gokyuzu',  ad: 'Gökyüzü',        zemin: '#f6faff', a: '#1668a8', b: '#96590d' },
+    { id: 'kum',      ad: 'Kum',            zemin: '#fbf7f0', a: '#8f5d0c', b: '#8a5a1c' },
+    { id: 'zeytin',   ad: 'Zeytin',         zemin: '#f7f8f1', a: '#436b20', b: '#8d6410' },
     { id: 'acik',     ad: 'Açık (gündüz)', zemin: '#fdf6f0', a: '#0a6d62', b: '#8f540c' },
     { id: 'kagit',    ad: 'Kâğıt (açık)',   zemin: '#faf7f2', a: '#0f8a76', b: '#9a6410' },
   ];

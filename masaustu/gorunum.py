@@ -255,6 +255,63 @@ TEMALAR = {
         "mola_halka": "#f5d49a", "mola_parilti": "#e8b478",
         "grafik": ["#e8b478", "#f5d49a", "#c8b89a", "#e09a75", "#b0c095"],
     },
+    "beyaz": {
+        "ad": "Beyaz",
+        "panel": {
+            "zemin": "#ffffff", "zemin2": "#f4f6f7", "kart": "#ffffff",
+            "kart2": "#f2f5f6", "cizgi": "#dfe5e6",
+            "yazi": "#16232a", "soluk": "#5a6b72",
+            "vurgu": "#0f8c78", "sicak": "#9a6410", "uyari": "#b8503a",
+            # Beyaz yazı bu vurguda 4.16 veriyordu (eşik 4.5); koyu yazı 5.05.
+            "ana_yazi": "#00120e",
+        },
+        "mola": ["#081a20", "#0f2b33", "#174049", "#21575e", "#2f6f70"],
+        "mola_yazi": "#eef7f4", "mola_soluk": "#a8c9c4",
+        "mola_halka": "#f0cfa0", "mola_parilti": "#8fd8c8",
+        "grafik": ["#0f8c78", "#9a6410", "#1668a8", "#b8503a", "#436b20"],
+    },
+    "gokyuzu": {
+        "ad": "Gökyüzü",
+        "panel": {
+            "zemin": "#f6faff", "zemin2": "#eaf2fb", "kart": "#ffffff",
+            "kart2": "#eff5fd", "cizgi": "#d8e4f2",
+            "yazi": "#17222f", "soluk": "#566577",
+            "vurgu": "#1668a8", "sicak": "#96590d", "uyari": "#b04a49",
+            "ana_yazi": "#ffffff",
+        },
+        "mola": ["#071019", "#0d1e2e", "#163047", "#204561", "#2f5d78"],
+        "mola_yazi": "#eff6fd", "mola_soluk": "#a6c0d8",
+        "mola_halka": "#f0cfa0", "mola_parilti": "#8fc4e8",
+        "grafik": ["#1668a8", "#96590d", "#0f8c78", "#b04a49", "#6a5aa8"],
+    },
+    "kum": {
+        "ad": "Kum",
+        "panel": {
+            "zemin": "#fbf7f0", "zemin2": "#f4ede1", "kart": "#ffffff",
+            "kart2": "#f7f1e7", "cizgi": "#e5dccb",
+            "yazi": "#2b2419", "soluk": "#6d6151",
+            "vurgu": "#8f5d0c", "sicak": "#8a5a1c", "uyari": "#b05436",
+            "ana_yazi": "#ffffff",
+        },
+        "mola": ["#100c07", "#1d160e", "#2f2317", "#453221", "#5e442b"],
+        "mola_yazi": "#fbf5ec", "mola_soluk": "#c8b69c",
+        "mola_halka": "#f0cfa0", "mola_parilti": "#d8b078",
+        "grafik": ["#8f5d0c", "#b05436", "#4c7a26", "#1668a8", "#7a5a8a"],
+    },
+    "zeytin": {
+        "ad": "Zeytin",
+        "panel": {
+            "zemin": "#f7f8f1", "zemin2": "#edf0e3", "kart": "#ffffff",
+            "kart2": "#f2f5ea", "cizgi": "#dde2ce",
+            "yazi": "#1f2718", "soluk": "#5c6650",
+            "vurgu": "#436b20", "sicak": "#8d6410", "uyari": "#a85a34",
+            "ana_yazi": "#ffffff",
+        },
+        "mola": ["#0b1109", "#151f11", "#23331b", "#344828", "#4a5f34"],
+        "mola_yazi": "#f2f7ee", "mola_soluk": "#b3c4a6",
+        "mola_halka": "#f0cfa0", "mola_parilti": "#9ec87a",
+        "grafik": ["#436b20", "#8d6410", "#1668a8", "#a85a34", "#6a5aa8"],
+    },
     "acik": {
         "ad": "Açık (gündüz)",
         "panel": {
@@ -387,10 +444,18 @@ def parilti_ciz(tuval, x, y, yaricap, renk, zemin_renk, katman=22,
     """
     for i in range(katman, 0, -1):
         oran = i / katman
+        k = (1 - oran) ** 2 * guc
+        # En dıştaki halkalarda karışım oranı sıfıra düşüyor ve MERKEZİN
+        # zemin rengiyle düz bir daire boyanıyor. Arkadaki asıl zemin bir
+        # gradyan olduğu için o daire kenarı belli bir leke bırakıyordu —
+        # yumuşak ışıma değil, sınırı görünen koyu bir daire. Katkısı
+        # görünmeyecek kadar az olan halkaları hiç çizmiyoruz.
+        if k < 0.03:
+            continue
         r = yaricap * oran
-        c = karistir(zemin_renk, renk, (1 - oran) ** 2 * guc)
         tuval.create_oval(x - r, y - r, x + r, y + r,
-                          fill=c, outline="", tags=etiket)
+                          fill=karistir(zemin_renk, renk, k),
+                          outline="", tags=etiket)
 
 
 # Açılışta varsayılan temayı yükle

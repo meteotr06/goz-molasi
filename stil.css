@@ -156,6 +156,54 @@
   --mola-yazi: #fbf5ec; --mola-soluk: #c4b39c;
 }
 
+/* ---- AÇIK TEMALAR ----
+   Uygulama ilk açıldığında beyaz gelir. Ana ekranın aydınlık olması
+   mola ekranıyla çelişmiyor: mola ekranı HER temada koyu kalıyor,
+   çünkü asıl iş orada. */
+:root[data-tema="beyaz"] {
+  --zemin: #ffffff;  --zemin-2: #f4f6f7;  --kart: #ffffff;  --kart-2: #f2f5f6;
+  --cizgi: #dfe5e6;  --yazi: #16232a;     --yazi-soluk: #5a6b72;
+  --vurgu-ham: #0f8c78; --vurgu-koyu: #00120e;
+  --uyari-ham: #9a6410; --mola-ham: #9a6410; --mercan-ham: #b8503a;
+  --golge: 0 10px 28px rgba(22, 40, 48, 0.10);
+  --mola-1-ham: #081a20; --mola-2-ham: #0f2b33; --mola-3-ham: #174049;
+  --mola-4-ham: #21575e; --mola-5-ham: #2f6f70;
+  --mola-yazi: #eef7f4; --mola-soluk: #a8c9c4;
+}
+:root[data-tema="kum"] {
+  --zemin: #fbf7f0;  --zemin-2: #f4ede1;  --kart: #ffffff;  --kart-2: #f7f1e7;
+  --cizgi: #e5dccb;  --yazi: #2b2419;     --yazi-soluk: #6d6151;
+  /* Ölçtüm: #a06a12 + koyu yazı 4.01 veriyordu (eşik 4.5).
+     Vurgu bir tık koyulaşıp yazı beyaza döndü: 5.62. */
+  --vurgu-ham: #8f5d0c; --vurgu-koyu: #ffffff;
+  --uyari-ham: #8a5a1c; --mola-ham: #8a5a1c; --mercan-ham: #b05436;
+  --golge: 0 10px 28px rgba(90, 70, 40, 0.11);
+  --mola-1-ham: #100c07; --mola-2-ham: #1d160e; --mola-3-ham: #2f2317;
+  --mola-4-ham: #453221; --mola-5-ham: #5e442b;
+  --mola-yazi: #fbf5ec; --mola-soluk: #c8b69c;
+}
+:root[data-tema="gokyuzu"] {
+  --zemin: #f6faff;  --zemin-2: #eaf2fb;  --kart: #ffffff;  --kart-2: #eff5fd;
+  --cizgi: #d8e4f2;  --yazi: #17222f;     --yazi-soluk: #566577;
+  --vurgu-ham: #1668a8; --vurgu-koyu: #ffffff;
+  --uyari-ham: #96590d; --mola-ham: #96590d; --mercan-ham: #b04a49;
+  --golge: 0 10px 28px rgba(30, 60, 100, 0.11);
+  --mola-1-ham: #071019; --mola-2-ham: #0d1e2e; --mola-3-ham: #163047;
+  --mola-4-ham: #204561; --mola-5-ham: #2f5d78;
+  --mola-yazi: #eff6fd; --mola-soluk: #a6c0d8;
+}
+:root[data-tema="zeytin"] {
+  --zemin: #f7f8f1;  --zemin-2: #edf0e3;  --kart: #ffffff;  --kart-2: #f2f5ea;
+  --cizgi: #dde2ce;  --yazi: #1f2718;     --yazi-soluk: #5c6650;
+  /* Ölçtüm: #4c7a26 + koyu yazı 3.64 veriyordu. Beyaz yazı: 6.25. */
+  --vurgu-ham: #436b20; --vurgu-koyu: #ffffff;
+  --uyari-ham: #8d6410; --mola-ham: #8d6410; --mercan-ham: #a85a34;
+  --golge: 0 10px 28px rgba(60, 80, 40, 0.11);
+  --mola-1-ham: #0b1109; --mola-2-ham: #151f11; --mola-3-ham: #23331b;
+  --mola-4-ham: #344828; --mola-5-ham: #4a5f34;
+  --mola-yazi: #f2f7ee; --mola-soluk: #b3c4a6;
+}
+
 /* Kullanıcı ayarlardan elle açık tema seçtiyse */
 :root[data-tema="acik"] {
   --zemin:      #fdf6f0;
@@ -1263,3 +1311,14 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .kip-sec[aria-pressed="true"] span { color: var(--yazi); }
 
 @media (prefers-reduced-motion: reduce) { .kip-sec { transition: none; } }
+
+/* Alt bilgideki bağlantılar 16px yüksekliğindeydi. Metin içi bağlantı
+   olduğu için dokunma hedefi kuralından muaf sayılıyor, ama rehber
+   bağlantısı önemli — parmakla rahat basılsın. */
+.alt-bilgi { line-height: 2.4; }
+.alt-bilgi a {
+  display: inline-block;
+  padding: 10px 6px;
+  border-radius: 8px;
+}
+.alt-bilgi a:hover, .alt-bilgi a:focus-visible { background: var(--kart-2); }

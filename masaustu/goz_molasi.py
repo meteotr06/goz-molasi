@@ -28,7 +28,7 @@ import gecmis as gcm
 import egzersiz as egz
 import ses
 import tepsi
-from bilgiler import BILGILER, MOLA_CUMLELERI
+from bilgiler import BILGILER, IPUCLARI, MOLA_CUMLELERI
 
 def kaynak_yolu(ad):
     """Dosya yolunu bul.
@@ -117,7 +117,9 @@ VARSAYILAN = {
     "analiz_izni": None,      # None = henüz sorulmadı
     "acilis_izni": None,      # None = henüz sorulmadı (açılışta başlasın mı)
     "ses": True,
-    "tema": "gece",
+    # İlk açılışta beyaz. Mola ekranı her temada koyu kalıyor,
+    # yani aydınlık panel gözü dinlendirme amacıyla çelişmiyor.
+    "tema": "beyaz",
     "kilit": None,            # {"yontem","tur","tuz","ozet"} — düz metin ASLA
     "bekci": True,            # kilit açıkken zorla kapatılırsa geri açsın mı
     # SESSİZ ÖLÇÜM: program açık kalır, ekran süresini ve hangi programda
@@ -385,7 +387,7 @@ class MolaEkrani:
         self.t.tag_lower("gradyan")
 
     def _neden_goster(self):
-        baslik, metin, kaynak = random.choice(BILGILER)
+        baslik, metin, kaynak = self.uyg.sonraki_kart()
         genislik = min(760, self.gen - 140)
 
         kart = self.t.create_rectangle(
@@ -694,6 +696,9 @@ class Uygulama:
         self.mola_ekrani = None
         self.balon = None
         self.uzun_mola_mi = False
+        self.kart_sirasi = 0
+        self.bilgi_no = random.randrange(len(BILGILER) or 1)
+        self.ipucu_no = 0
         self.son_bosta = 0.0
         self.duraklama_bitis = 0
         self.tepsi = None
@@ -1195,6 +1200,64 @@ class Uygulama:
                 self.tepsi.menuyu_tazele()
             self._panel_yenile()
             return
+
+    def sonraki_kart(self):
+        """Mola ekranında gösterilecek sıradaki kart.
+
+        Eskiden random.choice(BILGILER) ile seçiliyordu; aynı bilgi üst
+        üste iki molada çıkabiliyordu. Artık sıra dönüyor ve TÜRÜ de
+        değişiyor: neden → ipucu → neden → durumun → ...
+
+          neden  : göz sağlığı bilgisi, kaynaklı
+          ipucu  : molada YAPILACAK şey
+          durumun: kişinin kendi geçmişi
+
+        Sürekli aynı türde kart okumak sıkıcı; ayrıca "neden" bilmek
+        yetmiyor, "ne yapacağını" da söylemek gerekiyor.
+        """
+        # Altılı dizi: "durumun" kartı dört molada bir gelince fazla
+        # sık tekrarlıyordu (sekiz molada iki kez).
+        SIRA = ("neden", "ipucu", "neden", "durumun", "neden", "ipucu")
+        for _ in range(len(SIRA)):
+            tur = SIRA[self.kart_sirasi % len(SIRA)]
+            self.kart_sirasi += 1
+            if tur == "neden" and BILGILER:
+                k = BILGILER[self.bilgi_no % len(BILGILER)]
+                self.bilgi_no += 1
+                return k
+            if tur == "ipucu" and IPUCLARI:
+                k = IPUCLARI[self.ipucu_no % len(IPUCLARI)]
+                self.ipucu_no += 1
+                return k
+            if tur == "durumun":
+                k = self._durum_karti()
+                if k:
+                    return k
+        return BILGILER[0]
+
+    def _durum_karti(self):
+        """Kişinin kendi geçmişi. Hiç mola yoksa gösterilmez —
+        "bugün 0 mola" demek moral bozar."""
+        bugun = int(self.ist.get("tamamlanan", 0))
+        try:
+            gunler = gcm.son_gunler(KAYIT_KLASOR, 7, self.ist)
+            hafta = sum(sayi for _, sayi, _ in gunler)
+            seri = gcm.seri(KAYIT_KLASOR, self.ist)
+        except Exception:
+            hafta, seri = bugun, 0
+        if bugun == 0 and hafta == 0:
+            return None
+
+        parca = ["Bugün %d mola tamamladın." % bugun]
+        if hafta > bugun:
+            parca.append("Son yedi günde toplam %d mola." % hafta)
+        if seri >= 2:
+            parca.append("%d gündür üst üste günlük hedefi tutturuyorsun." % seri)
+        dk = round(hafta * self.ayar["mola_sn"] / 60.0)
+        if dk >= 1:
+            parca.append("Bu, yaklaşık %d dakikalık toplam göz dinlenmesi demek." % dk)
+        return ("Senin durumun", " ".join(parca),
+                "Kendi geçmişin · yalnızca bu cihazda saklanır")
 
     def sadece_olc_degistir(self):
         """Sessiz ölçüm modunu aç/kapat.

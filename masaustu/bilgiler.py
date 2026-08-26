@@ -118,3 +118,52 @@ MOLA_CUMLELERI = [
     "Uzaktaki bir noktaya odaklan, sonra parmağına, sonra tekrar uzağa.",
     "Bir yudum su iç. Vücudun susuzken göz de kurur.",
 ]
+
+
+# ----------------------------------------------------------------------
+# İPUÇLARI — molada YAPILACAK şeyler.
+# BİLGİLER "neden" anlatıyor, bunlar "ne yap" diyor. Mola ekranında
+# ikisi dönüşümlü çıkıyor; sürekli aynı türde kart okumak sıkıcı.
+# Web sürümündeki mola_icerik.js ile aynı içerik.
+# ----------------------------------------------------------------------
+IPUCLARI = [
+    (
+        "Bilerek üç kez tam kırp",
+        "Ekrana bakarken çoğu göz kırpma yarım kalır, kapaklar tam kapanmaz. "
+        "Şimdi üç kez, kapaklar tamamen birleşecek şekilde yavaşça kırp. "
+        "Kapağın kenarındaki yağ bezlerini boşaltan şey bu.",
+        "Ophthalmology & Therapy, 2023",
+    ),
+    (
+        "Ekranı biraz aşağı al",
+        "Ekranın üst kenarı göz hizanın ALTINDA olsun. Yukarı bakarak çalışmak "
+        "göz kapağını daha çok açar, açıkta kalan yüzey büyür, gözyaşı daha "
+        "hızlı buharlaşır.",
+        "American Optometric Association",
+    ),
+    (
+        "Bir kol boyu uzakta dursun",
+        "Ekranla aran 50–70 cm olsun — yaklaşık bir kol boyu. Daha yakını "
+        "odaklama kasını sürekli kasılı tutar.",
+        "American Academy of Ophthalmology",
+    ),
+    (
+        "Klimanın önünde oturma",
+        "Doğrudan üzerine gelen hava akımı gözyaşı tabakasını kurutur. "
+        "Vantilatörü ve klimayı yüzünden başka yöne çevir.",
+        "Tear Film & Ocular Surface Society, DEWS II",
+    ),
+    (
+        "Parlaklığı odana uydur",
+        "Ekran, arkasındaki duvardan belirgin şekilde parlak olmamalı. "
+        "Ekrana baktığında odanın geri kalanı karanlık bir mağara gibi "
+        "görünüyorsa parlaklığı düşür.",
+        "AOA — bilgisayar görme sendromu önerileri",
+    ),
+    (
+        "Su iç",
+        "Vücut susuz kaldığında gözyaşı üretimi de düşer. Molayı bir bardak "
+        "su içmek için kullan — hem kalkmış olursun.",
+        "Journal of Clinical Medicine, 2021",
+    ),
+]
