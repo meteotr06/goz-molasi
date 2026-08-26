@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import random
+import re as _re
 import secrets
 import sys
 import time
@@ -317,6 +318,17 @@ def sayi_oku(metin, varsayilan=None):
         if len(parcalar) > 1 and all(len(p) == 3 for p in parcalar[1:]) \
                 and parcalar[0].lstrip("-+").isdigit():
             m = "".join(parcalar)
+    # float() TEMIZLENMEMIS METNI KABUL EDER: nan, inf, Infinity,
+    # 1e3, 1_000. Hicbirini kullanici kastetmez ama hepsi sessizce
+    # sayiya donuyordu. nan en kotusu: int(nan) coker ve Kaydet
+    # dugmesi sessizce hicbir sey yapmaz; ayrica nan ile yapilan her
+    # karsilastirma False doner, yani bir sinir kontrolu nan'a
+    # takilirsa sinir HIC uygulanmaz.
+    #
+    # O yuzden bicimi float()'tan ONCE dogruluyoruz: rakam, en fazla
+    # bir ondalik ayraci ve istege bagli isaret. Baska hicbir sey.
+    if not _re.match(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", m):
+        return varsayilan
     try:
         return float(m)
     except ValueError:

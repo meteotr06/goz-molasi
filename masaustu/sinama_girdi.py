@@ -49,6 +49,23 @@ SAYILAR = [
     ("abc",       None,     "harf — reddedilmeli"),
     ("",          None,     "boş — reddedilmeli"),
     ("...",       None,     "yalnız ayraç — reddedilmeli"),
+    # float()/parseFloat() tuzagi — hepsi SESSIZCE sayiya donuyordu
+    ("nan",       None,     "NaN — her karsilastirma False, sinir hic uygulanmaz"),
+    ("NaN",       None,     "NaN buyuk harf"),
+    ("inf",       None,     "sonsuz"),
+    ("-inf",      None,     "eksi sonsuz"),
+    ("Infinity",  None,     "sonsuz, uzun yazim"),
+    ("1e3",       None,     "bilimsel gosterim — kullanici kastetmez"),
+    ("1E5",       None,     "bilimsel gosterim buyuk harf"),
+    ("1_000",     None,     "alt cizgili — Python kabul ediyordu"),
+    ("1,2,3",     None,     "tutarsiz gruplama"),
+    ("1.500.5",   None,     "son grup uc hane degil"),
+    ("+5",        5.0,      "arti isareti"),
+    ("0,30",      0.3,      "sifirla baslayan ondalik"),
+    ("1.234.567,89", 1234567.89, "cok gruplu binlik"),
+    (",5",        0.5,      "bastaki sifir atlanmis"),
+    ("1.",        1.0,      "sondaki ayrac"),
+    ("  ",        None,     "yalniz bosluk"),
 ]
 
 SAATLER = [
