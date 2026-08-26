@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v69">
+<link rel="stylesheet" href="stil.css?s=v72">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -101,6 +101,19 @@
     <button class="dugme sade yuvarlak" id="temaDugme" title="Temayı değiştir" aria-label="Temayı değiştir">◐</button>
     <button class="dugme sade yuvarlak" id="ayarDugme" title="Ayarlar" aria-label="Ayarlar">⚙</button>
   </header>
+
+  <!-- SEKME ÇUBUĞU
+       Bilgiler dört ayrı dosyaya dağılmıştı ve hiçbiri tek başına
+       görüntülenemiyordu; yalnızca molalarda tek tek çıkıyorlardı.
+       Merak eden kişinin hepsini görebileceği bir yer yoktu. -->
+  <nav class="sekme-cubugu" role="tablist" aria-label="Bölümler">
+    <button type="button" class="sekme secili" id="sekmeDugmeSayac"
+            role="tab" aria-selected="true" aria-controls="sekmeSayac">Sayaç</button>
+    <button type="button" class="sekme" id="sekmeDugmeBilgiler"
+            role="tab" aria-selected="false" aria-controls="sekmeBilgiler">Bilgiler</button>
+  </nav>
+
+  <div id="sekmeSayac" role="tabpanel" aria-labelledby="sekmeDugmeSayac">
 
   <!-- SAYAÇ -->
   <main class="sayac-kart">
@@ -285,6 +298,22 @@
     </div>
   </details>
 
+  </div><!-- /sekmeSayac -->
+
+  <!-- BİLGİLER SEKMESİ
+       İçerik JS ile kuruluyor: veriler zaten bilgiler.js, dunya.js,
+       mola_icerik.js ve egzersiz.js içinde. Buraya elle yazmak, aynı
+       metnin iki kopyası demek olurdu — bugün bilgiler.py/js ikizinin
+       tam bu yüzden ayrıştığını yakaladık. -->
+  <section id="sekmeBilgiler" role="tabpanel"
+           aria-labelledby="sekmeDugmeBilgiler" hidden>
+    <p class="bilgiler-giris" id="bilgilerGiris">
+      Uygulamadaki bütün bilgiler burada. Her sağlık iddiasının kaynağı
+      altında yazıyor; kanıtı zayıf olanlarda bunu açıkça söylüyoruz.
+    </p>
+    <div id="bilgilerIcerik"></div>
+  </section>
+
   <p class="alt-bilgi">
     Bu uygulama tıbbi tavsiye değildir. Gözünde sürekli ağrı, bulanık görme veya baş ağrısı
     varsa göz hekimine görün. · Tüm veriler yalnızca bu cihazda saklanır, hiçbir yere gönderilmez.
@@ -320,6 +349,8 @@
           <tr><td><kbd>A</kbd></td><td>Ayarlar</td></tr>
           <tr><td><kbd>T</kbd></td><td>Temayı değiştir</td></tr>
           <tr><td><kbd>R</kbd></td><td>Sayacı sıfırla</td></tr>
+          <tr><td><kbd>B</kbd></td><td>Bilgiler sekmesi</td></tr>
+          <tr><td><kbd>S</kbd></td><td>Sayaç sekmesi</td></tr>
           <tr><td><kbd>?</kbd></td><td>Bu liste</td></tr>
         </tbody>
       </table>
@@ -640,14 +671,14 @@
     </form>
   </dialog>
 
-  <script src="dil.js?s=v69"></script>
-  <script src="bilgiler.js?s=v69"></script>
-  <script src="bilgiler_en.js?s=v69"></script>
-  <script src="dunya.js?s=v69"></script>
-  <script src="egzersiz.js?s=v69"></script>
-  <script src="reklam.js?s=v69"></script>
-  <script src="cekirdek.js?s=v69"></script>
-  <script src="mola_icerik.js?s=v69"></script>
-  <script src="arayuz.js?s=v69"></script>
+  <script src="dil.js?s=v72"></script>
+  <script src="bilgiler.js?s=v72"></script>
+  <script src="bilgiler_en.js?s=v72"></script>
+  <script src="dunya.js?s=v72"></script>
+  <script src="egzersiz.js?s=v72"></script>
+  <script src="reklam.js?s=v72"></script>
+  <script src="cekirdek.js?s=v72"></script>
+  <script src="mola_icerik.js?s=v72"></script>
+  <script src="arayuz.js?s=v72"></script>
 </body>
 </html>

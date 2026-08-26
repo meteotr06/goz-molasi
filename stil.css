@@ -572,6 +572,89 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 .uyari-balon.acik { transform: translate(-50%, 0); }
 .uyari-balon b { font-size: 14px; white-space: nowrap; }
 
+/* ---------------- SEKME ÇUBUĞU ---------------- */
+.sekme-cubugu {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 14px;
+  padding: 4px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 999px;
+}
+.sekme {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--soluk);
+  font: 600 14px/1.2 inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.sekme:hover { color: var(--yazi); }
+.sekme.secili { background: var(--vurgu); color: var(--ana-yazi, #0d2b28); }
+
+.bilgiler-giris {
+  max-width: 720px;
+  margin: 0 auto 18px;
+  color: var(--soluk);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.bilgi-bolum { max-width: 720px; margin: 0 auto 26px; }
+.bilgi-bolum > h3 {
+  font-size: 15px;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.bilgi-bolum > h3 small {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--soluk);
+}
+.bilgi-bolum > p.bolum-not {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--soluk);
+  line-height: 1.5;
+}
+.bilgi-oge {
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 14px;
+}
+.bilgi-oge b { display: block; font-size: 14.5px; margin-bottom: 5px; }
+.bilgi-oge p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--yazi); }
+/* UZUN KELIME BOLUNEBILSIN.
+   Yeni Zelanda'daki 85 harflik yer adi tek parca ve 375 px ekrana
+   sigmiyordu; kabi zorla genisletip butun sayfayi yatay kaydiriyordu.
+   Olctum: 123 px tasma. Uzun adresler ve kaynak baglantilari da ayni
+   sorunu cikarir, o yuzden kural genel. */
+.bilgi-oge b, .bilgi-oge p, .bilgi-oge .kaynak,
+.rehber-govde p, .rehber-govde li, .rehber-govde h1,
+.rehber-govde h2, .rehber-govde h3 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* Rehberdeki tablolar kendi icinde kaysin, sayfayi kaydirmasin */
+.rehber-govde table { display: block; overflow-x: auto; max-width: 100%; }
+.bilgi-oge .kaynak { display: block; margin-top: 7px; }
+.rehber-govde { max-width: 720px; margin: 0 auto; }
+.rehber-govde h1 { font-size: 20px; }
+.rehber-govde h2 { font-size: 17px; margin-top: 26px; }
+.rehber-govde h3 { font-size: 15px; }
+.rehber-govde img, .rehber-govde table { max-width: 100%; }
+.rehber-yukleniyor { color: var(--soluk); font-size: 13px; }
+
 /* Bağlantı gibi görünen DÜĞME.
    href="#" bir bağlantı değil, eylem. Sınama "kırık iç bağlantı"
    diye yakaladı ve haklıydı: hiçbir yere gitmiyor, ekran okuyucuya

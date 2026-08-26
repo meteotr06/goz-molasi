@@ -1432,6 +1432,133 @@
     motor.sifirla();
   });
 
+  /* ============================================================
+     BİLGİLER SEKMESİ
+
+     Bilgiler dört ayrı dosyaya dağılmıştı ve yalnızca molalarda tek
+     tek çıkıyorlardı; merak eden kişinin hepsini görebileceği bir yer
+     yoktu. Burada tek listede toplanıyorlar.
+
+     İçerik VERİDEN kuruluyor, HTML'e elle yazılmıyor. Elle yazmak aynı
+     metnin ikinci kopyası demek; bugün bilgiler.py ile bilgiler.js'in
+     tam bu yüzden ayrıştığını yakaladık.
+
+     Rehber de kopyalanmıyor: rehber.html çalışma anında çekilip içeri
+     konuyor. Tek kaynak, iki gösterim.
+     ============================================================ */
+  const kacis = (m) => String(m ?? '').replace(/[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function bilgiOgesi(baslik, metin, kaynak) {
+    return '<div class="bilgi-oge"><b>' + kacis(baslik) + '</b><p>'
+      + kacis(metin) + '</p>'
+      + (kaynak ? '<span class="kaynak">' + kacis(kaynak) + '</span>' : '')
+      + '</div>';
+  }
+
+  function bilgiBolumu(baslik, adet, not, ogeler) {
+    return '<section class="bilgi-bolum"><h3>' + kacis(baslik)
+      + ' <small>' + adet + '</small></h3>'
+      + (not ? '<p class="bolum-not">' + kacis(not) + '</p>' : '')
+      + ogeler.join('') + '</section>';
+  }
+
+  let bilgilerKuruldu = false;
+  async function bilgileriKur() {
+    if (bilgilerKuruldu) return;
+    bilgilerKuruldu = true;
+    const kap = $('bilgilerIcerik');
+    if (!kap) return;
+    const parcalar = [];
+
+    // 1) Göz sağlığı bilgileri
+    try {
+      const dizi = (aktifDil() === 'en' && typeof BILGILER_EN !== 'undefined')
+        ? BILGILER_EN : BILGILER;
+      parcalar.push(bilgiBolumu(
+        C('Göz sağlığı'), dizi.length,
+        C('Molalarda karşına çıkan kartlar. Kanıtı zayıf olanlarda bunu '
+          + 'açıkça yazıyoruz — abartılı sağlık iddiası yok.'),
+        dizi.map((b) => bilgiOgesi(b.baslik, b.metin, b.kaynak))));
+    } catch {}
+
+    // 2) Pratik ipuçları
+    try {
+      const ip = MolaIcerik.ipuclari();
+      parcalar.push(bilgiBolumu(
+        C('Pratik ipuçları'), ip.length,
+        C('Molada ya da masa başında yapabileceğin küçük şeyler.'),
+        ip.map((b) => bilgiOgesi(b.baslik, b.metin, b.kaynak))));
+    } catch {}
+
+    // 3) Egzersizler
+    try {
+      parcalar.push(bilgiBolumu(
+        C('Molalardaki egzersizler'), TUM_EGZERSIZLER.length,
+        C('Mola ekranında sırayla çıkarlar. "Uzağa bak" asıl olan; '
+          + 'diğerleri ekranın ezberlenip görünmez olmasını önlüyor.'),
+        TUM_EGZERSIZLER.map((E) => bilgiOgesi(E.ad, E.yonerge, ''))));
+    } catch {}
+
+    // 4) Dünyadan — İngilizcede henüz yok
+    try {
+      if (typeof DUNYA !== 'undefined' && DUNYA.length && aktifDil() !== 'en') {
+        parcalar.push(bilgiBolumu(
+          'Dünyadan', DUNYA.length,
+          'Göz sağlığıyla ilgisi yok. Molada birkaç saniyeliğine merak '
+          + 'edilecek bir şey olsun diye.',
+          DUNYA.map((b) => bilgiOgesi(b.baslik, b.metin, b.kaynak))));
+      }
+    } catch {}
+
+    kap.innerHTML = parcalar.join('')
+      + '<section class="bilgi-bolum"><h3>' + kacis(C('Ayrıntılı rehber'))
+      + '</h3><div class="rehber-govde" id="rehberGovde">'
+      + '<p class="rehber-yukleniyor">' + kacis(C('Yükleniyor…'))
+      + '</p></div></section>';
+
+    /* Rehberi ÇEKİP koyuyoruz, kopyalamıyoruz. rehber.html hem arama
+       motorları için ayrı bir sayfa olarak duruyor hem de burada
+       görünüyor — tek kaynak. Çevrimdışıyken servis işçisinin
+       önbelleğinden geliyor; o da yoksa bağlantı bırakıyoruz. */
+    const govde = $('rehberGovde');
+    try {
+      const adres = aktifDil() === 'en' ? 'guide.html' : 'rehber.html';
+      const yanit = await fetch(adres);
+      if (!yanit.ok) throw new Error(yanit.status);
+      const belge = new DOMParser().parseFromString(await yanit.text(), 'text/html');
+      const yazi = belge.querySelector('main.yazi');
+      if (!yazi) throw new Error('govde yok');
+      yazi.querySelectorAll('script, .reklam-alani, nav.icindekiler')
+        .forEach((o) => o.remove());
+      govde.innerHTML = yazi.innerHTML;
+    } catch {
+      const adres = aktifDil() === 'en' ? 'guide.html' : 'rehber.html';
+      govde.innerHTML = '<p class="rehber-yukleniyor">'
+        + kacis(C('Rehber şu an yüklenemedi.')) + ' <a href="' + adres
+        + '">' + kacis(C('Ayrı sayfada aç')) + '</a></p>';
+    }
+    try { sayfayiCevir(kap); } catch {}
+  }
+
+  /* ---------- Sekme değiştirme ---------- */
+  const sekmeler = [
+    { dugme: $('sekmeDugmeSayac'), panel: $('sekmeSayac') },
+    { dugme: $('sekmeDugmeBilgiler'), panel: $('sekmeBilgiler') },
+  ];
+  function sekmeSec(ad) {
+    sekmeler.forEach((s) => {
+      const secili = s.panel && s.panel.id === ad;
+      if (!s.dugme || !s.panel) return;
+      s.dugme.classList.toggle('secili', secili);
+      s.dugme.setAttribute('aria-selected', secili ? 'true' : 'false');
+      s.panel.hidden = !secili;
+    });
+    if (ad === 'sekmeBilgiler') bilgileriKur();
+  }
+  sekmeler.forEach((s) => s.dugme?.addEventListener(
+    'click', () => sekmeSec(s.panel.id)));
+
   /* ---------- KISAYOLLAR ----------
      Boşluk ve M zaten vardı ama hiçbir yerde yazmıyordu. Kimsenin
      bilmediği kısayol kısayol değil. Liste "?" ile ya da alttaki
@@ -1466,6 +1593,8 @@
     if (t === 'a') { e.preventDefault(); og.ayarAc.click(); return; }
     if (t === 't') { og.tema.click(); return; }
     if (t === 'r') { og.sifirla.click(); return; }
+    if (t === 'b') { sekmeSec('sekmeBilgiler'); return; }
+    if (t === 's') { sekmeSec('sekmeSayac'); return; }
     if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
       e.preventDefault();
       kisayollariGoster();

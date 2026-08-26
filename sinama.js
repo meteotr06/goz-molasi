@@ -225,6 +225,57 @@
          !!window.molaMotoru._isci, window.molaMotoru._isci ? 'Worker' : 'setInterval yedeği');
   }
 
+  /* ---------- BİLGİLER SEKMESİ ----------
+     Sekme varsayılan olarak GİZLİ, o yüzden yukarıdaki "yatay taşma
+     yok" denetimi içeriğini hiç ölçmüyordu. Ölçtüm: telefon boyutunda
+     123 piksel taşıyordu ve sınama 31/31 diyordu. Gizli içerik
+     denetlenmemiş içeriktir. */
+  {
+    const dugme = document.getElementById('sekmeDugmeBilgiler');
+    const panel = document.getElementById('sekmeBilgiler');
+    if (dugme && panel) {
+      const oncedenAcikti = !panel.hidden;
+      dugme.click();
+      // İçerik veriden kuruluyor + rehber ağdan çekiliyor
+      await new Promise((z) => setTimeout(z, 1500));
+
+      const bolum = panel.querySelectorAll('.bilgi-bolum').length;
+      ekle('bilgiler', 'bölümler kuruldu', bolum >= 4, `${bolum} bölüm`);
+
+      const oge = panel.querySelectorAll('.bilgi-oge').length;
+      ekle('bilgiler', 'kartlar kuruldu', oge >= 20, `${oge} kart`);
+
+      /* Egzersizler yönerge, iddia değil — kaynak beklemiyoruz.
+         Geri kalan her kartın kaynağı OLMALI. */
+      const egzersizAdet = (typeof TUM_EGZERSIZLER !== 'undefined')
+        ? TUM_EGZERSIZLER.length : 5;
+      const kaynaksiz = [...panel.querySelectorAll('.bilgi-oge')]
+        .filter((o) => !o.querySelector('.kaynak')).length;
+      ekle('bilgiler', 'her iddianın kaynağı var',
+           kaynaksiz <= egzersizAdet, `${kaynaksiz} kaynaksız`);
+
+      const rehber = document.getElementById('rehberGovde');
+      ekle('bilgiler', 'rehber içeri alındı',
+           !!rehber && rehber.querySelectorAll('h2').length >= 3,
+           `${rehber ? rehber.querySelectorAll('h2').length : 0} başlık`);
+
+      const gen = window.innerWidth;
+      const tasan = [...panel.querySelectorAll('*')].filter((o) => {
+        const r = o.getBoundingClientRect();
+        if (r.width === 0) return false;
+        const st = getComputedStyle(o);
+        if (st.overflowX === 'auto' || st.overflowX === 'scroll') return false;
+        return r.right > gen + 1;
+      });
+      ekle('bilgiler', 'sekme içeriği taşmıyor',
+           gen < 50 || tasan.length === 0,
+           gen < 50 ? 'ölçülemedi (pencere gizli)'
+                    : `${tasan.length} taşan öğe`);
+
+      if (!oncedenAcikti) document.getElementById('sekmeDugmeSayac')?.click();
+    }
+  }
+
   /* ---------- RAPOR ---------- */
   const kalan = sonuc.filter(r => r.durum === 'KALDI');
   return JSON.stringify({

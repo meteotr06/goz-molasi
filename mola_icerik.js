@@ -424,6 +424,9 @@ const MolaIcerik = (() => {
 
   return {
     sonraki, ETIKET, havaAyarla,
+    // Bilgiler sekmesi ipuçlarını tek listede gösteriyor.
+    // IIFE içinde kapalıydı; dışarı vermeden okunamıyordu.
+    ipuclari: _ipuclari,
     konumuBul, konumOku, konumSil, sehirAra, sehirSec,
     havaGetir, havaKarti, kaliteGetir, kaliteKarti, ozetKarti,
   };
