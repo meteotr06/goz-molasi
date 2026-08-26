@@ -201,6 +201,15 @@
     const kirik = [...document.querySelectorAll('a[href^="#"]')]
       .filter(a => { try { return !document.querySelector(a.getAttribute('href')); } catch { return true; } });
     ekle('sağlık', 'kırık iç bağlantı yok', kirik.length === 0, `${kirik.length} tane`);
+    /* META DESCRIPTION UZUNLUGU
+       Google arama sonucunda ~160 karakterde kesiyor. 200 karakterlik
+       bir aciklama yazilmisti; sondaki "telefonda da calisir" hicbir
+       zaman gorunmuyordu. Sinirin altinda tutuluyor mu, makine baksin. */
+    const aciklama = document.querySelector('meta[name="description"]')?.content || '';
+    ekle('sağlık', 'meta description 160 karakteri aşmıyor',
+         aciklama.length > 0 && aciklama.length <= 160,
+         `${aciklama.length} karakter`);
+
     const gorsel = [...document.images].filter(i => !i.complete || i.naturalWidth === 0);
     ekle('sağlık', 'yüklenmeyen görsel yok', gorsel.length === 0, `${gorsel.length} tane`);
     /* 40 değil 44: WCAG 2.5.8 alt sınırı 44x44. Telefonda ölçtüm,
