@@ -54,6 +54,10 @@
     bitisBaslik: $('bitisBaslik'),
     bitisAlt: $('bitisAlt'),
     bitisKapat: $('bitisKapat'),
+    etkinlikDugme: $('etkinlikDugme'),
+    etkinlikDurum: $('etkinlikDurum'),
+    istSureEtiket: $('istSureEtiket'),
+    sureKutucuk: $('sureKutucuk'),
     ayHava: $('ayHava'),
     havaDurum: $('havaDurum'),
     havaKonumSatir: $('havaKonumSatir'),
@@ -79,6 +83,8 @@
     ayArkaPlan: $('ayArkaPlan'),
     arkaPlanNot: $('arkaPlanNot'),
     temaSeridi: $('temaSeridi'),
+    ayCanlilik: $('ayCanlilik'),
+    canlilikDurum: $('canlilikDurum'),
     temaAdi: $('temaAdi'),
     hazirSureler: $('hazirSureler'),
     ayCalismaDeger: $('ayCalismaDeger'),
@@ -297,6 +303,49 @@
   }
 
   og.bitisKapat.addEventListener('click', bitisKartiniGizle);
+
+  /* ---- Cihaz etkinliği izni: ayarlardaki düğme ---- */
+  async function etkinlikDurumunuGoster() {
+    const d = await etkinlikIzniDurumu();
+    const acik = !!etkinlikDedektoru;
+
+    if (d === 'desteklenmiyor') {
+      og.etkinlikDugme.disabled = true;
+      og.etkinlikDugme.textContent = 'Desteklenmiyor';
+      og.etkinlikDurum.textContent =
+        'Bu tarayıcı cihaz etkinliğini paylaşmıyor (Chrome ve Edge destekliyor). ' +
+        'Sayaç yalnızca bu sekmedeki hareketi görüyor.';
+      return;
+    }
+    if (acik) {
+      og.etkinlikDugme.textContent = 'Kapat';
+      og.etkinlikDurum.textContent =
+        'Açık — sekme arka plandayken de cihazda hareket olup olmadığı görülüyor. ' +
+        'Sadece "etkin mi, ekran kilitli mi" bilgisi; ne yaptığın değil.';
+    } else if (d === 'denied') {
+      og.etkinlikDugme.textContent = 'İzin ver';
+      og.etkinlikDurum.textContent =
+        'İzin reddedilmiş. Adres çubuğundaki kilit simgesinden açabilirsin.';
+    } else {
+      og.etkinlikDugme.textContent = 'İzin ver';
+      og.etkinlikDurum.textContent =
+        'Kapalı — sayaç yalnızca bu sekmedeki hareketi görüyor. ' +
+        'Başka pencerede çalışırken "boşta" sanılabilir.';
+    }
+  }
+
+  og.etkinlikDugme.addEventListener('click', async () => {
+    if (etkinlikDedektoru) {
+      etkinligiDurdur();
+    } else {
+      og.etkinlikDugme.disabled = true;
+      await etkinligiBaslat(true);
+      og.etkinlikDugme.disabled = false;
+    }
+    og.ayCanlilik.value = canlilikOku();
+    canlilikUygula(canlilikOku());
+    etkinlikDurumunuGoster();
+  });
 
   /* ============================================================
      MOLALARDA HAVA DURUMU
@@ -715,6 +764,14 @@
     og.istMola.textContent = d.istatistik.tamamlananMola;
     og.istAtlanan.textContent = d.istatistik.atlananMola;
     og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)} dk`;
+    // Etiket dürüst olsun: izin yoksa bu sayı cihazın değil, sekmenin süresi
+    if (og.istSureEtiket) {
+      og.istSureEtiket.textContent = etkinlikDedektoru
+        ? 'cihaz başında süre' : 'takip edilen süre';
+      og.sureKutucuk.title = etkinlikDedektoru
+        ? 'Cihaz etkinliği izniyle ölçülüyor — sekme arka plandayken de sayar.'
+        : 'Bu sayaç yalnızca uygulama açıkken işler. Ayarlardan "Cihaz etkinliğini izle"yi açarsan arka planda da sayar.';
+    }
 
     haftayiCiz();
   }
@@ -1076,10 +1133,41 @@
     { id: 'gunbatimi',ad: 'Gün batımı',    zemin: '#231318', a: '#ffb08a', b: '#ffd68a' },
     { id: 'buz',      ad: 'Buz',           zemin: '#0d1620', a: '#a8dcf0', b: '#ffd9a0' },
     { id: 'lavanta',  ad: 'Lavanta',       zemin: '#181530', a: '#c0a9ff', b: '#ffd28f' },
+    { id: 'kiraz',    ad: 'Kiraz',         zemin: '#1a0f14', a: '#ff9aa8', b: '#ffcf8a' },
+    { id: 'bakir',    ad: 'Bakır',         zemin: '#191512', a: '#e8b478', b: '#f5d49a' },
     { id: 'komur',    ad: 'Kömür (renksiz)', zemin: '#141416', a: '#d8d8de', b: '#c8b48a' },
     { id: 'acik',     ad: 'Açık (gündüz)', zemin: '#fdf6f0', a: '#0a6d62', b: '#8f540c' },
+    { id: 'kagit',    ad: 'Kâğıt (açık)',   zemin: '#faf7f2', a: '#0f8a76', b: '#9a6410' },
   ];
   const temaSirasi = TEMALAR.map((t) => t.id);
+
+  /* ---- Canlılık ----
+     Tema paletleri stil.css'te ham duruyor; buradaki çarpan OKLCH'de
+     yalnızca doygunluğu değiştiriyor, açıklığa dokunmuyor. Yani renk
+     canlanır ama yazı kontrastı yerinde kalır. */
+  const CANLILIK_ANAHTAR = 'goz-molasi-canlilik';
+
+  function canlilikOku() {
+    const d = parseInt(localStorage.getItem(CANLILIK_ANAHTAR) || '100', 10);
+    return Number.isFinite(d) ? Math.min(150, Math.max(60, d)) : 100;
+  }
+
+  function canlilikUygula(yuzde, kaydet = false) {
+    document.documentElement.style.setProperty('--canlilik', (yuzde / 100).toFixed(2));
+    if (kaydet) { try { localStorage.setItem(CANLILIK_ANAHTAR, String(yuzde)); } catch {} }
+    if (og.canlilikDurum) {
+      const ad = yuzde <= 75 ? 'Sakin' : yuzde >= 130 ? 'Canlı' : 'Dengeli';
+      const destek = CSS.supports('color', 'oklch(from white l c h)');
+      og.canlilikDurum.textContent = destek
+        ? `${ad} (%${yuzde}) — yazı okunaklılığı değişmez, sadece renklerin doygunluğu`
+        : 'Bu tarayıcı canlılık ayarını desteklemiyor; tema renkleri olduğu gibi kullanılıyor.';
+      og.ayCanlilik.disabled = !destek;
+    }
+  }
+
+  canlilikUygula(canlilikOku());
+  og.ayCanlilik.addEventListener('input', () => canlilikUygula(+og.ayCanlilik.value, true));
+
 
   /* ============================================================
      HAZIR SÜRELER
@@ -1244,6 +1332,7 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    etkinlikDurumunuGoster();
     og.ayHava.checked = havaAcik;
     havaDurumunuGoster();
     og.ayBasSaat.value = motor.ayarlar.basSaat;
@@ -1355,6 +1444,79 @@
   ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach((olay) =>
     window.addEventListener(olay, () => motor.hareketVar(), { passive: true })
   );
+
+  /* ============================================================
+     CİHAZ ETKİNLİĞİ (Idle Detection API)
+
+     Sorun: yukarıdaki olaylar yalnızca BU SEKMEDE olan hareketi
+     görüyor. Kullanıcı başka pencerede çalışırken sekme "hareket
+     yok" sanıp sayacı durduruyordu; "ekran süresi 1 dakika"
+     görünmesinin sebebi de buydu — cihazın değil, sekmenin süresi.
+
+     Çözüm: IdleDetector. İzin verilirse tarayıcı, sekme arka planda
+     olsa bile cihazda hareket olup olmadığını söylüyor. İzin
+     ZORUNLU ve kullanıcı hareketiyle isteniyor (ayarlardaki düğme).
+     Desteklemeyen tarayıcıda (Firefox, Safari) her şey eskisi gibi
+     çalışmaya devam ediyor.
+
+     Ne öğreniyoruz: yalnızca "etkin mi / boşta mı" ve "ekran kilitli
+     mi". Ne yazdığını, hangi uygulamada olduğunu DEĞİL — tarayıcı
+     zaten söylemiyor.
+     ============================================================ */
+  const ETKINLIK_ANAHTAR = 'goz-molasi-etkinlik-izni';
+  let etkinlikDedektoru = null;
+
+  function etkinlikDesteklenirMi() {
+    return typeof window.IdleDetector === 'function';
+  }
+
+  async function etkinlikIzniDurumu() {
+    if (!etkinlikDesteklenirMi()) return 'desteklenmiyor';
+    try {
+      const d = await navigator.permissions.query({ name: 'idle-detection' });
+      return d.state;                 // granted | denied | prompt
+    } catch { return 'bilinmiyor'; }
+  }
+
+  /** İzni ister ve dinlemeye başlar. Tarayıcı bunu yalnızca bir
+      tıklamanın ardından soruyor, o yüzden ayarlardaki düğmeden. */
+  async function etkinligiBaslat(izinIste = false) {
+    if (!etkinlikDesteklenirMi() || etkinlikDedektoru) return false;
+    try {
+      if (izinIste) {
+        const izin = await IdleDetector.requestPermission();
+        if (izin !== 'granted') return false;
+      } else if ((await etkinlikIzniDurumu()) !== 'granted') {
+        return false;                 // sessizce vazgeç, soru sorma
+      }
+
+      const d = new IdleDetector();
+      d.addEventListener('change', () => {
+        // active + unlocked = kişi gerçekten cihazın başında
+        if (d.userState === 'active' && d.screenState === 'unlocked') {
+          motor.hareketVar();
+        }
+      });
+      // 60 sn, tarayıcının izin verdiği en kısa eşik
+      await d.start({ threshold: 60000 });
+      etkinlikDedektoru = d;
+      try { localStorage.setItem(ETKINLIK_ANAHTAR, '1'); } catch {}
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function etkinligiDurdur() {
+    try { etkinlikDedektoru?.abort?.(); } catch {}
+    etkinlikDedektoru = null;
+    try { localStorage.removeItem(ETKINLIK_ANAHTAR); } catch {}
+  }
+
+  // Daha önce izin verilmişse sessizce yeniden bağlan
+  try {
+    if (localStorage.getItem(ETKINLIK_ANAHTAR) === '1') etkinligiBaslat(false);
+  } catch {}
 
   /* ============================================================
      ARKA PLAN SORUNU

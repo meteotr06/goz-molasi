@@ -69,6 +69,10 @@ class Tepsi:
                 A("2 saat", lambda: self._duraklat(120)),
             ), visible=lambda e: not self.uyg.duraklatildi_mi()),
             A("Devam et", self._devam, visible=lambda e: self.uyg.duraklatildi_mi()),
+            # Sessiz ölçüm: program açık kalır, ölçmeye devam eder,
+            # ama mola vermez ve ekrana hiçbir şey çıkarmaz.
+            A("Sadece ölç (mola verme)", self._sadece_olc,
+              checked=lambda e: bool(self.uyg.ayar.get("sadece_olc"))),
             pystray.Menu.SEPARATOR,
             A("Ayarlar", self._ayarlar),
             A("Çıkış", self._cikis),
@@ -92,6 +96,9 @@ class Tepsi:
 
     def _devam(self, *a):
         self._ana(self.uyg.devam_et)
+
+    def _sadece_olc(self, *a):
+        self._ana(self.uyg.sadece_olc_degistir)
 
     def _ayarlar(self, *a):
         self._ana(self.uyg.ayarlari_ac)

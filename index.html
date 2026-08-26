@@ -157,7 +157,7 @@
   <section class="istatistik" aria-label="Bugünkü durum">
     <div class="kutucuk"><b id="istMola">0</b><span>tamamlanan mola</span></div>
     <div class="kutucuk"><b id="istAtlanan">0</b><span>atlanan mola</span></div>
-    <div class="kutucuk"><b id="istSure">0 dk</b><span>ekran süresi</span></div>
+    <div class="kutucuk" id="sureKutucuk" title="Bu sayaç yalnızca uygulama açıkken işler."><b id="istSure">0 dk</b><span id="istSureEtiket">takip edilen süre</span></div>
   </section>
 
   <!-- SON 7 GÜN -->
@@ -350,6 +350,13 @@
       </div>
 
       <div class="satir">
+        <label for="ayEtkinlik">Cihaz etkinliğini izle
+          <small id="etkinlikDurum">Sekme arka plandayken de çalışsın</small>
+        </label>
+        <button type="button" class="dugme kucuk" id="etkinlikDugme">İzin ver</button>
+      </div>
+
+      <div class="satir">
         <label for="ayHava">Molalarda hava durumu
           <small id="havaDurum">Kapalı — molalarda yalnızca göz bilgisi gösterilir</small>
         </label>
@@ -378,6 +385,19 @@
           <button type="button" class="dugme kucuk" id="kilitKurDugme">Şifreyi koy</button>
           <button type="button" class="dugme kucuk gizli" id="kilitKaldirDugme">Şifreyi kaldır</button>
         </span>
+      </div>
+
+      <div class="satir" style="display:block">
+        <label for="ayCanlilik">Canlılık
+          <small id="canlilikDurum">Renklerin doygunluğu — yazı okunaklılığı değişmez</small>
+        </label>
+        <input type="range" id="ayCanlilik" min="60" max="150" step="5" value="100"
+               list="canlilikNoktalari">
+        <datalist id="canlilikNoktalari">
+          <option value="60" label="Sakin"></option>
+          <option value="100" label="Dengeli"></option>
+          <option value="150" label="Canlı"></option>
+        </datalist>
       </div>
 
       <div class="satir" style="display:block">

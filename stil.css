@@ -17,17 +17,17 @@
   --cizgi:       #3a3268;
   --yazi:        #f2ecff;
   --yazi-soluk:  #a99bd0;
-  --vurgu:       #7ee0d2;   /* nane */
-  --vurgu-koyu:  #0d2b28;
-  --uyari:       #ffc46b;   /* kehribar */
-  --mola:        #ffc46b;
-  --mercan:      #ff8f7a;
+  --vurgu-ham:       #7ee0d2;   /* nane */
+  --vurgu-koyu:  #04211c;
+  --uyari-ham:       #ffc46b;   /* kehribar */
+  --mola-ham:        #ffc46b;
+  --mercan-ham:      #ff8f7a;
   --golge:       0 14px 38px rgba(8, 4, 30, 0.5);
   --yuvarlak:    18px;
 
   /* Mola ekranının gökyüzü gradyanı — her temada koyu kalır */
-  --mola-1: #0c1533; --mola-2: #1b1a46; --mola-3: #2f2154;
-  --mola-4: #4a2a56; --mola-5: #6b3350;
+  --mola-1-ham: #0c1533; --mola-2-ham: #1b1a46; --mola-3-ham: #2f2154;
+  --mola-4-ham: #4a2a56; --mola-5-ham: #6b3350;
   --mola-yazi: #fdf3ff; --mola-soluk: #c3a8d8;
 }
 
@@ -41,11 +41,11 @@
     --cizgi:      #e6d9e8;
     --yazi:       #241a3d;
     --yazi-soluk: #6b5b85;
-    --vurgu:      #0f9b8a;
-    --vurgu-koyu: #0d2b28;
-    --uyari:      #b06a12;
-    --mola:       #b06a12;
-    --mercan:     #d1543c;
+    --vurgu-ham:      #0f9b8a;
+    --vurgu-koyu: #04211c;
+    --uyari-ham:      #b06a12;
+    --mola-ham:       #b06a12;
+    --mercan-ham:     #d1543c;
     --golge:      0 12px 32px rgba(90, 50, 110, 0.13);
   }
 }
@@ -58,59 +58,90 @@
 :root[data-tema="okyanus"] {
   --zemin: #0a1826;  --zemin-2: #102538;  --kart: #16304a;  --kart-2: #1d3d5c;
   --cizgi: #28527a;  --yazi: #e9f4ff;     --yazi-soluk: #93b6d4;
-  --vurgu: #5fd3e8;  --vurgu-koyu: #062330; --uyari: #ffb877; --mola: #ffb877;
-  --mercan: #ff9b7a;
-  --mola-1: #04121f; --mola-2: #0a2338; --mola-3: #123a52; --mola-4: #1b5266; --mola-5: #2d6b6e;
+  --vurgu-ham: #5fd3e8;  --vurgu-koyu: #062330; --uyari-ham: #ffb877; --mola-ham: #ffb877;
+  --mercan-ham: #ff9b7a;
+  --mola-1-ham: #04121f; --mola-2-ham: #0a2338; --mola-3-ham: #123a52; --mola-4-ham: #1b5266; --mola-5-ham: #2d6b6e;
   --mola-yazi: #eaf7ff; --mola-soluk: #9dc6dd;
 }
 :root[data-tema="orman"] {
   --zemin: #0f1c17;  --zemin-2: #152a22;  --kart: #1b382c;  --kart-2: #224638;
   --cizgi: #2f5c48;  --yazi: #ecf7f0;     --yazi-soluk: #9ec4ae;
-  --vurgu: #8fe08a;  --vurgu-koyu: #0a2312; --uyari: #ffd27a; --mola: #ffd27a;
-  --mercan: #ffab6b;
-  --mola-1: #08150f; --mola-2: #0e251a; --mola-3: #163a27; --mola-4: #245139; --mola-5: #40643a;
+  --vurgu-ham: #8fe08a;  --vurgu-koyu: #0a2312; --uyari-ham: #ffd27a; --mola-ham: #ffd27a;
+  --mercan-ham: #ffab6b;
+  --mola-1-ham: #08150f; --mola-2-ham: #0e251a; --mola-3-ham: #163a27; --mola-4-ham: #245139; --mola-5-ham: #40643a;
   --mola-yazi: #f0fbf2; --mola-soluk: #a8ceb6;
 }
 :root[data-tema="safak"] {
   --zemin: #1d1220;  --zemin-2: #2a1729;  --kart: #361d33;  --kart-2: #43253d;
   --cizgi: #5a3450;  --yazi: #ffeef4;     --yazi-soluk: #d3a4bb;
-  --vurgu: #ff9eb5;  --vurgu-koyu: #3a0d1e; --uyari: #ffd08a; --mola: #ffd08a;
-  --mercan: #ffab8f;
-  --mola-1: #150a16; --mola-2: #2a1226; --mola-3: #472034; --mola-4: #6b3140; --mola-5: #8f4a44;
+  --vurgu-ham: #ff9eb5;  --vurgu-koyu: #3a0d1e; --uyari-ham: #ffd08a; --mola-ham: #ffd08a;
+  --mercan-ham: #ffab8f;
+  --mola-1-ham: #150a16; --mola-2-ham: #2a1226; --mola-3-ham: #472034; --mola-4-ham: #6b3140; --mola-5-ham: #8f4a44;
   --mola-yazi: #fff2f6; --mola-soluk: #dbb0c2;
 }
 
 :root[data-tema="gunbatimi"] {
   --zemin: #231318;  --zemin-2: #31191c;  --kart: #3d2124;  --kart-2: #4b292a;
   --cizgi: #653a37;  --yazi: #fff0ea;     --yazi-soluk: #d5a89b;
-  --vurgu: #ffb08a;  --vurgu-koyu: #3a1508; --uyari: #ffd68a; --mola: #ffd68a;
-  --mercan: #ff8f6b;
-  --mola-1: #190b10; --mola-2: #30141a; --mola-3: #542323; --mola-4: #7d3a2c; --mola-5: #a55a36;
+  --vurgu-ham: #ffb08a;  --vurgu-koyu: #3a1508; --uyari-ham: #ffd68a; --mola-ham: #ffd68a;
+  --mercan-ham: #ff8f6b;
+  --mola-1-ham: #190b10; --mola-2-ham: #30141a; --mola-3-ham: #542323; --mola-4-ham: #7d3a2c; --mola-5-ham: #a55a36;
   --mola-yazi: #fff4ec; --mola-soluk: #dcb1a0;
 }
 :root[data-tema="buz"] {
   --zemin: #0d1620;  --zemin-2: #13212e;  --kart: #1a2c3d;  --kart-2: #22384c;
   --cizgi: #2f4d68;  --yazi: #eaf4fb;     --yazi-soluk: #9db8cc;
-  --vurgu: #a8dcf0;  --vurgu-koyu: #08202c; --uyari: #ffd9a0; --mola: #ffd9a0;
-  --mercan: #ffb38a;
-  --mola-1: #060e16; --mola-2: #0d1c28; --mola-3: #16303f; --mola-4: #204558; --mola-5: #365e6f;
+  --vurgu-ham: #a8dcf0;  --vurgu-koyu: #08202c; --uyari-ham: #ffd9a0; --mola-ham: #ffd9a0;
+  --mercan-ham: #ffb38a;
+  --mola-1-ham: #060e16; --mola-2-ham: #0d1c28; --mola-3-ham: #16303f; --mola-4-ham: #204558; --mola-5-ham: #365e6f;
   --mola-yazi: #f0f9ff; --mola-soluk: #a9c6d8;
 }
 :root[data-tema="lavanta"] {
   --zemin: #181530;  --zemin-2: #211c42;  --kart: #2b2454;  --kart-2: #352c66;
   --cizgi: #463b80;  --yazi: #f0ecff;     --yazi-soluk: #b0a4dc;
-  --vurgu: #c0a9ff;  --vurgu-koyu: #1b0d3d; --uyari: #ffd28f; --mola: #ffd28f;
-  --mercan: #ffa8c4;
-  --mola-1: #0f0c22; --mola-2: #1b1640; --mola-3: #2d245e; --mola-4: #443577; --mola-5: #61478a;
+  --vurgu-ham: #c0a9ff;  --vurgu-koyu: #1b0d3d; --uyari-ham: #ffd28f; --mola-ham: #ffd28f;
+  --mercan-ham: #ffa8c4;
+  --mola-1-ham: #0f0c22; --mola-2-ham: #1b1640; --mola-3-ham: #2d245e; --mola-4-ham: #443577; --mola-5-ham: #61478a;
   --mola-yazi: #f6f2ff; --mola-soluk: #bfb0e4;
 }
 :root[data-tema="komur"] {
   --zemin: #141416;  --zemin-2: #1c1c1f;  --kart: #242427;  --kart-2: #2e2e32;
   --cizgi: #3d3d42;  --yazi: #f0f0f2;     --yazi-soluk: #a5a5ad;
-  --vurgu: #d8d8de;  --vurgu-koyu: #151517; --uyari: #c8b48a; --mola: #c8b48a;
-  --mercan: #c99a80;
-  --mola-1: #0a0a0b; --mola-2: #161618; --mola-3: #232326; --mola-4: #323236; --mola-5: #434349;
+  --vurgu-ham: #d8d8de;  --vurgu-koyu: #151517; --uyari-ham: #c8b48a; --mola-ham: #c8b48a;
+  --mercan-ham: #c99a80;
+  --mola-1-ham: #0a0a0b; --mola-2-ham: #161618; --mola-3-ham: #232326; --mola-4-ham: #323236; --mola-5-ham: #434349;
   --mola-yazi: #f4f4f6; --mola-soluk: #adadb5;
+}
+
+/* Paletteki üç boşluk: sıcak kırmızı, sıcak nötr ve ikinci bir
+   açık tema. Kömür renksiz ve soğuk; bakır onun sıcak karşılığı. */
+:root[data-tema="kiraz"] {
+  --zemin: #1a0f14;  --zemin-2: #26151b;  --kart: #331b22;  --kart-2: #40232a;
+  --cizgi: #57323a;  --yazi: #ffeef1;     --yazi-soluk: #d0a3ac;
+  --vurgu-ham: #ff9aa8; --vurgu-koyu: #3d0d18;
+  --uyari-ham: #ffcf8a; --mola-ham: #ffcf8a; --mercan-ham: #ff8f80;
+  --mola-1-ham: #120810; --mola-2-ham: #241019; --mola-3-ham: #401b26;
+  --mola-4-ham: #612635; --mola-5-ham: #8a3a44;
+  --mola-yazi: #fff0f3; --mola-soluk: #d9adb8;
+}
+:root[data-tema="bakir"] {
+  --zemin: #191512;  --zemin-2: #221d18;  --kart: #2c251e;  --kart-2: #372e26;
+  --cizgi: #4b3f33;  --yazi: #f8f2e9;     --yazi-soluk: #bfae97;
+  --vurgu-ham: #e8b478; --vurgu-koyu: #2a1a0a;
+  --uyari-ham: #f5d49a; --mola-ham: #f5d49a; --mercan-ham: #e09a75;
+  --mola-1-ham: #0f0c09; --mola-2-ham: #1b1611; --mola-3-ham: #2b231a;
+  --mola-4-ham: #3e3123; --mola-5-ham: #56422c;
+  --mola-yazi: #fbf5ec; --mola-soluk: #c4b39c;
+}
+:root[data-tema="kagit"] {
+  --zemin: #faf7f2;  --zemin-2: #f2ede4;  --kart: #ffffff;  --kart-2: #f7f3ec;
+  --cizgi: #e2dace;  --yazi: #2a2620;     --yazi-soluk: #6b6252;
+  --vurgu-ham: #0f9280; --vurgu-koyu: #00120e;
+  --uyari-ham: #9a6410; --mola-ham: #9a6410; --mercan-ham: #b8503a;
+  --golge: 0 12px 32px rgba(90, 70, 40, 0.12);
+  --mola-1-ham: #0f0c09; --mola-2-ham: #1b1611; --mola-3-ham: #2b231a;
+  --mola-4-ham: #3e3123; --mola-5-ham: #56422c;
+  --mola-yazi: #fbf5ec; --mola-soluk: #c4b39c;
 }
 
 /* Kullanıcı ayarlardan elle açık tema seçtiyse */
@@ -122,17 +153,64 @@
   --cizgi:      #e6d9e8;
   --yazi:       #241a3d;
   --yazi-soluk: #6b5b85;
-  --vurgu:      #0f9b8a;
-  --vurgu-koyu: #0d2b28;
-  --uyari:      #b06a12;
-  --mola:       #b06a12;
-  --mercan:     #d1543c;
+  --vurgu-ham:      #0f9b8a;
+  --vurgu-koyu: #04211c;
+  --uyari-ham:      #b06a12;
+  --mola-ham:       #b06a12;
+  --mercan-ham:     #d1543c;
   --golge:      0 12px 32px rgba(90, 50, 110, 0.13);
   /* Açık tema seçilse bile mola ekranı koyu kalır: göz dinlenecek */
-  --mola-1: #101a33; --mola-2: #1d2a4d; --mola-3: #2f3d63;
-  --mola-4: #455073; --mola-5: #5c6482;
+  --mola-1-ham: #101a33; --mola-2-ham: #1d2a4d; --mola-3-ham: #2f3d63;
+  --mola-4-ham: #455073; --mola-5-ham: #5c6482;
   --mola-yazi: #f4f8ff; --mola-soluk: #b9c6e0;
 }
+
+/* ============================================================
+   CANLILIK
+
+   Tema paletleri yukarıda HAM olarak duruyor (--vurgu-ham vb.).
+   Gerçek renkler burada, kullanıcının seçtiği canlılığa göre
+   türetiliyor.
+
+   Neden OKLCH? Bu renk uzayında "l" algılanan açıklık, "c" ise
+   doygunluk. Yalnızca c'yi çarpıyoruz, l'ye dokunmuyoruz — yani
+   renk canlanır ya da soluklaşır ama yazı/zemin kontrastı yerinde
+   kalır. RGB'de doygunluğu artırmak açıklığı da kaydırıyor ve
+   okunaklılık bozuluyordu.
+
+   Desteklemeyen tarayıcı ham rengi olduğu gibi alır; hiçbir şey
+   bozulmaz, sadece kaydırıcı işe yaramaz.
+   ============================================================ */
+:root {
+  --canlilik: 1;
+
+  --vurgu:  var(--vurgu-ham);
+  --uyari:  var(--uyari-ham);
+  --mercan: var(--mercan-ham);
+  --mola:   var(--mola-ham);
+  --mola-1: var(--mola-1-ham); --mola-2: var(--mola-2-ham);
+  --mola-3: var(--mola-3-ham); --mola-4: var(--mola-4-ham);
+  --mola-5: var(--mola-5-ham);
+}
+
+@supports (color: oklch(from white l c h)) {
+  :root {
+    --vurgu:  oklch(from var(--vurgu-ham)  l calc(c * var(--canlilik)) h);
+    --uyari:  oklch(from var(--uyari-ham)  l calc(c * var(--canlilik)) h);
+    --mercan: oklch(from var(--mercan-ham) l calc(c * var(--canlilik)) h);
+    --mola:   oklch(from var(--mola-ham)   l calc(c * var(--canlilik)) h);
+
+    /* Mola ekranının gökyüzü gradyanı da canlılığa uyuyor.
+       Burada çarpanı biraz kısıyoruz: mola ekranı 20 saniye boyunca
+       tam ekran duruyor, en canlı ayarda bile gözü yormamalı. */
+    --mola-1: oklch(from var(--mola-1-ham) l calc(c * (1 + (var(--canlilik) - 1) * 0.6)) h);
+    --mola-2: oklch(from var(--mola-2-ham) l calc(c * (1 + (var(--canlilik) - 1) * 0.6)) h);
+    --mola-3: oklch(from var(--mola-3-ham) l calc(c * (1 + (var(--canlilik) - 1) * 0.6)) h);
+    --mola-4: oklch(from var(--mola-4-ham) l calc(c * (1 + (var(--canlilik) - 1) * 0.6)) h);
+    --mola-5: oklch(from var(--mola-5-ham) l calc(c * (1 + (var(--canlilik) - 1) * 0.6)) h);
+  }
+}
+
 
 * { box-sizing: border-box; }
 

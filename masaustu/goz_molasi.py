@@ -46,6 +46,41 @@ AYAR_DOSYA = os.path.join(KAYIT_KLASOR, "ayarlar.json")
 IST_DOSYA = os.path.join(KAYIT_KLASOR, "istatistik.json")
 DURUM_DOSYA = os.path.join(KAYIT_KLASOR, "durum.json")
 
+# Programların dosya adı yerine insanca adı. Grafikte "javaw.exe"
+# yazmak kimseye bir şey anlatmıyor. Listede olmayan program, dosya
+# uzantısı atılıp baş harfi büyütülerek gösterilir.
+PROGRAM_ADLARI = {
+    "chrome.exe": "Chrome", "msedge.exe": "Edge", "firefox.exe": "Firefox",
+    "brave.exe": "Brave", "opera.exe": "Opera", "vivaldi.exe": "Vivaldi",
+    "code.exe": "VS Code", "devenv.exe": "Visual Studio",
+    "pycharm64.exe": "PyCharm", "idea64.exe": "IntelliJ",
+    "windowsterminal.exe": "Terminal", "cmd.exe": "Komut İstemi",
+    "powershell.exe": "PowerShell", "explorer.exe": "Dosya Gezgini",
+    "javaw.exe": "Minecraft (Java)", "java.exe": "Java",
+    "valorant.exe": "VALORANT", "riotclientux.exe": "Riot Client",
+    "steam.exe": "Steam", "steamwebhelper.exe": "Steam",
+    "discord.exe": "Discord", "spotify.exe": "Spotify",
+    "whatsapp.exe": "WhatsApp", "telegram.exe": "Telegram",
+    "excel.exe": "Excel", "winword.exe": "Word",
+    "powerpnt.exe": "PowerPoint", "outlook.exe": "Outlook",
+    "notepad.exe": "Not Defteri", "photoshop.exe": "Photoshop",
+    "vlc.exe": "VLC", "obs64.exe": "OBS", "zoom.exe": "Zoom",
+    "teams.exe": "Teams", "claude.exe": "Claude",
+    "goz molasi.exe": "Göz Molası", "lively.exe": "Lively",
+    "shellexperiencehost.exe": "Windows", "searchhost.exe": "Windows Arama",
+    "nvidia overlay.exe": "NVIDIA Overlay",
+}
+
+
+def program_adi(dosya):
+    """Dosya adını insanca ada çevir."""
+    ad = PROGRAM_ADLARI.get(dosya.lower())
+    if ad:
+        return ad
+    kok = dosya.rsplit(".", 1)[0]
+    return kok[:1].upper() + kok[1:] if kok else dosya
+
+
 VARSAYILAN = {
     "calisma_dk": 20,
     "mola_sn": 20,
@@ -66,6 +101,10 @@ VARSAYILAN = {
     "tema": "gece",
     "kilit": None,            # {"yontem","tur","tuz","ozet"} — düz metin ASLA
     "bekci": True,            # kilit açıkken zorla kapatılırsa geri açsın mı
+    # SESSİZ ÖLÇÜM: program açık kalır, ekran süresini ve hangi programda
+    # ne kadar durduğunu ölçmeye devam eder, ama MOLA VERMEZ ve ekrana
+    # hiçbir şey çıkarmaz. Toplantı, oyun, film, sunum için.
+    "sadece_olc": False,
     # --- eski sürümden kalan alanlar (geriye uyumluluk) ---
     "kilit_ozeti": None,
     "kilit_tuz": None,
@@ -1079,6 +1118,26 @@ class Uygulama:
         if self.tepsi:
             self.tepsi.menuyu_tazele()
 
+    def sadece_olc_degistir(self):
+        """Sessiz ölçüm modunu aç/kapat.
+
+        Açıkken: program çalışmaya ve ölçmeye devam eder (ekran süresi,
+        kesintisiz süre, hangi programda ne kadar durulduğu) ama mola
+        vermez, uyarı balonu çıkarmaz, ekranı kaplamaz.
+        Kapanınca sayaç sıfırdan başlar — mod kapanır kapanmaz mola
+        gelmesi kimseyi memnun etmez."""
+        yeni = not self.ayar.get("sadece_olc")
+        self.ayar["sadece_olc"] = yeni
+        ayarlari_yaz(self.ayar)
+        if self.balon:
+            self.balon.kapat()
+            self.balon = None
+        self.durum = "olcuyor" if yeni else "calisiyor"
+        self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+        self._sayaci_kaydet()
+        if self.tepsi:
+            self.tepsi.menuyu_tazele()
+
     def hemen_mola(self):
         self.uzun_mola_mi = False
         self._molayi_baslat(self.ayar["mola_sn"])
@@ -1252,6 +1311,22 @@ class Uygulama:
             if program:
                 self.ist["programlar"][program] = self.ist["programlar"].get(program, 0) + 0.25
 
+        # SESSİZ ÖLÇÜM: yukarıdaki sayaçlar işledi, aşağıdaki mola/uyarı
+        # mantığı hiç çalışmıyor. Program açık kalır, ekrana bir şey
+        # çıkmaz, mola verilmez — ama ölçüm sürer.
+        if self.ayar.get("sadece_olc"):
+            if self.balon:
+                self.balon.kapat()
+                self.balon = None
+            self.durum = "olcuyor"
+            # Sayaç ilerlemesin ki mod kapanınca aniden mola gelmesin
+            self.hedef = simdi + self.ayar["calisma_dk"] * 60
+            self._ciz(self.hedef - simdi)
+            if int(simdi) % 30 == 0:
+                self._istatistik_yaz()
+            self.kok.after(250, self._tik)
+            return
+
         kalan = self.hedef - simdi
 
         if 0 < kalan <= self.ayar["uyari_sn"]:
@@ -1322,6 +1397,15 @@ class Uygulama:
             self.t.itemconfigure(self.ipucu_yazi,
                                  text="%s–%s arasında hatırlatır"
                                       % (self.ayar["bas_saat"], self.ayar["bit_saat"]))
+        elif self.ayar.get("sadece_olc"):
+            self.t.itemconfigure(self.sure_yazi, text="—")
+            self.t.itemconfigure(self.durum_yazi, text="Sadece ölçüyor",
+                                 fill=P["sicak"])
+            self.t.itemconfigure(self.halka_yay, extent=-359.9, outline=P["cizgi"])
+            self._yay_uclarini_ciz(0, P["cizgi"])
+            self.t.itemconfigure(
+                self.ipucu_yazi,
+                text="Mola vermez, ekrana çıkmaz — ölçmeye devam eder")
         elif self.duraklatildi_mi():
             kalan_dk = max(1, int((self.duraklama_bitis - time.time()) / 60) + 1)
             self.t.itemconfigure(self.sure_yazi, text="—")
@@ -1342,7 +1426,9 @@ class Uygulama:
 
         # Tepsi simgesinin üstüne gelince görünen yazı
         if self.tepsi and self.tepsi.acik and int(simdi_saniye()) % 5 == 0:
-            if self.duraklatildi_mi():
+            if self.ayar.get("sadece_olc"):
+                self.tepsi.ipucu_yaz("Göz Molası — sadece ölçüyor, mola vermiyor")
+            elif self.duraklatildi_mi():
                 self.tepsi.ipucu_yaz("Göz Molası — duraklatıldı")
             else:
                 self.tepsi.ipucu_yaz("Göz Molası — sonraki mola %s"
@@ -1429,7 +1515,14 @@ class Uygulama:
                                fill=P["soluk"], font=(yt, 9))
             return
 
-        self.t.itemconfigure(self.grafik_baslik, text="EN ÇOK KULLANDIKLARIN")
+        olculen = sum(self.ist["programlar"].values())
+        if olculen:
+            self.t.itemconfigure(
+                self.grafik_baslik,
+                text="EN ÇOK KULLANDIKLARIN   ·   TOPLAM %s ÖLÇÜLDÜ"
+                     % sure_okunakli(olculen).upper())
+        else:
+            self.t.itemconfigure(self.grafik_baslik, text="EN ÇOK KULLANDIKLARIN")
         if not sirali:
             self.t.create_text(ic_x, ic_y, anchor="nw", tags="grafik",
                                text="Henüz veri yok — birkaç dakika sonra dolacak.",
@@ -1443,15 +1536,17 @@ class Uygulama:
 
         for i, (ad, sn) in enumerate(sirali):
             y = ic_y + i * (yuk + bosluk)
-            kisa = ad if len(ad) <= 16 else ad[:15] + "…"
+            insanca = program_adi(ad)
+            kisa = insanca if len(insanca) <= 16 else insanca[:15] + "…"
             self.t.create_text(ic_x, y + yuk / 2, anchor="w", text=kisa,
                                fill=P["yazi"], font=(yt, 9), tags="grafik")
             og.cubuk(self.t, ic_x + etiket_g, y, cubuk_g, yuk, sn / enb,
                      P["kart2"], gor.GRAFIK_RENKLERI[i % len(gor.GRAFIK_RENKLERI)],
                      etiket="grafik")
+            yuzde = round(100.0 * sn / olculen) if olculen else 0
             self.t.create_text(ic_x + etiket_g + cubuk_g + o(10), y + yuk / 2, anchor="w",
-                               text=sure_okunakli(sn), fill=P["soluk"],
-                               font=(yt, 9), tags="grafik")
+                               text="%s  ·  %%%d" % (sure_okunakli(sn), yuzde),
+                               fill=P["soluk"], font=(yt, 9), tags="grafik")
         # Çubuklar kartın üstüne çizildi; etiketleri öne al
         for oge in self.t.find_withtag("grafik"):
             self.t.tag_raise(oge)
