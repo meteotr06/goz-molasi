@@ -134,6 +134,27 @@ VARSAYILAN = {
     # Renklerin doygunluğu: 0.6 sakin, 1.0 temanın kendisi, 1.5 canlı.
     # Açıklığa dokunulmaz, yani yazı okunaklılığı hiç değişmez.
     "canlilik": 1.0,
+    # ================= KİP =================
+    # "bireysel": bugünkü davranış — kullanıcı kendi ayarlarını yönetir.
+    # "aile":     ebeveyn kural koyar, çocuk değiştiremez.
+    #
+    # Aile kipi ŞİFRESİZ AÇILAMAZ. Şifresiz bir ebeveyn kilidi,
+    # kilidin anahtarını kapının üstünde bırakmak demek.
+    "kip": "bireysel",
+
+    # Günlük ekran süresi sınırı, dakika. 0 = sınır yok.
+    "gunluk_sinir_dk": 0,
+    # Ebeveynin verdiği ek sürenin bitiş anı (time.time()).
+    # Sınır dolduğunda ebeveyn şifreyle ek süre verebiliyor.
+    "ek_sure_bitis": 0,
+
+    # Saat yasağı: bu aralıkta bilgisayar kullanılamaz.
+    # "calisma saatleri" ayarından FARKLI: o yalnızca molaları
+    # susturuyor, bu kullanımı engelliyor.
+    "yasak_acik": False,
+    "yasak_bas": "21:00",
+    "yasak_bit": "07:00",
+
     # --- eski sürümden kalan alanlar (geriye uyumluluk) ---
     "kilit_ozeti": None,
     "kilit_tuz": None,
@@ -204,6 +225,42 @@ def saat_uygun_mu(ayar, simdi=None):
     if bas == bit:
         return True                      # 24 saat
     return (bas <= su < bit) if bas < bit else (su >= bas or su < bit)
+
+
+def yasak_saatinde_mi(ayar, simdi=None):
+    """Şu an saat yasağı içinde miyiz?
+
+    saat_uygun_mu ile aynı mantık ama TERS: orada aralık İÇİ çalışma
+    saati, burada aralık içi yasak. Ayrı tutuluyor çünkü ikisi farklı
+    işler: biri molaları susturur, öbürü kullanımı engeller. Aynı
+    ayarı iki işe koşmak, birini değiştirince öbürünü bozar.
+    """
+    if not ayar.get("yasak_acik"):
+        return False
+    simdi = simdi or time.localtime()
+
+    def dakika(metin):
+        try:
+            saat, dk = str(metin).split(":")
+            return int(saat) * 60 + int(dk)
+        except Exception:
+            return 0
+
+    su = simdi.tm_hour * 60 + simdi.tm_min
+    bas = dakika(ayar.get("yasak_bas", "21:00"))
+    bit = dakika(ayar.get("yasak_bit", "07:00"))
+    if bas == bit:
+        return False                     # aralık yok
+    return (bas <= su < bit) if bas < bit else (su >= bas or su < bit)
+
+
+def aile_kipinde_mi(ayar):
+    """Aile kipi AÇIK ve şifre KURULU mu?
+
+    Şifresiz aile kipi anlamsız — çocuk ayarlardan kipi kapatır.
+    O yüzden iki koşul birden aranıyor; biri eksikse kip yok sayılır.
+    """
+    return bool(ayar.get("kip") == "aile" and kilit_kaydi(ayar))
 
 
 def kilit_kaydi(ayar):
@@ -493,11 +550,196 @@ class MolaEkrani:
         self.p.after(200, self._tik)
 
     def _acil_cikis_iste(self):
-        """Acil çıkış istendi. Şifre SORULMAZ —
-        şifre yalnızca programı kapatırken sorulur."""
+        """Acil çıkış istendi.
+
+        Bireysel kipte şifre sorulmaz — şifre yalnızca programı
+        kapatırken sorulur; molayı atlamak kişinin kendi bileceği iş.
+
+        AİLE KİPİNDE şifre sorulur. Ebeveynin koyduğu 20 saniyeyi
+        çocuğun üç tuşla geçebilmesi, kuralı kural olmaktan çıkarır.
+        """
+        if aile_kipinde_mi(self.uyg.ayar):
+            self.acil_sorulyor = True
+            self.p.attributes("-topmost", False)
+            try:
+                tamam = self.uyg.izin_al(
+                    "Aile kipi açık. Molayı geçmek için ebeveyn şifresi.",
+                    ust=self.p)
+            finally:
+                self.p.attributes("-topmost", True)
+                self.acil_sorulyor = False
+            if not tamam:
+                return
         self.uyg.mola_bitti(iptal=True)
 
     def kapat(self):
+        try:
+            self.p.destroy()
+        except Exception:
+            pass
+
+
+class EngelEkrani:
+    """Aile kipinde kullanımı durduran tam ekran.
+
+    NE ZAMAN ÇIKAR
+      • Günlük ekran süresi dolduğunda
+      • Saat yasağı içinde
+
+    NEDEN MOLA EKRANI DEĞİL
+      Mola ekranı 20 saniye sürer ve kendi kapanır. Bu ekran koşul
+      sürdüğü sürece durur. İkisini aynı sınıfa sıkıştırmak, mola
+      mantığını da bunu da karmaşıklaştırırdı.
+
+    DÜRÜSTLÜK NOTU
+      Bu bir güvenlik duvarı DEĞİL. Görev yöneticisinden süreç
+      öldürülebilir. Bekçi süreci geri açıyor ama kararlı biri yine
+      de aşar. Ekranda bunu gizlemiyoruz — "kırılmaz" demek yalan
+      olurdu ve ebeveyni yanlış güvene sokardı.
+    """
+
+    def __init__(self, uygulama, baslik, aciklama):
+        self.uyg = uygulama
+        self.baslik_metni = baslik
+        self.aciklama_metni = aciklama
+        self.kapandi = False
+
+        sol, ust, gen, yuk = iz.sanal_ekran()
+        self.gen, self.yuk = gen, yuk
+
+        self.p = tk.Toplevel(uygulama.kok)
+        self.p.overrideredirect(True)
+        self.p.geometry("%dx%d+%d+%d" % (gen, yuk, sol, ust))
+        self.p.configure(bg=gor.MOLA_GRADYAN[0])
+        self.p.attributes("-topmost", True)
+        self.p.protocol("WM_DELETE_WINDOW", lambda: None)
+        for tus in ("<Alt-F4>", "<Escape>", "<Control-w>", "<Control-W>",
+                    "<Control-F4>", "<Alt-Tab>"):
+            self.p.bind(tus, lambda e: "break")
+
+        self.t = tk.Canvas(self.p, width=gen, height=yuk,
+                           highlightthickness=0, bd=0)
+        self.t.pack(fill="both", expand=True)
+        self._sahne()
+        self.p.lift()
+        self.p.focus_force()
+        self.p.after(60, lambda: iz.one_getir(self.p.winfo_id()))
+        self._tik()
+        self._koru()
+
+    def _koru(self):
+        """Ekranı önde tutar.
+
+        Ayrı ve HIZLI bir döngü: metin saniyede bir tazelense yeter ama
+        önde kalmak yetmiyor — Alt+Tab ile arkaya atılan ekran bir
+        saniye boyunca arkada kalıyordu, o bir saniye kaçmaya yetiyor.
+        400 ms'de bir öne alınıyor.
+        """
+        if self.kapandi:
+            return
+        try:
+            self.p.attributes("-topmost", True)
+            self.p.lift()
+            # Odak başka pencereye kaçtıysa geri al
+            if self.p.focus_displayof() is None:
+                self.p.focus_force()
+                iz.one_getir(self.p.winfo_id())
+        except Exception:
+            pass
+        self.p.after(400, self._koru)
+
+    def _sahne(self):
+        gen, yuk = self.gen, self.yuk
+        gor.gradyan_ciz(self.t, gen, yuk, gor.MOLA_GRADYAN)
+        mx = gen / 2
+        my = yuk / 2
+
+        self.baslik = self.t.create_text(
+            mx, my - 130, text=self.baslik_metni, fill=gor.MOLA_YAZI,
+            font=("Segoe UI", 34, "bold"))
+        self.aciklama = self.t.create_text(
+            mx, my - 60, text=self.aciklama_metni, fill=gor.MOLA_SOLUK,
+            font=("Segoe UI", 14), width=min(760, gen - 120), justify="center")
+        self.alt_yazi = self.t.create_text(
+            mx, my + 20, text="", fill=gor.KEHRIBAR,
+            font=("Segoe UI", 16, "bold"))
+        # Boş açılmasın; _tik bir saniye sonra gelir
+        try:
+            self.t.itemconfigure(self.alt_yazi,
+                                 text=self.uyg.engel_kalan_metni())
+        except Exception:
+            pass
+
+        # Ebeveyn düğmesi — şifreyle ek süre verir
+        self.dugmeler = [
+            og.Dugme(self.t, mx - 130, my + 80, 260, 46,
+                     "Ebeveyn: ek süre ver", self._ek_sure,
+                     gor.MOLA_GRADYAN[0], gor.KEHRIBAR, "#2a1f08",
+                     "Segoe UI", kalin=True),
+        ]
+
+        # NOT: burada eskiden "bu ekran görev yöneticisinden kapatılabilir"
+        # yazan bir satır vardı. Kaldırıldı — o yazı, engellemeye
+        # çalıştığımız kişiye kaçış yolunu tarif ediyordu. Sınırın
+        # dürüstçe yazılacağı yer AYARLAR penceresi; orayı yalnızca
+        # şifreyi bilen ebeveyn açabiliyor.
+
+    def _ek_sure(self):
+        """Ebeveyn şifresiyle ek süre. Şifre yoksa kip zaten geçersiz."""
+        kayit = kilit_kaydi(self.uyg.ayar)
+        if kayit is None:
+            return
+        self.p.attributes("-topmost", False)
+        try:
+            tamam = SifreSor(self.p, "Ek süre vermek için ebeveyn şifresi.",
+                             kayit, self.uyg._kilidi_yukselt).bekle()
+        finally:
+            self.p.attributes("-topmost", True)
+        if not tamam:
+            return
+        cevap = Soru(
+            self.p, "Ne kadar ek süre?",
+            "Bu süre boyunca engel kalkar. Süre bitince ekran geri gelir.",
+            evet_yazi="30 dakika", hayir_yazi="15 dakika",
+            # geri_sayim=0 aninda varsayilani uyguluyor. Ebeveyn
+            # ekranin basinda, dusunmesi icin sure verelim.
+            geri_sayim=30, varsayilan=False).bekle()
+        dakika = 30 if cevap else 15
+        self.uyg.ayar["ek_sure_bitis"] = time.time() + dakika * 60
+        ayarlari_yaz(self.uyg.ayar)
+        self.uyg.engeli_kaldir()
+
+    def _tik(self):
+        if self.kapandi:
+            return
+        # Koşul kalktıysa kendini kapat
+        yeni = self.uyg.engel_sebebi()
+        if not yeni:
+            self.uyg.engeli_kaldir()
+            return
+
+        # Sebep değiştiyse (yasak bitti ama süre sınırı doldu gibi)
+        # başlığı ve açıklamayı tazele. Eskiden yalnızca alt satır
+        # güncelleniyordu ve başlık yanlış sebebi gösteriyordu.
+        if yeni[1] != self.baslik_metni:
+            self.baslik_metni = yeni[1]
+            self.aciklama_metni = yeni[2]
+            self.t.itemconfigure(self.baslik, text=yeni[1])
+            self.t.itemconfigure(self.aciklama, text=yeni[2])
+
+        # Alt satır CANLI geri sayım — açıklamanın kopyası değil.
+        # İlk yazımda buraya da açıklama konuyordu ve ekranda aynı
+        # cümle iki kez görünüyordu.
+        try:
+            self.t.itemconfigure(self.alt_yazi,
+                                 text=self.uyg.engel_kalan_metni())
+        except Exception:
+            pass
+
+        self.p.after(1000, self._tik)
+
+    def kapat(self):
+        self.kapandi = True
         try:
             self.p.destroy()
         except Exception:
@@ -788,6 +1030,8 @@ class Uygulama:
         # sonraki mola kaç saniye olacak
         self.telafi_sayisi = 0
         self.telafi_suresi = None
+        # Aile kipi engel ekrani (gunluk sinir / saat yasagi)
+        self.engel_ekrani = None
         self.baslangic_ani = time.time()
         self.kilit_gorundu = False
         self.kart_sirasi = 0
@@ -1614,6 +1858,95 @@ class Uygulama:
     # odağını uzağa alması için yetmiyor
     TELAFI_ASGARI_SN = 8
 
+    def engel_sebebi(self):
+        """Şu an kullanımı engellemek gerekiyor mu?
+
+        Döner: (tur, baslik, aciklama) ya da None.
+
+        Sıra önemli: saat yasağı süre sınırından ÖNCE bakılıyor.
+        Gece 23:00'te süre sınırı dolmuş olsa bile asıl sebep yasak;
+        ebeveynin verdiği ek süre yasağı da açar, bu kasıtlı — "bu
+        akşam biraz daha" diyebilmek gerekiyor.
+        """
+        if not aile_kipinde_mi(self.ayar):
+            return None
+        # Ebeveyn ek süre verdiyse hiçbir engel yok
+        if time.time() < float(self.ayar.get("ek_sure_bitis", 0) or 0):
+            return None
+
+        if yasak_saatinde_mi(self.ayar):
+            return ("yasak", "Şimdi bilgisayar zamanı değil",
+                    "Ailen %s ile %s arasını kapalı zaman olarak ayarladı."
+                    % (self.ayar.get("yasak_bas", "21:00"),
+                       self.ayar.get("yasak_bit", "07:00")))
+
+        sinir = int(self.ayar.get("gunluk_sinir_dk", 0) or 0)
+        if sinir > 0:
+            gecen = float(self.ist.get("ekran_sn", 0))
+            if gecen >= sinir * 60:
+                return ("sinir", "Bugünlük ekran süren doldu",
+                        "Günlük sınır %d dakika. Bugün %s kullandın."
+                        % (sinir, sure_okunakli(gecen)))
+        return None
+
+    def engel_kalan_metni(self):
+        """Engel ne zaman kalkacak? Canlı metin.
+
+        "Ne kadar bekleyeceğim" sorusunun cevabı olmadan engel ekranı
+        sadece bir duvar. Cevapla birlikte anlaşılır bir kural oluyor.
+        """
+        sebep = self.engel_sebebi()
+        if not sebep:
+            return ""
+        simdi = time.localtime()
+        su = simdi.tm_hour * 3600 + simdi.tm_min * 60 + simdi.tm_sec
+
+        if sebep[0] == "yasak":
+            try:
+                s, d = str(self.ayar.get("yasak_bit", "07:00")).split(":")
+                hedef = int(s) * 3600 + int(d) * 60
+            except Exception:
+                hedef = 7 * 3600
+            kalan = hedef - su
+            if kalan <= 0:
+                kalan += 86400
+            return "Saat %s'de kalkacak — %s kaldı" % (
+                self.ayar.get("yasak_bit", "07:00"), sure_okunakli(kalan))
+
+        # Sınır: gece yarısı sıfırlanıyor
+        kalan = 86400 - su
+        return "Sayaç gece yarısı sıfırlanır — %s kaldı" % sure_okunakli(kalan)
+
+    def _aile_kipini_saglamlastir(self):
+        """Aile kipi açıkken bekçi ZORUNLU.
+
+        Bekçi kapalıyken çocuk programı görev yöneticisinden öldürüyor
+        ve o gün bir daha açılmıyor — kural da kalkmış oluyor. Aile
+        kipinde bu ayar kullanıcıya bırakılmaz.
+        """
+        if aile_kipinde_mi(self.ayar) and not self.ayar.get("bekci"):
+            self.ayar["bekci"] = True
+            ayarlari_yaz(self.ayar)
+            self._bekciyi_kur()
+
+    def engeli_uygula(self):
+        self._aile_kipini_saglamlastir()
+        """Engel gerekiyorsa ekranı aç, gerekmiyorsa kapat."""
+        sebep = self.engel_sebebi()
+        if sebep and self.engel_ekrani is None:
+            # Mola ekranı açıkken engel açmıyoruz — üst üste iki tam
+            # ekran, ikisi de topmost, sonsuz döngüye giriyor.
+            if self.mola_ekrani:
+                return
+            self.engel_ekrani = EngelEkrani(self, sebep[1], sebep[2])
+        elif not sebep and self.engel_ekrani is not None:
+            self.engeli_kaldir()
+
+    def engeli_kaldir(self):
+        if self.engel_ekrani is not None:
+            self.engel_ekrani.kapat()
+            self.engel_ekrani = None
+
     def _molayi_atladi(self):
         """Mola atlandı.
 
@@ -1828,6 +2161,18 @@ class Uygulama:
         # "pencereni göster" mesajı bırakmıştır
         if kl.goster_istendi_mi(KAYIT_KLASOR):
             self.pencereyi_goster()
+
+        # AİLE KİPİ — engel gerekiyor mu?
+        # Mola durumundan ÖNCE bakılıyor: molanın bitmesini beklemek
+        # yasak saatinin 20 saniye gecikmesi demek olurdu.
+        if aile_kipinde_mi(self.ayar) or self.engel_ekrani is not None:
+            self.engeli_uygula()
+            if self.engel_ekrani is not None:
+                # Engel ekranı açıkken ekran süresi SAYILMIYOR — kişi
+                # zaten kullanamıyor. Saymak, ertesi günün sınırını da
+                # yiyip bitirirdi.
+                self.kok.after(500, self._tik)
+                return
 
         if self.durum == "mola":
             self.kok.after(250, self._tik)
@@ -2251,6 +2596,14 @@ class Uygulama:
 
     # ---------------- Ayarlar penceresi ----------------
     def ayarlari_ac(self):
+        # AİLE KİPİ: ayarlar ebeveyn şifresiyle korunuyor. Bu olmadan
+        # kip anlamsız — çocuk ayarlara girip kipi kapatırdı.
+        if aile_kipinde_mi(self.ayar):
+            if not self.izin_al("Aile kipi açık. Ayarlar için ebeveyn şifresi."):
+                return
+        return self._ayarlari_ac()
+
+    def _ayarlari_ac(self):
         # Şifre sorulmaz. Kilidin tek görevi programın kapatılmasını
         # engellemek; "şifreyi kaldır" zaten ayrıca şifre ister.
 
@@ -2583,14 +2936,107 @@ class Uygulama:
 
         kutu("Zorla kapatılırsa geri aç",
              "Kilit açıkken, Görev Yöneticisi'nden kapatılırsa program kendini "
-             "yeniden başlatır. Şifreyle düzgün kapattığında bu olmaz.", bekci)
+             "yeniden başlatır. Şifreyle düzgün kapattığında bu olmaz."
+             + (" AİLE KİPİNDE bu ayar kapatılamaz — kapalıyken kural "
+                "tek bir kapatmayla kalkardı."
+                if aile_kipinde_mi(self.ayar) else ""), bekci)
 
-        tk.Label(p, text="Şifre düz metin saklanmaz. PBKDF2-HMAC-SHA256 ile 240.000 tur "
-                         "döndürülür; her deneme ~0,1 saniye sürer, yani hızlı denemeyle "
-                         "kırılamaz. Yine de bu bir cihaz güvenliği değildir: ayar "
-                         "dosyasını silen kişi kilidi de siler.",
+        tk.Label(p, text="Şifre düz metin saklanmaz. PBKDF2-HMAC-SHA256 ile 600.000 tur "
+                         "döndürülür (OWASP'ın güncel tavsiyesi) ve her şifreye özel "
+                         "rastgele bir tuz eklenir. Yine de bu bir cihaz güvenliği "
+                         "değildir: ayar dosyasını silen kişi kilidi de siler. "
+                         "Kısa rakam şifreler hızlı kırılır — yukarıdaki süre tahmini "
+                         "ekran kartıyla saldıran birini varsayar.",
                  font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
                  wraplength=400, justify="left").pack(padx=26, pady=(8, 0), anchor="w")
+
+        # ================= AİLE KİPİ =================
+        # Ebeveyn kural koyar, çocuk değiştiremez. Şifre ZORUNLU:
+        # şifresiz aile kipi, kilidin anahtarını kapının üstünde
+        # bırakmak demek — çocuk ayarlara girip kipi kapatır.
+        tk.Frame(p, bg=P["cizgi"], height=1).pack(fill="x", padx=26, pady=(14, 10))
+        akf = tk.Frame(p, bg=P["kart"])
+        akf.pack(fill="x", padx=26)
+        tk.Label(akf, text="Kip", font=("Segoe UI", 10, "bold"), fg=P["yazi"],
+                 bg=P["kart"]).pack(anchor="w")
+
+        kip_secim = tk.StringVar(value=self.ayar.get("kip", "bireysel"))
+        for deger, ad, aciklama in (
+                ("bireysel", "Bireysel",
+                 "Ayarları sen yönetirsin, molayı istersen geçersin."),
+                ("aile", "Aile (ebeveyn kontrolü)",
+                 "Ayarlar ve molayı geçme şifreli. Günlük süre sınırı ve "
+                 "saat yasağı konabilir.")):
+            kr = tk.Frame(p, bg=P["kart"])
+            kr.pack(fill="x", padx=26, pady=(4, 0))
+            tk.Radiobutton(kr, text=ad, variable=kip_secim, value=deger,
+                           font=("Segoe UI", 10), fg=P["yazi"], bg=P["kart"],
+                           activebackground=P["kart"], activeforeground=P["yazi"],
+                           selectcolor=P["zemin"], highlightthickness=0,
+                           anchor="w").pack(anchor="w")
+            tk.Label(kr, text=aciklama, font=("Segoe UI", 8), fg=P["soluk"],
+                     bg=P["kart"], wraplength=380, justify="left").pack(
+                anchor="w", padx=24)
+
+        aile_uyari = tk.Label(p, text="", font=("Segoe UI", 8), fg="#ff8f7a",
+                              bg=P["kart"], wraplength=400, justify="left")
+        aile_uyari.pack(anchor="w", padx=26, pady=(6, 0))
+
+        # --- Aile ayarları (yalnızca aile kipinde anlamlı) ---
+        agf = tk.Frame(p, bg=P["kart"])
+        agf.pack(fill="x", padx=26, pady=(8, 0))
+
+        sinir_satir = tk.Frame(agf, bg=P["kart"])
+        sinir_satir.pack(fill="x", pady=(4, 0))
+        tk.Label(sinir_satir, text="Günlük ekran süresi sınırı (dakika, 0 = sınırsız)",
+                 font=("Segoe UI", 9), fg=P["yazi"], bg=P["kart"]).pack(anchor="w")
+        sinir_alan = tk.Entry(sinir_satir, width=8, font=("Segoe UI", 11),
+                              justify="center", bg=P["zemin"], fg=P["yazi"],
+                              insertbackground=P["yazi"], relief="flat")
+        sinir_alan.insert(0, str(int(self.ayar.get("gunluk_sinir_dk", 0) or 0)))
+        sinir_alan.pack(anchor="w", ipady=4, pady=(3, 0))
+
+        yasak_acik = tk.BooleanVar(value=bool(self.ayar.get("yasak_acik")))
+        kutu("Saat yasağı",
+             "Bu aralıkta tam ekran uyarı çıkar ve kapanmaz. “Çalışma "
+             "saatleri” ayarından farklı: o yalnızca molaları susturur, "
+             "bu kullanımı engeller.", yasak_acik)
+
+        ysf = tk.Frame(p, bg=P["kart"])
+        ysf.pack(fill="x", padx=50, pady=(0, 4))
+        tk.Label(ysf, text="Yasak başlangıcı", font=("Segoe UI", 8),
+                 fg=P["soluk"], bg=P["kart"]).pack(side="left")
+        yasak_bas_alan = tk.Entry(ysf, width=6, font=("Segoe UI", 10),
+                                  justify="center", bg=P["zemin"], fg=P["yazi"],
+                                  insertbackground=P["yazi"], relief="flat")
+        yasak_bas_alan.insert(0, self.ayar.get("yasak_bas", "21:00"))
+        yasak_bas_alan.pack(side="left", padx=6, ipady=3)
+        tk.Label(ysf, text="bitişi", font=("Segoe UI", 8),
+                 fg=P["soluk"], bg=P["kart"]).pack(side="left")
+        yasak_bit_alan = tk.Entry(ysf, width=6, font=("Segoe UI", 10),
+                                  justify="center", bg=P["zemin"], fg=P["yazi"],
+                                  insertbackground=P["yazi"], relief="flat")
+        yasak_bit_alan.insert(0, self.ayar.get("yasak_bit", "07:00"))
+        yasak_bit_alan.pack(side="left", padx=6, ipady=3)
+
+        tk.Label(p, text="Bu bir güvenlik duvarı değildir. Görev Yöneticisi'nden "
+                         "kapatılabilir; “Zorla kapatılırsa geri aç” ayarı bunu "
+                         "zorlaştırır ama kararlı biri yine de aşar. Amaç "
+                         "engellemek değil, sınırı görünür kılmak.",
+                 font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
+                 wraplength=400, justify="left").pack(padx=26, pady=(8, 0),
+                                                      anchor="w")
+
+        def kip_degisti(*_):
+            if kip_secim.get() == "aile" and not self.kilitli_mi():
+                aile_uyari.configure(
+                    text="Aile kipi için önce yukarıdan bir şifre koymalısın. "
+                         "Şifresiz aile kipi kaydedilmez.")
+            else:
+                aile_uyari.configure(text="")
+
+        kip_secim.trace_add("write", kip_degisti)
+        kip_degisti()
 
         # Hatalı giriş olursa kullanıcı görsün — eskiden sessizce hiçbir şey
         # olmuyordu ve "ayar kaydedilmiyor" gibi görünüyordu.
@@ -2643,9 +3089,46 @@ class Uygulama:
                 # Hatalı yazımda varsayılana dön — bozuk saat sessizce
                 # tüm hatırlatmaları kapatabilirdi
                 self.ayar[anahtar] = deger if _re.match(r"^\d{1,2}:\d{2}$", deger) else varsayilan
+            # --- Aile kipi ---
+            istenen_kip = kip_secim.get()
+            if istenen_kip == "aile" and not self.kilitli_mi():
+                # Şifresiz aile kipi anlamsız; sessizce kaydetmek yerine
+                # söylüyoruz. Sessiz reddetme "ayar kaydedilmiyor" gibi
+                # görünüyor — bu hatayı bu dosyada bir kez yaptık.
+                hata_yazi.configure(
+                    text="Aile kipi için önce bir kilit şifresi koy. "
+                         "Şifresiz aile kipi çocuk tarafından kapatılabilir.")
+                hata_yazi.pack(pady=(6, 0))
+                return
+            # Aile kipinden ÇIKMAK da şifre ister — yoksa kural kural olmaz
+            if self.ayar.get("kip") == "aile" and istenen_kip != "aile":
+                if not self.izin_al("Aile kipini kapatmak için ebeveyn şifresi.",
+                                    ust=pencere):
+                    return
+            self.ayar["kip"] = istenen_kip
+            if istenen_kip == "aile":
+                # Aile kipinde bekçi zorunlu; kullanıcı kapatmışsa geri aç
+                self.ayar["bekci"] = True
+            self.ayar["yasak_acik"] = bool(yasak_acik.get())
+            try:
+                sinir = int(float(sinir_alan.get().strip() or 0))
+            except ValueError:
+                sinir = 0
+            self.ayar["gunluk_sinir_dk"] = max(0, min(1440, sinir))
+            for alan, anahtar, varsayilan in ((yasak_bas_alan, "yasak_bas", "21:00"),
+                                              (yasak_bit_alan, "yasak_bit", "07:00")):
+                deger = alan.get().strip()
+                self.ayar[anahtar] = (deger if _re.match(r"^\d{1,2}:\d{2}$", deger)
+                                      else varsayilan)
+
             ayarlari_yaz(self.ayar)
             self.hedef = time.time() + self.ayar["calisma_dk"] * 60
             self._bekciyi_kur()
+            # Kip değiştiyse engel durumunu hemen gözden geçir
+            try:
+                self.engeli_uygula()
+            except Exception:
+                pass
             pencere.destroy()
 
         # Düğmeler kayan alanın DIŞINDA — hep görünür kalsınlar
