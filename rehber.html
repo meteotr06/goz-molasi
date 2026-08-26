@@ -34,6 +34,21 @@
   .oz { background:var(--kart); border:1px solid var(--cizgi); border-left:4px solid var(--vurgu);
         border-radius:var(--yuvarlak); padding:16px 20px; margin:22px 0; }
   .oz b { color:var(--vurgu); }
+  .kaynak { font-size:13px; color:var(--yazi-soluk); border-left:2px solid var(--cizgi);
+            padding-left:12px; margin:14px 0 0; }
+  .icindekiler { background:var(--kart); border:1px solid var(--cizgi);
+                 border-radius:var(--yuvarlak); padding:16px 20px; margin:26px 0; }
+  .icindekiler h2 { font-size:13px !important; margin:0 0 10px !important;
+                    letter-spacing:.08em; text-transform:uppercase;
+                    color:var(--yazi-soluk) !important; }
+  .icindekiler ol { margin:0; padding-left:20px; }
+  .icindekiler li { margin-bottom:2px; }
+  /* Parmakla basılabilir olsun: ölçtüm, 10 bağlantının 9'u 32px'in
+     altındaydı. Satır içi bağlantıyı blok yapıp yükseklik veriyoruz. */
+  .icindekiler a { text-decoration:none; display:block; padding:8px 4px;
+                   min-height:40px; }
+  .icindekiler a:hover, .icindekiler a:focus-visible { text-decoration:underline; }
+  .yazi h2 { scroll-margin-top:16px; }
   .kaynakca { font-size:13.5px; color:var(--yazi-soluk); }
   .kaynakca li { margin-bottom:10px; }
   table { width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px; }
@@ -125,10 +140,26 @@ yorgunluğunun kendisi çok iyi belgelenmiş bir sorun ve düzenli mola vermenin
 olduğunu kaynaklarıyla ayırıyoruz.
 </div>
 
+<nav class="icindekiler" aria-label="İçindekiler">
+  <h2>İçindekiler</h2>
+  <ol>
+    <li><a href="#b-dijital-goz-yorgunlugu-nedir">Dijital göz yorgunluğu nedir?</a></li>
+    <li><a href="#b-neden-oluyor-uc-ayri-mekanizma">Neden oluyor? Üç ayrı mekanizma</a></li>
+    <li><a href="#b-20-20-20-kurali-nereden-geliyor">20-20-20 kuralı nereden geliyor?</a></li>
+    <li><a href="#b-peki-gercekten-ise-yariyor-mu-kanitin-durumu">Peki gerçekten işe yarıyor mu? Kanıtın durumu</a></li>
+    <li><a href="#b-yaygin-yanlislar">Yaygın yanlışlar</a></li>
+    <li><a href="#b-pratikte-ne-yapmali">Pratikte ne yapmalı?</a></li>
+    <li><a href="#b-goz-yorgunluguna-ne-iyi-gelir">Göz yorgunluğuna ne iyi gelir?</a></li>
+    <li><a href="#b-gozde-kuruluk-neden-oluyor">Gözde kuruluk neden oluyor?</a></li>
+    <li><a href="#b-cocuklarda-ekran-suresi-ve-miyopi">Çocuklarda ekran süresi ve miyopi</a></li>
+    <li><a href="#b-sik-sorulanlar">Sık sorulanlar</a></li>
+  </ol>
+</nav>
+
 <aside class="reklam-alani gizli"
        data-birim="rehberUst" data-bicim="horizontal" aria-label="Reklam"></aside>
 
-<h2>Dijital göz yorgunluğu nedir?</h2>
+<h2 id="b-dijital-goz-yorgunlugu-nedir">Dijital göz yorgunluğu nedir?</h2>
 
 <p>Amerikan Optometri Birliği'nin (AOA) tanımıyla dijital göz yorgunluğu —
 literatürdeki adıyla <i>bilgisayar görme sendromu</i> — uzun süreli bilgisayar,
@@ -158,7 +189,7 @@ olarak ölçüldü.</p>
 <p>Belirtilerin dağılımı da ilginç: bulanık görme %34, göz yorgunluğu %32,
 sulanma %31 ile başı çekiyor.</p>
 
-<h2>Neden oluyor? Üç ayrı mekanizma</h2>
+<h2 id="b-neden-oluyor-uc-ayri-mekanizma">Neden oluyor? Üç ayrı mekanizma</h2>
 
 <h3>1. Göz kırpma sayısı düşüyor</h3>
 
@@ -199,7 +230,7 @@ gösteriyor.</p>
 göz kapağı yüzeyin daha azını örter ve kuruluk artar. AAO ekranı bir kol boyu
 uzaklıkta (yaklaşık 60 cm) ve göz hizasının biraz altında tutmayı öneriyor.</p>
 
-<h2>20-20-20 kuralı nereden geliyor?</h2>
+<h2 id="b-20-20-20-kurali-nereden-geliyor">20-20-20 kuralı nereden geliyor?</h2>
 
 <p>Kuralın ifadesi AOA'nın hasta broşüründe şöyle geçiyor: <i>"Her 20 dakikada
 bir, 20 saniye boyunca 20 fit (yaklaşık 6 metre) uzaktaki bir şeye bakın."</i></p>
@@ -216,7 +247,7 @@ tasarladığını söylüyor.</p>
 Yani 6 metreye baktığınızda odaklama kasınız pratikte tamamen gevşer. Daha
 uzağa bakmanın ölçülebilir bir ek faydası yoktur.</p>
 
-<h2>Peki gerçekten işe yarıyor mu? Kanıtın durumu</h2>
+<h2 id="b-peki-gercekten-ise-yariyor-mu-kanitin-durumu">Peki gerçekten işe yarıyor mu? Kanıtın durumu</h2>
 
 <p>Burada dürüst olmak gerekiyor, çünkü internetteki çoğu kaynak bu kuralı
 "kanıtlanmış" diye sunuyor. Değil.</p>
@@ -258,7 +289,7 @@ Daha az süre çalışılmasına rağmen üretim aynı kalıyor.</p>
 <aside class="reklam-alani gizli"
        data-birim="rehberOrta" data-bicim="fluid" aria-label="Reklam"></aside>
 
-<h2>Yaygın yanlışlar</h2>
+<h2 id="b-yaygin-yanlislar">Yaygın yanlışlar</h2>
 
 <h3>"Ekran gözü kalıcı olarak bozar"</h3>
 <p>Doğru değil. AAO açıkça belirtiyor: uzun süreli ekran kullanımı gözde kalıcı
@@ -278,12 +309,24 @@ meta-analizde her ek "diyoptri-saat/hafta" yakın iş, miyopi olasılığını %
 artırıyordu. Bu bir ilişki, tek başına neden-sonuç kanıtı değil.</p>
 
 <h3>"Mavi ışık filtresi göz yorgunluğunu çözer"</h3>
-<p>Mavi ışık gözlüklerinin dijital göz yorgunluğunu azalttığına dair kanıt
-zayıf. Belirtilerin büyük kısmı kırpma azalması ve odak kasından kaynaklanıyor;
-ışığın rengiyle doğrudan ilgisi yok. Mavi ışığın uyku üzerindeki etkisi ayrı
-bir konudur ve daha iyi belgelenmiştir.</p>
+<p>Bu, elimizdeki en sağlam kanıtla çürütülmüş bir inanış. 2023'te Cochrane —
+tıpta kanıt değerlendirmesinin en titiz kurumu sayılır — altı ülkeden 17
+rastgele kontrollü çalışmayı bir araya getirdi. Sonuç: <b>mavi ışık filtreli
+gözlükler, bilgisayar kullanımına bağlı göz yorgunluğunu azaltmıyor.</b>
+Filtresiz gözlüklere göre kısa vadede bir üstünlüğü görülmedi.</p>
+<p>Aynı derleme, bu gözlüklerin retinayı (sarı nokta bölgesini) koruduğuna dair
+<b>hiçbir rastgele kontrollü çalışma bulamadı</b> — yani "gözünü mavi ışıktan
+korur" iddiasının arkasında bu düzeyde bir kanıt yok. İyi haber şu ki zararı
+da görülmemiş: bildirilen yan etkiler hafif ve geçici.</p>
+<p>Sebebi aslında basit: belirtilerin büyük kısmı göz kırpmanın azalmasından ve
+odak kasının kasılı kalmasından geliyor. İkisinin de ışığın rengiyle ilgisi yok.
+Filtre takarken de dakikada 5 kez kırpıyorsun.</p>
+<p>Mavi ışığın <i>uykuya</i> etkisi ayrı bir konudur ve daha iyi belgelenmiştir —
+ama o zaman çözüm gözlük değil, akşam ekranı azaltmak.</p>
+<p class="kaynak">Kaynak: Singh ve ark., Cochrane Database of Systematic Reviews,
+2023, Sayı 8 — 17 rastgele kontrollü çalışma</p>
 
-<h2>Pratikte ne yapmalı?</h2>
+<h2 id="b-pratikte-ne-yapmali">Pratikte ne yapmalı?</h2>
 
 <p>Kanıt durumunu bilerek, makul bir yaklaşım şöyle:</p>
 
@@ -317,7 +360,94 @@ bir konudur ve daha iyi belgelenmiştir.</p>
 <aside class="reklam-alani gizli" id="reklamAlani"
        data-birim="rehberAlt" data-bicim="rectangle" aria-label="Reklam"></aside>
 
-<h2>Sık sorulanlar</h2>
+<h2 id="b-goz-yorgunluguna-ne-iyi-gelir">Göz yorgunluğuna ne iyi gelir?</h2>
+
+<p>En çok arananların başında bu geliyor. Dürüst cevap: tek bir sihirli çözüm
+yok, ama işe yaradığı ölçülmüş birkaç şey var. Etkisi büyükten küçüğe:</p>
+
+<h3>1. Molanın kendisi</h3>
+<p>Uzağa bakmak odaklama kasını (siliyer kas) gevşetiyor; bilinçli kırpmak
+gözyaşı tabakasını yeniliyor. Bu ikisi belirtilerin iki ana sebebine doğrudan
+dokunuyor. Kanıtın en güçlü olduğu yer burası — asıl fayda kuralın rakamlarında
+değil, düzenli hatırlatmanın kendisinde.</p>
+
+<h3>2. Suni gözyaşı</h3>
+<p>Gözün batıyor, yanıyor ya da kuru hissediyorsa koruyucusuz suni gözyaşı
+damlası belirtileri hafifletir. Eczaneden reçetesiz alınır. Günde dörtten fazla
+kullanacaksan koruyucusuz olanı seç — koruyucu maddeler sık kullanımda gözü
+tahriş edebiliyor.</p>
+
+<h3>3. Ortam nemi ve hava akımı</h3>
+<p>Klima ve kalorifer havayı kurutuyor; doğrudan yüzüne gelen hava akımı gözyaşı
+tabakasını hızla buharlaştırıyor. Vantilatörü yüzünden başka yöne çevirmek,
+kışın odaya bir kap su koymak basit ama işe yarayan şeyler.</p>
+
+<h3>4. Ekranın konumu</h3>
+<p>Ekranın üst kenarı göz hizanın <b>altında</b> olmalı. Yukarı bakarak
+çalışınca göz kapağı daha çok açılıyor, açıkta kalan yüzey büyüdüğü için
+gözyaşı daha hızlı buharlaşıyor. Mesafe bir kol boyu, yani 50–70 cm.</p>
+
+<h3>5. Parlaklık dengesi</h3>
+<p>Ekran, arkasındaki duvardan belirgin şekilde parlak olmamalı. Gece karanlık
+odada tam parlaklıkla çalışmak gözü zorluyor. Kural şu: ekrana baktığında
+odanın geri kalanı karanlık bir mağara gibi görünüyorsa parlaklığı düşür.</p>
+
+<h3>İşe yaramayan ne?</h3>
+<p>Mavi ışık filtreli gözlükler — yukarıda anlattım. Ayrıca "göz vitamini"
+takviyelerinin ekran yorgunluğuna faydası gösterilmiş değil.</p>
+
+<h2 id="b-gozde-kuruluk-neden-oluyor">Gözde kuruluk neden oluyor?</h2>
+
+<p>Ekrana bakarken göz kırpma sayısı dakikada yaklaşık 15'ten 5–7'ye düşüyor.
+Ama asıl mesele sayı değil: <b>kırpmaların büyük kısmı yarım kalıyor</b>,
+kapaklar tam birleşmiyor. Yarım kırpma gözyaşını yüzeye düzgün yaymıyor.</p>
+
+<p>Gözyaşı üç katmandan oluşuyor — en dışta yağ, ortada su, içte müsin. Yağ
+katmanı buharlaşmayı yavaşlatıyor ve bu katman göz kapağının kenarındaki
+bezlerden (meibom bezleri) geliyor. O bezleri boşaltan şey tam kırpma. Yarım
+kırpınca yağ gelmiyor, su katmanı hızla buharlaşıyor, göz kuruyor.</p>
+
+<p>Bu yüzden molada "10 kez tam kırp" demek boş bir tavsiye değil: kapakların
+tamamen birleşmesi gereken şey o bezleri sıkmak.</p>
+
+<p>Kontakt lens kullanıyorsan kuruluk daha belirgin olabilir, çünkü lens gözyaşı
+tabakasını ikiye bölüyor. Bu grupta mola vermek daha da önemli.</p>
+
+<h2 id="b-cocuklarda-ekran-suresi-ve-miyopi">Çocuklarda ekran süresi ve miyopi</h2>
+
+<p>Ebeveynlerin en çok sorduğu şey bu ve cevabı çoğu kişinin beklediğinden
+farklı: <b>asıl belirleyici ekran süresi değil, dışarıda geçirilen zaman.</b></p>
+
+<p>2024 tarihli bir meta-analiz 6–16 yaş arası 12.922 çocuğun verisini
+birleştirdi. Sonuç açık bir doz-etki ilişkisi gösteriyor. Haftada 3,5 saat
+dışarıda kalan bir çocuğa göre:</p>
+
+<ul>
+  <li>Haftada <b>7 saat</b> dışarıda → miyopi başlama riski <b>%20 daha az</b></li>
+  <li>Haftada <b>16,3 saat</b> → <b>%53 daha az</b></li>
+  <li>Haftada <b>27 saat</b> → <b>%69 daha az</b></li>
+</ul>
+
+<p>Başka bir hesapla: günde yaklaşık <b>76 dakika</b> daha fazla dışarıda kalmak
+miyopi başlama riskini yarıya indiriyor.</p>
+
+<p>Önemli bir ayrıntı: bu koruma <b>henüz miyop olmayan</b> çocuklarda işliyor.
+Miyopisi başlamış çocuklarda dışarıda geçirilen zaman ilerlemeyi durdurmuyor.
+Yani bu bir önlem, tedavi değil.</p>
+
+<p>Mekanizmanın gün ışığının şiddetiyle ilgili olduğu düşünülüyor — kapalı
+alanda 300–500 lüks varken, bulutlu bir günde bile dışarısı 10.000 lüksün
+üstünde. Yani "dışarı çık" derken kastedilen spor değil, sadece dışarıda olmak.</p>
+
+<p>Ekran süresine gelince: ekranın kendisi gözü <b>kalıcı olarak bozmuyor</b>.
+Ama ekran başındaki saatler dışarıda geçirilebilecek saatlerin yerini aldığı
+için dolaylı bir etkisi var. Yani doğru soru "kaç saat ekran" değil, "kaç saat
+dışarıda" olmalı.</p>
+
+<p class="kaynak">Kaynak: Kido ve ark., Cochrane Database of Systematic Reviews,
+2024 · Ophthalmic Research, 2024 — 12.922 katılımcılı meta-analiz</p>
+
+<h2 id="b-sik-sorulanlar">Sık sorulanlar</h2>
 
 <h3>20 saniye çok kısa değil mi?</h3>
 <p>Olabilir. 2023 çalışması 20 saniyenin odaklama kasını rahatlatmaya
@@ -340,7 +470,7 @@ belirtiler ısrarcıysa önce gözlük numaranızı kontrol ettirin.</p>
 şikâyetlerde azalma görüldü. Ama etkinin hatırlatıcı kalkınca kaybolduğunu da
 unutmayın — bu bir kür değil, sürekli bir alışkanlık.</p>
 
-<h2>Kaynaklar</h2>
+<h2 id="b-kaynaklar">Kaynaklar</h2>
 <ol class="kaynakca">
   <li>American Optometric Association. <i>Computer Vision Syndrome</i>. aoa.org</li>
   <li>American Academy of Ophthalmology. <i>Computers, Digital Devices and Eye
@@ -368,6 +498,18 @@ unutmayın — bu bir kür değil, sürekli bir alışkanlık.</p>
   <li>Luger T ve ark. <i>Work-break schedules for preventing musculoskeletal
       symptoms and disorders in healthy workers</i>. Cochrane Database of
       Systematic Reviews, 2025.</li>
+  <li>Singh S ve ark. <i>Blue-light filtering spectacle lenses for visual
+      performance, sleep, and macular health in adults</i>. Cochrane Database of
+      Systematic Reviews, 2023, Sayı 8, CD013244. 17 rastgele kontrollü çalışma,
+      altı ülke.</li>
+  <li>Kido A ve ark. <i>Interventions to increase time spent outdoors for
+      preventing incidence and progression of myopia in children</i>. Cochrane
+      Database of Systematic Reviews, 2024, CD013549.</li>
+  <li>Dışarıda geçirilen zaman ve miyopi: meta-analiz, 6–16 yaş, 12.922
+      katılımcı. Ophthalmic Research, 2024;67(1):393.</li>
+  <li>Craig JP ve ark. <i>TFOS DEWS II Definition and Classification Report</i>.
+      The Ocular Surface, 2017;15(3):276-283. Gözyaşı tabakası ve meibom
+      bezleri.</li>
   <li>T.C. Sağlık Bakanlığı, Diyarbakır İl Sağlık Müdürlüğü.
       <i>Göz sağlığı için 20-20-20 kuralı</i>, 2023.</li>
 </ol>
