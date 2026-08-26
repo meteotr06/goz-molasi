@@ -33,6 +33,14 @@ def _simge_ciz(boyut=64, zemin="#141130", halka="#7ee0d2", ic="#0f766e"):
     return resim
 
 
+def gm_kipleri():
+    """KİPLER listesini ana modülden al. Doğrudan import edersek
+    dairesel içe aktarma oluyor (goz_molasi -> tepsi -> goz_molasi)."""
+    import sys
+    gm = sys.modules.get("goz_molasi") or sys.modules.get("__main__")
+    return getattr(gm, "KIPLER", [])
+
+
 class Tepsi:
     def __init__(self, uygulama, ikon_yolu=None):
         self.uyg = uygulama
@@ -74,6 +82,16 @@ class Tepsi:
             A("Sadece ölç (mola verme)", self._sadece_olc,
               checked=lambda e: bool(self.uyg.ayar.get("sadece_olc"))),
             pystray.Menu.SEPARATOR,
+            # Kip: yaptığın işe göre kayıtlı ayar takımı. Tepsiden
+            # değiştirilebilmesi önemli — bütün mesele ayar penceresine
+            # girmek zorunda kalmamak.
+            A("Kip", pystray.Menu(*[
+                A(ad, (lambda a: lambda: self._kip(a))(anahtar),
+                  checked=(lambda a: lambda e: self.uyg.acik_kip() == a)(anahtar),
+                  radio=True)
+                for anahtar, ad, _ayar in gm_kipleri()
+            ])),
+            pystray.Menu.SEPARATOR,
             A("Ayarlar", self._ayarlar),
             A("Çıkış", self._cikis),
         )
@@ -99,6 +117,9 @@ class Tepsi:
 
     def _sadece_olc(self, *a):
         self._ana(self.uyg.sadece_olc_degistir)
+
+    def _kip(self, anahtar):
+        self._ana(lambda: self.uyg.kipe_gec(anahtar))
 
     def _ayarlar(self, *a):
         self._ana(self.uyg.ayarlari_ac)

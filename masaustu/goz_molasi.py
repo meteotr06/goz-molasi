@@ -81,6 +81,25 @@ def program_adi(dosya):
     return kok[:1].upper() + kok[1:] if kok else dosya
 
 
+# KİPLER — yaptığın işe göre kayıtlı ayar takımı.
+# Web sürümündekiyle aynı. Kip yalnızca zamanlama ayarlarını
+# değiştirir; tema, canlılık, kilit gibi kişisel tercihler taşınır.
+KIPLER = [
+    ("calisma", "Çalışma", {
+        "calisma_dk": 20, "mola_sn": 20, "uyari_sn": 15,
+        "ses": True, "sadece_olc": False}),
+    ("ders", "Ders", {
+        "calisma_dk": 25, "mola_sn": 30, "uyari_sn": 15,
+        "ses": True, "sadece_olc": False}),
+    ("toplanti", "Toplantı", {
+        "calisma_dk": 60, "mola_sn": 20, "uyari_sn": 0,
+        "ses": False, "sadece_olc": False}),
+    ("film", "Film · oyun", {
+        "calisma_dk": 90, "mola_sn": 20, "uyari_sn": 0,
+        "ses": False, "sadece_olc": False}),
+]
+
+
 VARSAYILAN = {
     "calisma_dk": 20,
     "mola_sn": 20,
@@ -1149,6 +1168,33 @@ class Uygulama:
         self._sayaci_kaydet()
         if self.tepsi:
             self.tepsi.menuyu_tazele()
+
+    def acik_kip(self):
+        """Şu anki ayarlar hangi kipe uyuyor? Hiçbirine uymuyorsa None —
+        kullanıcı elle ayar yaptıysa kip seçili görünmemeli."""
+        for anahtar, _ad, ayar in KIPLER:
+            if all(self.ayar.get(k) == v for k, v in ayar.items()):
+                return anahtar
+        return None
+
+    def kipe_gec(self, anahtar):
+        """Kipi uygula ve sayacı yeni süreyle baştan başlat."""
+        for a, ad, ayar in KIPLER:
+            if a != anahtar:
+                continue
+            self.ayar.update(ayar)
+            ayarlari_yaz(self.ayar)
+            if self.balon:
+                self.balon.kapat()
+                self.balon = None
+            self.durum = "calisiyor"
+            self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+            self._sayaci_kaydet()
+            if self.tepsi:
+                self.tepsi.ipucu_yaz("Göz Molası — %s kipi" % ad)
+                self.tepsi.menuyu_tazele()
+            self._panel_yenile()
+            return
 
     def sadece_olc_degistir(self):
         """Sessiz ölçüm modunu aç/kapat.
