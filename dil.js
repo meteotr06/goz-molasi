@@ -264,6 +264,13 @@ const SOZLUK = {
   'tüm verileri silmeyi': 'erasing all data',
   'korur. Ayarlar, duraklatma ve molayı atlama serbesttir. Masaüstü sürümünde şifre ayrıca programın kapatılmasını engeller — tarayıcıda böyle bir şey mümkün değil, sekmeyi kapatan herkes kilidi aşar.':
     'only. Settings, pausing and skipping breaks are free. In the desktop version the PIN also prevents the app from being closed — a browser cannot do that; anyone who closes the tab bypasses the lock.',
+  /* ---- Diğer uygulamalar köprüsü ---- */
+  'Diğer ücretsiz uygulamalarım': 'My other free apps',
+  'Net maaş, kredi, kira artışı, KDV — 35 araç':
+    'Salary, loan, rent, VAT — 35 calculators (Turkish)',
+  'Hava Durumu': 'Weather',
+  'Türkiye geneli, saatlik ve 7 günlük': 'All of Türkiye, hourly and 7-day',
+  'Döviz, altın ve kur tahmini': 'Currencies, gold and rate forecasts',
 };
 
 
