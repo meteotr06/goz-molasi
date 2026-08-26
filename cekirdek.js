@@ -283,6 +283,9 @@ class MolaMotoru {
       istatistik: this.istatistik,
       hedefZaman: this.hedefZaman,
       durum: this.durum,
+      // Ne zaman kaydedildi — geri yüklerken "ne kadar kapalı kaldı"
+      // sorusunun cevabı bu.
+      kayitAni: Date.now(),
     };
   }
 
@@ -295,6 +298,49 @@ class MolaMotoru {
         this.istatistik = veri.istatistik;
       }
     }
+    this.geriYuklendi = this.sayaciGeriYukle(veri);
+  }
+
+  /** Kalan süreyi kayıttan geri yükler.
+
+      Eskiden disaAktar hedefZaman ve durum'u YAZIYOR ama iceAktar
+      onları HİÇ OKUMUYORDU. Sonuç: sayfa her açıldığında sayaç
+      sıfırdan başlıyordu ve iki sekme açıksa ikisi birbirinin
+      kaydını eziyordu. Masaüstü sürümünde aynı hata durum.json ile
+      çözülmüştü; web tarafına bakılmamış.
+
+      Kurallar (masaüstündekiyle aynı):
+        • Kapalı kalınan süre dinlenme eşiğinden uzunsa gözler zaten
+          dinlenmiştir — temiz bir süre başlar.
+        • Hedef henüz geçmemişse kaldığı yerden devam eder.
+        • Hedef kapalıyken geçtiyse: kısa kapanmaysa molayı kısa bir
+          payla verir, uzun kapanmaysa temiz başlar. */
+  sayaciGeriYukle(veri) {
+    const hedef = +veri.hedefZaman;
+    const kayitAni = +veri.kayitAni;
+    if (!Number.isFinite(hedef) || !Number.isFinite(kayitAni)) return false;
+    if (veri.durum === 'mola' || veri.durum === 'hazir') return false;
+
+    const simdi = Date.now();
+    const kapaliKalan = (simdi - kayitAni) / 1000;
+    if (kapaliKalan < 0 || kapaliKalan > this.ayarlar.dinlenmeEsigi) return false;
+
+    const kalan = (hedef - simdi) / 1000;
+    if (kalan > 0 && kalan <= this.ayarlar.calismaSuresi) {
+      this.hedefZaman = hedef;
+      this.durum = veri.durum === 'duraklatildi' ? 'duraklatildi' : 'calisiyor';
+      if (this.durum === 'duraklatildi') this.kalanDondurulmus = kalan;
+      this.sonHareket = simdi;
+      return true;
+    }
+    // Hedef kapalıyken geçmiş: kısa kapanmaysa molayı kaçırma
+    if (kalan <= 0 && kapaliKalan <= 60) {
+      this.hedefZaman = simdi + 25000;
+      this.durum = 'calisiyor';
+      this.sonHareket = simdi;
+      return true;
+    }
+    return false;
   }
 }
 

@@ -1613,6 +1613,32 @@
   window.addEventListener('pagehide', kaydet);
 
   /* ============================================================
+     SEKMELER ARASI EŞİTLEME
+
+     Uygulama iki sekmede açıksa her sekmenin kendi sayacı işliyor ve
+     ikisi aynı kaydı ezmeye çalışıyordu. Ölçtüm: bir sekme 36:20
+     gösterirken yeni açılan sekme 36:56 gösteriyordu.
+
+     storage olayı YALNIZCA diğer sekmelerde tetiklenir; kendi
+     yazdığımızda gelmez. Yani başka bir sekme kaydettiğinde sayacı
+     ondan eşitliyoruz — son yazan kazanıyor ve hepsi aynı şeyi
+     gösteriyor.
+
+     Mola sırasında eşitleme yapmıyoruz: mola ekranı açıkken sayacı
+     dışarıdan oynatmak molayı bozar.
+     ============================================================ */
+  window.addEventListener('storage', (e) => {
+    if (e.key !== KAYIT_ANAHTARI || !e.newValue) return;
+    if (motor.durum === 'mola' || molaAcik) return;
+    let veri = null;
+    try { veri = JSON.parse(e.newValue); } catch { return; }
+    if (!veri) return;
+    if (motor.sayaciGeriYukle(veri)) {
+      ekraniCiz(motor.anlikDurum());
+    }
+  });
+
+  /* ============================================================
      HAREKET TAKİBİ — cihaz kullanılmıyorsa sayaç dursun
      ============================================================ */
   ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach((olay) =>
@@ -1722,9 +1748,11 @@
   temaSeciciyiKur();
   hazirSureleriKur();
 
-  /* Açılışta kendiliğinden başla.
-     Sekme kapalıyken geçen süreyi mola yağmuruna çevirmiyoruz;
-     temiz bir 20 dakikayla başlıyoruz.
+  /* Açılışta kendiliğinden başla — AMA sayaç kayıttan geri
+     yüklenmediyse. Eskiden koşulsuz çağrılıyordu ve geri yüklenen
+     hedefi eziyordu: sayfayı yenilemek 36 dakikalık ilerlemeyi
+     sıfırlıyordu. Ölçtüm, 13 saniye sonra yenilenen sayfa yine
+     36:58 gösteriyordu.
 
      "Cihaza bakılmaya başlandığında başlasın" isteği burada
      iki parçayla karşılanıyor:
@@ -1734,7 +1762,7 @@
      Yani bilgisayar açıkken sen yokken sayaç boşa dönmez. */
   const oncedenCalisiyordu =
     kayit.durum === 'calisiyor' || kayit.durum === 'uyari' || kayit.durum === 'mola';
-  if (otomatikBasla || oncedenCalisiyordu) motor.basla();
+  if (!motor.geriYuklendi && (otomatikBasla || oncedenCalisiyordu)) motor.basla();
 
   // Hata ayıklama / test için: konsoldan molaMotoru.ayarlar ile oynayabilirsin
   window.molaMotoru = motor;
