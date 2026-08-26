@@ -51,6 +51,8 @@
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
     ayDil: $('ayDil'),
+    ikinciSekme: $('ikinciSekme'),
+    buradaDevam: $('buradaDevamDugme'),
     kipDugmeler: $('kipDugmeler'),
     tanitimKart: $('tanitimKart'),
     tanitimMetin: $('tanitimMetin'),
@@ -278,6 +280,113 @@
       `Every ${dk} minutes the screen goes dark for ${sn} seconds. ` +
         'Look 6 metres away.');
   }
+
+  /* ============================================================
+     TEK SEKME — lider seçimi
+
+     Sorun: uygulama iki sekmede açıksa her sekme kendi sayacını
+     işletiyor. Ekran süresi iki kat sayılıyor, sekmeler birbirinin
+     kaydını eziyor ve sayaçlar farklı gösteriyor (ölçtüm: biri 36:20
+     derken öteki 36:56).
+
+     Çözüm WhatsApp Web'inkiyle aynı: tek sekme sayar, diğerleri
+     "buradan devam et" der. Veriler ortak depoda olduğu için geçiş
+     sırasında hiçbir şey kaybolmuyor.
+
+     Yöntem: her sekme kendine bir kimlik üretiyor ve lider olduğunda
+     depoya iki saniyede bir kalp atışı yazıyor. Kalp atışı altı
+     saniyeden eskiyse lider ölmüş sayılıyor ve boştaki sekme
+     devralıyor — yani sekme çökse bile kilitli kalmıyor.
+     ============================================================ */
+  const LIDER_ANAHTAR = 'goz-molasi-lider';
+  const LIDER_ARALIK = 2000;
+  const LIDER_OLU = 6000;
+  const SEKME_KIMLIGI = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  let liderMiyim = false;
+  let liderZaman = 0;
+
+  function liderOku() {
+    try { return JSON.parse(localStorage.getItem(LIDER_ANAHTAR) || 'null'); }
+    catch { return null; }
+  }
+
+  function liderDamgala() {
+    try {
+      localStorage.setItem(LIDER_ANAHTAR,
+        JSON.stringify({ kimlik: SEKME_KIMLIGI, an: Date.now() }));
+    } catch {}
+  }
+
+  /** Başka bir sekme şu an canlı lider mi? */
+  function baskaLiderVar() {
+    const l = liderOku();
+    return !!(l && l.kimlik !== SEKME_KIMLIGI && (Date.now() - l.an) < LIDER_OLU);
+  }
+
+  function lideriDevral() {
+    liderMiyim = true;
+    liderDamgala();
+    og.ikinciSekme.hidden = true;
+    // Sayaç kaydı ortak; devralan sekme kaldığı yerden sürdürür.
+    try { motor.sayaciGeriYukle(JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}')); } catch {}
+    motor._kalpAtisiBaslat();
+    ekraniCiz(motor.anlikDurum());
+    clearInterval(liderZaman);
+    liderZaman = setInterval(liderNobeti, LIDER_ARALIK);
+  }
+
+  function liderligiBirak() {
+    liderMiyim = false;
+    og.ikinciSekme.hidden = false;
+    // Sayaç bu sekmede işlemesin; ölçüm çift sayılmasın.
+    try { motor._kalpAtisiDurdur(); } catch {}
+  }
+
+  /** İki saniyede bir: liderim damgala, değilsem devralınabilir mi bak. */
+  function liderNobeti() {
+    if (liderMiyim) {
+      const l = liderOku();
+      // Başka sekme devraldıysa sessizce geri çekil
+      if (l && l.kimlik !== SEKME_KIMLIGI && (Date.now() - l.an) < LIDER_OLU) {
+        liderligiBirak();
+        return;
+      }
+      liderDamgala();
+    } else if (!baskaLiderVar()) {
+      lideriDevral();          // lider öldü, boşluğu doldur
+    }
+  }
+
+  function tekSekmeyiKur() {
+    if (baskaLiderVar()) {
+      liderligiBirak();
+    } else {
+      lideriDevral();
+    }
+    clearInterval(liderZaman);
+    liderZaman = setInterval(liderNobeti, LIDER_ARALIK);
+    // Sekme kapanırken bayrağı bırak ki diğeri hemen devralsın
+    window.addEventListener('pagehide', () => {
+      if (liderMiyim) { try { localStorage.removeItem(LIDER_ANAHTAR); } catch {} }
+    });
+
+    // Arka plandaki sekmenin zamanlayıcısı da kısılıyor: lider sekme
+    // kapandığında bekleyen sekme dakikalarca fark etmeyebiliyordu.
+    // Ölçtüm — beş saniye sonra hâlâ devralmamıştı. Sekmeye dönüldüğü
+    // anda kontrol ediyoruz.
+    const hemenBak = () => { if (!liderMiyim && !baskaLiderVar()) lideriDevral(); };
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) hemenBak();
+    });
+    window.addEventListener('focus', hemenBak);
+
+    // Lider bayrağı silinince (diğer sekme kapandı) haberdar ol
+    window.addEventListener('storage', (e) => {
+      if (e.key === LIDER_ANAHTAR && !e.newValue) hemenBak();
+    });
+  }
+
+  og.buradaDevam.addEventListener('click', lideriDevral);
 
   /* ============================================================
      KİPLER
@@ -1783,6 +1892,7 @@
     Math.round(motor.ayarlar.calismaSuresi / 60), motor.ayarlar.molaSuresi);
 
   ekraniCiz(motor.anlikDurum());
+  tekSekmeyiKur();
   kipleriKur();
   tanitimiKurGerekirse();
 

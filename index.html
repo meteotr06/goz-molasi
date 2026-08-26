@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v55">
+<link rel="stylesheet" href="stil.css?s=v57">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -286,6 +286,25 @@
   <div class="uyari-balon" id="uyariBalon" role="status">
     <b id="uyariMetin">15 sn sonra göz molası</b>
     <button class="dugme sade kucuk" id="erteleDugme">5 dk ertele</button>
+  </div>
+
+  <!-- BAŞKA SEKMEDE AÇIK ÖRTÜSÜ
+       Aynı anda birden çok sekme sayarsa ekran süresi kat kat
+       sayılıyor ve sekmeler birbirinin kaydını eziyor. WhatsApp Web
+       gibi: tek sekme sayar, diğerleri "buradan devam et" der. -->
+  <div class="ikinci-sekme" id="ikinciSekme" hidden role="dialog"
+       aria-labelledby="ikinciBaslik">
+    <div class="ikinci-kutu">
+      <h2 id="ikinciBaslik">Göz Molası başka bir sekmede açık</h2>
+      <p>
+        Sayacın doğru işlemesi için aynı anda tek sekme sayar. Bu sekmede
+        devam etmek istersen diğeri durur — verilerin aynen taşınır,
+        hiçbir şey kaybolmaz.
+      </p>
+      <button type="button" class="dugme ana" id="buradaDevamDugme">
+        Buradan devam et
+      </button>
+    </div>
   </div>
 
   <!-- MOLA EKRANI (tam ekran örtü) -->
@@ -565,13 +584,13 @@
     </form>
   </dialog>
 
-  <script src="dil.js?s=v55"></script>
-  <script src="bilgiler.js?s=v55"></script>
-  <script src="bilgiler_en.js?s=v55"></script>
-  <script src="egzersiz.js?s=v55"></script>
-  <script src="reklam.js?s=v55"></script>
-  <script src="cekirdek.js?s=v55"></script>
-  <script src="mola_icerik.js?s=v55"></script>
-  <script src="arayuz.js?s=v55"></script>
+  <script src="dil.js?s=v57"></script>
+  <script src="bilgiler.js?s=v57"></script>
+  <script src="bilgiler_en.js?s=v57"></script>
+  <script src="egzersiz.js?s=v57"></script>
+  <script src="reklam.js?s=v57"></script>
+  <script src="cekirdek.js?s=v57"></script>
+  <script src="mola_icerik.js?s=v57"></script>
+  <script src="arayuz.js?s=v57"></script>
 </body>
 </html>

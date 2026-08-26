@@ -20,6 +20,10 @@ const SOZLUK = {
   'Göz Molası — Ekran Başında Göz Yorgunluğu İçin 20-20-20 Hatırlatıcısı':
     'Eye Break — 20-20-20 Reminder for Screen Eye Strain',
   'Göz Molası': 'Eye Break',
+  'Göz Molası başka bir sekmede açık': 'Eye Break is open in another tab',
+  'Sayacın doğru işlemesi için aynı anda tek sekme sayar. Bu sekmede devam etmek istersen diğeri durur — verilerin aynen taşınır, hiçbir şey kaybolmaz.':
+    'Only one tab counts at a time so the timer stays accurate. Continue here and the other one stops — your data carries over, nothing is lost.',
+  'Buradan devam et': 'Use here',
   '20 DAKİKA · 20 SANİYE · 6 METRE': '20 MINUTES · 20 SECONDS · 6 METRES',
 
   /* ---- Ana ekran ---- */

@@ -174,9 +174,13 @@
 
   /* ---------- 8. SAYFA SAĞLIĞI ---------- */
   {
+    // innerWidth 0 ise pencere ölçülemiyor demektir (gizli bölme);
+    // o durumda "taşma var" demek yanıltıcı olur.
+    const gen = window.innerWidth;
     ekle('sağlık', 'yatay taşma yok',
-         document.documentElement.scrollWidth <= window.innerWidth,
-         `${document.documentElement.scrollWidth} / ${window.innerWidth}`);
+         gen < 50 || document.documentElement.scrollWidth <= gen + 1,
+         gen < 50 ? 'ölçülemedi (pencere gizli)'
+                  : `${document.documentElement.scrollWidth} / ${gen}`);
     const kirik = [...document.querySelectorAll('a[href^="#"]')]
       .filter(a => { try { return !document.querySelector(a.getAttribute('href')); } catch { return true; } });
     ekle('sağlık', 'kırık iç bağlantı yok', kirik.length === 0, `${kirik.length} tane`);

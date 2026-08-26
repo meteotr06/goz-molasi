@@ -1444,3 +1444,37 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .karsilastirma td.hayir { color: var(--yazi-soluk); }
 .kucuk-not { font-size: 12.5px !important; line-height: 1.6; }
 .karsilastirma .dugme { align-self: flex-start; }
+
+/* ---- Başka sekmede açık örtüsü ----
+   Aynı anda birden çok sekme sayarsa ekran süresi kat kat sayılıyor
+   ve sekmeler birbirinin kaydını eziyor. Tek sekme sayar. */
+.ikinci-sekme {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--zemin) 92%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.ikinci-sekme[hidden] { display: none; }
+.ikinci-kutu {
+  max-width: 420px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak);
+  box-shadow: var(--golge);
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  align-items: center;
+}
+.ikinci-kutu h2 { margin: 0; font-size: 19px; line-height: 1.3; }
+.ikinci-kutu p {
+  margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--yazi-soluk);
+}
