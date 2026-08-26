@@ -207,7 +207,12 @@ def simge_ciz(boy, pay_orani=0.10, detay=None):
     # 0.96'da iris alttan da kesiliyordu; gerçek gözde alt kenar
     # görünür, yalnızca üst kapak örter.
     iris_r = goz_y * 0.86
-    ix, iy = orta + goz_g * 0.06, orta
+    # Bakış YANA çevrik. İki sebep: dosdoğru bakan gerçekçi bir göz
+    # simge boyutunda gözetleniyormuş hissi veriyor — oysa uygulamanın
+    # işi rahatlatmak. İkincisi zaten uygulamanın söylediği şey bu:
+    # "gözünü ekrandan ayır, uzağa bak".
+    # 0.30'da iris bademin sağ kenarına dayanıp sıkışıyordu.
+    ix, iy = orta + goz_g * 0.17, orta + goz_y * 0.03
 
     # 2a) Limbal halka (irisin koyu dış kenarı) — gerçek gözde vardır
     ciz.ellipse([ix - iris_r, iy - iris_r, ix + iris_r, iy + iris_r],
@@ -278,7 +283,9 @@ def simge_ciz(boy, pay_orani=0.10, detay=None):
     gp = gecis.load()
     for y in range(B):
         t = (y - ust) / boyu
-        gp[0, y] = 0 if t < 0 or t > 1 else int(78 * (1 - t) ** 1.7)
+        # 78 -> 96: üst kapak biraz daha inik, bakış "faltaşı gibi
+        # açık" değil dingin görünüyor.
+        gp[0, y] = 0 if t < 0 or t > 1 else int(96 * (1 - t) ** 1.6)
     golge = Image.new("RGBA", im.size, (4, 26, 32, 255))
     ak_maske = Image.new("L", im.size, 0)
     ImageDraw.Draw(ak_maske).polygon(ak_nokta, fill=255)
