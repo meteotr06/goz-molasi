@@ -327,8 +327,8 @@
   function kilitDurumunuGoster() {
     const acik = !!kilitOzeti;
     og.kilitDurum.textContent = acik
-      ? 'Açık — mola atlama, duraklatma ve ayarlar şifreli'
-      : 'Kapalı — mola atlama ve ayarlar serbest';
+      ? 'Açık — şifreyi değiştirme ve verileri silme korumalı'
+      : 'Kapalı — verileri silmek serbest';
     og.kilitKur.textContent = acik ? 'Şifreyi değiştir' : 'Şifreyi koy';
     og.kilitKaldir.classList.toggle('gizli', !acik);
     og.atla.textContent = atlaEtiketi();
@@ -863,7 +863,7 @@
     }, HOLD_SURE);
   }
   function atlaEtiketi() {
-    return kilitOzeti ? 'Atlamak için basılı tut 🔒' : 'Atlamak için basılı tut';
+    return 'Atlamak için basılı tut';
   }
   function holdIptal() {
     clearTimeout(holdZaman);

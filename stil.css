@@ -952,3 +952,14 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .sehir-secenek:hover, .sehir-secenek:focus-visible { border-color: var(--vurgu); }
 .sehir-secenek b { font-size: 14px; }
 .sehir-secenek span { font-size: 12px; color: var(--yazi-soluk); }
+
+/* ---- Mola kartı: türüne göre farklı vurgu ----
+   Aynı kutu her molada farklı içerik gösteriyor (göz bilgisi, hava,
+   kişisel özet, ipucu, hava kalitesi). Sol kenardaki renk şeridi
+   "bu sefer başka bir şey" sinyalini okumadan verir. */
+.neden-kart { border-left: 3px solid transparent; transition: border-color .4s ease; }
+.neden-kart[data-tur="bilgi"]  { border-left-color: rgba(255,255,255,0.45); }
+.neden-kart[data-tur="hava"]   { border-left-color: #7fd4ff; }
+.neden-kart[data-tur="kalite"] { border-left-color: #9ae6a0; }
+.neden-kart[data-tur="ozet"]   { border-left-color: #ffd479; }
+.neden-kart[data-tur="ipucu"]  { border-left-color: #d2a8ff; }

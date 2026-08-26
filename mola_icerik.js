@@ -64,7 +64,11 @@ const MolaIcerik = (() => {
     try { localStorage.setItem(KONUM_ANAHTAR, JSON.stringify(k)); } catch {}
   }
   function konumSil() {
-    try { localStorage.removeItem(KONUM_ANAHTAR); localStorage.removeItem(HAVA_ANAHTAR); } catch {}
+    try {
+      localStorage.removeItem(KONUM_ANAHTAR);
+      localStorage.removeItem(HAVA_ANAHTAR);
+      localStorage.removeItem(KALITE_ANAHTAR);
+    } catch {}
   }
 
   /** Tarayıcının konumunu ister. Tarayıcılar bunu yalnızca bir
@@ -123,7 +127,10 @@ const MolaIcerik = (() => {
 
   function sehirSec(y) {
     konumYaz({ enlem: y.enlem, boylam: y.boylam, ad: y.ad });
-    try { localStorage.removeItem(HAVA_ANAHTAR); } catch {}
+    try {
+      localStorage.removeItem(HAVA_ANAHTAR);
+      localStorage.removeItem(KALITE_ANAHTAR);
+    } catch {}
   }
 
   /* ================= HAVA ================= */
@@ -171,6 +178,71 @@ const MolaIcerik = (() => {
       try { localStorage.setItem(HAVA_ANAHTAR, JSON.stringify({ an: Date.now(), veri })); } catch {}
       return veri;
     } catch { return null; }
+  }
+
+  /* ---------- HAVA KALİTESİ ----------
+     Neden göz uygulamasında? Hava kirliliği ile kuru göz arasında
+     ölçülmüş bir bağ var: PM2.5 ve ozon yükseldiğinde kuru göz
+     şikâyetiyle başvuru artıyor. Ekran başındaki az kırpma zaten
+     gözyaşını inceltiyor; kirli havada ikisi üst üste biniyor. */
+  const KALITE_ANAHTAR = 'goz-molasi-hava-kalite';
+
+  async function kaliteGetir() {
+    const konum = konumOku();
+    if (!konum) return null;
+    try {
+      const eski = JSON.parse(localStorage.getItem(KALITE_ANAHTAR) || 'null');
+      if (eski && Date.now() - eski.an < HAVA_TAZELIK) return eski.veri;
+    } catch {}
+    try {
+      const u = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${konum.enlem}` +
+                `&longitude=${konum.boylam}&current=european_aqi,pm2_5,pm10&timezone=auto&forecast_days=1`;
+      const c = await fetch(u);
+      if (!c.ok) return null;
+      const d = await c.json();
+      if (d.current == null || d.current.european_aqi == null) return null;
+      const veri = {
+        ad: konum.ad || '',
+        aqi: Math.round(d.current.european_aqi),
+        pm25: d.current.pm2_5,
+        pm10: d.current.pm10,
+      };
+      try { localStorage.setItem(KALITE_ANAHTAR, JSON.stringify({ an: Date.now(), veri })); } catch {}
+      return veri;
+    } catch { return null; }
+  }
+
+  /* Avrupa Hava Kalitesi İndeksi (EAQI) eşikleri — Avrupa Çevre Ajansı */
+  function aqiSeviye(a) {
+    if (a <= 20) return ['çok iyi', '🟢'];
+    if (a <= 40) return ['iyi', '🟢'];
+    if (a <= 60) return ['orta', '🟡'];
+    if (a <= 80) return ['kötü', '🟠'];
+    if (a <= 100) return ['çok kötü', '🔴'];
+    return ['aşırı kötü', '🟣'];
+  }
+
+  function kaliteKarti(k) {
+    if (!k) return null;
+    const [ad, simge] = aqiSeviye(k.aqi);
+    const yer = k.ad ? `${k.ad} · ` : '';
+    const parcalar = [`Hava kalitesi indeksi ${k.aqi} — ${ad}.`];
+    if (k.pm25 != null) parcalar.push(`PM2.5: ${Math.round(k.pm25)} µg/m³.`);
+
+    if (k.aqi <= 40) {
+      parcalar.push('Hava temiz — pencereyi açıp uzağa bakmak için iyi bir an.');
+    } else if (k.aqi <= 60) {
+      parcalar.push('Hava orta düzeyde. Gözün batıyorsa suni gözyaşı işe yarayabilir.');
+    } else {
+      parcalar.push('Hava kirli. Pencereyi kapalı tut; kirli havada kuru göz şikâyeti ' +
+                    'belirgin şekilde artıyor. Yine de gözünü ekrandan ayır — ' +
+                    'odanın en uzak köşesine bak.');
+    }
+    return {
+      baslik: `${simge} ${ad} (indeks ${k.aqi})`,
+      metin: yer + parcalar.join(' '),
+      kaynak: 'Open-Meteo (EAQI) · JAMA Ophthalmology, 2018 — kirlilik ve kuru göz',
+    };
   }
 
   function kalanSure(isoZaman) {
@@ -234,7 +306,7 @@ const MolaIcerik = (() => {
 
   /* ================= SIRA ================= */
 
-  const SIRA = ['bilgi', 'hava', 'bilgi', 'ozet', 'bilgi', 'ipucu'];
+  const SIRA = ['bilgi', 'hava', 'bilgi', 'ozet', 'bilgi', 'ipucu', 'bilgi', 'kalite'];
   let havaIzin = true;                 // ayarlardan kapatılabilir
   function havaAyarla(acik) { havaIzin = !!acik; }
   let adim = 0;
@@ -259,6 +331,7 @@ const MolaIcerik = (() => {
       else if (tur === 'ipucu') k = ipucuKarti();
       else if (tur === 'ozet') k = ozetKarti(istatistik);
       else if (tur === 'hava') k = havaIzin ? havaKarti(await havaGetir()) : null;
+      else if (tur === 'kalite') k = havaIzin ? kaliteKarti(await kaliteGetir()) : null;
       if (k) return { tur, ...k };
     }
     const y = bilgiKarti();
@@ -266,12 +339,13 @@ const MolaIcerik = (() => {
   }
 
   /** Türe göre kartın üstündeki etiket. */
-  const ETIKET = { bilgi: 'Neden?', hava: 'Dışarısı', ozet: 'Senin durumun', ipucu: 'İpucu' };
+  const ETIKET = { bilgi: 'Neden?', hava: 'Dışarısı', ozet: 'Senin durumun',
+                   ipucu: 'İpucu', kalite: 'Hava kalitesi' };
 
   return {
     sonraki, ETIKET, havaAyarla,
     konumuBul, konumOku, konumSil, sehirAra, sehirSec,
-    havaGetir, havaKarti, ozetKarti,
+    havaGetir, havaKarti, kaliteGetir, kaliteKarti, ozetKarti,
   };
 })();
 

@@ -1751,9 +1751,9 @@ class Uygulama:
 
         def kilit_metni():
             if not self.kilitli_mi():
-                return "Kapalı — herkes ayarları değiştirip programı kapatabilir"
-            return ("Açık — ayarlar, programı kapatma ve molayı erken bitirme "
-                    "şifre ister")
+                return "Kapalı — program herkes tarafından kapatılabilir"
+            return ("Açık — program YALNIZCA şifreyle kapatılır. Ayarlar, "
+                    "duraklatma ve molayı erken bitirme serbest.")
 
         def sifre_kur():
             yeni = sifre_alan.get().strip()
