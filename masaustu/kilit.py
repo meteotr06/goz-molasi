@@ -28,7 +28,11 @@ import subprocess
 import sys
 import time
 
-TUR_SAYISI = 240_000
+# OWASP'in PBKDF2-HMAC-SHA256 icin guncel tavsiyesi. 240.000'di,
+# 600.000'e cikarildi. Var olan sifreler kendiliginden yukseliyor:
+# dogru sifre girilince dogrula() 'yukseltilmeli' der ve cagiran
+# taraf ozeti yeni tur sayisiyla yeniden uretir.
+TUR_SAYISI = 600_000
 TEMIZ_CIKIS_DOSYA = "temiz_cikis.bayrak"
 
 
@@ -68,17 +72,64 @@ def dogrula(sifre, kayit):
     return False, False
 
 
-def sifre_gucu(sifre):
-    """Kullanıcıya 'bu şifre ne kadar dayanır' diye söyleyebilmek için."""
-    if not sifre.isdigit():
-        return None
-    ihtimal = 10 ** len(sifre)
-    saniye = ihtimal * 0.1              # deneme başına ~0,1 sn
+# Saldırganın saniyede kaç deneme yapabildiği.
+#
+# Buradaki sayı ÖNEMLİ. Eskiden deneme başına 0,1 saniye varsayılıyordu
+# — yani saniyede 10 deneme. O rakam, şifreyi UYGULAMANIN EKRANINDAN
+# denemenin maliyeti. Ama şifreyi kırmak isteyen kişi ekranı hiç
+# kullanmaz: ayarlar.json'u kopyalar, kendi bilgisayarında dener.
+# Ekran kartıyla 600.000 turluk PBKDF2-SHA256'da saniyede birkaç bin
+# deneme çıkarılabiliyor.
+#
+# Ölçek farkı bin kat. 4 haneli bir PIN için ekranda "1000 dakika
+# dayanır" yazıyordu; gerçekte birkaç saniye. Kullanıcıyı yanlış
+# güvene sokmak, hiçbir şey söylememekten kötü.
+SANIYEDE_DENEME = 5000
+
+
+def _alfabe_boyu(sifre):
+    """Şifrede hangi karakter türleri var? Deneme uzayı bundan çıkıyor."""
+    boy = 0
+    if any(c.isdigit() for c in sifre):
+        boy += 10
+    if any(c.islower() for c in sifre):
+        boy += 29          # Türkçe küçük harfler dahil
+    if any(c.isupper() for c in sifre):
+        boy += 29
+    if any(not c.isalnum() for c in sifre):
+        boy += 20          # noktalama ve simgeler
+    return max(boy, 10)
+
+
+def sure_metni(saniye):
+    if saniye < 60:
+        return "%d saniye" % max(1, int(saniye))
     if saniye < 3600:
-        return "%d dakika" % max(1, saniye // 60)
+        return "%d dakika" % (saniye // 60)
     if saniye < 86400:
         return "%d saat" % (saniye // 3600)
-    return "%d gün" % (saniye // 86400)
+    if saniye < 86400 * 365:
+        return "%d gün" % (saniye // 86400)
+    yil = saniye / (86400 * 365)
+    if yil > 1000:
+        return "binlerce yıl"
+    return "%d yıl" % yil
+
+
+def sifre_gucu(sifre):
+    """Bu şifre kaba kuvvetle ne kadar dayanır?
+
+    Dönen süre KÖTÜMSER tarafta: şifrenin yarısı denendiğinde
+    bulunacağı varsayılıyor ve saldırganın ekran kartı olduğu kabul
+    ediliyor. Kullanıcıya olduğundan güçlü göstermektense olduğundan
+    zayıf göstermek daha az zarar verir.
+    """
+    if not sifre:
+        return None
+    ihtimal = _alfabe_boyu(sifre) ** len(sifre)
+    # Ortalama olarak uzayın yarısında bulunur
+    saniye = (ihtimal / 2.0) / SANIYEDE_DENEME
+    return sure_metni(saniye)
 
 
 # ----------------------------------------------------------------------

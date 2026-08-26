@@ -40,6 +40,28 @@ class Egzersiz {
     this.r = Math.min(p.width, p.height) * 0.42;
   }
 
+  /** Yumuşak ışıma — merkezden dışa sönen daire.
+
+      Neden var: düz doldurulmuş şekiller ekranda "yapıştırılmış" gibi
+      duruyordu. İnce bir hale, şekli zemine oturtuyor. Bütün
+      egzersizler bunu kullanıyor, böylece hepsi aynı dile ait
+      görünüyor. */
+  _isima(x, y, r, renk, alfa = 0.5) {
+    if (r <= 0) return;
+    const c = this.c;
+    const gecis = c.createRadialGradient(x, y, 0, x, y, r);
+    gecis.addColorStop(0, renk);
+    gecis.addColorStop(0.45, renk);
+    gecis.addColorStop(1, 'transparent');
+    const eski = c.globalAlpha;
+    c.globalAlpha = eski * alfa;
+    c.fillStyle = gecis;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+    c.globalAlpha = eski;
+  }
+
   ciz(gecen, toplam) {}
 
   anlikYonerge() { return this.constructor.yonerge; }
@@ -103,41 +125,97 @@ class GozKirp extends Egzersiz {
   static yonerge = 'Kapak kapandığında sen de tam kırp — gözünü sıkıca kapat';
   static DONGU = 2;
 
+  static KANAT = 7;      // diyafram kanadı sayısı
+
+  /* TASARIM KARARI — bu egzersiz bir DİYAFRAM.
+
+     Önceki hâli iki eğriyle çizilmiş yassı bir badem ve içinde düz bir
+     daireydi. Ekran görüntüsünde çizgi film gibi duruyordu; uygulamanın
+     geri kalanı ise yumuşak halkalardan oluşuyor.
+
+     Diyafram üç işi birden yapıyor:
+       • Kapanıp açılması "göz kırp"ı anlatıyor, anlatmak için yazıya
+         ihtiyaç bırakmıyor.
+       • Dairesel — sayaç halkasıyla, nefes halkalarıyla aynı dilde.
+       • Soyut. Çizilmiş bir göze bakmak tuhaf; ışığı kesilen bir
+         açıklığa bakmak değil.
+
+     WCAG 2.3.1: döngü 2 saniye, yani saniyede 0,5 kapanış. Sınır
+     saniyede 3. Fazlasıyla altında. */
   ciz(gecen, toplam) {
     this._hazirla();
     const c = this.c;
-    const g = this.r * 0.78;
+    const R = this.r * 0.80;
     const evre = (gecen % GozKirp.DONGU) / GozKirp.DONGU;
     let aciklik;
-    if (evre < 0.12) aciklik = 1 - evre / 0.12;          // hızlı kapanış
+    if (evre < 0.12) aciklik = 1 - evre / 0.12;            // hızlı kapanış
     else if (evre < 0.26) aciklik = (evre - 0.12) / 0.14;  // yumuşak açılış
     else aciklik = 1;
-    const yuk = Math.max(g * 0.05, g * 0.55 * aciklik);
+    // Yumuşat: doğrusal açıklık mekanik duruyordu
+    const a = aciklik * aciklik * (3 - 2 * aciklik);
 
-    // Badem şekli: iki eğri
-    c.beginPath();
-    c.moveTo(this.mx - g, this.my);
-    c.quadraticCurveTo(this.mx, this.my - yuk * 2, this.mx + g, this.my);
-    c.quadraticCurveTo(this.mx, this.my + yuk * 2, this.mx - g, this.my);
-    c.fillStyle = this.renk.vurgu;
-    c.fill();
+    // Açıklığın yarıçapı ve kanatların bükülmesi
+    const delik = R * (0.06 + 0.62 * a);
+    const buk = (1 - a) * 0.55;
 
-    // Göz bebeği
-    const p = Math.min(g * 0.30, yuk * 0.9);
-    if (p > 1) {
-      c.beginPath();
-      c.arc(this.mx, this.my, p, 0, Math.PI * 2);
-      c.fillStyle = this.renk.zemin;
-      c.fill();
+    // 1) Açıklıktan sızan ışık. Kapanınca sönüyor — asıl "kırpma"
+    //    hissini veren şey bu.
+    this._isima(this.mx, this.my, delik * 2.1, this.renk.vurgu, 0.22 + 0.30 * a);
+
+    // 2) Kanatlar
+    const n = GozKirp.KANAT;
+    const dilim = (Math.PI * 2) / n;
+    const koseler = [];
+    for (let i = 0; i < n; i++) {
+      const t = i * dilim + buk;
+      koseler.push([this.mx + delik * Math.cos(t), this.my + delik * Math.sin(t)]);
     }
+    for (let i = 0; i < n; i++) {
+      const t0 = i * dilim;
+      const t1 = t0 + dilim;
+      const k0 = koseler[i];
+      const k1 = koseler[(i + 1) % n];
+      c.beginPath();
+      c.moveTo(this.mx + R * Math.cos(t0), this.my + R * Math.sin(t0));
+      c.arc(this.mx, this.my, R, t0, t1);
+      c.lineTo(k1[0], k1[1]);
+      c.lineTo(k0[0], k0[1]);
+      c.closePath();
+      /* Komşu kanatlar hafif farklı parlaklıkta — düz bir halka değil,
+         üst üste binmiş yapraklar gibi okunuyor.
 
-    // Sayaç
+         Doluluk KAPANDIKÇA artıyor. İlk denemede sabitti ve tam
+         kapalı kare pasta dilimi gibi duruyordu: merkeze inen ince
+         çizgiler, arada boşluk. Göz kapandığında görünmesi gereken
+         şey dolu bir yüzey. */
+      c.globalAlpha = 0.14 + 0.09 * (i % 2) + 0.30 * (1 - a);
+      c.fillStyle = this.renk.vurgu;
+      c.fill();
+      // Kanat kenarları açıkken belirgin, kapanınca siliniyor —
+      // yoksa kapalı gözün üstünde ışın gibi çizgiler kalıyor
+      c.globalAlpha = 0.14 + 0.42 * a;
+      c.strokeStyle = this.renk.vurgu;
+      c.lineWidth = 1.4;
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+
+    // 3) Dış çerçeve
+    c.beginPath();
+    c.arc(this.mx, this.my, R, 0, Math.PI * 2);
+    c.strokeStyle = this.renk.vurgu;
+    c.globalAlpha = 0.75;
+    c.lineWidth = 2.4;
+    c.stroke();
+    c.globalAlpha = 1;
+
+    // 4) Sayaç
     const kirpma = Math.floor(gecen / GozKirp.DONGU) + 1;
     const hepsi = Math.max(1, Math.floor(toplam / GozKirp.DONGU));
     c.fillStyle = this.renk.soluk;
-    c.font = `${Math.round(this.r * 0.20)}px "Segoe UI", system-ui, sans-serif`;
+    c.font = `${Math.round(this.r * 0.18)}px "Segoe UI", system-ui, sans-serif`;
     c.textAlign = 'center';
-    c.fillText(`${Math.min(kirpma, hepsi)} / ${hepsi}`, this.mx, this.my + this.r * 0.82);
+    c.fillText(`${Math.min(kirpma, hepsi)} / ${hepsi}`, this.mx, this.my + this.r * 0.99);
   }
 }
 
@@ -156,6 +234,7 @@ class YakinUzak extends Egzersiz {
     // Yumuşak gidiş-geliş, ani sıçrama yok
     const yakinlik = (1 - Math.cos(2 * Math.PI * e)) / 2;
 
+    // "Uzak" çerçevesi — nokta uzaklaştıkça belirginleşiyor
     c.beginPath();
     c.arc(this.mx, this.my, this.r * 0.86, 0, Math.PI * 2);
     c.strokeStyle = this.renk.sicak;
@@ -164,7 +243,24 @@ class YakinUzak extends Egzersiz {
     c.stroke();
     c.globalAlpha = 1;
 
+    /* Derinlik izi: noktanın arkasında, ondan biraz geride kalan iki
+       soluk halka. Tek başına büyüyüp küçülen bir daire "yaklaşıyor"
+       değil "şişiyor" gibi duruyordu; geride kalan halkalar hareketi
+       ileri-geri eksenine oturtuyor. */
+    for (let i = 1; i <= 2; i++) {
+      const gecikme = 0.10 * i;
+      const gy = (1 - Math.cos(2 * Math.PI * Math.max(0, e - gecikme))) / 2;
+      c.beginPath();
+      c.arc(this.mx, this.my, this.r * (0.10 + 0.55 * gy) + i * 3, 0, Math.PI * 2);
+      c.strokeStyle = this.renk.vurgu;
+      c.globalAlpha = 0.16 / i;
+      c.lineWidth = 2;
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+
     const p = this.r * (0.10 + 0.55 * yakinlik);
+    this._isima(this.mx, this.my, p * 2.4, this.renk.vurgu, 0.30);
     c.beginPath();
     c.arc(this.mx, this.my, p, 0, Math.PI * 2);
     c.fillStyle = this.renk.vurgu;
@@ -188,6 +284,11 @@ class GozKapat extends Egzersiz {
     const e = (gecen % 10) / 10;
     const nefes = (1 - Math.cos(2 * Math.PI * e)) / 2;
     const olcek = 0.70 + 0.30 * nefes;
+    // Nefesle birlikte büyüyüp sönen hale. Gözler kapalı olduğu için
+    // bu ekranı kimse izlemiyor olabilir — ama göz aralayan biri
+    // nerede olduğunu tek bakışta anlasın.
+    this._isima(this.mx, this.my, this.r * olcek * 1.15, this.renk.vurgu,
+                0.10 + 0.14 * nefes);
     for (let i = 0; i < 5; i++) {
       const r = this.r * olcek * (0.32 + 0.17 * i);
       c.beginPath();
@@ -217,19 +318,40 @@ class Boyun extends Egzersiz {
   ciz(gecen, toplam) {
     this._hazirla();
     const c = this.c;
+    /* Baş bir çizgi üzerinde kaymaz, bir YAY çizerek döner. Düz çizgi
+       hareketi yanlış anlatıyordu: insan başını sağa-sola kaydırmıyor,
+       çeviriyor. Yay üzerinde giden nokta doğru hareketi gösteriyor. */
     const gen = this.r * 0.88;
+    const yay = this.r * 0.30;          // yayın ne kadar bombeli olduğu
+    const nokta = (o) => [this.mx + gen * o, this.my - yay * (1 - o * o)];
+
     c.beginPath();
-    c.moveTo(this.mx - gen, this.my);
-    c.lineTo(this.mx + gen, this.my);
+    for (let i = 0; i <= 40; i++) {
+      const [x, y] = nokta(-1 + (2 * i) / 40);
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    }
     c.strokeStyle = this.renk.sicak;
-    c.globalAlpha = 0.55;
+    c.globalAlpha = 0.45;
     c.lineWidth = 2;
     c.stroke();
     c.globalAlpha = 1;
 
-    const x = this.mx + gen * Math.sin(2 * Math.PI * this._evre(gecen));
+    const e = this._evre(gecen);
+    // Arkada kalan iz — hareketin yönünü okunur kılıyor
+    for (let i = 3; i >= 1; i--) {
+      const [ix, iy] = nokta(Math.sin(2 * Math.PI * (e - i * 0.018)));
+      c.beginPath();
+      c.arc(ix, iy, this.r * (0.17 - 0.028 * i), 0, Math.PI * 2);
+      c.fillStyle = this.renk.vurgu;
+      c.globalAlpha = 0.13 * (4 - i) / 3;
+      c.fill();
+    }
+    c.globalAlpha = 1;
+
+    const [x, y] = nokta(Math.sin(2 * Math.PI * e));
+    this._isima(x, y, this.r * 0.46, this.renk.vurgu, 0.32);
     c.beginPath();
-    c.arc(x, this.my, this.r * 0.17, 0, Math.PI * 2);
+    c.arc(x, y, this.r * 0.17, 0, Math.PI * 2);
     c.fillStyle = this.renk.vurgu;
     c.fill();
   }

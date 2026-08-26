@@ -32,7 +32,7 @@ print("surum:", SURUM)
 # ve manifest'ten de referans veriliyor)
 HEDEF = re.compile(
     r'(src|href)="(\./)?((?:stil|cekirdek|dil|bilgiler|bilgiler_en|'
-    r'mola_icerik|arayuz|egzersiz|reklam)\.(?:js|css))(\?s=v\d+)?"'
+    r'mola_icerik|arayuz|egzersiz|reklam|dunya)\.(?:js|css))(\?s=v\d+)?"'
 )
 
 for ad in SAYFALAR:

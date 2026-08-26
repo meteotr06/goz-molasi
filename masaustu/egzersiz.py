@@ -128,21 +128,40 @@ class GozKirp(Egzersiz):
     yonerge = "Kapak kapandığında sen de tam kırp — gözünü sıkıca kapat"
     DONGU = 2.0
 
+    KANAT = 7          # diyafram kanadı sayısı
+
+    # TASARIM KARARI — bu egzersiz bir DİYAFRAM.
+    #
+    # Önceki hâli iki yarım daireden yapılmış yassı bir badem ve içinde
+    # düz bir daireydi. Ekranda çizgi film gibi duruyordu; uygulamanın
+    # geri kalanı ise yumuşak halkalardan oluşuyor.
+    #
+    # Diyafram üç işi birden yapıyor:
+    #   • Kapanıp açılması "göz kırp"ı anlatıyor, yazıya gerek bırakmıyor.
+    #   • Dairesel — sayaç halkasıyla, nefes halkalarıyla aynı dilde.
+    #   • Soyut. Çizilmiş bir göze bakmak tuhaf; ışığı kesilen bir
+    #     açıklığa bakmak değil.
+    #
+    # WEB SÜRÜMÜYLE AYNI: egzersiz.js içindeki GozKirp ile aynı geometri
+    # ve aynı zamanlama. Birini değiştirirsen diğerini de değiştir.
+    #
+    # WCAG 2.3.1: döngü 2 saniye = saniyede 0,5 kapanış. Sınır 3.
+
     def hazirla(self):
-        self.goz = self.t.create_arc(0, 0, 0, 0, start=0, extent=180,
-                                     style="chord", fill=self.vurgu,
-                                     outline="", tags=self.etiket)
-        self.goz_alt = self.t.create_arc(0, 0, 0, 0, start=180, extent=180,
-                                         style="chord", fill=self.vurgu,
-                                         outline="", tags=self.etiket)
-        self.bebek = self.t.create_oval(0, 0, 0, 0, fill=self.zemin,
-                                        outline="", tags=self.etiket)
-        self.sayi = self.t.create_text(self.mx, self.my + self.r * 0.62, text="",
+        self.kanatlar = []
+        for _ in range(self.KANAT):
+            self.kanatlar.append(self.t.create_polygon(
+                0, 0, 0, 0, 0, 0, fill=self.vurgu, outline=self.vurgu,
+                width=1.4, tags=self.etiket))
+        self.cerceve = self.t.create_oval(
+            self.mx - self.r * 0.80, self.my - self.r * 0.80,
+            self.mx + self.r * 0.80, self.my + self.r * 0.80,
+            outline=self.vurgu, width=2.4, tags=self.etiket)
+        self.sayi = self.t.create_text(self.mx, self.my + self.r * 0.99, text="",
                                        fill=self.ikincil, tags=self.etiket)
 
     def guncelle(self, gecen, toplam):
-        g = self.r * 0.62
-        # 0..1 arası: 1 = tam açık, 0 = kapalı. Kapanma hızlı, açılma yumuşak.
+        R = self.r * 0.80
         evre = (gecen % self.DONGU) / self.DONGU
         if evre < 0.12:
             aciklik = 1.0 - (evre / 0.12)
@@ -150,14 +169,42 @@ class GozKirp(Egzersiz):
             aciklik = (evre - 0.12) / 0.14
         else:
             aciklik = 1.0
-        yukseklik = max(g * 0.06, g * 0.62 * aciklik)
+        # Yumuşat: doğrusal açıklık mekanik duruyordu
+        a = aciklik * aciklik * (3 - 2 * aciklik)
 
-        self.t.coords(self.goz, self.mx - g, self.my - yukseklik,
-                      self.mx + g, self.my + yukseklik)
-        self.t.coords(self.goz_alt, self.mx - g, self.my - yukseklik,
-                      self.mx + g, self.my + yukseklik)
-        p = min(g * 0.30, yukseklik * 0.85)
-        self.t.coords(self.bebek, self.mx - p, self.my - p, self.mx + p, self.my + p)
+        delik = R * (0.06 + 0.62 * a)
+        buk = (1 - a) * 0.55
+        n = self.KANAT
+        dilim = 2 * math.pi / n
+
+        koseler = []
+        for i in range(n):
+            t = i * dilim + buk
+            koseler.append((self.mx + delik * math.cos(t),
+                            self.my + delik * math.sin(t)))
+
+        # Kanat rengi: kapandıkça koyulaşıyor (tkinter'da globalAlpha yok,
+        # o yüzden saydamlık yerine RENK KARIŞTIRIYORUZ). Web'deki
+        # alpha 0.14-0.53 aralığının karşılığı.
+        for i in range(n):
+            t0 = i * dilim
+            t1 = t0 + dilim
+            k0 = koseler[i]
+            k1 = koseler[(i + 1) % n]
+            # Dış yay: düz kenar yerine birkaç ara nokta — yuvarlak dursun
+            noktalar = []
+            adim = 5
+            for j in range(adim + 1):
+                t = t0 + (t1 - t0) * j / adim
+                noktalar.extend([self.mx + R * math.cos(t),
+                                 self.my + R * math.sin(t)])
+            noktalar.extend([k1[0], k1[1], k0[0], k0[1]])
+            oran = 0.14 + 0.09 * (i % 2) + 0.30 * (1 - a)
+            self.t.coords(self.kanatlar[i], *noktalar)
+            self.t.itemconfigure(
+                self.kanatlar[i],
+                fill=gor.karistir(self.zemin, self.vurgu, oran),
+                outline=gor.karistir(self.zemin, self.vurgu, 0.14 + 0.42 * a))
 
         kirpma = int(gecen / self.DONGU) + 1
         toplam_kirpma = max(1, int(toplam / self.DONGU))

@@ -342,7 +342,11 @@ const MolaIcerik = (() => {
 
   /* ================= SIRA ================= */
 
-  const SIRA = ['bilgi', 'hava', 'bilgi', 'ozet', 'bilgi', 'ipucu', 'bilgi', 'kalite'];
+  /* Göz bilgisi BASKIN kalıyor: 10 adımın 4'ü 'bilgi'. 'dunya'
+     kartları çeşitlilik için araya giriyor — uygulamanın asıl işi
+     hâlâ göz sağlığı, dünya kartları onun yerine geçmiyor. */
+  const SIRA = ['bilgi', 'hava', 'bilgi', 'ozet', 'dunya',
+                'bilgi', 'ipucu', 'bilgi', 'kalite', 'dunya'];
   let havaIzin = true;                 // ayarlardan kapatılabilir
   function havaAyarla(acik) { havaIzin = !!acik; }
   let adim = 0;
@@ -374,6 +378,20 @@ const MolaIcerik = (() => {
     return dizi[ipucuNo++ % dizi.length];
   }
 
+  /* Dünyadan genel kültür kartı.
+
+     İngilizcede NULL döner — henüz çevrilmediler. Bu dosyanın genel
+     kuralı "çevrilmemiş içerik boş karttan iyidir" ama o kural
+     tek tük kelimeler için geçerli; İngilizce kullanıcıya baştan
+     sona Türkçe bir paragraf göstermek işe yaramaz. Tür null
+     dönünce sıra onu sessizce atlıyor. */
+  let dunyaNo = Math.floor(Math.random() * 1000);
+  function dunyaKarti() {
+    if (_ing()) return null;
+    if (typeof DUNYA === 'undefined' || !DUNYA.length) return null;
+    return DUNYA[dunyaNo++ % DUNYA.length];
+  }
+
   /** Sıradaki kartı döndürür. Üretilemeyen tür atlanır,
       en kötü ihtimalle göz bilgisine düşer — kart hep dolu gelir. */
   async function sonraki(istatistik) {
@@ -382,6 +400,7 @@ const MolaIcerik = (() => {
       let k = null;
       if (tur === 'bilgi') k = bilgiKarti();
       else if (tur === 'ipucu') k = ipucuKarti();
+      else if (tur === 'dunya') k = dunyaKarti();
       else if (tur === 'ozet') k = ozetKarti(istatistik);
       else if (tur === 'hava') k = havaIzin ? havaKarti(await havaGetir()) : null;
       else if (tur === 'kalite') k = havaIzin ? kaliteKarti(await kaliteGetir()) : null;
@@ -393,9 +412,11 @@ const MolaIcerik = (() => {
 
   /** Türe göre kartın üstündeki etiket. */
   const ETIKET_TR = { bilgi: 'Neden?', hava: 'Dışarısı', ozet: 'Senin durumun',
-                      ipucu: 'İpucu', kalite: 'Hava kalitesi' };
+                      ipucu: 'İpucu', kalite: 'Hava kalitesi',
+                      dunya: 'Dünyadan' };
   const ETIKET_EN = { bilgi: 'Why?', hava: 'Outside', ozet: 'Your progress',
-                      ipucu: 'Tip', kalite: 'Air quality' };
+                      ipucu: 'Tip', kalite: 'Air quality',
+                      dunya: 'From the world' };
   // Nesne olarak dışarı veriliyor; dil çalışma anında belirleniyor
   const ETIKET = new Proxy({}, {
     get: (_h, k) => (_ing() ? ETIKET_EN : ETIKET_TR)[k],
