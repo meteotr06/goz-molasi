@@ -436,7 +436,6 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 22px;
   padding: 24px;
   text-align: center;
@@ -448,9 +447,19 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
       color-mix(in srgb, var(--vurgu) 14%, transparent), transparent 70%),
     linear-gradient(170deg, var(--mola-1) 0%, var(--mola-2) 28%,
       var(--mola-3) 55%, var(--mola-4) 80%, var(--mola-5) 100%);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  /* backdrop-filter YOK: gradyan zaten tamamen opak (mola-1..5 hepsi
+     düz renk), altında görünecek bir şey olmadığı için bulanıklık
+     saf GPU israfıydı — üstelik 20 saniye boyunca her karede. */
   color: var(--mola-yazi);
+
+  /* İçerik ekrana sığmazsa kaydırılabilsin.
+     "safe center": normal center, taşma olduğunda içeriği İKİ uçtan
+     birden kırpıyor — 1280x600 gibi kısa ekranlarda hem başlık hem
+     "atla" düğmesi görünmez oluyordu. safe center taşma varında
+     flex-start gibi davranır, hiçbir şey kaybolmaz. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  justify-content: safe center;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.45s ease, visibility 0.45s;
@@ -473,7 +482,10 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 /* Nefes dairesi — 20 sn boyunca yavaşça büyüyüp küçülür */
 .nefes {
   position: relative;
-  width: min(58vw, 220px);
+  /* 30dvh de sınıra girdi: eskiden yalnızca genişliğe bakıyordu,
+     geniş ama kısa ekranlarda (1280x600) daire 220px kalıp
+     içeriği ekran dışına itiyordu. */
+  width: min(58vw, 30dvh, 220px);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -1027,3 +1039,21 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 }
 
 .hafta-ozet { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--yazi-soluk); }
+
+/* ---- Kısa ekranlarda mola ekranı ----
+   Dizüstülerde tarayıcı çubukları düştükten sonra 600-700px yükseklik
+   kalıyor. Ölçülen sorun: 1280x600'de başlık 39px yukarıda, "atla"
+   düğmesi 39px aşağıda kalıyordu. Aşağıdaki daraltmalar bunu kapatıyor. */
+@media (max-height: 760px) {
+  .mola-ekran { gap: 14px; padding: 16px; }
+  .mola-baslik { font-size: clamp(18px, 4vw, 22px); }
+  .mola-alt { font-size: 14px; }
+  .mola-sayi { font-size: clamp(28px, 6vh, 38px); }
+  .neden-kart { max-height: 26dvh; overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-height: 620px) {
+  .mola-ekran { gap: 10px; }
+  /* Bu yükseklikte alt açıklama artık lüks — halka ve sayı kalsın */
+  .mola-alt { display: none; }
+  .nefes { width: min(40vw, 24dvh, 150px); }
+}
