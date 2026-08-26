@@ -115,6 +115,18 @@
 
 /* Paletteki üç boşluk: sıcak kırmızı, sıcak nötr ve ikinci bir
    açık tema. Kömür renksiz ve soğuk; bakır onun sıcak karşılığı. */
+/* Simgenin paletiyle aynı: alacakaranlıkta su. Doygunluk bilerek
+   düşük — uygulamanın işi gözü dinlendirmek, uyarmak değil. */
+:root[data-tema="dinginlik"] {
+  --zemin: #102830;  --zemin-2: #16353f;  --kart: #1c4149;  --kart-2: #234e57;
+  --cizgi: #2f646c;  --yazi: #e8f2ef;     --yazi-soluk: #9fbfba;
+  --vurgu-ham: #8fd8c8; --vurgu-koyu: #06231f;
+  --uyari-ham: #f0cfa0; --mola-ham: #f0cfa0; --mercan-ham: #e8a38f;
+  --mola-1-ham: #081a20; --mola-2-ham: #0f2b33; --mola-3-ham: #174049;
+  --mola-4-ham: #21575e; --mola-5-ham: #2f6f70;
+  --mola-yazi: #eef7f4; --mola-soluk: #a8c9c4;
+}
+
 :root[data-tema="kiraz"] {
   --zemin: #1a0f14;  --zemin-2: #26151b;  --kart: #331b22;  --kart-2: #40232a;
   --cizgi: #57323a;  --yazi: #ffeef1;     --yazi-soluk: #d0a3ac;

@@ -115,6 +115,20 @@ TEMALAR = {
         "mola_halka": "#ffc46b", "mola_parilti": "#7ee0d2",
         "grafik": ["#7ee0d2", "#ffc46b", "#c39bff", "#ff8f7a", "#8fd3ff"],
     },
+    "dinginlik": {
+        "ad": "Dinginlik",
+        "panel": {
+            "zemin": "#102830", "zemin2": "#16353f", "kart": "#1c4149",
+            "kart2": "#234e57", "cizgi": "#2f646c",
+            "yazi": "#e8f2ef", "soluk": "#9fbfba",
+            "vurgu": "#8fd8c8", "sicak": "#f0cfa0", "uyari": "#e8a38f",
+            "ana_yazi": "#06231f",
+        },
+        "mola": ["#081a20", "#0f2b33", "#174049", "#21575e", "#2f6f70"],
+        "mola_yazi": "#eef7f4", "mola_soluk": "#a8c9c4",
+        "mola_halka": "#f0cfa0", "mola_parilti": "#8fd8c8",
+        "grafik": ["#8fd8c8", "#f0cfa0", "#9cc8d8", "#e8a38f", "#b5d4a8"],
+    },
     "okyanus": {
         "ad": "Okyanus",
         "panel": {
