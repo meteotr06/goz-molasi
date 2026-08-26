@@ -241,6 +241,11 @@ const SOZLUK = {
 
   /* ---- Alt bilgi ---- */
   'Göz sağlığı rehberi': 'Eye health guide',
+  'Windows sürümü': 'Windows version',
+  'Tarayıcı, sekmesi kapalıyken hiçbir şey ölçemez — hiçbir izin bunu değiştirmiyor. Bilgisayarın açık olduğu her an ölçüm yapılmasını istiyorsan':
+    'A browser cannot measure anything while its tab is closed — no permission changes that. If you want measurement whenever your computer is on, use the',
+  'kullan: açılışta başlar, tepside durur, cihazın tamamını ölçer.':
+    'instead: it starts with Windows, lives in the tray, and measures the whole device.',
   '📖 Ayrıntılı rehberi oku': '📖 Read the full guide',
   'Gizlilik politikası': 'Privacy policy',
   'Kaynak kod': 'Source code',
@@ -266,8 +271,14 @@ const SOZLUK = {
     'only. Settings, pausing and skipping breaks are free. In the desktop version the PIN also prevents the app from being closed — a browser cannot do that; anyone who closes the tab bypasses the lock.',
   /* ---- Diğer uygulamalar köprüsü ---- */
   'Diğer ücretsiz uygulamalarım': 'My other free apps',
-  'Net maaş, kredi, kira artışı, KDV — 35 araç':
+  'Net maaş, kredi, kira, KDV — 35 araç':
     'Salary, loan, rent, VAT — 35 calculators (Turkish)',
+  'Saatlik ve 7 günlük': 'Hourly and 7-day',
+  'Döviz, altın ve tahmin': 'Currencies, gold and forecasts',
+  'Haftalık Planlayıcı': 'Weekly Planner',
+  'Ders ve iş programı': 'Study and work schedule',
+  'Muhasebe': 'Bookkeeping',
+  'Gelir, gider, kasa ve cari': 'Income, expenses, cash and accounts',
   'Hava Durumu': 'Weather',
   'Türkiye geneli, saatlik ve 7 günlük': 'All of Türkiye, hourly and 7-day',
   'Döviz, altın ve kur tahmini': 'Currencies, gold and rate forecasts',

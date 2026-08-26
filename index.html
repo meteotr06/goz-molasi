@@ -223,15 +223,19 @@
   <!-- Ayni adreste dort uygulama var; birbirlerini tanitsinlar -->
   <nav class="diger-uyg" aria-label="Diğer uygulamalar">
     <h2>Diğer ücretsiz uygulamalarım</h2>
-    <a href="../hesap/"><b>Hesap Araçları</b><span>Net maaş, kredi, kira artışı, KDV — 35 araç</span></a>
-    <a href="../mobil/"><b>Hava Durumu</b><span>Türkiye geneli, saatlik ve 7 günlük</span></a>
-    <a href="../kur-pusulasi/"><b>Kur Pusulası</b><span>Döviz, altın ve kur tahmini</span></a>
+    <a href="../hesap/"><b>Hesap Araçları</b><span>Net maaş, kredi, kira, KDV — 35 araç</span></a>
+    <a href="../mobil/"><b>Hava Durumu</b><span>Saatlik ve 7 günlük</span></a>
+    <a href="../kur-pusulasi/"><b>Kur Pusulası</b><span>Döviz, altın ve tahmin</span></a>
+    <a href="../planlayici/"><b>Haftalık Planlayıcı</b><span>Ders ve iş programı</span></a>
+    <a href="../muhasebe/"><b>Muhasebe</b><span>Gelir, gider, kasa ve cari</span></a>
   </nav>
 
   <p class="alt-bilgi">
     Bu uygulama tıbbi tavsiye değildir. Gözünde sürekli ağrı, bulanık görme veya baş ağrısı
     varsa göz hekimine görün. · Tüm veriler yalnızca bu cihazda saklanır, hiçbir yere gönderilmez.
     <br>
+    <a href="https://github.com/meteotr06/goz-molasi/releases/latest" rel="noopener"
+       target="_blank"><b>Windows sürümü</b></a> ·
     <a href="rehber.html"><b>Göz sağlığı rehberi</b></a> ·
     <a href="gizlilik.html">Gizlilik politikası</a> ·
     <a href="https://github.com/meteotr06/goz-molasi" rel="noopener" target="_blank">Kaynak kod</a>
@@ -417,6 +421,17 @@
         </label>
         <span class="anahtar"><input type="checkbox" id="ayHava"><i></i></span>
       </div>
+      <div class="satir" style="display:block">
+        <p class="masaustu-not">
+          Tarayıcı, sekmesi kapalıyken hiçbir şey ölçemez — hiçbir izin bunu
+          değiştirmiyor. Bilgisayarın açık olduğu her an ölçüm yapılmasını
+          istiyorsan
+          <a href="https://github.com/meteotr06/goz-molasi/releases/latest"
+             rel="noopener" target="_blank">Windows sürümünü</a>
+          kullan: açılışta başlar, tepside durur, cihazın tamamını ölçer.
+        </p>
+      </div>
+
       <div class="satir gizli" id="havaKonumSatir" style="display:block">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           <button type="button" class="dugme kucuk" id="konumBulDugme">Konumumu kullan</button>
