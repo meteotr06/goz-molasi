@@ -329,27 +329,27 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 .hafta-ust h3 { margin: 0; font-size: 15px; }
 .seri { font-size: 13px; font-weight: 700; color: var(--vurgu); white-space: nowrap; }
 
+/* ---------------- Son 7 gün grafiği ----------------
+   Satır yükseklikleri SABİT: sayı 15px, çubuk alanı 92px, gün adı 16px.
+   Böylece çubuğun %'si sadece çubuk alanına göre hesaplanıyor ve hedef
+   çizgisi tam olması gereken yere oturuyor. (Önceden çubuk tüm hücrenin
+   %'siydi, etiketler de aynı hücredeydi; hedef çizgisi ancak
+   "calc(%X - Ypx + 18px)" gibi bir düzeltmeyle tutturulabiliyordu.) */
 .hafta-grafik {
+  --cubuk-alan: 92px;
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+}
+.gun {
+  display: grid;
+  grid-template-rows: 15px var(--cubuk-alan) 16px;
   align-items: end;
-  height: 118px;
-  padding-top: 16px;
+  justify-items: center;
+  gap: 4px;
 }
-/* Hedef çizgisi — yüksekliği JS ayarlar */
-.hafta-grafik::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: var(--hedef-yuksekligi, 50%);
-  border-top: 1px dashed var(--yazi-soluk);
-  opacity: 0.5;
-  pointer-events: none;
-}
-.gun { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.cubuk-alan { position: relative; width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
 .gun i {
   display: block;
   width: 100%;
@@ -357,14 +357,41 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   border-radius: 6px 6px 3px 3px;
   background: var(--cizgi);
   min-height: 3px;
-  transition: height 0.4s ease;
+  transition: height .4s ease, background-color .3s ease;
 }
 .gun.hedefte i { background: var(--vurgu); }
 .gun.bugun i    { background: var(--uyari); }
 .gun.bugun.hedefte i { background: var(--vurgu); }
 .gun b { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--yazi-soluk); }
+.gun.hedefte b { color: var(--vurgu); }
 .gun span { font-size: 11px; color: var(--yazi-soluk); }
 .gun.bugun span { color: var(--yazi); font-weight: 700; }
+
+/* Hedef çizgisi — çubuk alanının içinde, JS yüzdeyi veriyor.
+   19px = gün adı satırı (16) + boşluk (4) eksi 1px kenarlık payı. */
+.hedef-cizgi {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(19px + var(--hedef-oran, .5) * var(--cubuk-alan));
+  border-top: 1px dashed var(--yazi-soluk);
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* Hiç veri yokken 7 tane 3 piksellik kütük göstermek bozuk duruyordu */
+.hafta-bos {
+  grid-column: 1 / -1;          /* yoksa 7 sütunlu grid'in ilk sütununa sıkışıyor */
+  margin: 0;
+  display: flex; align-items: center; justify-content: center;
+  height: calc(var(--cubuk-alan, 92px) + 35px);
+  padding: 0 12px;
+  font-size: 13px; line-height: 1.5; text-align: center;
+  color: var(--yazi-soluk);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gun i { transition: none; }
+}
 
 /* ---------------- Bilgi kartı (ana ekran) ---------------- */
 .bilgi-kart {
@@ -998,3 +1025,5 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 @media (prefers-reduced-motion: reduce) {
   .bitis-kart { transition: none; }
 }
+
+.hafta-ozet { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--yazi-soluk); }

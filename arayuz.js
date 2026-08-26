@@ -32,6 +32,7 @@
 
     haftaGrafik: $('haftaGrafik'),
     seriRozet: $('seriRozet'),
+    haftaOzet: $('haftaOzet'),
     hedefSayi: $('hedefSayi'),
 
     anaBaslik: $('anaBilgiBaslik'),
@@ -726,25 +727,63 @@
     if (imza === haftaImza) return;
     haftaImza = imza;
 
-    const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
-    // Hedef çizgisinin yüksekliği çubuk alanına göre
-    og.haftaGrafik.style.setProperty('--hedef-yuksekligi',
-      `calc(${(GUNLUK_HEDEF / enb) * 100}% - ${(GUNLUK_HEDEF / enb) * 16}px + 18px)`);
-
-    og.haftaGrafik.innerHTML = gunler.map((g) => {
-      const yuzde = enb ? Math.round((g.sayi / enb) * 100) : 0;
-      const siniflar = ['gun'];
-      if (g.sayi >= GUNLUK_HEDEF) siniflar.push('hedefte');
-      if (g.bugunMu) siniflar.push('bugun');
-      return `<div class="${siniflar.join(' ')}">
-                <b>${g.sayi || ''}</b>
-                <i style="height:${Math.max(3, yuzde)}%"></i>
-                <span>${g.bugunMu ? 'Bugün' : g.ad}</span>
-              </div>`;
-    }).join('');
-
+    const toplam = gunler.reduce((t, g) => t + g.sayi, 0);
     const s = Gecmis.seri(motor.istatistik);
     og.seriRozet.textContent = s > 0 ? `🔥 ${s} gün üst üste` : '';
+    og.haftaGrafik.innerHTML = '';
+
+    // Hiç mola yoksa yedi tane 3 piksellik kütük göstermek bozuk duruyor
+    if (toplam === 0) {
+      const bos = document.createElement('p');
+      bos.className = 'hafta-bos';
+      bos.textContent = 'Henüz mola yok. İlk molanı tamamladığında ' +
+                        'buraya günlük çubuğun düşecek.';
+      og.haftaGrafik.appendChild(bos);
+      og.haftaOzet.textContent = '';
+      return;
+    }
+
+    const ortalama = Math.round((toplam / 7) * 10) / 10;
+    og.haftaOzet.textContent = `${toplam} mola · günde ortalama ${ortalama}`;
+
+    const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
+
+    // Grafiğin tamamını ekran okuyucuya tek cümlede anlat
+    og.haftaGrafik.setAttribute('role', 'img');
+    og.haftaGrafik.setAttribute('aria-label',
+      'Son yedi gün: ' + gunler.map((g) => `${g.bugunMu ? 'bugün' : g.ad} ${g.sayi}`).join(', ') +
+      `. Toplam ${toplam} mola, günlük hedef ${GUNLUK_HEDEF}.`);
+
+    for (const g of gunler) {
+      const hucre = document.createElement('div');
+      hucre.className = 'gun'
+        + (g.sayi >= GUNLUK_HEDEF ? ' hedefte' : '')
+        + (g.bugunMu ? ' bugun' : '');
+      // Fare üstüne gelince kesin sayı görünsün
+      hucre.title = `${g.bugunMu ? 'Bugün' : g.ad}: ${g.sayi} mola`
+                  + (g.sayi >= GUNLUK_HEDEF ? ' — hedef tamam' : '');
+
+      const sayi = document.createElement('b');
+      sayi.textContent = g.sayi || '';
+
+      const alan = document.createElement('span');
+      alan.className = 'cubuk-alan';
+      const cubuk = document.createElement('i');
+      cubuk.style.height = Math.max(3, Math.round((g.sayi / enb) * 100)) + '%';
+      alan.appendChild(cubuk);
+
+      const ad = document.createElement('span');
+      ad.textContent = g.bugunMu ? 'Bugün' : g.ad;
+
+      hucre.append(sayi, alan, ad);
+      og.haftaGrafik.appendChild(hucre);
+    }
+
+    // Hedef çizgisi: çubuk alanının içinde, en büyük değere göre oranlı
+    const cizgi = document.createElement('div');
+    cizgi.className = 'hedef-cizgi';
+    cizgi.style.setProperty('--hedef-oran', GUNLUK_HEDEF / enb);
+    og.haftaGrafik.appendChild(cizgi);
   }
 
   /* ---------- Ana ekrandaki bilgi kartı ---------- */
