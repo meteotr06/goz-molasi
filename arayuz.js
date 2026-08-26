@@ -50,6 +50,11 @@
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
+    tanitimKart: $('tanitimKart'),
+    tanitimMetin: $('tanitimMetin'),
+    tanitimGoster: $('tanitimGoster'),
+    tanitimAnladim: $('tanitimAnladim'),
+    tanitimKapat: $('tanitimKapat'),
     bitisKart: $('bitisKart'),
     bitisBaslik: $('bitisBaslik'),
     bitisAlt: $('bitisAlt'),
@@ -259,6 +264,60 @@
 
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  /* ============================================================
+     İLK AÇILIŞ TANITIMI
+
+     Bu kategoride bırakmanın bir numaralı sebebi, insanın uygulamayı
+     açıp ne olacağını anlamaması. Burada anlatmıyoruz, GÖSTERİYORUZ:
+     6 saniyelik örnek mola, gerçek mola ekranıyla aynı. Kişi ne
+     olacağını yaşayarak öğreniyor.
+
+     Örnek mola istatistiğe SAYILMAZ — 6 saniye, 20 saniyelik bir
+     mola değil; sayması rakamları şişirirdi.
+     ============================================================ */
+  const TANITIM_ANAHTAR = 'goz-molasi-tanitim';
+  let tanitimMolasi = false;
+
+  function tanitimGoruldu() {
+    try { return localStorage.getItem(TANITIM_ANAHTAR) === '1'; } catch { return true; }
+  }
+  function tanitimiKapat() {
+    try { localStorage.setItem(TANITIM_ANAHTAR, '1'); } catch {}
+    og.tanitimKart.hidden = true;
+  }
+
+  function tanitimiKurGerekirse() {
+    // Daha önce mola tamamlamış biri tanıtımı görmesin — geri dönen
+    // kullanıcıya "hoş geldin" göstermek can sıkıyor.
+    // Gün SAYISINA değil MOLA sayısına bakmalı: uygulama açılır açılmaz
+    // bugün için sıfırlarla dolu bir kayıt yazıyor, o yüzden gün sayısı
+    // yeni kullanıcıda da 1 oluyordu ve tanıtım hiç görünmüyordu.
+    const gecmisToplam = Object.values(Gecmis.oku())
+      .reduce((t, g) => t + ((g && g.mola) | 0), 0);
+    const molaVarMi = (motor.istatistik.tamamlananMola | 0) > 0 || gecmisToplam > 0;
+    if (tanitimGoruldu() || molaVarMi) return;
+    og.tanitimKart.hidden = false;
+  }
+
+  og.tanitimKapat.addEventListener('click', tanitimiKapat);
+  og.tanitimAnladim.addEventListener('click', tanitimiKapat);
+
+  og.tanitimGoster.addEventListener('click', () => {
+    if (motor.durum === 'mola') return;
+    tanitimMolasi = true;
+    const gercekSure = motor.ayarlar.molaSuresi;
+    motor.ayarlar.molaSuresi = 6;
+    if (motor.durum === 'hazir' || motor.durum === 'bosta') motor.basla();
+    motor.molayaGec();
+    // Süreyi hemen geri al: motor asamaya gecerken degeri zaten kopyaladi
+    motor.ayarlar.molaSuresi = gercekSure;
+    og.tanitimMetin.textContent =
+      'İşte böyle görünüyor. Gerçeğinde 20 saniye sürecek ve ' +
+      'kapatılamayacak.';
+    og.tanitimGoster.textContent = 'Tekrar göster';
+    og.tanitimAnladim.textContent = 'Anladım, başla';
+  });
 
   /* ============================================================
      MOLA BİTİŞİ KARTI
@@ -1087,6 +1146,17 @@
       calSes(990, 0.4);
       titret(200);                  // tek uzun: "devam"
       og.okuyucu.textContent = 'Mola bitti, devam edebilirsin.';
+
+      if (tanitimMolasi) {
+        // Örnek mola 6 saniyeydi; 20 saniyelik bir mola sayılmaz.
+        tanitimMolasi = false;
+        motor.istatistik.tamamlananMola =
+          Math.max(0, (motor.istatistik.tamamlananMola | 0) - 1);
+        kaydet();
+        ekraniCiz(motor.anlikDurum());
+        return;
+      }
+
       bildirimGonder('Mola bitti', 'Gözlerin dinlendi. Devam edebilirsin.');
       bitisKartiniGoster(motor.istatistik);
     })
@@ -1562,6 +1632,7 @@
     `${motor.ayarlar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
 
   ekraniCiz(motor.anlikDurum());
+  tanitimiKurGerekirse();
   bildirimDurumunuGoster();
   kilitDurumunuGoster();
   temaSeciciyiKur();

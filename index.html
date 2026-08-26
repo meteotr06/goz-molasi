@@ -135,6 +135,31 @@
     </div>
   </main>
 
+  <!-- İLK AÇILIŞ TANITIMI
+       Yalnızca ilk ziyarette, bir kez görünür. Modal DEĞİL: sayfanın
+       üstünde duran bir kart. Karşılama penceresi itici duruyor ve
+       insanlar okumadan kapatıyor. Buradaki asıl fikir anlatmak değil
+       GÖSTERMEK — 6 saniyelik örnek molayla ne olacağını yaşatmak. -->
+  <section class="tanitim" id="tanitimKart" hidden>
+    <div class="tanitim-ust">
+      <b>20 dakikada bir ekranın 20 saniye kapanacak.</b>
+      <button type="button" class="tanitim-kapat" id="tanitimKapat"
+              aria-label="Tanıtımı kapat">×</button>
+    </div>
+    <p id="tanitimMetin">
+      O sırada gözünü 6 metre uzağa çevirmen yeterli. Nasıl bir şey
+      olduğunu şimdi 6 saniyede görebilirsin.
+    </p>
+    <div class="tanitim-dugmeler">
+      <button type="button" class="dugme ana kucuk" id="tanitimGoster">
+        Örnek molayı göster
+      </button>
+      <button type="button" class="dugme sade kucuk" id="tanitimAnladim">
+        Gerek yok, başla
+      </button>
+    </div>
+  </section>
+
   <!-- MOLA BİTİŞİ KARTI
        Mola biter bitmez birkaç saniye görünür, sonra kendiliğinden solar.
        Amacı: yapılan işi görünür kılmak. Molayı tamamlamak soyut bir şey;

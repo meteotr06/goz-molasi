@@ -1190,3 +1190,31 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   line-height: 1.5;
   color: var(--yazi-soluk);
 }
+
+/* ---- İlk açılış tanıtımı ----
+   Modal değil, sayfanın üstünde duran bir kart. Karşılama penceresi
+   itici duruyor ve insanlar okumadan kapatıyor. */
+.tanitim {
+  width: 100%;
+  max-width: 720px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-left: 3px solid var(--vurgu);
+  border-radius: var(--yuvarlak);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tanitim[hidden] { display: none; }
+.tanitim-ust { display: flex; align-items: flex-start; gap: 12px; }
+.tanitim-ust b { font-size: 16px; line-height: 1.4; }
+.tanitim p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--yazi-soluk); }
+.tanitim-dugmeler { display: flex; gap: 8px; flex-wrap: wrap; }
+.tanitim-kapat {
+  margin-left: auto; flex: none;
+  width: 44px; height: 44px; margin-top: -10px; margin-right: -8px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--yazi-soluk); font-size: 22px; line-height: 1; cursor: pointer;
+}
+.tanitim-kapat:hover, .tanitim-kapat:focus-visible { color: var(--yazi); }
