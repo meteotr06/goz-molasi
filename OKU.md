@@ -329,28 +329,94 @@ masaustu\                      Windows programının kaynak kodu
   gorunum.py                   Beş tema, renk paleti ve gradyan çizimi
   ogeler.py                    Tuvale çizilen yuvarlak kart / düğme / çubuk
   bilgiler.py                  14 bilgi kartı (kaynaklarıyla)
+  dunya.py                     ÜRETİLEN dosya — elle düzenleme (aşağı bak)
+  dunya_uret.py                dunya.js'ten dunya.py üretir
+  guncelleme.py                GitHub Releases'e bakıp yeni sürüm var mı sorar
+  kilit.py                     Şifre (PBKDF2), bekçi süreç, açılışta başlatma
+  izleyici.py                  Boşta süresi, ön pencere, çalışma alanı ölçümü
+  sinama.py                    Bütün sınamaları koşan betik
+  sinama_veri.py               Kaynak denetimi + sürümler arası tutarlılık
+  sinama_aile.py               Ebeveyn kontrolü mantığı
+  sinama_yerlesim.py           Panelde çakışma/taşma (16 tema x 3 ölçek)
+  sinama_acilis.py             Derlenen exe gerçekten açılıyor mu
   ikon.ico
 
-index.html / stil.css          Web sürümü arayüzü (beş tema)
+index.html / stil.css          Web sürümü arayüzü
 cekirdek.js                    Zamanlayıcı motoru + geçmiş/seri hesabı
 arayuz.js                      Motoru ekrana bağlayan katman
+dil.js                         Türkçe/İngilizce sözlük
 egzersiz.js                    Aynı beş rehberli egzersiz (tuval animasyonu)
 bilgiler.js                    Aynı 14 bilgi kartı
-sw.js / manifest.json          Çevrimdışı çalışma ve "ana ekrana ekle"
+bilgiler_en.js                 Bilgilerin İngilizcesi
+dunya.js                       18 genel kültür kartı (dunya.py'nin KAYNAĞI)
+mola_icerik.js                 Mola kartı sırası: bilgi/hava/özet/ipucu/dünya
+reklam.js                      AdSense yerleri (numaralar boşken kapalı)
+sinama.js                      31 senaryoluk web sınaması
+sw.js / manifest.json          Çevrimdışı çalışma, "ana ekrana ekle", kısayollar
 ```
 
-`bilgiler.py` ve `bilgiler.js` **aynı içeriktedir** — birini değiştirirsen
-diğerini de değiştir.
+**İKİZ DOSYALAR — dikkat**
+
+`bilgiler.py` ile `bilgiler.js` aynı içerikte tutuluyor. Bunu insanın
+hatırlamasına bırakmak bir kez tuttu, bir kez tutmadı: iki dosya kesme
+işaretinde ayrıştı. Artık `sinama_veri.py` bu ikizliği denetliyor ve
+ayrışırlarsa derleme durur.
+
+`dunya.py` **ÜRETİLEN** dosyadır, elle düzenleme. Kaynağı `dunya.js`:
+
+```
+cd masaustu
+python dunya_uret.py
+```
+
+### Sınama
+
+Değişiklikten sonra **önce bunu çalıştır**:
+
+```
+cd masaustu
+python sinama.py hizli
+```
+
+Dört takım var: **veri · aile · yerlesim · acilis**. `hizli` kipi exe
+gerektireni atlar. Web tarafı için sayfayı aç ve konsola yaz:
+
+```
+fetch('sinama.js').then(r=>r.text()).then(k=>eval(k)).then(console.log)
+```
+
+### Web sürümü yayınlama
+
+Dosya değiştirdiysen `sw.js` içindeki `SURUM` numarasını artır, sonra
+`masaustu/surum_ekle.py` çalıştır. Bu, HTML'deki `?s=v..` etiketlerini
+tazeler. Yapılmazsa kullanıcı tarayıcı önbelleğindeki eski dosyalarla
+kalır — geliştirme sırasında bunu bizzat yaşadık: dosya sunucuda vardı,
+sayfada yoktu.
 
 ### Yeniden derleme
 
-Windows programını değiştirdiysen exe'yi yenilemek için:
-
-```bash
-cd "D:\Projeler\05 Ekran koruması\masaustu" && python -m PyInstaller --noconsole --onefile --clean --noconfirm --name "Goz Molasi" --icon ikon.ico --add-data "ikon.ico;." goz_molasi.py
+```
+DERLE.bat
 ```
 
-Sonra `dist\Goz Molasi.exe` dosyasını ana klasöre kopyala.
+**Elle PyInstaller çalıştırma.** Bu bölüm eskiden elle bir komut veriyor
+ve `dist\` klasöründen kopyalamayı söylüyordu. O yol bütün sınamaları
+atlıyor — tam da önlemek istediğimiz şey. Bir keresinde "başarılı"
+derlenen bir sürüm çalıştırıldığında hiç açılmadı; derleme çıktısına
+bakılıp geçilmişti.
+
+`DERLE.bat` sırayla:
+
+1. Ucuz sınamalar (veri + aile + yerleşim) — kalırsa derleme HİÇ BAŞLAMAZ
+2. Çalışan sürümü kapatır, derler
+3. Açılış sınaması — exe gerçekten açılıyor mu, penceresi geliyor mu,
+   ekrana sığıyor mu
+4. Hepsi geçerse uygulamayı açar
+
+Herhangi biri kalırsa uygulama **açılmaz**. Bozuk derleme yayına çıkamaz.
+
+Çıktı `Goz Molasi.exe` olarak ana klasöre gelir; ara dosyalar
+`masaustu\build` içinde kalır.
 
 ---
 
