@@ -214,44 +214,58 @@ const MolaIcerik = (() => {
 
   /* Avrupa Hava Kalitesi İndeksi (EAQI) eşikleri — Avrupa Çevre Ajansı */
   function aqiSeviye(a) {
-    if (a <= 20) return ['çok iyi', '🟢'];
-    if (a <= 40) return ['iyi', '🟢'];
-    if (a <= 60) return ['orta', '🟡'];
-    if (a <= 80) return ['kötü', '🟠'];
-    if (a <= 100) return ['çok kötü', '🔴'];
-    return ['aşırı kötü', '🟣'];
+    const ing = _ing();
+    if (a <= 20) return [ing ? 'very good' : 'çok iyi', '🟢'];
+    if (a <= 40) return [ing ? 'good' : 'iyi', '🟢'];
+    if (a <= 60) return [ing ? 'moderate' : 'orta', '🟡'];
+    if (a <= 80) return [ing ? 'poor' : 'kötü', '🟠'];
+    if (a <= 100) return [ing ? 'very poor' : 'çok kötü', '🔴'];
+    return [ing ? 'extremely poor' : 'aşırı kötü', '🟣'];
   }
 
   function kaliteKarti(k) {
     if (!k) return null;
     const [ad, simge] = aqiSeviye(k.aqi);
     const yer = k.ad ? `${k.ad} · ` : '';
-    const parcalar = [`Hava kalitesi indeksi ${k.aqi} — ${ad}.`];
+    const ing = _ing();
+    const parcalar = [ing ? `Air quality index ${k.aqi} — ${ad}.`
+                          : `Hava kalitesi indeksi ${k.aqi} — ${ad}.`];
     if (k.pm25 != null) parcalar.push(`PM2.5: ${Math.round(k.pm25)} µg/m³.`);
 
     if (k.aqi <= 40) {
-      parcalar.push('Hava temiz — pencereyi açıp uzağa bakmak için iyi bir an.');
+      parcalar.push(ing
+        ? 'The air is clean — a good moment to open the window and look far.'
+        : 'Hava temiz — pencereyi açıp uzağa bakmak için iyi bir an.');
     } else if (k.aqi <= 60) {
-      parcalar.push('Hava orta düzeyde. Gözün batıyorsa suni gözyaşı işe yarayabilir.');
+      parcalar.push(ing
+        ? 'Air quality is moderate. If your eyes sting, artificial tears may help.'
+        : 'Hava orta düzeyde. Gözün batıyorsa suni gözyaşı işe yarayabilir.');
     } else {
-      parcalar.push('Hava kirli. Pencereyi kapalı tut; kirli havada kuru göz şikâyeti ' +
-                    'belirgin şekilde artıyor. Yine de gözünü ekrandan ayır — ' +
-                    'odanın en uzak köşesine bak.');
+      parcalar.push(ing
+        ? 'The air is polluted. Keep the window shut; dry eye complaints rise ' +
+          'markedly in polluted air. Still, look away from the screen — find the ' +
+          'far corner of the room.'
+        : 'Hava kirli. Pencereyi kapalı tut; kirli havada kuru göz şikâyeti ' +
+          'belirgin şekilde artıyor. Yine de gözünü ekrandan ayır — ' +
+          'odanın en uzak köşesine bak.');
     }
     return {
-      baslik: `${simge} ${ad} (indeks ${k.aqi})`,
+      baslik: ing ? `${simge} ${ad} (index ${k.aqi})` : `${simge} ${ad} (indeks ${k.aqi})`,
       metin: yer + parcalar.join(' '),
-      kaynak: 'Open-Meteo (EAQI) · JAMA Ophthalmology, 2018 — kirlilik ve kuru göz',
+      kaynak: ing
+        ? 'Open-Meteo (EAQI) · JAMA Ophthalmology, 2018 — pollution and dry eye'
+        : 'Open-Meteo (EAQI) · JAMA Ophthalmology, 2018 — kirlilik ve kuru göz',
     };
   }
 
-  function kalanSure(isoZaman) {
+  function kalanSure(isoZaman, ing) {
     if (!isoZaman) return null;
     const fark = new Date(isoZaman).getTime() - Date.now();
     if (fark <= 0) return null;
     const dk = Math.round(fark / 60000);
-    if (dk < 60) return `${dk} dakika`;
-    return `${Math.floor(dk / 60)} saat ${dk % 60} dakika`;
+    if (dk < 60) return ing ? `${dk} minutes` : `${dk} dakika`;
+    return ing ? `${Math.floor(dk / 60)} h ${dk % 60} min`
+               : `${Math.floor(dk / 60)} saat ${dk % 60} dakika`;
   }
 
   function havaKarti(h) {
@@ -260,23 +274,33 @@ const MolaIcerik = (() => {
     const yer = h.ad ? `${h.ad} · ` : '';
     const baslik = `${simge} ${h.sicaklik}° · ${ad}`;
 
+    const ing = _ing();
     const parcalar = [];
     if (Math.abs(h.hissedilen - h.sicaklik) >= 2) {
-      parcalar.push(`Hissedilen ${h.hissedilen}°.`);
+      parcalar.push(ing ? `Feels like ${h.hissedilen}°.` : `Hissedilen ${h.hissedilen}°.`);
     }
     if (h.gunduz) {
-      const kalan = kalanSure(h.batis);
-      parcalar.push('Pencereden dışarı bak — uzağa odaklanmanın en kolay yolu bu.');
-      if (kalan) parcalar.push(`Gün batımına ${kalan} var.`);
-      parcalar.push('Gün ışığında geçirilen zaman, özellikle çocuklarda miyopi ilerlemesini yavaşlatıyor.');
+      const kalan = kalanSure(h.batis, ing);
+      parcalar.push(ing
+        ? 'Look out of the window — the easiest way to focus far away.'
+        : 'Pencereden dışarı bak — uzağa odaklanmanın en kolay yolu bu.');
+      if (kalan) parcalar.push(ing ? `${kalan} until sunset.` : `Gün batımına ${kalan} var.`);
+      parcalar.push(ing
+        ? 'Time spent in daylight slows myopia progression, especially in children.'
+        : 'Gün ışığında geçirilen zaman, özellikle çocuklarda miyopi ilerlemesini yavaşlatıyor.');
     } else {
-      const kalan = kalanSure(h.dogus);
-      parcalar.push('Hava karanlık; yine de gözünü ekrandan ayır ve odanın en uzak köşesine bak.');
-      if (kalan) parcalar.push(`Gün doğumuna ${kalan} var.`);
-      parcalar.push('Gece ekran parlaklığını düşürmek gözü belirgin şekilde rahatlatır.');
+      const kalan = kalanSure(h.dogus, ing);
+      parcalar.push(ing
+        ? 'It is dark outside — still, look away and find the far corner of the room.'
+        : 'Hava karanlık; yine de gözünü ekrandan ayır ve odanın en uzak köşesine bak.');
+      if (kalan) parcalar.push(ing ? `${kalan} until sunrise.` : `Gün doğumuna ${kalan} var.`);
+      parcalar.push(ing
+        ? 'Lowering screen brightness at night makes a noticeable difference.'
+        : 'Gece ekran parlaklığını düşürmek gözü belirgin şekilde rahatlatır.');
     }
 
-    return { baslik, metin: yer + parcalar.join(' '), kaynak: 'Open-Meteo · Acta Ophthalmologica, 2017' };
+    return { baslik, metin: yer + parcalar.join(' '),
+             kaynak: 'Open-Meteo · Acta Ophthalmologica, 2017' };
   }
 
   /* ================= KİŞİSEL ÖZET ================= */
@@ -290,17 +314,29 @@ const MolaIcerik = (() => {
     // İlk gün hiç veri yokken "0 mola verdin" demek moral bozar
     if (bugun === 0 && hafta === 0) return null;
 
+    const ing = _ing();
     const parcalar = [];
-    parcalar.push(`Bugün ${bugun} mola tamamladın.`);
-    if (hafta > bugun) parcalar.push(`Son yedi günde toplam ${hafta} mola.`);
-    if (seri >= 2) parcalar.push(`${seri} gündür üst üste günlük hedefi tutturuyorsun.`);
+    parcalar.push(ing ? `You have taken ${bugun} breaks today.`
+                      : `Bugün ${bugun} mola tamamladın.`);
+    if (hafta > bugun) {
+      parcalar.push(ing ? `${hafta} in the last seven days.`
+                        : `Son yedi günde toplam ${hafta} mola.`);
+    }
+    if (seri >= 2) {
+      parcalar.push(ing ? `${seri} days in a row hitting the daily goal.`
+                        : `${seri} gündür üst üste günlük hedefi tutturuyorsun.`);
+    }
     const dk = Math.round((hafta * 20) / 60);
-    if (dk >= 1) parcalar.push(`Bu, yaklaşık ${dk} dakikalık toplam göz dinlenmesi demek.`);
+    if (dk >= 1) {
+      parcalar.push(ing ? `That is roughly ${dk} minutes of rest for your eyes.`
+                        : `Bu, yaklaşık ${dk} dakikalık toplam göz dinlenmesi demek.`);
+    }
 
     return {
-      baslik: `bugün ${bugun}. molan`,
+      baslik: ing ? `break number ${bugun} today` : `bugün ${bugun}. molan`,
       metin: parcalar.join(' '),
-      kaynak: 'Kendi geçmişin · yalnızca bu cihazda saklanır',
+      kaynak: ing ? 'Your own history · stored only on this device'
+                  : 'Kendi geçmişin · yalnızca bu cihazda saklanır',
     };
   }
 
@@ -313,12 +349,29 @@ const MolaIcerik = (() => {
   let bilgiNo = Math.floor(Math.random() * 1000);
   let ipucuNo = Math.floor(Math.random() * 1000);
 
+  /** Dile göre kaynak dizi. İngilizce dosya yoksa Türkçeye düşer —
+      çevrilmemiş içerik, boş karttan iyidir. */
+  function _ing() {
+    try { return typeof aktifDil === 'function' && aktifDil() === 'en'; }
+    catch { return false; }
+  }
+  function _bilgiler() {
+    if (_ing() && typeof BILGILER_EN !== 'undefined') return BILGILER_EN;
+    return typeof BILGILER !== 'undefined' ? BILGILER : [];
+  }
+  function _ipuclari() {
+    if (_ing() && typeof IPUCLARI_EN !== 'undefined') return IPUCLARI_EN;
+    return IPUCLARI;
+  }
+
   function bilgiKarti() {
-    if (typeof BILGILER === 'undefined' || !BILGILER.length) return null;
-    return BILGILER[bilgiNo++ % BILGILER.length];
+    const dizi = _bilgiler();
+    if (!dizi.length) return null;
+    return dizi[bilgiNo++ % dizi.length];
   }
   function ipucuKarti() {
-    return IPUCLARI[ipucuNo++ % IPUCLARI.length];
+    const dizi = _ipuclari();
+    return dizi[ipucuNo++ % dizi.length];
   }
 
   /** Sıradaki kartı döndürür. Üretilemeyen tür atlanır,
@@ -339,8 +392,14 @@ const MolaIcerik = (() => {
   }
 
   /** Türe göre kartın üstündeki etiket. */
-  const ETIKET = { bilgi: 'Neden?', hava: 'Dışarısı', ozet: 'Senin durumun',
-                   ipucu: 'İpucu', kalite: 'Hava kalitesi' };
+  const ETIKET_TR = { bilgi: 'Neden?', hava: 'Dışarısı', ozet: 'Senin durumun',
+                      ipucu: 'İpucu', kalite: 'Hava kalitesi' };
+  const ETIKET_EN = { bilgi: 'Why?', hava: 'Outside', ozet: 'Your progress',
+                      ipucu: 'Tip', kalite: 'Air quality' };
+  // Nesne olarak dışarı veriliyor; dil çalışma anında belirleniyor
+  const ETIKET = new Proxy({}, {
+    get: (_h, k) => (_ing() ? ETIKET_EN : ETIKET_TR)[k],
+  });
 
   return {
     sonraki, ETIKET, havaAyarla,

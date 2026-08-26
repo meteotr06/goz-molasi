@@ -50,6 +50,7 @@
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
     nedenKart: $('nedenKart'),
+    ayDil: $('ayDil'),
     kipDugmeler: $('kipDugmeler'),
     tanitimKart: $('tanitimKart'),
     tanitimMetin: $('tanitimMetin'),
@@ -229,7 +230,7 @@
       if (yanlisSayisi >= 3) {
         bekletmeBitis = Date.now() + 30000;
         yanlisSayisi = 0;
-        og.sifreHata.textContent = 'Çok fazla yanlış deneme — 30 saniye bekle.';
+        og.sifreHata.textContent = C('Çok fazla yanlış deneme — 30 saniye bekle.');
         og.sifreAlan.disabled = true;
         setTimeout(() => {
           og.sifreAlan.disabled = false;
@@ -267,6 +268,16 @@
 
   og.sifreVazgec.addEventListener('click', () => sifreKapat(false));
   og.sifrePencere.addEventListener('cancel', (e) => { e.preventDefault(); sifreKapat(false); });
+
+  /** Ana ekrandaki açıklama. Sayı içerdiği için sözlükte anahtar
+      olarak tutulamıyor; iki dilde ayrı kalıp. */
+  function aciklamaMetni(dk, sn) {
+    return CS(
+      `${dk} dakikada bir ekran ${sn} saniyeliğine kapanır. ` +
+        'O sırada 6 metre uzağa bak.',
+      `Every ${dk} minutes the screen goes dark for ${sn} seconds. ` +
+        'Look 6 metres away.');
+  }
 
   /* ============================================================
      KİPLER
@@ -318,9 +329,8 @@
     // Sayaç yeni süreyle baştan başlasın; yarım kalmış eski süreyle
     // devam etmek kafa karıştırıyor.
     if (motor.durum !== 'mola') motor.sifirla();
-    og.aciklama.textContent =
-      `${Math.round(k.ayar.calismaSuresi / 60)} dakikada bir ekran ` +
-      `${k.ayar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
+    og.aciklama.textContent = aciklamaMetni(
+      Math.round(k.ayar.calismaSuresi / 60), k.ayar.molaSuresi);
     og.okuyucu.textContent = `${k.ad} kipine geçildi.`;
     kipleriTazele();
     ekraniCiz(motor.anlikDurum());
@@ -393,8 +403,8 @@
     og.tanitimMetin.textContent =
       'İşte böyle görünüyor. Gerçeğinde 20 saniye sürecek ve ' +
       'kapatılamayacak.';
-    og.tanitimGoster.textContent = 'Tekrar göster';
-    og.tanitimAnladim.textContent = 'Anladım, başla';
+    og.tanitimGoster.textContent = C('Tekrar göster');
+    og.tanitimAnladim.textContent = C('Anladım, başla');
   });
 
   /* ============================================================
@@ -449,23 +459,23 @@
 
     if (d === 'desteklenmiyor') {
       og.etkinlikDugme.disabled = true;
-      og.etkinlikDugme.textContent = 'Desteklenmiyor';
+      og.etkinlikDugme.textContent = C('Desteklenmiyor');
       og.etkinlikDurum.textContent =
         'Bu tarayıcı cihaz etkinliğini paylaşmıyor (Chrome ve Edge destekliyor). ' +
         'Sayaç yalnızca bu sekmedeki hareketi görüyor.';
       return;
     }
     if (acik) {
-      og.etkinlikDugme.textContent = 'Kapat';
+      og.etkinlikDugme.textContent = C('Kapat');
       og.etkinlikDurum.textContent =
         'Açık — sekme arka plandayken de cihazda hareket olup olmadığı görülüyor. ' +
         'Sadece "etkin mi, ekran kilitli mi" bilgisi; ne yaptığın değil.';
     } else if (d === 'denied') {
-      og.etkinlikDugme.textContent = 'İzin ver';
+      og.etkinlikDugme.textContent = C('İzin ver');
       og.etkinlikDurum.textContent =
-        'İzin reddedilmiş. Adres çubuğundaki kilit simgesinden açabilirsin.';
+        C('İzin reddedilmiş. Adres çubuğundaki kilit simgesinden açabilirsin.');
     } else {
-      og.etkinlikDugme.textContent = 'İzin ver';
+      og.etkinlikDugme.textContent = C('İzin ver');
       og.etkinlikDurum.textContent =
         'Kapalı — sayaç yalnızca bu sekmedeki hareketi görüyor. ' +
         'Başka pencerede çalışırken "boşta" sanılabilir.';
@@ -503,12 +513,12 @@
     og.konumSilDugme.classList.toggle('gizli', !konum);
     if (mesaj) { og.havaDurum.textContent = mesaj; return; }
     if (!og.ayHava.checked) {
-      og.havaDurum.textContent = 'Kapalı — molalarda yalnızca göz bilgisi gösterilir';
+      og.havaDurum.textContent = C('Kapalı — molalarda yalnızca göz bilgisi gösterilir');
     } else if (konum) {
       og.havaDurum.textContent = (konum.ad ? konum.ad + ' · ' : '') +
         'her birkaç molada bir hava durumu gösterilir';
     } else {
-      og.havaDurum.textContent = 'Açık — önce konum ver ya da şehir ara';
+      og.havaDurum.textContent = C('Açık — önce konum ver ya da şehir ara');
     }
   }
 
@@ -539,7 +549,7 @@
       const liste = await MolaIcerik.sehirAra(q);
       og.sehirSonuc.innerHTML = '';
       if (!liste.length) {
-        og.sehirSonuc.textContent = 'Sonuç yok.';
+        og.sehirSonuc.textContent = C('Sonuç yok.');
         return;
       }
       liste.forEach((y) => {
@@ -565,10 +575,10 @@
 
   function kilitDurumunuGoster() {
     const acik = !!kilitOzeti;
-    og.kilitDurum.textContent = acik
+    og.kilitDurum.textContent = C(acik
       ? 'Açık — şifreyi değiştirme ve verileri silme korumalı'
-      : 'Kapalı — verileri silmek serbest';
-    og.kilitKur.textContent = acik ? 'Şifreyi değiştir' : 'Şifreyi koy';
+      : 'Kapalı — verileri silmek serbest');
+    og.kilitKur.textContent = C(acik ? 'Şifreyi değiştir' : 'Şifreyi koy');
     og.kilitKaldir.classList.toggle('gizli', !acik);
     og.atla.textContent = atlaEtiketi();
     // HTML'deki başlığı koruyoruz. Eskiden sabit bir metin yazılıyordu ve
@@ -581,7 +591,7 @@
     if (kilitOzeti && !(await sifreSor('Şifreyi değiştirmek için önce mevcut şifreni gir.'))) return;
     const yeni = (og.ayKilitAlan.value || '').trim();
     if (!/^\d{4,8}$/.test(yeni)) {
-      og.kilitDurum.textContent = 'Şifre 4–8 rakam olmalı.';
+      og.kilitDurum.textContent = C('Şifre 4–8 rakam olmalı.');
       og.ayKilitAlan.focus();
       return;
     }
@@ -696,7 +706,7 @@
 
   og.bildirim.addEventListener('click', async () => {
     if (!('Notification' in window)) {
-      og.bildirim.textContent = '🔕 Bu tarayıcı bildirim desteklemiyor';
+      og.bildirim.textContent = C('🔕 Bu tarayıcı bildirim desteklemiyor');
       return;
     }
     // iOS'ta izin isteği MUTLAKA bir dokunuşun içinden çağrılmalı
@@ -707,10 +717,10 @@
   function bildirimDurumunuGoster(izin = (window.Notification?.permission)) {
     if (!('Notification' in window)) { og.bildirim.classList.add('gizli'); return; }
     if (izin === 'granted') {
-      og.bildirim.textContent = '🔔 Bildirimler açık';
+      og.bildirim.textContent = C('🔔 Bildirimler açık');
       og.bildirim.disabled = true;
     } else if (izin === 'denied') {
-      og.bildirim.textContent = '🔕 Bildirimlere izin verilmedi';
+      og.bildirim.textContent = C('🔕 Bildirimlere izin verilmedi');
       og.bildirim.disabled = true;
     }
   }
@@ -791,7 +801,7 @@
     if (iOS) { iosPencere.showModal(); return; }
     // Masaüstü: tarayıcının kurulum simgesini göster
     $('kurulumAciklama').textContent =
-      'Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas';
+      C('Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas');
     $('kurulumAciklama').style.color = 'var(--vurgu)';
   });
 
@@ -816,7 +826,7 @@
   /* iPhone'da beforeinstallprompt YOK — hiç tetiklenmez.
      Beklersek kullanıcı kurulabileceğini hiç öğrenemez. */
   if (iOS && !uygulamaKipi) {
-    og.kur.textContent = '⬇ Ana ekrana ekle';
+    og.kur.textContent = C('⬇ Ana ekrana ekle');
     og.kur.classList.remove('gizli');
     seridiGoster('Ana ekrana ekle',
                  'Uygulama gibi açılsın, internetsiz de çalışsın', 'Nasıl?');
@@ -885,7 +895,7 @@
 
   function ekraniCiz(d) {
     og.govde.dataset.durum = d.durum;
-    og.durum.textContent = DURUM_ADI[d.durum] || '';
+    og.durum.textContent = C(DURUM_ADI[d.durum]) || '';
 
     if (d.durum === 'mola') {
       og.sure.textContent = `${Math.ceil(d.kalan)}`;
@@ -897,15 +907,16 @@
     }
 
     og.baslat.textContent =
-      d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat';
+      C(d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat');
 
     og.istMola.textContent = d.istatistik.tamamlananMola;
     og.istAtlanan.textContent = d.istatistik.atlananMola;
-    og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)} dk`;
+    og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)}`
+                           + CS(' dk', ' min');
     // Etiket dürüst olsun: izin yoksa bu sayı cihazın değil, sekmenin süresi
     if (og.istSureEtiket) {
-      og.istSureEtiket.textContent = etkinlikDedektoru
-        ? 'cihaz başında süre' : 'takip edilen süre';
+      og.istSureEtiket.textContent = C(etkinlikDedektoru
+        ? 'cihaz başında süre' : 'takip edilen süre');
       og.sureKutucuk.title = etkinlikDedektoru
         ? 'Cihaz etkinliği izniyle ölçülüyor — sekme arka plandayken de sayar.'
         : 'Bu sayaç yalnızca uygulama açıkken işler. Ayarlardan "Cihaz etkinliğini izle"yi açarsan arka planda da sayar.';
@@ -1007,16 +1018,19 @@
   /* ---------- Ana ekrandaki bilgi kartı ---------- */
   let bilgiSirasi = Math.floor(Math.random() * BILGILER.length);
   function bilgiGoster(hedefBaslik, hedefMetin, hedefKaynak, indeks) {
-    const b = BILGILER[indeks % BILGILER.length];
+    // Dile göre kaynak dizi; İngilizce dosya yoksa Türkçeye düşer
+    const dizi = (aktifDil() === 'en' && typeof BILGILER_EN !== 'undefined')
+      ? BILGILER_EN : BILGILER;
+    const b = dizi[indeks % dizi.length];
     hedefBaslik.textContent = b.baslik;
     hedefMetin.textContent = b.metin;
-    hedefKaynak.textContent = `Kaynak: ${b.kaynak}`;
+    hedefKaynak.textContent = CS(`Kaynak: ${b.kaynak}`, `Source: ${b.kaynak}`);
     return b;
   }
   bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
   og.anaBilgiTiklama = $('anaBilgi');
   og.anaBilgiTiklama.style.cursor = 'pointer';
-  og.anaBilgiTiklama.title = 'Başka bir bilgi göster';
+  og.anaBilgiTiklama.title = C('Başka bir bilgi göster');
   og.anaBilgiTiklama.addEventListener('click', () => {
     bilgiSirasi++;
     bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
@@ -1116,7 +1130,7 @@
 
       og.nedenBaslik.textContent = `${MolaIcerik.ETIKET[k.tur] || 'Neden?'} — ${k.baslik}`;
       og.nedenMetin.textContent = k.metin;
-      og.nedenKaynak.textContent = k.kaynak ? `Kaynak: ${k.kaynak}` : '';
+      og.nedenKaynak.textContent = k.kaynak ? CS(`Kaynak: ${k.kaynak}`, `Source: ${k.kaynak}`) : '';
       og.nedenKart.dataset.tur = k.tur;
       og.nedenKart.classList.add('gorunur');
 
@@ -1125,7 +1139,7 @@
       if (k.tur === 'bilgi') {
         og.anaBaslik.textContent = k.baslik;
         og.anaMetin.textContent = k.metin;
-        og.anaKaynak.textContent = k.kaynak ? `Kaynak: ${k.kaynak}` : '';
+        og.anaKaynak.textContent = k.kaynak ? CS(`Kaynak: ${k.kaynak}`, `Source: ${k.kaynak}`) : '';
       }
     }, nedenGecikme);
 
@@ -1160,7 +1174,7 @@
   function holdBasla(e) {
     e.preventDefault();
     if (holdZaman) return;
-    og.atla.textContent = 'Bırakma…';
+    og.atla.textContent = C('Bırakma…');
     og.atla.style.transition = `background ${HOLD_SURE}ms linear`;
     og.atla.style.background = 'rgba(255,255,255,0.34)';
     holdZaman = setTimeout(async () => {
@@ -1223,7 +1237,7 @@
       molaEkraniKapat();
       calSes(990, 0.4);
       titret(200);                  // tek uzun: "devam"
-      og.okuyucu.textContent = 'Mola bitti, devam edebilirsin.';
+      og.okuyucu.textContent = C('Mola bitti, devam edebilirsin.');
 
       if (tanitimMolasi) {
         // Örnek mola 6 saniyeydi; 20 saniyelik bir mola sayılmaz.
@@ -1248,7 +1262,7 @@
     })
     .uzerine('molaAtlandi', () => {
       molaEkraniKapat();
-      og.okuyucu.textContent = 'Mola atlandı.';
+      og.okuyucu.textContent = C('Mola atlandı.');
       bitisKartiniGoster(motor.istatistik, true);
     });
 
@@ -1293,7 +1307,7 @@
      önizleme göstermek için. */
   const TEMALAR = [
     { id: 'beyaz',    ad: 'Beyaz',          zemin: '#ffffff', a: '#0f8c78', b: '#9a6410' },
-    { id: 'otomatik', ad: 'Sistemle aynı', zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
+    { id: 'otomatik', ad: C('Sistemle aynı'), zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
     { id: 'koyu',     ad: 'Gece moru',     zemin: '#141130', a: '#7ee0d2', b: '#ffc46b' },
     { id: 'dinginlik',ad: 'Dinginlik',     zemin: '#102830', a: '#8fd8c8', b: '#f0cfa0' },
     { id: 'okyanus',  ad: 'Okyanus',       zemin: '#0a1826', a: '#5fd3e8', b: '#ffb877' },
@@ -1332,8 +1346,9 @@
       if (og.ayCanlilikDeger) og.ayCanlilikDeger.textContent = `${ad} · %${yuzde}`;
       const destek = CSS.supports('color', 'oklch(from white l c h)');
       og.canlilikDurum.textContent = destek
-        ? `${ad} (%${yuzde}) — yazı okunaklılığı değişmez, sadece renklerin doygunluğu`
-        : 'Bu tarayıcı canlılık ayarını desteklemiyor; tema renkleri olduğu gibi kullanılıyor.';
+        ? CS(`${ad} (%${yuzde}) — yazı okunaklılığı değişmez, sadece renklerin doygunluğu`,
+             `${ad} (${yuzde}%) — only colour saturation changes; text legibility does not`)
+        : C('Bu tarayıcı canlılık ayarını desteklemiyor; tema renkleri olduğu gibi kullanılıyor.');
       og.ayCanlilik.disabled = !destek;
     }
   }
@@ -1357,7 +1372,7 @@
   function hazirSureleriKur() {
     og.hazirSureler.innerHTML = SURE_SECENEKLERI.map((s, i) => `
       <button type="button" class="sure-sec" data-i="${i}" aria-pressed="false">
-        <b>${s.ad}</b><span>${s.not}</span>
+        <b>${C(s.ad)}</b><span>${C(s.not)}</span>
       </button>`).join('');
 
     og.hazirSureler.querySelectorAll('.sure-sec').forEach((d) => {
@@ -1379,11 +1394,13 @@
     const sn = +og.ayMola.value;
     const uy = +og.ayUyari.value;
 
-    og.ayCalismaDeger.textContent = `${dk} dk`;
+    og.ayCalismaDeger.textContent = `${dk}` + CS(' dk', ' min');
     og.ayMolaDeger.textContent = sn >= 60
-      ? (sn % 60 === 0 ? `${sn / 60} dk` : `${Math.floor(sn / 60)} dk ${sn % 60} sn`)
-      : `${sn} sn`;
-    og.ayUyariDeger.textContent = uy === 0 ? 'kapalı' : `${uy} sn`;
+      ? (sn % 60 === 0 ? `${sn / 60}` + CS(' dk', ' min')
+                       : `${Math.floor(sn / 60)}` + CS(' dk ', ' min ') + `${sn % 60}` + CS(' sn', ' s'))
+      : `${sn}` + CS(' sn', ' s');
+    og.ayUyariDeger.textContent = uy === 0 ? CS('kapalı', 'off')
+                                           : `${uy}` + CS(' sn', ' s');
 
     og.hazirSureler.querySelectorAll('.sure-sec').forEach((d) => {
       const s = SURE_SECENEKLERI[+d.dataset.i];
@@ -1405,11 +1422,16 @@
 
     let not = '';
     if (dk > 30) {
-      not = '<span class="uyari-notu">⚠ 30 dakikadan seyrek molanın faydası azalıyor. ' +
-            'Amerikan Optometri Birliği 20 dakika öneriyor.</span>';
+      not = '<span class="uyari-notu">' + CS(
+        '⚠ 30 dakikadan seyrek molanın faydası azalıyor. '
+          + 'Amerikan Optometri Birliği 20 dakika öneriyor.',
+        '⚠ Breaks less often than every 30 minutes lose much of their benefit. '
+          + 'The American Optometric Association suggests 20 minutes.') + '</span>';
     } else if (sn < 15) {
-      not = '<span class="uyari-notu">⚠ 15 saniyeden kısa mola gözün odak kasının ' +
-            'gevşemesine yetmeyebilir.</span>';
+      not = '<span class="uyari-notu">' + CS(
+        '⚠ 15 saniyeden kısa mola gözün odak kasının gevşemesine yetmeyebilir.',
+        '⚠ A break shorter than 15 seconds may not let the focusing muscle relax.')
+        + '</span>';
     } else if (dk <= 10) {
       not = '<span class="uyari-notu">Sık mola: 2023 çalışması 10 dakikayı destekliyor, ' +
             'ama işini bölebilir.</span>';
@@ -1423,9 +1445,10 @@
     const acik = og.ayUzunMola.checked;
     og.uzunMolaAyar.classList.toggle('gizli', !acik);
     const dk = +og.ayUzunSure.value;
-    og.ayUzunSureDeger.textContent = `${dk} dk`;
-    og.uzunMolaNe.textContent =
-      `2 saat kesintisiz çalışınca ${dk} dakikalık uzun mola önerilir. Zorlama yok, sorar.`;
+    og.ayUzunSureDeger.textContent = `${dk}` + CS(' dk', ' min');
+    og.uzunMolaNe.textContent = CS(
+      `2 saat kesintisiz çalışınca ${dk} dakikalık uzun mola önerilir. Zorlama yok, sorar.`,
+      `After 2 hours of unbroken work it offers a ${dk}-minute long break. It asks, never forces.`);
   }
 
   function saatleriTazele() {
@@ -1500,7 +1523,7 @@
     if (!navigator.vibrate) {
       og.ayTitresim.disabled = true;
       og.ayTitresim.closest('.satir').querySelector('small').textContent =
-        'Bu cihaz titreşimi desteklemiyor';
+        C('Bu cihaz titreşimi desteklemiyor');
     }
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
@@ -1547,9 +1570,7 @@
     motor.ayarlar.bitSaat = og.ayBitSaat.value || '18:00';
     // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
 
-    og.aciklama.textContent =
-      `${dk} dakikada bir ekran ${ml} saniyeliğine kapanır. ` +
-      'O sırada 6 metre uzağa bak.';
+    og.aciklama.textContent = aciklamaMetni(dk, ml);
 
     if (motor.durum !== 'hazir') motor.sifirla();
     kaydet();
@@ -1567,13 +1588,13 @@
     if (!silmeOnayi) {
       if (!(await sifreSor('Verileri silmek için şifre gerekli.'))) return;
       silmeOnayi = true;
-      og.hepsiniSil.textContent = 'Emin misin? Tekrar bas';
-      og.sifirlamaDurum.textContent = 'Bu işlem geri alınamaz.';
+      og.hepsiniSil.textContent = C('Emin misin? Tekrar bas');
+      og.sifirlamaDurum.textContent = C('Bu işlem geri alınamaz.');
       clearTimeout(silmeZaman);
       silmeZaman = setTimeout(() => {
         silmeOnayi = false;
-        og.hepsiniSil.textContent = 'Sıfırla';
-        og.sifirlamaDurum.textContent = 'Ayarlar, sayaçlar ve şifre silinir';
+        og.hepsiniSil.textContent = C('Sıfırla');
+        og.sifirlamaDurum.textContent = C('Ayarlar, sayaçlar ve şifre silinir');
       }, 6000);
       return;
     }
@@ -1740,13 +1761,23 @@
   /* ============================================================
      AÇILIŞ
      ============================================================ */
-  og.aciklama.textContent =
-    `${Math.round(motor.ayarlar.calismaSuresi / 60)} dakikada bir ekran ` +
-    `${motor.ayarlar.molaSuresi} saniyeliğine kapanır. O sırada 6 metre uzağa bak.`;
+  og.aciklama.textContent = aciklamaMetni(
+    Math.round(motor.ayarlar.calismaSuresi / 60), motor.ayarlar.molaSuresi);
 
   ekraniCiz(motor.anlikDurum());
   kipleriKur();
   tanitimiKurGerekirse();
+
+  /* ---- Dil ----
+     Sözlük Türkçe metnin kendisini anahtar alıyor, o yüzden HTML'e
+     hiç dokunmadan çeviriyoruz: sayfa kurulduktan SONRA metin
+     düğümleri geziliyor. Dinamik olarak yazılan metinler (kip adları,
+     bilgi kartları) kendi yerlerinde C() ile geçiyor. */
+  try {
+    og.ayDil.value = aktifDil();
+    og.ayDil.addEventListener('change', () => diliDegistir(og.ayDil.value));
+    sayfayiCevir();
+  } catch {}
   bildirimDurumunuGoster();
   kilitDurumunuGoster();
   temaSeciciyiKur();
