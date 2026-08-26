@@ -55,6 +55,30 @@
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "5 dakika duraklat",
+      "short_name": "Duraklat",
+      "description": "Toplantı ya da film için molaları geçici durdur",
+      "url": "./index.html?eylem=duraklat",
+      "icons": [
+        {
+          "src": "ikon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Göz sağlığı rehberi",
+      "short_name": "Rehber",
+      "description": "20-20-20 kuralı, kanıtın durumu ve pratik öneriler",
+      "url": "./rehber.html",
+      "icons": [
+        {
+          "src": "ikon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

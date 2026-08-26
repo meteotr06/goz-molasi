@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v66">
+<link rel="stylesheet" href="stil.css?s=v69">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -292,6 +292,7 @@
     <a href="https://github.com/meteotr06/goz-molasi/releases/latest" rel="noopener"
        target="_blank"><b>Windows sürümü</b></a> ·
     <a href="rehber.html"><b>Göz sağlığı rehberi</b></a> ·
+    <button type="button" class="baglanti-dugme" id="kisayolAc">Kısayollar</button> ·
     <a href="gizlilik.html">Gizlilik politikası</a> ·
     <a href="https://github.com/meteotr06/goz-molasi" rel="noopener" target="_blank">Kaynak kod</a>
   </p>
@@ -305,6 +306,37 @@
     <button class="dugme ana kucuk" id="guncelleYenile">Yenile</button>
     <button class="guncelleme-kapat" id="guncelleKapat" aria-label="Kapat">✕</button>
   </div>
+
+  <!-- KISAYOL LİSTESİ
+       Klavye kısayolları vardı ama hiçbir yerde yazmıyordu. Kimsenin
+       bilmediği kısayol kısayol değil; sadece tesadüfen basılan tuş. -->
+  <dialog class="ayarlar" id="kisayolPencere">
+    <div class="ayar-govde">
+      <h2>Kısayollar</h2>
+      <table class="kisayol-tablo">
+        <tbody>
+          <tr><td><kbd>Boşluk</kbd></td><td>Başlat / duraklat</td></tr>
+          <tr><td><kbd>M</kbd></td><td>Şimdi mola ver</td></tr>
+          <tr><td><kbd>A</kbd></td><td>Ayarlar</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Temayı değiştir</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Sayacı sıfırla</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Bu liste</td></tr>
+        </tbody>
+      </table>
+      <p class="ipucu" id="kisayolTelefon">
+        <b>Telefonda:</b> uygulamayı ana ekrana kurduysan simgeye basılı
+        tutunca “Şimdi mola ver”, “5 dakika duraklat” ve “Rehber”
+        kısayolları çıkar.
+      </p>
+      <p class="ipucu" id="kisayolMolaNot">
+        Mola ekranındayken kısayollar çalışmaz — 20 saniye tuşla
+        geçilebilseydi mola olmazdı.
+      </p>
+    </div>
+    <div class="ayar-alt">
+      <button class="dugme ana" id="kisayolKapat">Anladım</button>
+    </div>
+  </dialog>
 
   <!-- MOLA ÖNCESİ UYARI BALONU -->
   <div class="uyari-balon" id="uyariBalon" role="status">
@@ -608,14 +640,14 @@
     </form>
   </dialog>
 
-  <script src="dil.js?s=v66"></script>
-  <script src="bilgiler.js?s=v66"></script>
-  <script src="bilgiler_en.js?s=v66"></script>
-  <script src="dunya.js?s=v66"></script>
-  <script src="egzersiz.js?s=v66"></script>
-  <script src="reklam.js?s=v66"></script>
-  <script src="cekirdek.js?s=v66"></script>
-  <script src="mola_icerik.js?s=v66"></script>
-  <script src="arayuz.js?s=v66"></script>
+  <script src="dil.js?s=v69"></script>
+  <script src="bilgiler.js?s=v69"></script>
+  <script src="bilgiler_en.js?s=v69"></script>
+  <script src="dunya.js?s=v69"></script>
+  <script src="egzersiz.js?s=v69"></script>
+  <script src="reklam.js?s=v69"></script>
+  <script src="cekirdek.js?s=v69"></script>
+  <script src="mola_icerik.js?s=v69"></script>
+  <script src="arayuz.js?s=v69"></script>
 </body>
 </html>

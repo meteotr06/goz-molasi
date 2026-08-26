@@ -977,9 +977,28 @@
     }, 300);
   }
 
-  /* Ana ekran kısayolundan "Şimdi mola ver" ile açıldıysa */
-  if (new URLSearchParams(location.search).get('eylem') === 'mola') {
-    setTimeout(() => { motor.basla(); motor.molayaGec(); }, 400);
+  /* Ana ekran kısayolundan açıldıysa (telefonda simgeye basılı tutma).
+     Adres çubuğunda ?eylem=... kalmasın diye iş bitince temizleniyor;
+     yoksa kullanıcı sayfayı yenilediğinde eylem tekrar çalışıyordu. */
+  {
+    const eylem = new URLSearchParams(location.search).get('eylem');
+    if (eylem === 'mola') {
+      setTimeout(() => { motor.basla(); motor.molayaGec(); }, 400);
+      history.replaceState(null, '', location.pathname);
+    } else if (eylem === 'duraklat') {
+      /* motor.duraklat() süresiz durdurur — "5 dakika" işini burada
+         kuruyoruz. Motora süreli duraklatma eklemedim: sayfa kapanınca
+         zamanlayıcı zaten ölür, motorda tutmak yanlış bir söz verirdi. */
+      setTimeout(() => {
+        try {
+          motor.duraklat();
+          setTimeout(() => {
+            try { motor.devamEt(); } catch {}
+          }, 5 * 60 * 1000);
+        } catch {}
+      }, 300);
+      history.replaceState(null, '', location.pathname);
+    }
   }
 
   /* ============================================================
@@ -1413,12 +1432,44 @@
     motor.sifirla();
   });
 
+  /* ---------- KISAYOLLAR ----------
+     Boşluk ve M zaten vardı ama hiçbir yerde yazmıyordu. Kimsenin
+     bilmediği kısayol kısayol değil. Liste "?" ile ya da alttaki
+     bağlantıyla açılıyor.
+
+     Mola ekranı açıkken HİÇBİRİ çalışmaz: 20 saniye tek tuşla
+     geçilebilseydi mola olmazdı. */
+  const kisayolPencere = $('kisayolPencere');
+  function kisayollariGoster() {
+    try { kisayolPencere?.showModal(); } catch {}
+  }
+  $('kisayolKapat')?.addEventListener('click', () => kisayolPencere?.close());
+  $('kisayolAc')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    kisayollariGoster();
+  });
+
   document.addEventListener('keydown', (e) => {
     // e.target her zaman bir Element olmayabilir (document olabilir)
     if (e.target instanceof Element && e.target.matches('input, select, textarea')) return;
+    if (e.ctrlKey || e.altKey || e.metaKey) return;   // tarayıcı kısayollarına dokunma
+    if (kisayolPencere?.open) {
+      if (e.key === 'Escape') kisayolPencere.close();
+      return;
+    }
     if (og.pencere.open || og.sifrePencere.open) return;
-    if (e.key === ' ' && !molaAcik) { e.preventDefault(); og.baslat.click(); }
-    if ((e.key === 'm' || e.key === 'M') && !molaAcik) og.mola.click();
+    if (molaAcik) return;                             // mola sırasında kısayol yok
+
+    if (e.key === ' ') { e.preventDefault(); og.baslat.click(); return; }
+    const t = e.key.toLowerCase();
+    if (t === 'm') { og.mola.click(); return; }
+    if (t === 'a') { e.preventDefault(); og.ayarAc.click(); return; }
+    if (t === 't') { og.tema.click(); return; }
+    if (t === 'r') { og.sifirla.click(); return; }
+    if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+      e.preventDefault();
+      kisayollariGoster();
+    }
   });
 
   /* Mola ekranı açıkken Esc ile kaçış yok — atlamak için basılı tutulmalı */

@@ -203,10 +203,22 @@
     ekle('sağlık', 'kırık iç bağlantı yok', kirik.length === 0, `${kirik.length} tane`);
     const gorsel = [...document.images].filter(i => !i.complete || i.naturalWidth === 0);
     ekle('sağlık', 'yüklenmeyen görsel yok', gorsel.length === 0, `${gorsel.length} tane`);
-    const kucuk = [...document.querySelectorAll('button')]
-      .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && (r.height < 44 || r.width < 44) && e.offsetParent; });
     /* 40 değil 44: WCAG 2.5.8 alt sınırı 44x44. Telefonda ölçtüm,
-       beş bağlantı 43,2 px'ti ve 40'lık eşikten geçiyordu. */
+       beş bağlantı 43,2 px'ti ve 40'lık eşikten geçiyordu.
+
+       İSTİSNA: WCAG 2.5.8 "inline" maddesi, bir cümlenin İÇİNDE akan
+       hedefleri kuralın dışında tutuyor — alt bilgideki "Kısayollar ·
+       Gizlilik politikası" gibi. Onları 44 px yapmak cümleyi bozardı
+       ve zaten çevresindeki metinle birlikte okunuyorlar. */
+    const cumleIcinde = (e) => {
+      const st = getComputedStyle(e);
+      if (!st.display.startsWith('inline')) return false;
+      const ust = e.parentElement;
+      return !!ust && (ust.tagName === 'P' || ust.classList.contains('alt-bilgi'));
+    };
+    const kucuk = [...document.querySelectorAll('button')]
+      .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && (r.height < 44 || r.width < 44) && e.offsetParent; })
+      .filter(e => !cumleIcinde(e));
     ekle('sağlık', 'küçük dokunma hedefi yok (<44px)', kucuk.length === 0,
          kucuk.map(e => e.id || e.className).join(',').slice(0, 40));
     ekle('sağlık', 'kalp atışı Worker\'da (arka planda kısılmaz)',

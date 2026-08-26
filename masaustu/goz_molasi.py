@@ -1462,7 +1462,8 @@ class Uygulama:
         # ---------- Alt ----------
         self.alt_bilgi = self.t.create_text(
             ke, o(865), anchor="w",
-            text="Pencereyi kapatmak programı kapatmaz — saatin yanında çalışmaya devam eder.",
+            text="Pencereyi kapatmak programı kapatmaz — saatin yanında çalışır.   "
+                 "Kısayollar için F1",
             fill=gor.karistir(P["zemin"], P["soluk"], 0.7), font=(yt, 8))
 
         kapat_g = o(130)
@@ -1476,6 +1477,7 @@ class Uygulama:
         # için şerit boş bir kutu olarak görünüyordu. Tema değişiminde panel
         # baştan çizildiği için de buraya konması gerekiyor.
         self._arka_seridi_tazele()
+        self._kisayollari_kur()
 
         # ---------- YERLEŞİM KAYDI ----------
         # Panelin satırları burada tek listede duruyor. sinama_yerlesim.py
@@ -1888,6 +1890,64 @@ class Uygulama:
                         "Günlük sınır %d dakika. Bugün %s kullandın."
                         % (sinir, sure_okunakli(gecen)))
         return None
+
+    # Klavye kısayolları. Web sürümüyle AYNI harfler — aynı uygulamanın
+    # iki sürümünün farklı davranması, kullanıcıyı her geçişte yeniden
+    # öğrenmeye zorluyor.
+    KISAYOLLAR = (
+        ("M", "Şimdi mola ver"),
+        ("A", "Ayarlar"),
+        ("T", "Temayı değiştir"),
+        ("H", "Pencereyi gizle (program çalışmaya devam eder)"),
+        ("F1", "Bu liste"),
+    )
+
+    def _kisayollari_kur(self):
+        """Kısayolları ana pencereye bağlar.
+
+        Mola ve engel ekranları ayrı pencereler ve odağı onlar alıyor;
+        bu bağlamalar oralarda çalışmaz. Kasıtlı: 20 saniyelik molayı
+        tek tuşla geçebilmek molayı mola olmaktan çıkarır.
+        """
+        def bagla(tus, islev):
+            try:
+                self.kok.bind(tus, lambda e: (islev(), "break")[1])
+            except Exception:
+                pass
+
+        for buyuk, kucuk, islev in (
+                ("<M>", "<m>", self.hemen_mola),
+                ("<A>", "<a>", self.ayarlari_ac),
+                ("<T>", "<t>", self._temayi_dondur),
+                ("<H>", "<h>", self.gizle)):
+            bagla(buyuk, islev)
+            bagla(kucuk, islev)
+        bagla("<F1>", self._kisayollari_goster)
+        bagla("<question>", self._kisayollari_goster)
+
+    def _temayi_dondur(self):
+        """Sıradaki temaya geç. Web'deki T tuşunun karşılığı."""
+        try:
+            adlar = list(gor.TEMALAR.keys())
+            su = self.ayar.get("tema", gor.VARSAYILAN_TEMA)
+            yeni = adlar[(adlar.index(su) + 1) % len(adlar)] if su in adlar else adlar[0]
+            self.ayar["tema"] = yeni
+            ayarlari_yaz(self.ayar)
+            gor.tema_uygula(yeni, self.ayar.get("canlilik", 1.0))
+            self._panel_yenile()
+        except Exception:
+            pass
+
+    def _kisayollari_goster(self):
+        satirlar = SATIR_AYRAC.join(
+            "  %-4s  %s" % (t, a) for t, a in self.KISAYOLLAR)
+        try:
+            TelafiKarti(
+                self.kok, "Klavye kısayolları", satirlar, "",
+                "Mola ekranındayken kısayollar çalışmaz — 20 saniye "
+                "tuşla geçilebilseydi mola olmazdı.")
+        except Exception:
+            pass
 
     def engel_kalan_metni(self):
         """Engel ne zaman kalkacak? Canlı metin.
