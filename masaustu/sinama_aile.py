@@ -24,6 +24,10 @@ import time
 
 import goz_molasi as gm
 import kilit as kl
+import sinama_yalitim
+
+# Bu sinama da gercek ayar dosyasina yazabilir; ayni yalitim.
+sinama_yalitim.yalit(gm)
 
 
 class SahteUygulama(gm.Uygulama):
@@ -93,6 +97,9 @@ def main():
         hatalar.append("şifresiz aile kipi geçerli sayıldı")
     if not gm.aile_kipinde_mi({"kip": "aile", "kilit": sifre}):
         hatalar.append("şifreli aile kipi geçersiz sayıldı")
+
+    for s in sinama_yalitim.dogrula():
+        hatalar.append(s)
 
     if hatalar:
         print("BAŞARISIZ — %d sorun:" % len(hatalar))

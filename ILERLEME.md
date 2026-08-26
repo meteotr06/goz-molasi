@@ -15,10 +15,10 @@ bir yol çıkmaz çıkınca burayı güncelle.
 
 | | |
 |---|---|
-| Web | https://meteotr06.github.io/goz-molasi/ · servis işçisi **v73** |
+| Web | https://meteotr06.github.io/goz-molasi/ · servis işçisi **v76** |
 | Windows | kodda **1.1** · GitHub Releases'te **v1.0** ⚠️ |
 | Depo | github.com/meteotr06/goz-molasi · dal `main` |
-| Sınama | masaüstü 4 takım · web 37 senaryo |
+| Sınama | masaüstü **5 takım** · web **38 senaryo** |
 
 ---
 
@@ -31,7 +31,10 @@ bir yol çıkmaz çıkınca burayı güncelle.
   Sebebi: bir keresinde "başarıyla derlendi" diyen sürüm hiç açılmadı.
 - `sinama_veri.py` · `sinama_aile.py` · `sinama_yerlesim.py` (16 tema ×
   3 ölçek) · `sinama_acilis.py`
-- Web: `sinama.js` 37 senaryo.
+- Web: `sinama.js` 38 senaryo.
+- `sinama_zaman.py` — sahte saatle 22 senaryo: gece yarısı, saat
+  geri/ileri alma, yaz-kış saati, uzun oturum. Üç sessiz hata bu
+  sınamayla bulundu.
 - `dunya.py` artık **üretiliyor** (`dunya_uret.py`). Elle ikiz tutulan
   `bilgiler.py`/`bilgiler.js` bir kez ayrıştı; aynı hatayı tekrarlamamak
   için.
@@ -70,6 +73,57 @@ bir yol çıkmaz çıkınca burayı güncelle.
       `robots.txt` okur. Zararsız (kök zaten sitemap'i listeliyor).
 
 ---
+
+## Aile kipi — neyi garanti eder, neyi etmez
+
+**Ebeveyn bunu okumalı.** Bir güvenlik özelliğinin en tehlikeli hâli,
+sandığından zayıf olmasıdır. Aşağıdakiler denendi ve ölçüldü.
+
+### Atlatılamıyor
+
+| Deneme | Sonuç |
+|---|---|
+| Sistem saatini geri alma | Sayaç korunuyor; mola ertelenmiyor |
+| Saati değiştirip yasak saatinden kaçma | Yakalanıyor, engel sürüyor, sebebi yazıyor |
+| Saati ileri alıp günü atlama | Günlük sınır birikimli saniye tutuyor, etkilenmiyor |
+| Gece yarısını bekleyip sınır sıfırlatma | Doğru çalışıyor, ek süre devretmiyor |
+| Temiz çıkış bayrağını taklit etme | Gizli söz doğrulanıyor, sahte bayrak kabul edilmiyor |
+| Ayarlara girip kipi kapatma | Şifre ister |
+| Molayı Ctrl+Alt+Shift ile atlama | Aile kipinde şifre ister |
+| Yaz/kış saati, NTP eşitlemesi | Sayaç bozulmuyor |
+
+### Atlatılabiliyor — ebeveyn bunları bilmeli
+
+1. **Ayar dosyasını silmek.** `%APPDATA%` altındaki `GozMolasi` klasöründeki `ayarlar.json`
+   silinirse şifre de aile kipi de gider. En kolay yol ve **çözümü
+   yok**: dosya kullanıcının kendi klasöründe, okuma-yazma hakkı onda.
+   Gerçek koruma ancak ayrı bir Windows hesabı ve yönetici hakları ile
+   olur — o da bu uygulamanın işi değil.
+2. **Görev Yöneticisi'nden iki süreci birden öldürmek.** Bekçi programı
+   geri açar, ama bekçi de öldürülürse biter.
+3. **Bekçinin komut satırındaki gizli sözü okumak.** Görev
+   Yöneticisi'nin komut satırı sütunu gösteriyor. Çubuğu yükselttik,
+   kaldırmadık.
+4. **Windows'u güvenli kipte başlatmak.** Açılışta hiçbir program
+   başlamaz.
+5. **Web sürümünü kullanmak.** Aile kipi yalnızca Windows sürümünde
+   var. Çocuk tarayıcıdan siteyi açarsa hiçbir kural geçerli değil —
+   ama web sürümü bilgisayarı zaten engellemiyor, yalnızca mola
+   hatırlatıcısı. Yani bu "engeli kaldırma" değil, "mola
+   hatırlatmalarından kaçma".
+6. **Başka bir Windows hesabı açmak.** Program o hesapta kurulu değilse
+   çalışmaz.
+
+### Neden daha ileri gitmedik
+
+Windows tuşunu ve Görev Yöneticisi'ni engellemek için düşük seviyeli
+klavye kancası ya da kayıt defteri politikası gerekiyor. İkisi de
+sistemi kalıcı bozabilir; bir hata kullanıcının **kendi bilgisayarına**
+girişini engelleyebilir. Bir göz molası uygulamasının alacağı risk
+değil.
+
+Bu yüzden uygulama hiçbir yerde "kırılmaz" demiyor. Amaç engellemek
+değil, **sınırı görünür kılmak**.
 
 ## Denendi, olmadı — tekrar araştırma
 

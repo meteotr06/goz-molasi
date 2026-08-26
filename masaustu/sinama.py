@@ -30,6 +30,7 @@ BURASI = os.path.dirname(os.path.abspath(__file__))
 SINAMALAR = [
     ("veri", "sinama_veri.py", "Bilgilerin kaynağı ve sürümler arası tutarlılık"),
     ("aile", "sinama_aile.py", "Ebeveyn kontrolü: kip, sınır, yasak, şifre"),
+    ("zaman", "sinama_zaman.py", "Sayaç doğruluğu ve saat oyunları"),
     ("yerlesim", "sinama_yerlesim.py", "Panelde çakışma ve taşma"),
     ("acilis", "sinama_acilis.py", "Derlenen exe açılıyor mu"),
 ]

@@ -572,6 +572,18 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 .uyari-balon.acik { transform: translate(-50%, 0); }
 .uyari-balon b { font-size: 14px; white-space: nowrap; }
 
+/* HIDDEN HER ZAMAN KAZANIR.
+   HTML'in `hidden` özniteliğinin varsayılan kuralı `display: none`,
+   ama sınıfa yazılan her `display` onu eziyor. .durum-notu ve
+   .guncelleme-serit'e `display: flex` yazmıştım; ikisi de
+   hidden="true" olduğu hâlde çiziliyordu — biri ekranda boş bir kutu
+   olarak duruyordu.
+
+   Aynı hata iki ayrı projede daha çıktı, yani sınıfsal. Tek kural
+   hepsini kapatıyor. `!important` burada haklı: `hidden` bir niyet
+   beyanı, görünüm tercihi değil. */
+[hidden] { display: none !important; }
+
 /* ---------------- SEKME ÇUBUĞU ---------------- */
 .sekme-cubugu {
   display: flex;
@@ -1200,8 +1212,10 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   font-size: 16px;
   cursor: pointer;
   padding: 8px;
-  min-width: 36px;
-  min-height: 36px;
+  /* 36x36 idi ve gozle fark edilmiyordu (serit icinde duruyor).
+     Parmakla vurulacak her sey en az 44x44 - WCAG 2.5.8. */
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   flex: none;
 }

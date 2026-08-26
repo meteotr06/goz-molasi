@@ -328,10 +328,22 @@ def bekci_baslat(klasor):
         if os.path.exists(bayrak):
             os.remove(bayrak)
 
+        # GİZLİ SÖZ — temiz çıkış bayrağının taklit edilmesini önler.
+        #
+        # Bayrak düz bir dosyaydı ve %APPDATA% altında herkes yazabiliyor.
+        # Çocuk boş bir dosya oluşturup programı Görev Yöneticisi'nden
+        # öldürürse bekçi "düzgün kapandı" sanıp çekiliyordu. Şifre bile
+        # gerekmiyordu.
+        #
+        # Söz DİSKE YAZILMIYOR, yalnızca bekçinin komut satırında
+        # geçiyor. Bayrak dosyası bu sözü içermek zorunda.
+        global _GIZLI_SOZ
+        _GIZLI_SOZ = secrets.token_hex(16)
+
         komut = [sys.executable]
         if not getattr(sys, "frozen", False):
             komut.append(os.path.abspath(sys.argv[0]))
-        komut += ["--bekci", str(os.getpid()), klasor]
+        komut += ["--bekci", str(os.getpid()), klasor, _GIZLI_SOZ]
 
         # CREATE_NO_WINDOW: siyah konsol penceresi açılmasın
         subprocess.Popen(komut, creationflags=0x08000000,
@@ -341,14 +353,40 @@ def bekci_baslat(klasor):
         return False
 
 
+_GIZLI_SOZ = ""
+
+
 def temiz_cikis_isaretle(klasor):
-    """Kullanıcı şifresini girip düzgün kapattı — bekçi karışmasın."""
+    """Kullanıcı şifresini girip düzgün kapattı — bekçi karışmasın.
+
+    Bayrağa gizli sözü yazıyoruz; bekçi bunu doğruluyor. Sözü bilmeyen
+    biri bayrağı oluştursa da bekçi kanmaz.
+    """
     try:
         os.makedirs(klasor, exist_ok=True)
         with open(os.path.join(klasor, TEMIZ_CIKIS_DOSYA), "w") as f:
-            f.write(str(time.time()))
+            f.write(_GIZLI_SOZ or str(time.time()))
     except Exception:
         pass
+
+
+def temiz_cikis_gecerli_mi(klasor, soz):
+    """Bayrak GERÇEKTEN programın kendisi tarafından mı bırakıldı?
+
+    Bekçi bunu soruyor. Söz boşsa (kilit yokken, eski davranış) bayrağın
+    varlığı yeterli — orada korunacak bir şey yok. Söz varsa içerik
+    tutmalı: taklit bayrak kabul edilmez.
+    """
+    yol = os.path.join(klasor, TEMIZ_CIKIS_DOSYA)
+    if not os.path.exists(yol):
+        return False
+    if not soz:
+        return True
+    try:
+        with open(yol, "r") as f:
+            return f.read().strip() == soz
+    except Exception:
+        return False
 
 
 GOSTER_BAYRAK = "goster.bayrak"
@@ -403,27 +441,35 @@ def goster_istendi_mi(klasor):
 ASGARI_YASAM = 25          # saniye — bundan kısa sürede ölen program çöküyordur
 
 
-def bekci_calis(izlenen_pid, klasor):
-    """Bekçi kipi. Programın bittiğini görene kadar bekler."""
+def bekci_calis(izlenen_pid, klasor, soz=""):
+    """Bekçi kipi. Programın bittiğini görene kadar bekler.
+
+    `soz`: programın başlatırken verdiği gizli söz. Temiz çıkış bayrağı
+    bu sözü içermek zorunda. Eskiden bayrağın VARLIĞI yeterliydi ve
+    bayrak %APPDATA% altında herkesin yazabildiği düz bir dosyaydı —
+    boş bir dosya oluşturup programı öldüren biri bekçiyi devre dışı
+    bırakıyordu, şifre bile gerekmiyordu.
+    """
     bayrak = os.path.join(klasor, TEMIZ_CIKIS_DOSYA)
     basladi = time.time()
 
+    def temiz_cikildi():
+        if not temiz_cikis_gecerli_mi(klasor, soz):
+            return False
+        try:
+            os.remove(bayrak)
+        except Exception:
+            pass
+        return True
+
     while surec_yasiyor_mu(izlenen_pid):
-        if os.path.exists(bayrak):
-            try:
-                os.remove(bayrak)
-            except Exception:
-                pass
+        if temiz_cikildi():
             return 0                      # düzgün kapanış: bekçi çekilir
         time.sleep(2)
 
     # Süreç bitti. Düzgün kapanış bayrağı var mı?
     time.sleep(1.0)
-    if os.path.exists(bayrak):
-        try:
-            os.remove(bayrak)
-        except Exception:
-            pass
+    if temiz_cikildi():
         return 0
 
     # Program çok kısa sürede öldüyse bu bir çökmedir, zorla kapatma değil.

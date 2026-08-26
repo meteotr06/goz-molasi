@@ -36,12 +36,31 @@ KAYIT_KLASOR = os.path.join(os.environ.get("APPDATA", ""), "GozMolasi")
 
 # Pencerenin gelmesi için tanınan süre. Soğuk açılışta PyInstaller
 # tek dosyayı geçici klasöre açıyor, bu birkaç saniye sürebiliyor.
-BEKLEME_SN = 25
+# Mola ekrani acikken panel bulunamaz; varsayilan mola 20 saniye.
+# Sure bunu kapsamali, yoksa 'pencere acilmadi' diye yanlis kalir.
+BEKLEME_SN = 45
+
+
+def _kutu(hwnd):
+    """Pencerenin gerçek dış kutusu (gölge payı olmadan)."""
+    k = wintypes.RECT()
+    ctypes.windll.dwmapi.DwmGetWindowAttribute(
+        wintypes.HWND(hwnd), ctypes.c_uint(9), ctypes.byref(k), ctypes.sizeof(k))
+    return k
 
 
 def pencereyi_bul(baslik_parcasi="Göz Molası"):
-    """Görünür pencereler arasında başlığı eşleşeni bul."""
+    """Görünür pencereler arasında ANA PANELİ bul.
+
+    TAM EKRAN PENCERELERİ ATLIYOR. Mola ve engel ekranları da aynı
+    başlığı taşıyor ve bütün monitörleri kaplıyor. Bir kez bu yüzden
+    derleme kaldı: program açılırken kaçırılmış bir molayı hemen verdi,
+    sınama 1920x1200'lük mola ekranını panel sanıp "pencere ekrana
+    sığmıyor" dedi. Kod doğruydu, sınama yanılıyordu.
+    """
     user32 = ctypes.windll.user32
+    ekran_g = user32.GetSystemMetrics(0)
+    ekran_y = user32.GetSystemMetrics(1)
     bulunan = []
 
     def geri(hwnd, _):
@@ -52,8 +71,13 @@ def pencereyi_bul(baslik_parcasi="Göz Molası"):
             return True
         tampon = ctypes.create_unicode_buffer(n + 1)
         user32.GetWindowTextW(hwnd, tampon, n + 1)
-        if baslik_parcasi in tampon.value:
-            bulunan.append(hwnd)
+        if baslik_parcasi not in tampon.value:
+            return True
+        k = _kutu(hwnd)
+        # Ekranı kaplayan pencere paneldir DEĞİL: mola/engel ekranı.
+        if (k.right - k.left) >= ekran_g - 4 and (k.bottom - k.top) >= ekran_y - 4:
+            return True
+        bulunan.append(hwnd)
         return True
 
     TIP = ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
@@ -140,11 +164,8 @@ def main():
 
     # 4) pencere ekranın içinde mi
     if hwnd:
-        k = wintypes.RECT()
-        ctypes.windll.dwmapi.DwmGetWindowAttribute(
-            wintypes.HWND(hwnd), ctypes.c_uint(9), ctypes.byref(k),
-            ctypes.sizeof(k))
-        print("pencere açıldı: %dx%d konum (%d,%d)"
+        k = _kutu(hwnd)
+        print("panel açıldı: %dx%d konum (%d,%d)"
               % (k.right - k.left, k.bottom - k.top, k.left, k.top))
         a_sol, a_ust, a_gen, a_yuk = iz.calisma_alani()
         if k.bottom > a_ust + a_yuk + 8 or k.right > a_sol + a_gen + 8:

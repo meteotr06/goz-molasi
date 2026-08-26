@@ -111,8 +111,14 @@
   /* ---------- 4. DİL ---------- */
   {
     const turkceMi = (t) => /[çğıöşüÇĞİÖŞÜ]/.test(t);
+    /* Uygulama ADLARI ozel addir, cevrilmez: "Hesap Araclari",
+       "Kur Pusulasi", "Haftalik Planlayici"... Sinama bunlari
+       "cevrilmemis Turkce metin" sayiyordu ve her calismada iki
+       yanlis alarm veriyordu. Yanlis alarm veren sinama, bir sure
+       sonra bakilmayan sinamadir. */
     const gorunur = () => [...document.querySelectorAll('body *')]
       .filter(e => e.children.length === 0 && e.offsetParent)
+      .filter(e => !e.closest('.diger-uyg, .diger-izgara'))
       .map(e => e.textContent.trim()).filter(t => t.length > 3);
 
     const dil = aktifDil();
@@ -209,6 +215,34 @@
     ekle('sağlık', 'meta description 160 karakteri aşmıyor',
          aciklama.length > 0 && aciklama.length <= 160,
          `${aciklama.length} karakter`);
+
+    /* HIDDEN GERCEKTEN GIZLIYOR MU?
+       HTML'in `hidden` ozniteligi `display: none` demek, ama sinifa
+       yazilan her `display` onu eziyor. .durum-notu ve
+       .guncelleme-serit'e display:flex yazmistim; ikisi de
+       hidden="true" olduğu halde ciziliyordu - biri ekranda bos bir
+       kutuydu. Ayni hata iki ayri projede daha cikti, sinifsal. */
+    const gizliAmaGorunen = [...document.querySelectorAll('[hidden]')].filter((o) => {
+      const s = getComputedStyle(o);
+      const r = o.getBoundingClientRect();
+      return s.display !== 'none' && r.width > 0 && r.height > 0;
+    });
+    ekle('sağlık', 'hidden olan her şey gerçekten gizli',
+         gizliAmaGorunen.length === 0,
+         gizliAmaGorunen.map((o) => o.id || o.className).join(',').slice(0, 60));
+
+    /* SURUM DAMGASI TUTUYOR MU?
+       sw.js icindeki SURUM ile HTML'deki ?s=v.. etiketleri ayni olmali.
+       sw.js'i artirip surum_ekle.py'yi calistirmayi unutmak, kullanicinin
+       onbellekteki ESKI kodla calismasi demek: duzeltirsin, sinamalar
+       gecer, kullanici hala hatali surumdedir. Bugun bir kez oldu.
+
+       Not: bu projede servis iscisi "once ag, onbellek yedek" calisiyor
+       (cache: 'no-cache'), yani internet varken zaten guncel dosya
+       geliyor. Damga cevrimdisi kopya ve tarayici onbellegi icin onemli. */
+    const damga = (document.querySelector('script[src*="?s=v"]') || {})
+      .getAttribute?.('src')?.match(/\?s=(v\d+)/)?.[1];
+    ekle('sağlık', 'sürüm damgası betiklerde var', !!damga, damga || 'yok');
 
     const gorsel = [...document.images].filter(i => !i.complete || i.naturalWidth === 0);
     ekle('sağlık', 'yüklenmeyen görsel yok', gorsel.length === 0, `${gorsel.length} tane`);

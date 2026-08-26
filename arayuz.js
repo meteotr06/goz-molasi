@@ -440,7 +440,11 @@
     if (motor.durum !== 'mola') motor.sifirla();
     og.aciklama.textContent = aciklamaMetni(
       Math.round(k.ayar.calismaSuresi / 60), k.ayar.molaSuresi);
-    og.okuyucu.textContent = `${k.ad} kipine geçildi.`;
+    // Kip ADI sozlukte var ama cumle kalibi koda gomuluydu:
+    // Ingilizce kipte ekran okuyucu "Film - gaming kipine gecildi"
+    // diyordu. Sayi/degisken iceren metinler CS ile iki dilli olur.
+    og.okuyucu.textContent = CS(`${C(k.ad)} kipine geçildi.`,
+                                `Switched to ${C(k.ad)} mode.`);
     kipleriTazele();
     ekraniCiz(motor.anlikDurum());
   }
@@ -938,7 +942,7 @@
     og.kur.textContent = C('⬇ Ana ekrana ekle');
     og.kur.classList.remove('gizli');
     seridiGoster('Ana ekrana ekle',
-                 'Uygulama gibi açılsın, internetsiz de çalışsın', 'Nasıl?');
+                 'Uygulama gibi açılsın, internetsiz de çalışsın', C('Nasıl?'));
   }
 
   /* Masaüstü tarayıcılarda beforeinstallprompt gecikebilir ya da hiç
@@ -948,7 +952,7 @@
       if (!kurulumOlayi && serit.classList.contains('gizli')) {
         seridiGoster('Uygulama olarak kurulabilir',
                      'Tarayıcı çubuğu olmadan, kendi penceresinde çalışır',
-                     'Nasıl?');
+                     C('Nasıl?'));
       }
     }, 3000);
   }
@@ -1292,7 +1296,9 @@
     // Atla düğmesi ayardan kapalıysa hiç gösterme
     og.atla.classList.toggle('gizli', !motor.ayarlar.molaAtlanabilir);
 
-    og.okuyucu.textContent = `Mola başladı. ${motor.ayarlar.molaSuresi} saniye boyunca uzağa bak.`;
+    og.okuyucu.textContent = CS(
+      `Mola başladı. ${motor.ayarlar.molaSuresi} saniye boyunca uzağa bak.`,
+      `Break started. Look away for ${motor.ayarlar.molaSuresi} seconds.`);
     calSes(660, 0.55);
     titret([120, 80, 120]);         // iki kısa: "dur"
     uyanikTut();

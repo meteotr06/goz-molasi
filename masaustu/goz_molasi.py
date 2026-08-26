@@ -277,6 +277,44 @@ def sure_yazisi(saniye):
     return "%02d:%02d" % (saniye // 60, saniye % 60)
 
 
+def sayi_oku(metin, varsayilan=None):
+    """Türkçe yazılmış sayıyı okur. Okuyamazsa `varsayilan` döner.
+
+    NEDEN VAR: alanlar `float(metin.replace(",", "."))` ile okunuyordu.
+      "90,5"  -> ValueError -> yakalanıyor -> 0 -> SINIR YOK
+      "1.500" -> 1.5        -> bin ayıracı ondalık sanılıyor
+
+    İkisi de sessiz. Ebeveyn "günlük 90 dakika" yazdığını sanıp hiç
+    sınır koymamış oluyor; kimse fark etmiyor çünkü ekranda hata yok.
+
+    Kurallar:
+      • Hem "." hem "," varsa: "." binlik, "," ondalık  (1.500,50)
+      • Yalnız "," varsa: ondalık                        (90,5)
+      • Yalnız "." varsa ve arkasında TAM ÜÇ rakam varsa: binlik
+        (1.500 -> 1500). Aksi hâlde ondalık               (90.5)
+    """
+    if metin is None:
+        return varsayilan
+    m = str(metin).strip().replace(" ", "").replace("\u00a0", "")
+    if not m:
+        return varsayilan
+    nokta, virgul = "." in m, "," in m
+    if nokta and virgul:
+        m = m.replace(".", "").replace(",", ".")
+    elif virgul:
+        m = m.replace(",", ".")
+    elif nokta:
+        parcalar = m.split(".")
+        # 1.500 ya da 1.234.567 gibi: her grup üç rakam -> binlik ayıracı
+        if len(parcalar) > 1 and all(len(p) == 3 for p in parcalar[1:]) \
+                and parcalar[0].lstrip("-+").isdigit():
+            m = "".join(parcalar)
+    try:
+        return float(m)
+    except ValueError:
+        return varsayilan
+
+
 def sure_okunakli(saniye):
     saniye = int(saniye)
     if saniye < 60:
@@ -1860,6 +1898,96 @@ class Uygulama:
     # odağını uzağa alması için yetmiyor
     TELAFI_ASGARI_SN = 8
 
+    # Duvar saatinin bu kadar sapmasi "saat oynadi" sayilir. Normal bir
+    # tik 0,25-1 saniye; 2 saniye pay yeterli ve NTP'nin milisaniyelik
+    # duzeltmelerini yanlislikla sicrama saymiyor.
+    SICRAMA_ESIGI = 2.0
+
+    def _gunu_tazele(self):
+        """Gece yarısı geçildiyse günlük sayaçları sıfırla.
+
+        Eskiden `ist["gun"]` yalnızca açılışta belirleniyordu ve _tik
+        içinde hiç denetlenmiyordu. Bilgisayarı gece yarısını geçerek
+        açık bırakan biri için:
+          • ekran süresi DÜNKÜ kovaya yazılmaya devam ediyordu,
+          • aile kipi günlük sınırı sıfırlanmıyordu — çocuk ertesi gün
+            de kilitli kalıyordu,
+          • engel ekranındaki "gece yarısı sıfırlanır" yazısı yalandı.
+        """
+        bugun = time.strftime("%Y-%m-%d")
+        if self.ist.get("gun") == bugun:
+            return False
+        # Biten günü kalıcı geçmişe yaz, SONRA sıfırla — sırası önemli,
+        # tersi olursa o günün verisi kaybolur.
+        try:
+            gcm.gunu_isle(KAYIT_KLASOR, self.ist.get("gun", bugun), self.ist)
+        except Exception:
+            pass
+        self.ist.update({
+            "gun": bugun,
+            "tamamlanan": 0, "ertelenen": 0, "uzun_mola": 0,
+            "ekran_sn": 0.0, "kesintisiz_sn": 0.0, "programlar": {},
+        })
+        # Ebeveynin dünkü ek süresi yeni güne devretmez
+        self.ayar["ek_sure_bitis"] = 0
+        try:
+            ayarlari_yaz(self.ayar)
+        except Exception:
+            pass
+        self._istatistik_yaz()
+        return True
+
+    def _saat_sicramasini_yakala(self, simdi):
+        """Duvar saati oynadıysa sayacı koru ve olayı kaydet.
+
+        Sayaç `hedef` olarak bir duvar saati anı tutuyor. Saat geri
+        alınırsa kalan süre uzuyor, ileri alınırsa mola aniden geliyor.
+        Bu yalnızca kötü niyet değil: yaz/kış saati değişimi ve NTP
+        eşitlemesi de aynı etkiyi yapıyor.
+
+        Monotonik saat duvar saatinden bağımsız ilerler. İkisinin farkı
+        sıçramanın miktarını veriyor; `hedef`i o kadar kaydırınca KALAN
+        SÜRE değişmiyor.
+        """
+        mono = time.monotonic()
+        onceki_duvar = getattr(self, "_son_duvar", None)
+        onceki_mono = getattr(self, "_son_mono", None)
+        self._son_duvar, self._son_mono = simdi, mono
+        if onceki_duvar is None:
+            self._en_ileri_an = max(getattr(self, "_en_ileri_an", 0), simdi)
+            return 0.0
+
+        sapma = (simdi - onceki_duvar) - (mono - onceki_mono)
+        if abs(sapma) < self.SICRAMA_ESIGI:
+            self._en_ileri_an = max(getattr(self, "_en_ileri_an", 0), simdi)
+            return 0.0
+
+        # Sayacı koru: kalan süre saat oyunundan etkilenmesin
+        self.hedef += sapma
+        if getattr(self, "duraklama_bitis", 0):
+            self.duraklama_bitis += sapma
+        if self.ayar.get("ek_sure_bitis"):
+            self.ayar["ek_sure_bitis"] += sapma
+
+        # Saat GERİ alındıysa bunu unutma. Aile kipinde yasak saatini
+        # atlatmanın en kolay yolu bu; kanmamak için en ileri görülen
+        # anı saklıyoruz.
+        self._en_ileri_an = max(getattr(self, "_en_ileri_an", 0), onceki_duvar)
+        if sapma < 0:
+            self._saat_geri_alindi = True
+        return sapma
+
+    def saat_oynanmis_mi(self):
+        """Sistem saati geriye alınmış mı? (aile kipi için)"""
+        if not getattr(self, "_saat_geri_alindi", False):
+            return False
+        # Saat düzeltilip en ileri ana yetiştiyse affediyoruz — kullanıcı
+        # yanlış saati düzeltmiş olabilir, sonsuza kadar suçlu saymayız.
+        if time.time() >= getattr(self, "_en_ileri_an", 0) - 60:
+            self._saat_geri_alindi = False
+            return False
+        return True
+
     def engel_sebebi(self):
         """Şu an kullanımı engellemek gerekiyor mu?
 
@@ -1875,6 +2003,14 @@ class Uygulama:
         # Ebeveyn ek süre verdiyse hiçbir engel yok
         if time.time() < float(self.ayar.get("ek_sure_bitis", 0) or 0):
             return None
+
+        # SAAT OYUNU — yasak saatini atlatmanın en kolay yolu sistem
+        # saatini değiştirmek. Engelleyemiyoruz ama kanmıyoruz: saat
+        # geri alınmışsa yasağı kaldırmıyoruz ve sebebini yazıyoruz.
+        if self.saat_oynanmis_mi() and self.ayar.get("yasak_acik"):
+            return ("saat", "Sistem saati değiştirilmiş",
+                    "Bilgisayarın saati geri alınmış. Saat yasağı bu yüzden "
+                    "kaldırılmadı. Saati doğru değere getirince engel kalkar.")
 
         if yasak_saatinde_mi(self.ayar):
             return ("yasak", "Şimdi bilgisayar zamanı değil",
@@ -2216,6 +2352,13 @@ class Uygulama:
     # ---------------- Kalp atışı ----------------
     def _tik(self):
         simdi = time.time()
+
+        # Saat oynadıysa sayacı koru; gece yarısı geçildiyse günü çevir.
+        # İkisi de _tik'in EN BAŞINDA: aşağıdaki bütün kararlar doğru
+        # zamana ve doğru güne dayansın.
+        self._saat_sicramasini_yakala(simdi)
+        if self._gunu_tazele():
+            self.engeli_uygula()
 
         # Kullanıcı kısayola tekrar tıkladıysa ikinci kopya bize
         # "pencereni göster" mesajı bırakmıştır
@@ -3113,10 +3256,9 @@ class Uygulama:
             )
             yeni = {}
             for anahtar, ad, enaz, encok in SINIRLAR:
-                ham = alanlar[anahtar].get().strip().replace(",", ".")
-                try:
-                    deger = float(ham)
-                except ValueError:
+                ham = alanlar[anahtar].get().strip()
+                deger = sayi_oku(ham)
+                if deger is None:
                     hata_yazi.configure(
                         text="“%s” alanına sayı yazmalısın (%s yazılmış)." % (ad, ham or "boş"))
                     hata_yazi.pack(pady=(6, 0))
@@ -3170,11 +3312,19 @@ class Uygulama:
                 # Aile kipinde bekçi zorunlu; kullanıcı kapatmışsa geri aç
                 self.ayar["bekci"] = True
             self.ayar["yasak_acik"] = bool(yasak_acik.get())
-            try:
-                sinir = int(float(sinir_alan.get().strip() or 0))
-            except ValueError:
-                sinir = 0
-            self.ayar["gunluk_sinir_dk"] = max(0, min(1440, sinir))
+            # Okunamayan değeri SESSİZCE 0 yapmak, "sınır yok" demekti.
+            # Ebeveyn sınır koyduğunu sanıp hiç koymamış oluyordu.
+            # Artık okunamıyorsa söylüyoruz ve kaydetmiyoruz.
+            ham_sinir = sinir_alan.get().strip()
+            sinir = sayi_oku(ham_sinir, varsayilan=(0 if not ham_sinir else None))
+            if sinir is None:
+                hata_yazi.configure(
+                    text="Günlük sınır alanına sayı yazmalısın "
+                         "(%s yazılmış). Boş bırakırsan sınır olmaz." % ham_sinir)
+                hata_yazi.pack(pady=(6, 0))
+                sinir_alan.focus_set()
+                return
+            self.ayar["gunluk_sinir_dk"] = max(0, min(1440, int(sinir)))
             for alan, anahtar, varsayilan in ((yasak_bas_alan, "yasak_bas", "21:00"),
                                               (yasak_bit_alan, "yasak_bit", "07:00")):
                 deger = alan.get().strip()
@@ -3224,7 +3374,10 @@ if __name__ == "__main__":
     # Bekçi kipi: "--bekci <izlenecek_pid> <klasor>" ile çağrılır.
     # Arayüz açmaz, sadece programın hayatta olup olmadığını izler.
     if len(sys.argv) >= 4 and sys.argv[1] == "--bekci":
-        sys.exit(kl.bekci_calis(int(sys.argv[2]), sys.argv[3]))
+        # 5. argüman gizli söz; eski sürümden kalan bekçiler onsuz
+        # çağırabilir, o durumda eski davranış sürüyor.
+        soz = sys.argv[4] if len(sys.argv) >= 5 else ""
+        sys.exit(kl.bekci_calis(int(sys.argv[2]), sys.argv[3], soz))
 
     # Zaten açıksa ikinci kopya açma; açık olana "pencereni göster" de.
     if not kl.tek_ornek_al():

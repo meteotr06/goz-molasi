@@ -58,6 +58,16 @@ const SOZLUK = {
   'Molalardaki egzersizler': 'Break exercises',
   'Dünyadan': 'From the world',
   'Ayrıntılı rehber': 'The full guide',
+  'Nasıl?': 'How?',
+  'Windows sürümü imzalı olmadığı için ilk açılışta':
+    'Because the Windows version is unsigned, the first launch shows',
+  'Windows bilgisayarınızı korudu': 'Windows protected your PC',
+  'uyarısı çıkar.\n        Zararlı olduğu anlamına gelmez —':
+    'That does not mean it is harmful —',
+  'Ek bilgi': 'More info',
+  'Yine de çalıştır': 'Run anyway',
+  'ile açılır.\n        Kaynak kodun tamamı açık, istersen kendin derleyebilirsin.':
+    'opens it. The full source is public; you can build it yourself.',
   'Kısayollar': 'Shortcuts',
   'Başlat / duraklat': 'Start / pause',
   'Temayı değiştir': 'Change theme',
