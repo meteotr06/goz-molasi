@@ -696,6 +696,7 @@ class Uygulama:
         self.mola_ekrani = None
         self.balon = None
         self.uzun_mola_mi = False
+        self.kilit_gorundu = False
         self.kart_sirasi = 0
         self.bilgi_no = random.randrange(len(BILGILER) or 1)
         self.ipucu_no = 0
@@ -1430,19 +1431,36 @@ class Uygulama:
             if self.durum != "bosta":
                 self.dondurulmus = self.hedef - simdi
                 self.durum = "bosta"
+                self.kilit_gorundu = False
             self.son_bosta = bosta
+            # Ekran kilitlendiyse kişi GERÇEKTEN uzaklaşmıştır.
+            # Bunu ayrıca izliyoruz çünkü "klavyeye dokunmadı" ile
+            # "makineden uzaklaştı" aynı şey değil.
+            if not self.kilit_gorundu and iz.ekran_kilitli_mi():
+                self.kilit_gorundu = True
             self._ciz(self.dondurulmus or 0)
             self.kok.after(400, self._tik)
             return
 
         if self.durum == "bosta":
-            if self.son_bosta > self.ayar["dinlenme_esigi_sn"]:
+            # Sayacı sıfırlamak, "gözlerin dinlendi, baştan başla"
+            # demektir. Bunu YALNIZCA gerçekten uzaklaşıldıysa yapmalı:
+            #   • ekran kilitlendiyse — kesin kanıt, ya da
+            #   • girdi eşiğin epey üstünde bir süre gelmediyse.
+            # Eskiden tek ölçüt 5 dakika girdisizlikti; uzun bir metni
+            # okuyan biri ekrana baktığı hâlde sayacı sıfırlanıyordu.
+            # Ölçtüm: 132 dakika ekran süresine karşılık 0 mola.
+            uzun_esik = max(self.ayar["dinlenme_esigi_sn"], 900)
+            gercekten_uzaklasti = (self.kilit_gorundu
+                                   or self.son_bosta > uzun_esik)
+            if gercekten_uzaklasti:
                 self.ist["kesintisiz_sn"] = 0.0
                 self.hedef = simdi + self.ayar["calisma_dk"] * 60
             else:
                 self.hedef = simdi + max(1, self.dondurulmus or 0)
             self.durum = "calisiyor"
             self.dondurulmus = None
+            self.kilit_gorundu = False
 
         self.ist["ekran_sn"] += 0.25
         self.ist["kesintisiz_sn"] += 0.25

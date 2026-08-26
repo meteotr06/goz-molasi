@@ -75,6 +75,30 @@ class _SonGirdi(ctypes.Structure):
     _fields_ = [("cbSize", wt.UINT), ("dwTime", wt.DWORD)]
 
 
+def ekran_kilitli_mi():
+    """Ekran kilit ekranında mı?
+
+    Neden gerekiyor: "klavyeye dokunmadı" ile "makineden uzaklaştı"
+    aynı şey değil. Uzun bir metni okuyan biri ekrana bakıyor — tam da
+    mola gereken durum — ama girdi sayacı onu boşta gösteriyor.
+    Gerçekten uzaklaşıp uzaklaşmadığını anlamanın güvenilir yolu
+    ekranın kilitli olup olmadığına bakmak.
+
+    Yöntem: kilit ekranı ayrı bir masaüstünde çalışır. Kullanıcının
+    girdi masaüstü açılamıyorsa kilit ekranındayız demektir.
+    """
+    try:
+        u32 = ctypes.windll.user32
+        DESKTOP_SWITCHDESKTOP = 0x0100
+        h = u32.OpenInputDesktop(0, False, DESKTOP_SWITCHDESKTOP)
+        if not h:
+            return True
+        u32.CloseDesktop(h)
+        return False
+    except Exception:
+        return False          # bilemiyorsak kilitli sayma
+
+
 def bosta_saniye():
     """Kullanıcı kaç saniyedir klavye/fareye dokunmadı?
 

@@ -136,7 +136,20 @@ class MolaMotoru {
     this.sonHareket = simdi;
 
     if (this.durum === 'bosta') {
-      if (uzaktaKalinan > this.ayarlar.dinlenmeEsigi * 1000) {
+      // Sayacı sıfırlamak "gözlerin dinlendi, baştan başla" demektir.
+      // Bunu YALNIZCA gerçekten uzaklaşıldıysa yapmalı: ekran
+      // kilitlendiyse (kesin kanıt) ya da girdi eşiğin epey üstünde
+      // bir süre gelmediyse.
+      //
+      // Eskiden tek ölçüt 5 dakika hareketsizlikti. Ama "klavyeye
+      // dokunmadı" ile "makineden uzaklaştı" aynı şey değil: uzun bir
+      // metni okuyan biri ekrana bakıyor — tam da mola gereken durum —
+      // ve sayacı sıfırlanıyordu. Masaüstü sürümünde ölçtüm: 132
+      // dakika ekran süresine karşılık 0 mola.
+      const uzunEsik = Math.max(this.ayarlar.dinlenmeEsigi, 900) * 1000;
+      const gercektenUzaklasti = this.ekranKilitlendi || uzaktaKalinan > uzunEsik;
+      this.ekranKilitlendi = false;
+      if (gercektenUzaklasti) {
         this.istatistik.kesintisizSure = 0;   // gerçekten dinlenildi
         this._duyur('dinlenildi', Math.round(uzaktaKalinan / 1000));
         this.sifirla();
@@ -144,6 +157,12 @@ class MolaMotoru {
         this.devamEt();
       }
     }
+  }
+
+  /** Ekran kilitlendi — kişi gerçekten uzaklaştı demektir.
+      IdleDetector izni verilmişse arayüz bunu bildiriyor. */
+  ekranKilitlendiBildir() {
+    this.ekranKilitlendi = true;
   }
 
   /* ---------- Kalp atışı ---------- */

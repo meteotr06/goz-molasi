@@ -1692,6 +1692,10 @@
 
       const d = new IdleDetector();
       d.addEventListener('change', () => {
+        // Ekran kilitlendiyse kişi gerçekten uzaklaşmıştır; sayacın
+        // sıfırlanması ancak bu durumda (ya da çok uzun bir aradan
+        // sonra) doğru olur.
+        if (d.screenState === 'locked') motor.ekranKilitlendiBildir();
         // active + unlocked = kişi gerçekten cihazın başında
         if (d.userState === 'active' && d.screenState === 'unlocked') {
           motor.hareketVar();
