@@ -1773,6 +1773,12 @@
      hiç dokunmadan çeviriyoruz: sayfa kurulduktan SONRA metin
      düğümleri geziliyor. Dinamik olarak yazılan metinler (kip adları,
      bilgi kartları) kendi yerlerinde C() ile geçiyor. */
+  // İngilizce kipte rehber bağlantıları İngilizce rehbere gitsin
+  if (aktifDil() === 'en') {
+    document.querySelectorAll('a[href="rehber.html"]')
+      .forEach((a) => { a.href = 'guide.html'; });
+  }
+
   try {
     og.ayDil.value = aktifDil();
     og.ayDil.addEventListener('change', () => diliDegistir(og.ayDil.value));

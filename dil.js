@@ -240,6 +240,7 @@ const SOZLUK = {
 
   /* ---- Alt bilgi ---- */
   'Göz sağlığı rehberi': 'Eye health guide',
+  '📖 Ayrıntılı rehberi oku': '📖 Read the full guide',
   'Gizlilik politikası': 'Privacy policy',
   'Kaynak kod': 'Source code',
   'Kısayollar:': 'Shortcuts:',
