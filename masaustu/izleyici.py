@@ -33,6 +33,11 @@ user32.GetWindowTextLengthW.restype = ctypes.c_int
 kernel32.GetTickCount.restype = wt.DWORD
 
 
+SPI_GETWORKAREA = 0x0030
+SM_CYCAPTION = 4
+SM_CXSIZEFRAME = 32
+
+
 def dpi_farkindaligi_ac():
     """Windows'a 'ben ölçeklemeyi kendim hallederim' de.
 
@@ -120,6 +125,34 @@ def sanal_ekran():
         user32.GetSystemMetrics(SM_CXVIRTUALSCREEN),
         user32.GetSystemMetrics(SM_CYVIRTUALSCREEN),
     )
+
+
+def calisma_alani():
+    """(sol, ust, genislik, yukseklik) — GÖREV ÇUBUĞU DÜŞÜLMÜŞ alan.
+
+    Neden var: pencere yüksekliği "ekran yüksekliği - 80" diye
+    hesaplanıyordu. 80 uydurma bir sayıydı; görev çubuğu 60, başlık
+    çubuğu 29 olan bir makinede pencerenin altı görev çubuğunun altında
+    kalıyor ve "Programı kapat" düğmesine ulaşılamıyordu.
+    Windows bu alanı zaten bildiriyor, tahmin etmeye gerek yok."""
+    k = wt.RECT()
+    try:
+        if user32.SystemParametersInfoW(SPI_GETWORKAREA, 0, ctypes.byref(k), 0):
+            return (k.left, k.top, k.right - k.left, k.bottom - k.top)
+    except Exception:
+        pass
+    return (0, 0, user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
+
+
+def pencere_cercevesi():
+    """(baslik_yuksekligi, kenar_kalinligi) — pencerenin içeriğe EK
+    olarak kapladığı yer. Tk yalnızca içeriği ölçer; başlık çubuğu
+    hesaba katılmazsa pencere ekrana sığıyor sanılır ama sığmaz."""
+    try:
+        return (user32.GetSystemMetrics(SM_CYCAPTION),
+                user32.GetSystemMetrics(SM_CXSIZEFRAME))
+    except Exception:
+        return (30, 4)
 
 
 def on_pencere():

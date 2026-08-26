@@ -725,15 +725,24 @@ class Uygulama:
         # Ekran büyütmesi (%125, %150...) — tasarımı buna göre ölçekliyoruz.
         self.o = iz.olcek()
 
-        # ...ama ekrana SIĞMASI şart. Panel 580x800 tasarım ölçüsünde ve
+        # ...ama ekrana SIĞMASI şart. Panel 580x888 tasarım ölçüsünde ve
         # resizable(False, False); eskiden yalnızca DPI ile çarpılıyordu.
         # 1366x768 bir dizüstünde %125 ölçekte panel 1000px oluyor, 232px'i
         # ekranın dışında kalıyor ve kullanıcı pencereyi büyütemediği için
         # alttaki düğmelere hiç ulaşamıyordu. Ölçeği ekrana göre kısıyoruz.
+        # Windows'un bildirdiği ÇALIŞMA ALANI'na sığdırıyoruz. Eskiden
+        # "ekran yüksekliği - 80" yazıyordu: 80 uydurma bir sayıydı ve
+        # başlık çubuğunu hiç saymıyordu. 1920x1200 / %125 ölçekli bir
+        # makinede pencere 1143 piksel istiyor, çalışma alanı ise 1140 —
+        # alttaki "Programı kapat" düğmesi görev çubuğunun altında
+        # kalıyordu. Artık tahmin yok, ölçülen değer var.
         try:
-            kul_y = self.kok.winfo_screenheight() - 80   # görev çubuğu payı
-            kul_g = self.kok.winfo_screenwidth() - 40
-            self.o = min(self.o, kul_y / 800.0, kul_g / 580.0)
+            _, _, kul_g, kul_y = iz.calisma_alani()
+            baslik, kenar = iz.pencere_cercevesi()
+            # Tk yalnızca İÇERİĞİ ölçer; başlık çubuğu ve kenarlar ayrıca yer kaplar
+            ic_y = kul_y - baslik - 2 * kenar
+            ic_g = kul_g - 2 * kenar
+            self.o = min(self.o, ic_y / 888.0, ic_g / 580.0)
             self.o = max(0.62, self.o)                   # okunmaz kadar küçülmesin
         except Exception:
             pass
@@ -743,8 +752,19 @@ class Uygulama:
         except Exception:
             pass
 
-        self.G, self.Y = self.ol(580), self.ol(800)
-        self.kok.geometry("%dx%d" % (self.G, self.Y))
+        self.G, self.Y = self.ol(580), self.ol(888)
+        # Pencereyi çalışma alanının İÇİNE yerleştir. Boyut doğru olsa
+        # bile Windows pencereyi y=32 gibi bir yere koyuyordu ve alt
+        # kenar görev çubuğunun altında kalıyordu.
+        try:
+            a_sol, a_ust, a_gen, a_yuk = iz.calisma_alani()
+            baslik, kenar = iz.pencere_cercevesi()
+            tam_y = self.Y + baslik + 2 * kenar
+            x = a_sol + max(0, (a_gen - self.G) // 2)
+            y = a_ust + max(0, (a_yuk - tam_y) // 2)
+            self.kok.geometry("%dx%d+%d+%d" % (self.G, self.Y, x, y))
+        except Exception:
+            self.kok.geometry("%dx%d" % (self.G, self.Y))
         self.kok.resizable(False, False)
         self.yt = og.yazi_tipi_sec(self.kok)
         self.kok.protocol("WM_DELETE_WINDOW", self.gizle)
@@ -971,9 +991,36 @@ class Uygulama:
         self.seri_rozet = self.t.create_text(G - ke, o(34), anchor="e", text="",
                                              fill=P["vurgu"], font=(yt, 11, "bold"))
 
+        # "ARKA PLANDA ÇALIŞIYORUM" ŞERİDİ
+        # Kullanıcının haklı şikâyeti: program saatlerdir çalışıp ölçüyor
+        # ama hiçbir yerde göründüğüne dair iz yok — Windows 11 yeni tepsi
+        # simgelerini taşma okunun altına saklıyor. Pencere açıldığında ilk
+        # görülecek şey, arka planda ne kadar ölçtüğü olmalı.
+        #
+        # YERLEŞİM — bu bir kez bozuldu, bir daha bozulmasın:
+        # Şerit KENDİ satırında durur (78-140). Önce 92-142 arasına
+        # çizilmişti, ama sayaç kartı 78'de başlıyordu; şerit kartın
+        # tepesine biniyordu. Artık kart 148'de başlıyor ve şeridin
+        # altındaki HER ŞEY 70 birim aşağıda. Tasarım yüksekliği de
+        # 800'den 888'e çıktı, yoksa alttaki düğmeler pencerenin
+        # dışına taşardı. sinama_yerlesim.py bunu otomatik denetliyor.
+        #
+        # yuvarlak() genişlik/yükseklik değil KÖŞE KOORDİNATLARI alıyor
+        # ve rengi fill= ile istiyor.
+        og.yuvarlak(self.t, ke, o(78), G - ke, o(140),
+                    r=o(12), fill=gor.karistir(P["zemin"], P["vurgu"], 0.14),
+                    outline="")
+        self.arka_serit = self.t.create_text(
+            ke + o(16), o(95), anchor="w", text="",
+            fill=P["yazi"], font=(yt, 9, "bold"))
+        self.arka_serit_alt = self.t.create_text(
+            ke + o(16), o(118), anchor="w", text="",
+            fill=P["soluk"], font=(yt, 8),
+            width=G - 2 * ke - o(32))
+
         # ---------- Sayaç kartı ----------
-        og.kart(self.t, ke, o(78), G - ke, o(352), P["zemin"], P["kart"], r=o(22))
-        mx, my = G / 2, o(196)
+        og.kart(self.t, ke, o(148), G - ke, o(422), P["zemin"], P["kart"], r=o(22))
+        mx, my = G / 2, o(266)
         self.halka_r = o(78)
         self.halka_kalinlik = o(12)
         gor.parilti_ciz(self.t, mx, my, self.halka_r * 1.5, P["vurgu"], P["kart"], katman=14)
@@ -992,18 +1039,18 @@ class Uygulama:
                                              fill=P["soluk"], font=(yt, 9))
 
         # Kartın altında: bugünkü molalar nokta nokta + sonraki mola bilgisi
-        self.nokta_y = o(300)
+        self.nokta_y = o(370)
         self.nokta_x = ke + o(22)
         self.nokta_cap = o(9)
         self.nokta_ara = o(6)
         self.nokta_adet = 12
-        self.t.create_text(self.nokta_x, o(288), anchor="w", text="BUGÜNKÜ MOLALAR",
+        self.t.create_text(self.nokta_x, o(358), anchor="w", text="BUGÜNKÜ MOLALAR",
                            fill=gor.karistir(P["kart"], P["soluk"], 0.75), font=(yt, 7, "bold"))
-        self.ipucu_yazi = self.t.create_text(G - ke - o(22), o(304), anchor="e", text="",
+        self.ipucu_yazi = self.t.create_text(G - ke - o(22), o(374), anchor="e", text="",
                                              fill=P["soluk"], font=(yt, 9))
 
         # ---------- Düğmeler ----------
-        dy, dyu = o(374), o(46)
+        dy, dyu = o(444), o(46)
         ara = o(10)
         kalan_g = G - 2 * ke - 2 * ara
         g1, g2 = int(kalan_g * 0.42), int(kalan_g * 0.29)
@@ -1018,9 +1065,9 @@ class Uygulama:
         ]
 
         # ---------- Bugün kutucukları ----------
-        self.t.create_text(ke, o(446), anchor="w", text="BUGÜN",
+        self.t.create_text(ke, o(516), anchor="w", text="BUGÜN",
                            fill=P["soluk"], font=(yt, 8, "bold"))
-        ky, kyu = o(460), o(80)
+        ky, kyu = o(530), o(80)
         kutu_g = (G - 2 * ke - 3 * ara) / 4
         self.kutu_yazilari = {}
         for i, (anahtar, etiket, vurgu) in enumerate((
@@ -1040,8 +1087,8 @@ class Uygulama:
                                fill=P["soluk"], font=(yt, 8))
 
         # ---------- Grafik kartı ----------
-        self.grafik_ust = o(562)
-        self.grafik_alt = o(716)
+        self.grafik_ust = o(632)
+        self.grafik_alt = o(786)
         og.kart(self.t, ke, self.grafik_ust, G - ke, self.grafik_alt,
                 P["zemin"], P["kart"], r=o(20))
         self.grafik_baslik = self.t.create_text(
@@ -1063,37 +1110,55 @@ class Uygulama:
             self.sekme_dugmeleri[anahtar] = d
 
         # ---------- Öneri şeridi ----------
-        self.oneri_ust = o(730)
+        self.oneri_ust = o(800)
         self.oneri_imza = None
 
         # ---------- Alt ----------
         self.alt_bilgi = self.t.create_text(
-            ke, o(780), anchor="w",
+            ke, o(865), anchor="w",
             text="Pencereyi kapatmak programı kapatmaz — saatin yanında çalışmaya devam eder.",
             fill=gor.karistir(P["zemin"], P["soluk"], 0.7), font=(yt, 8))
 
-        # "ARKA PLANDA ÇALIŞIYORUM" ŞERİDİ
-        # Kullanıcının haklı şikâyeti: program saatlerdir çalışıp ölçüyor
-        # ama hiçbir yerde göründüğüne dair iz yok — Windows 11 yeni tepsi
-        # simgelerini taşma okunun altına saklıyor. Pencere açıldığında ilk
-        # görülecek şey, arka planda ne kadar ölçtüğü olmalı.
-        # yuvarlak() genişlik/yükseklik değil KÖŞE KOORDİNATLARI alıyor
-        # ve rengi fill= ile istiyor. İlk yazımda genişlik verip rengi
-        # sıraya koymuştum; renk r parametresine düşüp çakışıyordu.
-        og.yuvarlak(self.t, ke, o(92), G - ke, o(142),
-                    r=o(12), fill=gor.karistir(P["zemin"], P["vurgu"], 0.14),
-                    outline="")
-        self.arka_serit = self.t.create_text(
-            ke + o(16), o(109), anchor="w", text="",
-            fill=P["yazi"], font=(yt, 9, "bold"))
-        self.arka_serit_alt = self.t.create_text(
-            ke + o(16), o(127), anchor="w", text="",
-            fill=P["soluk"], font=(yt, 8))
         kapat_g = o(130)
         self.dugmeler.append(
-            og.Dugme(self.t, G - ke - kapat_g, o(766), kapat_g, o(30), "Programı kapat",
+            og.Dugme(self.t, G - ke - kapat_g, o(850), kapat_g, o(30), "Programı kapat",
                      self.cik, P["zemin"], gor.karistir(P["zemin"], P["kart2"], 0.7),
                      P["soluk"], yt))
+
+        # Şeridin metnini HEMEN doldur. Eskiden yalnızca pencereyi_goster()
+        # dolduruyordu; program ilk açılışta pencereyi doğrudan gösterdiği
+        # için şerit boş bir kutu olarak görünüyordu. Tema değişiminde panel
+        # baştan çizildiği için de buraya konması gerekiyor.
+        self._arka_seridi_tazele()
+
+        # ---------- YERLEŞİM KAYDI ----------
+        # Panelin satırları burada tek listede duruyor. sinama_yerlesim.py
+        # bu listeyi okuyup İKİ ŞEYİ denetliyor:
+        #   1) hiçbir kutu bir başkasının üstüne binmiyor,
+        #   2) hiçbir kutu pencerenin dışına taşmıyor.
+        #
+        # NEDEN VAR: "arka planda çalışıyorum" şeridi sonradan eklenmiş
+        # ama kendine yer açılmamıştı; doğrudan sayaç kartının içine
+        # düşüyordu. Öneri şeridi de kapat düğmesinin üstüne biniyordu.
+        # İkisi de gözle fark edilene kadar sürdü.
+        #
+        # PANELE YENİ SATIR EKLERSEN BURAYA DA EKLE.
+        self.yerlesim_kutulari = [
+            ("arka plan şeridi",  ke,                o(78),
+                                  G - ke,            o(140)),
+            ("sayaç kartı",       ke,                o(148),
+                                  G - ke,            o(422)),
+            ("ana düğmeler",      ke,                dy,
+                                  G - ke,            dy + dyu),
+            ("bugün kutucukları", ke,                ky,
+                                  G - ke,            ky + kyu),
+            ("grafik kartı",      ke,                self.grafik_ust,
+                                  G - ke,            self.grafik_alt),
+            ("öneri şeridi",      ke,                self.oneri_ust,
+                                  G - ke,            self.oneri_ust + o(42)),
+            ("kapat düğmesi",     G - ke - kapat_g,  o(850),
+                                  G - ke,            o(880)),
+        ]
 
     # ---------------- İzin ----------------
     def _acilis_izni_sor_gerekirse(self):
