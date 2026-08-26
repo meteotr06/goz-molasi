@@ -1957,7 +1957,79 @@
   // Reklam alanı — numaralar girilmemişse kendini tamamen kaldırır
   try { tumReklamlariKur(); } catch {}
 
+  /* SAYAÇ NEDEN SIFIRLANDI?
+
+     Motor, uzun süre kapalı kalındığı için sayacı sıfırladıysa sebebi
+     kaydediyor. Burada bir kez gösteriyoruz.
+
+     Neden gerekli: kullanıcı uygulamayı açıp 20:00 görünce "saymamış,
+     bozuk" diye düşünüyor. Oysa tarayıcı, sekmesi kapalıyken hiçbir
+     şey ölçemez — bu bir hata değil, teknik bir sınır. Söylemek,
+     sessiz kalmaktan iyi. */
+  (function sifirlanmaNotu() {
+    const sebep = motor.sifirlanmaSebebi;
+    if (!sebep || sebep.tur !== 'uzun-kapali') return;
+    const not = $('durumNotu');
+    if (!not) return;
+    const dk = Math.max(1, sebep.dakika | 0);
+    $('durumNotuMetin').textContent = CS(
+      `Uygulama ${dk} dakika kapalıydı. Tarayıcı, sekmesi kapalıyken hiçbir `
+      + `şey ölçemez — bu bir ayar değil, teknik bir sınır. Bilgisayarında `
+      + `kapalıyken de ölçmesi için Windows sürümünü kullanabilirsin.`,
+      `The app was closed for ${dk} minutes. A browser cannot measure `
+      + `anything while its tab is closed — that is a technical limit, not `
+      + `a setting. On a computer, the Windows version keeps measuring.`);
+    not.hidden = false;
+    $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });
+  })();
+
+  /* SERVİS İŞÇİSİ + "yeni sürüm hazır" bildirimi
+
+     Sorun: servis işçisi yeni dosyaları indirip önbelleğe alıyor ama
+     AÇIK OLAN sayfa eski sürümde çalışmaya devam ediyor. Kullanıcı
+     düzelttiğimiz hatayı görmeye devam ediyor ve bunu bilmiyor.
+     Geliştirme sırasında bizim de başımıza geldi: dosyayı ekledik,
+     sunucuda vardı, sayfada yoktu.
+
+     Sayfayı KENDİ KENDİNE yenilemiyoruz. Kullanıcı 19. dakikada
+     olabilir; habersiz yenileme sayacı görünürde sıfırlar ve
+     "uygulama bozuldu" izlenimi verir. Şeridi gösterip kararı
+     kullanıcıya bırakıyoruz. */
+  function guncellemeSeridiniGoster() {
+    const serit = $('guncellemeSerit');
+    if (!serit || serit.dataset.gosterildi) return;
+    serit.dataset.gosterildi = '1';
+    serit.hidden = false;
+    // requestAnimationFrame DEGIL: sekme arka plandayken rAF
+    // calismiyor ve serit gorunur ama ekranin disinda kaliyor.
+    // Olctum: hidden kalkti, .acik sinifi hic eklenmedi.
+    setTimeout(() => serit.classList.add('acik'), 20);
+    $('guncelleYenile')?.addEventListener('click', () => {
+      location.reload();
+    });
+    $('guncelleKapat')?.addEventListener('click', () => {
+      serit.classList.remove('acik');
+      setTimeout(() => { serit.hidden = true; }, 400);
+    });
+  }
+
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then((kayit) => {
+      // Zaten bekleyen bir sürüm varsa (kullanıcı bu sekmeyi açık
+      // bırakmışsa) hemen söyle
+      if (kayit.waiting && navigator.serviceWorker.controller) {
+        guncellemeSeridiniGoster();
+      }
+      kayit.addEventListener('updatefound', () => {
+        const yeni = kayit.installing;
+        if (!yeni) return;
+        yeni.addEventListener('statechange', () => {
+          // controller varsa bu bir GÜNCELLEME; yoksa ilk kurulum
+          if (yeni.state === 'installed' && navigator.serviceWorker.controller) {
+            guncellemeSeridiniGoster();
+          }
+        });
+      });
+    }).catch(() => {});
   }
 })();

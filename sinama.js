@@ -19,8 +19,25 @@
     r = dene({ hedefZaman: s + 600e3, durum: 'calisiyor', kayitAni: s - 10e3 });
     ekle('sayaç', 'kısa kapanma → kaldığı yerden devam', r.ok && yakin(r.kalan, 600, 3), `${r.kalan} sn`);
 
-    r = dene({ hedefZaman: s + 300e3, durum: 'calisiyor', kayitAni: s - 1200e3 });
-    ekle('sayaç', '20 dk kapanma → temiz başla', !r.ok, r.ok ? 'geri yükledi' : 'reddetti');
+    /* KURAL DEĞİŞTİ — eskiden 5 dakikadan uzun her kapanma sayacı
+       sıfırlıyordu. O kural masaüstünden kopyalanmıştı; orada program
+       hep açık olduğu için "5 dakika girdi yok" gerçekten "gözler
+       dinlendi" demek. Web'de ise sekmenin kapalı olması kişinin
+       ekrandan uzaklaştığını GÖSTERMEZ — sekme değiştirmiş olabilir.
+       Sonuç: kullanıcı uygulamayı her açtığında 20:00 görüyordu ve
+       mola hiç gelmiyordu. Eşik ayrıldı (kapaliDevamEsigi) ve 20
+       dakikaya çıkarıldı. */
+    /* 18 dakika, tam 20 değil: eşik 1200 sn ve testi sınırın TAM
+       üstüne kurarsak aradan geçen birkaç milisaniye eşiği aşıyor,
+       sınama rastgele kalıyor. Sınır değil NİYET sınanmalı: normal
+       bir kapat-aç sayacı sıfırlamamalı. */
+    r = dene({ hedefZaman: s + 300e3, durum: 'calisiyor', kayitAni: s - 1080e3 });
+    ekle('sayaç', '18 dk kapanma → kaldığı yerden devam',
+         r.ok && yakin(r.kalan, 300, 3), r.ok ? `${r.kalan} sn` : 'reddetti');
+
+    r = dene({ hedefZaman: s + 300e3, durum: 'calisiyor', kayitAni: s - 2100e3 });
+    ekle('sayaç', '35 dk kapanma → temiz başla', !r.ok,
+         r.ok ? 'geri yükledi' : 'reddetti');
 
     r = dene({ hedefZaman: s - 30e3, durum: 'calisiyor', kayitAni: s - 40e3 });
     ekle('sayaç', 'kaçan mola, kısa kapanma → kısa payla ver', r.ok && yakin(r.kalan, 25, 4), `${r.kalan} sn`);
@@ -187,8 +204,10 @@
     const gorsel = [...document.images].filter(i => !i.complete || i.naturalWidth === 0);
     ekle('sağlık', 'yüklenmeyen görsel yok', gorsel.length === 0, `${gorsel.length} tane`);
     const kucuk = [...document.querySelectorAll('button')]
-      .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.height < 40 && e.offsetParent; });
-    ekle('sağlık', 'küçük dokunma hedefi yok (<40px)', kucuk.length === 0,
+      .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && (r.height < 44 || r.width < 44) && e.offsetParent; });
+    /* 40 değil 44: WCAG 2.5.8 alt sınırı 44x44. Telefonda ölçtüm,
+       beş bağlantı 43,2 px'ti ve 40'lık eşikten geçiyordu. */
+    ekle('sağlık', 'küçük dokunma hedefi yok (<44px)', kucuk.length === 0,
          kucuk.map(e => e.id || e.className).join(',').slice(0, 40));
     ekle('sağlık', 'kalp atışı Worker\'da (arka planda kısılmaz)',
          !!window.molaMotoru._isci, window.molaMotoru._isci ? 'Worker' : 'setInterval yedeği');

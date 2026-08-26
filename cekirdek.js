@@ -19,6 +19,15 @@ const VARSAYILAN_AYARLAR = {
   uyariSuresi: 15,          // saniye — molaya kaç saniye kala uyaralım
   bostaEsigi: 90,           // saniye — bu kadar dokunulmazsa sayaç durur
   dinlenmeEsigi: 300,       // saniye — bu kadar uzak kalındıysa gözler zaten dinlendi
+  // SEKME KAPALIYKEN geçen süre için AYRI eşik. Neden ayrı:
+  // masaüstünde program hep açık, orada '5 dakika girdi yok'
+  // gerçekten 'gözler dinlendi' demek. Web'de sekmenin kapalı
+  // olması kişinin ekrandan uzaklaştığını GÖSTERMEZ — sekme
+  // değiştirmiş, başka pencereye geçmiş olabilir. 5 dakikayı
+  // aynen uygulayınca kullanıcı uygulamayı her açtığında 20:00
+  // görüyor ve mola hiç gelmiyordu. 20 dakika, normal bir
+  // çalışma ritminde sekme kapatıp açmayı tolere ediyor.
+  kapaliDevamEsigi: 1200,   // saniye — 20 dk
   molaAtlanabilir: false,   // VARSAYILAN: mola atlanamaz. 20 sn kesin.
   sesAcik: true,
 
@@ -392,7 +401,18 @@ class MolaMotoru {
 
     const simdi = Date.now();
     const kapaliKalan = (simdi - kayitAni) / 1000;
-    if (kapaliKalan < 0 || kapaliKalan > this.ayarlar.dinlenmeEsigi) return false;
+    // Sekme kapalıyken geçen süre için dinlenmeEsigi DEĞİL
+    // kapaliDevamEsigi kullanılır — sebebi ayarın yanında yazılı.
+    const esik = this.ayarlar.kapaliDevamEsigi || this.ayarlar.dinlenmeEsigi;
+    if (kapaliKalan < 0 || kapaliKalan > esik) {
+      // Kullanıcıya NEDEN sıfırlandığını söyleyebilmek için sebebi
+      // tutuyoruz. Sessizce sıfırlanan sayaç "bozuk" gibi duruyor.
+      this.sifirlanmaSebebi = {
+        tur: 'uzun-kapali',
+        dakika: Math.round(kapaliKalan / 60),
+      };
+      return false;
+    }
 
     const kalan = (hedef - simdi) / 1000;
     if (kalan > 0 && kalan <= this.ayarlar.calismaSuresi) {

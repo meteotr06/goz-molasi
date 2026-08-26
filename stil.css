@@ -359,7 +359,13 @@ body {
 /* İkincil, dar düğmeler — yine de parmakla basılabilir kalsın */
 .dugme.kucuk { padding: 9px 14px; min-height: 40px; font-size: 13px; }
 .dugme.sade { background: transparent; }
-.dugme.yuvarlak { padding: 11px; width: 44px; justify-content: center; }
+/* min-width ve flex-shrink:0 SART. width:44px yaziyordu ama ust serit
+   bir flex satiri; dar ekranda tarayici dugmeleri 41px'e kadar
+   sikistiriyordu. WCAG 2.5.8 alt siniri 44x44. */
+.dugme.yuvarlak {
+  padding: 11px; width: 44px; min-width: 44px; min-height: 44px;
+  flex: 0 0 auto; justify-content: center;
+}
 
 /* ---------------- Sayaç kartı ---------------- */
 .sayac-kart {
@@ -565,6 +571,81 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 }
 .uyari-balon.acik { transform: translate(-50%, 0); }
 .uyari-balon b { font-size: 14px; white-space: nowrap; }
+
+/* ---------------- SAYAÇ SIFIRLANMA NOTU ---------------- */
+.durum-notu {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in oklch, var(--kart) 88%, var(--vurgu));
+  border: 1px solid color-mix(in oklch, var(--kart) 60%, var(--vurgu));
+}
+.durum-notu-simge {
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--vurgu);
+  flex: 0 0 auto;
+}
+.durum-notu b { font-size: 14px; display: block; }
+.durum-notu p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--soluk);
+  line-height: 1.45;
+}
+.durum-notu-kapat {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--soluk);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px;
+  /* 32x32 yazmistim - parmakla vurulamayacak kadar kucuk.
+     WCAG 2.5.8 alt siniri 44x44. */
+  min-width: 44px;
+  min-height: 44px;
+  flex: 0 0 auto;
+}
+.durum-notu-kapat:hover { color: var(--yazi); }
+
+/* ---------------- YENİ SÜRÜM ŞERİDİ ---------------- */
+.guncelleme-serit {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 140%);
+  z-index: 41;
+  background: var(--kart);
+  border: 1px solid var(--vurgu);
+  border-radius: 999px;
+  box-shadow: var(--golge);
+  padding: 10px 12px 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  max-width: calc(100vw - 24px);
+}
+.guncelleme-serit.acik { transform: translate(-50%, 0); }
+.guncelleme-serit b { font-size: 14px; }
+.guncelleme-kapat {
+  background: none;
+  border: 0;
+  color: var(--soluk);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px;
+  /* 32x32 cok kucuktu - WCAG 2.5.8 alt siniri 44x44 */
+  min-width: 44px;
+  min-height: 44px;
+}
+.guncelleme-kapat:hover { color: var(--yazi); }
 
 /* ---------------- MOLA EKRANI ---------------- */
 .mola-ekran {
@@ -1350,8 +1431,10 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   font-size: 14px; font-weight: 600; color: var(--yazi-soluk);
   margin: 0 0 9px; text-align: center;
 }
+/* min-height: dolgu 12+12 ile yukseklik 43px kaliyordu, 1px eksik */
 .diger-uyg a {
   display: block; padding: 12px 14px; margin-bottom: 8px;
+  min-height: 44px; box-sizing: border-box;
   border-radius: 14px; background: var(--kart);
   border: 1px solid var(--cizgi); text-decoration: none;
   transition: border-color .15s, transform .15s;
@@ -1384,7 +1467,10 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   .diger-uyg, .diger-izgara { display: block !important; }
   .diger-uyg > a, .diger-izgara > a {
     display: inline-block; padding: 12px 15px; margin: 0 6px 7px 0;
-    border-radius: 999px; min-height: 0;
+    /* min-height: 0 yaziyordu; etiketler 43,2 px kaliyordu. Parmakla
+       vurulacak her sey en az 44x44 olmali (WCAG 2.5.8). Olctum:
+       tam bu kural yuzunden bes baglanti da sinirin altindaydi. */
+    border-radius: 999px; min-height: 44px; box-sizing: border-box;
   }
   .diger-uyg > a span, .diger-izgara > a span { display: none; }
   .diger-uyg > a b, .diger-izgara > a b { font-size: 13px; font-weight: 500; }
