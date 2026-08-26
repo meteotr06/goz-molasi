@@ -374,6 +374,8 @@
     }, 350);
   });
 
+  const ASIL_BASLIK = document.title;
+
   function kilitDurumunuGoster() {
     const acik = !!kilitOzeti;
     og.kilitDurum.textContent = acik
@@ -382,7 +384,10 @@
     og.kilitKur.textContent = acik ? 'Şifreyi değiştir' : 'Şifreyi koy';
     og.kilitKaldir.classList.toggle('gizli', !acik);
     og.atla.textContent = atlaEtiketi();
-    document.title = acik ? '🔒 Göz Molası — 20·20·20' : 'Göz Molası — 20·20·20';
+    // HTML'deki başlığı koruyoruz. Eskiden sabit bir metin yazılıyordu ve
+    // sayfanın arama için yazılmış <title>'ını eziyordu — Googlebot sayfayı
+    // çalıştırdığı için ezilmiş halini görüyordu.
+    document.title = acik ? '🔒 ' + ASIL_BASLIK : ASIL_BASLIK;
   }
 
   og.kilitKur.addEventListener('click', async () => {

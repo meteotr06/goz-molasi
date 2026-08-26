@@ -172,6 +172,9 @@ def dugme(ana, yazi, komut, ana_mi=False, kucuk=False):
 # ======================================================================
 # MOLA EKRANI
 # ======================================================================
+SATIR_AYRAC = chr(10)      # heredoc kaçış dizilerine takılmamak için
+
+
 class MolaEkrani:
     """Bütün monitörleri kaplayan, kapatılamayan mola ekranı.
 
@@ -220,11 +223,31 @@ class MolaEkrani:
         gor.gradyan_ciz(self.t, gen, yuk, gor.MOLA_GRADYAN)
 
         self.orta_x = gen / 2
-        self.orta_y = yuk / 2
-        self.zemin_renk = gor.gradyan_rengi(gor.MOLA_GRADYAN, self.orta_y / yuk)
 
-        # Halka ölçüsü ekrana göre
-        self.yaricap = max(90, min(150, int(min(gen, yuk) * 0.15)))
+        # ---- DİKEY YERLEŞİM ----
+        # Her şey merkeze göre konumlanıyor: başlık merkezin 132+yarıçap
+        # üstünde, "neden?" kartı 262+yarıçap altında bitiyor. Eskiden
+        # merkez basitçe ekranın ortasıydı; 768 piksellik bir ekranda kart
+        # 761'de bitip ekran dışına taşıyor ve en alttaki acil çıkış
+        # yazısının üstüne biniyordu. Artık merkez, üst ve alt ihtiyaç
+        # hesaplanarak yerleştiriliyor; sığmazsa önce halka küçülüyor.
+        UST_PAY = 150        # başlık + yönerge (yarıçap hariç)
+        ALT_PAY = 280        # sayı + "saniye" + neden kartı (yarıçap hariç)
+        ALT_NOT = 70         # en alttaki "bu ekran kapatılamaz" yazısı
+
+        self.yaricap = max(70, min(150, int(min(gen, yuk) * 0.15)))
+        while self.yaricap > 70 and                 UST_PAY + ALT_PAY + 2 * self.yaricap + ALT_NOT + 20 > yuk:
+            self.yaricap -= 5
+
+        ust_ihtiyac = self.yaricap + UST_PAY
+        alt_ihtiyac = self.yaricap + ALT_PAY
+        self.orta_y = min(max(yuk / 2, ust_ihtiyac + 10),
+                          yuk - ALT_NOT - alt_ihtiyac)
+        # Ekran gerçekten çok kısaysa (yuk < ~640) yukarıdaki min/max ters
+        # dönebilir; o zaman üstü kurtar, alttaki kart kaydırılamaz zaten.
+        self.orta_y = max(self.orta_y, ust_ihtiyac + 10)
+
+        self.zemin_renk = gor.gradyan_rengi(gor.MOLA_GRADYAN, self.orta_y / yuk)
 
         # Başlık = egzersizin adı. Ne yapacağını en üstte söylüyoruz.
         self.t.create_text(
@@ -272,6 +295,9 @@ class MolaEkrani:
 
         # "Neden?" kartı — molanın ilk beşte birinde belirir
         self.kart_y = self.orta_y + self.yaricap + 112
+        # Kart 150 piksel yüksekliğinde; en alttaki uyarı yazısına
+        # çarpıyorsa hiç gösterme. Mola yine tam çalışır — kart süs.
+        self.kart_sigar = (self.kart_y + 150) <= (yuk - 60)
         self.kart_ogeleri = []
 
         self.t.create_text(
@@ -376,7 +402,8 @@ class MolaEkrani:
             except Exception:
                 self.egzersiz = None      # egzersiz çökse bile mola sürsün
 
-        if not self.neden_gosterildi and gecen >= min(4.0, self.toplam * 0.2):
+        if (not self.neden_gosterildi and self.kart_sigar
+                and gecen >= min(4.0, self.toplam * 0.2)):
             self.neden_gosterildi = True
             self._neden_goster()
 
@@ -622,6 +649,19 @@ class Uygulama:
 
         # Ekran büyütmesi (%125, %150...) — tasarımı buna göre ölçekliyoruz.
         self.o = iz.olcek()
+
+        # ...ama ekrana SIĞMASI şart. Panel 580x800 tasarım ölçüsünde ve
+        # resizable(False, False); eskiden yalnızca DPI ile çarpılıyordu.
+        # 1366x768 bir dizüstünde %125 ölçekte panel 1000px oluyor, 232px'i
+        # ekranın dışında kalıyor ve kullanıcı pencereyi büyütemediği için
+        # alttaki düğmelere hiç ulaşamıyordu. Ölçeği ekrana göre kısıyoruz.
+        try:
+            kul_y = self.kok.winfo_screenheight() - 80   # görev çubuğu payı
+            kul_g = self.kok.winfo_screenwidth() - 40
+            self.o = min(self.o, kul_y / 800.0, kul_g / 580.0)
+            self.o = max(0.62, self.o)                   # okunmaz kadar küçülmesin
+        except Exception:
+            pass
         # Yazı tipleri punto cinsinden; tk'ye de aynı ölçeği bildiriyoruz
         try:
             self.kok.tk.call("tk", "scaling", self.o * 96.0 / 72.0)
@@ -1426,7 +1466,16 @@ class Uygulama:
 
         self.t.delete("grafik")
         o, yt, ke = self.ol, self.yt, self.ol(24)
-        self.t.itemconfigure(self.grafik_baslik, text="SON 7 GÜN")
+
+        toplam = sum(sayi for _, sayi, _ in gunler)
+        if toplam:
+            ortalama = round(toplam / 7.0, 1)
+            self.t.itemconfigure(
+                self.grafik_baslik,
+                text="SON 7 GÜN   ·   %d MOLA, GÜNDE ORTALAMA %s"
+                     % (toplam, str(ortalama).replace(".", ",")))
+        else:
+            self.t.itemconfigure(self.grafik_baslik, text="SON 7 GÜN")
 
         ic_x = ke + o(20)
         taban = self.grafik_alt - o(30)
@@ -1435,6 +1484,19 @@ class Uygulama:
         alan = self.G - 2 * ic_x
         cubuk_g = alan / 7 * 0.52
         ara = alan / 7
+
+        # Hiç mola yokken yedi tane sıfır çubuğu ve yedi tane "0" yazısı
+        # bozuk duruyor — yeni kullanıcının gördüğü ilk şey bu.
+        if not toplam:
+            self.t.create_text(
+                self.G / 2, (taban + tepe) / 2,
+                text=SATIR_AYRAC.join(["Henüz mola yok.",
+                                      "İlk molanı tamamladığında buraya",
+                                      "günlük çubuğun düşecek."]),
+                fill=P["soluk"], font=(yt, 9), justify="center", tags="grafik")
+            for oge in self.t.find_withtag("grafik"):
+                self.t.tag_raise(oge)
+            return
 
         enb = max([s for _, s, _ in gunler] + [gcm.GUNLUK_HEDEF])
 
@@ -1457,9 +1519,11 @@ class Uygulama:
                 renk = P["sicak"]
             og.dikey_cubuk(self.t, x, taban, cubuk_g, taban - y, renk,
                            r=o(5), etiket="grafik")
-            self.t.create_text(x + cubuk_g / 2, y - o(9), text=str(sayi),
-                               fill=P["yazi"] if sayi else P["soluk"],
-                               font=(yt, 8, "bold"), tags="grafik")
+            if sayi:                       # sıfır günde "0" yazmak gürültü
+                self.t.create_text(x + cubuk_g / 2, y - o(9), text=str(sayi),
+                                   fill=P["vurgu"] if sayi >= gcm.GUNLUK_HEDEF
+                                        else P["yazi"],
+                                   font=(yt, 8, "bold"), tags="grafik")
             self.t.create_text(x + cubuk_g / 2, taban + o(12),
                                text="Bugün" if bugun_mu else ad,
                                fill=P["yazi"] if bugun_mu else P["soluk"],
