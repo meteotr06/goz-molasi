@@ -1077,8 +1077,12 @@ class Uygulama:
         # ama hiçbir yerde göründüğüne dair iz yok — Windows 11 yeni tepsi
         # simgelerini taşma okunun altına saklıyor. Pencere açıldığında ilk
         # görülecek şey, arka planda ne kadar ölçtüğü olmalı.
-        og.yuvarlak(self.t, ke, o(92), G - 2 * ke, o(50),
-                    gor.karistir(P["zemin"], P["vurgu"], 0.14), r=o(12))
+        # yuvarlak() genişlik/yükseklik değil KÖŞE KOORDİNATLARI alıyor
+        # ve rengi fill= ile istiyor. İlk yazımda genişlik verip rengi
+        # sıraya koymuştum; renk r parametresine düşüp çakışıyordu.
+        og.yuvarlak(self.t, ke, o(92), G - ke, o(142),
+                    r=o(12), fill=gor.karistir(P["zemin"], P["vurgu"], 0.14),
+                    outline="")
         self.arka_serit = self.t.create_text(
             ke + o(16), o(109), anchor="w", text="",
             fill=P["yazi"], font=(yt, 9, "bold"))
