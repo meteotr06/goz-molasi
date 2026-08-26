@@ -827,7 +827,8 @@ class Uygulama:
           • Kapalı kaldığı süre dinlenme eşiğinden uzunsa (varsayılan 5 dk)
             gözler zaten dinlenmiştir — temiz bir süre başlar.
           • Hedef henüz geçmemişse kaldığı yerden devam eder.
-          • Hedef kapalıyken geçtiyse mola yağmuru yapmayız, temiz başlarız.
+          • Hedef kapalıyken geçtiyse: kısa süre kapalıydıysa kaçırılan
+            molayı kısa bir payla verir, uzun kapalıydıysa temiz başlar.
         """
         tam = time.time() + self.ayar["calisma_dk"] * 60
         try:
@@ -843,6 +844,15 @@ class Uygulama:
         kalan = float(d.get("hedef", 0)) - time.time()
         if 0 < kalan <= self.ayar["calisma_dk"] * 60:
             return time.time() + kalan
+
+        # Hedef kapalıyken geçmiş. Ölçtüm: sayaç -45 saniyedeyken program
+        # açılınca o mola sessizce düşüyor ve 20 dakika baştan başlıyordu.
+        # Kısa bir kapanmaydıysa (güncelleme, çökme, yeniden başlatma)
+        # kullanıcı ekranın başındaydı ve molayı hak ediyor — kısa bir
+        # pay bırakıp veriyoruz. Uzun kapanmada temiz başlıyoruz ki
+        # açılır açılmaz mola ekranı yüzüne çarpmasın.
+        if kalan <= 0 and kapali_kalan <= 60:
+            return time.time() + 25
         return tam
 
     def _sayaci_kaydet(self):
