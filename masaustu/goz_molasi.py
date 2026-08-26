@@ -315,6 +315,35 @@ def sayi_oku(metin, varsayilan=None):
         return varsayilan
 
 
+def saat_oku(metin):
+    r""""SS:DD" biçimindeki saati doğrular. Geçersizse None döner.
+
+    NEDEN VAR: saat alanları `re.match(r"^\d{1,2}:\d{2}$")` ile
+    denetleniyordu ve tutmadığında SESSİZCE varsayılana dönüyordu.
+    İki sorun:
+      • "22.30" ya da "10 pm" yazan ebeveyn, 21:00 kaydedildiğini
+        bilmiyor — koyduğunu sandığı yasağı koymamış oluyor.
+      • Regex BİÇİME bakıyor, DEĞERE bakmıyor: "25:00" ve "12:75"
+        geçiyordu.
+
+    Günlük sınır alanında aynı hatayı düzelttik; sessizce düzeltilen
+    girdi, kullanıcıya yalan söylemektir.
+    """
+    if metin is None:
+        return None
+    m = str(metin).strip().replace(".", ":")
+    parcalar = m.split(":")
+    if len(parcalar) != 2:
+        return None
+    try:
+        saat, dakika = int(parcalar[0]), int(parcalar[1])
+    except ValueError:
+        return None
+    if not (0 <= saat <= 23 and 0 <= dakika <= 59):
+        return None
+    return "%02d:%02d" % (saat, dakika)
+
+
 def sure_okunakli(saniye):
     saniye = int(saniye)
     if saniye < 60:
@@ -3284,13 +3313,20 @@ class Uygulama:
             if bool(acilis.get()) != kl.acilista_baslar_mi():
                 kl.acilista_baslat(bool(acilis.get()))
             self.ayar["acilis_izni"] = bool(acilis.get())
-            import re as _re
-            for alan, anahtar, varsayilan in ((bas_alan, "bas_saat", "09:00"),
-                                              (bit_alan, "bit_saat", "18:00")):
-                deger = alan.get().strip()
-                # Hatalı yazımda varsayılana dön — bozuk saat sessizce
-                # tüm hatırlatmaları kapatabilirdi
-                self.ayar[anahtar] = deger if _re.match(r"^\d{1,2}:\d{2}$", deger) else varsayilan
+            # Hatalı saat SESSİZCE varsayılana dönmüyor artık: kullanıcı
+            # yazdığı saatin kaydedilmediğini bilmeli.
+            for alan, anahtar, ad in ((bas_alan, "bas_saat", "Başlangıç saati"),
+                                      (bit_alan, "bit_saat", "Bitiş saati")):
+                ham = alan.get().strip()
+                deger = saat_oku(ham)
+                if deger is None:
+                    hata_yazi.configure(
+                        text="“%s” SS:DD biçiminde olmalı, 00:00 ile 23:59 "
+                             "arasında (%s yazılmış)." % (ad, ham or "boş"))
+                    hata_yazi.pack(pady=(6, 0))
+                    alan.focus_set()
+                    return
+                self.ayar[anahtar] = deger
             # --- Aile kipi ---
             istenen_kip = kip_secim.get()
             if istenen_kip == "aile" and not self.kilitli_mi():
@@ -3325,11 +3361,18 @@ class Uygulama:
                 sinir_alan.focus_set()
                 return
             self.ayar["gunluk_sinir_dk"] = max(0, min(1440, int(sinir)))
-            for alan, anahtar, varsayilan in ((yasak_bas_alan, "yasak_bas", "21:00"),
-                                              (yasak_bit_alan, "yasak_bit", "07:00")):
-                deger = alan.get().strip()
-                self.ayar[anahtar] = (deger if _re.match(r"^\d{1,2}:\d{2}$", deger)
-                                      else varsayilan)
+            for alan, anahtar, ad in ((yasak_bas_alan, "yasak_bas", "Yasak başlangıcı"),
+                                      (yasak_bit_alan, "yasak_bit", "Yasak bitişi")):
+                ham = alan.get().strip()
+                deger = saat_oku(ham)
+                if deger is None:
+                    hata_yazi.configure(
+                        text="“%s” SS:DD biçiminde olmalı, 00:00 ile 23:59 "
+                             "arasında (%s yazılmış)." % (ad, ham or "boş"))
+                    hata_yazi.pack(pady=(6, 0))
+                    alan.focus_set()
+                    return
+                self.ayar[anahtar] = deger
 
             ayarlari_yaz(self.ayar)
             self.hedef = time.time() + self.ayar["calisma_dk"] * 60

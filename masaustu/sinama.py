@@ -28,6 +28,7 @@ import time
 BURASI = os.path.dirname(os.path.abspath(__file__))
 
 SINAMALAR = [
+    ("sizinti", "sinama_sizinti.py", "Sınamalar kullanıcı verisine dokunuyor mu"),
     ("veri", "sinama_veri.py", "Bilgilerin kaynağı ve sürümler arası tutarlılık"),
     ("aile", "sinama_aile.py", "Ebeveyn kontrolü: kip, sınır, yasak, şifre"),
     ("zaman", "sinama_zaman.py", "Sayaç doğruluğu ve saat oyunları"),
