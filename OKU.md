@@ -443,10 +443,15 @@ baş ağrısı varsa göz hekimine görün.
 
 ---
 
-## Sonraki adımlar (yapılmadı)
+## Sonraki adımlar
 
-- Web sürümünde **uzun mola** ve **süreli duraklatma** (masaüstünde var).
-- **Haftalık HTML rapor** dışa aktarma.
+Neyin bittiği, neyin kaldığı ve **neyin denenip bırakıldığı**
+`ILERLEME.md` dosyasında.
+
+Neden ayrı: bu belge uygulamanın nasıl kullanıldığını ve nasıl
+çalıştığını anlatıyor — kalıcı kısım. İlerleme ise her hafta değişiyor.
+İkisi aynı dosyada olunca kullanım belgesi her ilerlemede kirleniyor ve
+bir süre sonra kimse hangisinin güncel olduğunu bilmiyor.
 
 ---
 
