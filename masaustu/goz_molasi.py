@@ -105,6 +105,9 @@ VARSAYILAN = {
     # ne kadar durduğunu ölçmeye devam eder, ama MOLA VERMEZ ve ekrana
     # hiçbir şey çıkarmaz. Toplantı, oyun, film, sunum için.
     "sadece_olc": False,
+    # Renklerin doygunluğu: 0.6 sakin, 1.0 temanın kendisi, 1.5 canlı.
+    # Açıklığa dokunulmaz, yani yazı okunaklılığı hiç değişmez.
+    "canlilik": 1.0,
     # --- eski sürümden kalan alanlar (geriye uyumluluk) ---
     "kilit_ozeti": None,
     "kilit_tuz": None,
@@ -662,7 +665,8 @@ class Uygulama:
         # Ayar dosyası yoksa bu ilk açılış demektir
         self.ilk_acilis = not os.path.exists(AYAR_DOSYA)
         self.ayar = ayarlari_oku()
-        gor.tema_uygula(self.ayar.get("tema", "gece"))
+        gor.tema_uygula(self.ayar.get("tema", "gece"),
+                        self.ayar.get("canlilik", 1.0))
         self.durum = "calisiyor"
         # Sayacı kaldığı yerden sürdür. Eskiden her açılışta sıfırdan
         # başlıyordu: programı aç-kapa yapan biri hiç mola almıyordu.
@@ -765,18 +769,10 @@ class Uygulama:
         """Tasarım ölçüsünü ekranın büyütmesine çevir."""
         return int(round(deger * self.o))
 
-    def temayi_degistir(self, ad):
-        """Temayı değiştir ve paneli baştan çiz.
-
-        Renkler çizim ANINDA okunuyor; var olan şekillerin rengi kendiliğinden
-        değişmez. Bu yüzden tuvali komple yenilemek gerekiyor.
-        """
-        if ad == self.ayar.get("tema"):
-            return
-        self.ayar["tema"] = ad
-        gor.tema_uygula(ad)
-        ayarlari_yaz(self.ayar)
-
+    def _panel_yenile(self):
+        """Paneli baştan çiz. Renkler çizim ANINDA okunuyor; var olan
+        şekillerin rengi kendiliğinden değişmiyor, o yüzden tuvali
+        komple yeniliyoruz. Tema ve canlılık değişince çağrılır."""
         gorunur = self.kok.state() == "normal"
         try:
             self.t.destroy()
@@ -795,6 +791,32 @@ class Uygulama:
             pass
         if gorunur:
             self._ciz(self.hedef - time.time())
+
+    def canliligi_degistir(self, deger):
+        """Renklerin doygunluğunu değiştir ve paneli baştan çiz.
+        Renkler çizim ANINDA okunuyor; var olan şekiller kendiliğinden
+        değişmez, o yüzden tuvali komple yeniliyoruz."""
+        yeni = max(0.6, min(1.5, round(float(deger), 2)))
+        if abs(yeni - float(self.ayar.get("canlilik", 1.0))) < 0.01:
+            return
+        self.ayar["canlilik"] = yeni
+        gor.tema_uygula(self.ayar.get("tema", "gece"), yeni)
+        ayarlari_yaz(self.ayar)
+        self._panel_yenile()
+
+    def temayi_degistir(self, ad):
+        """Temayı değiştir ve paneli baştan çiz.
+
+        Renkler çizim ANINDA okunuyor; var olan şekillerin rengi kendiliğinden
+        değişmez. Bu yüzden tuvali komple yenilemek gerekiyor.
+        """
+        if ad == self.ayar.get("tema"):
+            return
+        self.ayar["tema"] = ad
+        gor.tema_uygula(ad, self.ayar.get("canlilik", 1.0))
+        ayarlari_yaz(self.ayar)
+
+        self._panel_yenile()
 
     # ---------------- Kayıt ----------------
     def _sayaci_geri_yukle(self):
@@ -1745,6 +1767,47 @@ class Uygulama:
         tk.Label(p, text=gor.TEMALAR[self.ayar.get("tema", "gece")]["ad"],
                  font=("Segoe UI", 9, "bold"), fg=P["vurgu"],
                  bg=P["kart"]).pack(padx=26, anchor="w", pady=(0, 6))
+
+        # ---------- Canlılık ----------
+        # Renklerin doygunluğu. OKLab'da yalnızca doygunluk değişiyor,
+        # algılanan açıklık sabit kalıyor — yani yazı okunaklılığı hiç
+        # etkilenmiyor. Web sürümündeki kaydırıcının aynısı.
+        canli_satir = tk.Frame(p, bg=P["kart"])
+        canli_satir.pack(fill="x", padx=26, pady=(2, 2))
+        tk.Label(canli_satir, text="Canlılık", font=("Segoe UI", 9, "bold"),
+                 fg=P["yazi"], bg=P["kart"]).pack(side="left")
+        canli_yazi = tk.Label(canli_satir, text="", font=("Segoe UI", 8),
+                              fg=P["soluk"], bg=P["kart"])
+        canli_yazi.pack(side="right")
+
+        def canli_ad(v):
+            return "Sakin" if v <= 0.75 else ("Canlı" if v >= 1.3 else "Dengeli")
+
+        def canli_degisti(deger):
+            v = round(float(deger), 2)
+            canli_yazi.configure(text="%s  ·  %%%d" % (canli_ad(v), round(v * 100)))
+
+        canli_kaydirici = tk.Scale(
+            p, from_=0.6, to=1.5, resolution=0.05, orient="horizontal",
+            showvalue=False, command=canli_degisti,
+            bg=P["kart"], fg=P["yazi"], troughcolor=P["zemin2"],
+            activebackground=P["vurgu"], highlightthickness=0, bd=0,
+            sliderrelief="flat", length=10)
+        canli_kaydirici.set(float(self.ayar.get("canlilik", 1.0)))
+        canli_degisti(canli_kaydirici.get())
+        canli_kaydirici.pack(fill="x", padx=26, pady=(0, 2))
+
+        tk.Label(p, text="Renklerin doygunluğu. Yazı okunaklılığı değişmez.",
+                 font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"]).pack(
+            padx=26, anchor="w", pady=(0, 4))
+
+        def canliligi_uygula():
+            pencere.destroy()
+            self.canliligi_degistir(canli_kaydirici.get())
+            self.kok.after(60, self.ayarlari_ac)   # yeni renklerle tekrar aç
+
+        dugme(p, "Canlılığı uygula", canliligi_uygula, kucuk=True).pack(
+            padx=26, anchor="w", pady=(0, 8))
 
         tk.Frame(p, bg=P["cizgi"], height=1).pack(fill="x", padx=26, pady=(4, 10))
 

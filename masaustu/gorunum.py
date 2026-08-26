@@ -19,6 +19,87 @@ ekran tam tersini yapar. Açık tema seçilse bile mola ekranı koyu gökyüzü
 tonlarında kalır — sadece rengi temaya uyar.
 """
 
+# ============================================================
+# CANLILIK — renklerin doygunluğunu, açıklığa dokunmadan değiştirir
+#
+# Neden OKLab? Bu renk uzayında L "algılanan açıklık", C ise
+# doygunluk. Yalnızca C'yi çarpınca renk canlanır ya da soluklaşır
+# ama yazı/zemin kontrastı yerinde kalır. HSV'de doygunluk artırmak
+# algılanan açıklığı da kaydırıyor ve okunaklılık bozuluyordu.
+# Web sürümü aynı işi CSS'in oklch() işleviyle yapıyor.
+# Kaynak: Björn Ottosson, "A perceptual color space for image
+# processing" (2020) — OKLab dönüşüm katsayıları.
+# ============================================================
+
+def _cozgu(deger):
+    """sRGB kanalı (0..1) -> doğrusal ışık"""
+    return deger / 12.92 if deger <= 0.04045 else ((deger + 0.055) / 1.055) ** 2.4
+
+
+def _sikistir(deger):
+    """Doğrusal ışık -> sRGB kanalı (0..1)"""
+    return deger * 12.92 if deger <= 0.0031308 else 1.055 * (deger ** (1 / 2.4)) - 0.055
+
+
+def _oklab(r, g, b):
+    r, g, b = _cozgu(r), _cozgu(g), _cozgu(b)
+    l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
+    m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
+    t = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
+    l, m, t = l ** (1 / 3) if l > 0 else 0, m ** (1 / 3) if m > 0 else 0, t ** (1 / 3) if t > 0 else 0
+    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * t,
+            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * t,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * t)
+
+
+def _dogrusal_rgb(L, A, B):
+    l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3
+    m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3
+    t = (L - 0.0894841775 * A - 1.2914855480 * B) ** 3
+    return (4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * t,
+            -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * t,
+            -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * t)
+
+
+def _sigiyor_mu(L, A, B):
+    """Renk sRGB'nin içinde mi?"""
+    return all(-0.0001 <= k <= 1.0001 for k in _dogrusal_rgb(L, A, B))
+
+
+def _oklab_ters(L, A, B):
+    return tuple(min(1.0, max(0.0, _sikistir(min(1.0, max(0.0, k)))))
+                 for k in _dogrusal_rgb(L, A, B))
+
+
+def canlilik_uygula(renk, carpan):
+    """Rengin doygunluğunu çarpanla ölçekle, açıklığını koru."""
+    if carpan == 1.0:
+        return renk
+    h = renk.lstrip("#")
+    if len(h) != 6:
+        return renk
+    r, g, b = (int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+    L, A, B = _oklab(r, g, b)
+    A, B = A * carpan, B * carpan
+
+    # sRGB dışına taştıysa KANALLARI KIRPMA — açıklık kayar ve
+    # canlılığın bütün amacı bozulur. Bunun yerine doygunluğu
+    # sığana kadar geri çek; açıklık ve renk tonu aynı kalır.
+    # (CSS Color 4'ün gamut eşleme yaklaşımının basit hâli.)
+    if not _sigiyor_mu(L, A, B):
+        alt, ust = 0.0, 1.0
+        for _ in range(24):
+            orta = (alt + ust) / 2
+            if _sigiyor_mu(L, A * orta, B * orta):
+                alt = orta
+            else:
+                ust = orta
+        A, B = A * alt, B * alt
+
+    r, g, b = _oklab_ters(L, A, B)
+    return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
+
+
 TEMALAR = {
     "gece": {
         "ad": "Gece moru",
@@ -132,6 +213,34 @@ TEMALAR = {
         "mola_halka": "#c8b48a", "mola_parilti": "#d8d8de",
         "grafik": ["#d8d8de", "#c8b48a", "#a9b3c4", "#c99a80", "#93a08c"],
     },
+    "kiraz": {
+        "ad": "Kiraz",
+        "panel": {
+            "zemin": "#1a0f14", "zemin2": "#26151b", "kart": "#331b22",
+            "kart2": "#40232a", "cizgi": "#57323a",
+            "yazi": "#ffeef1", "soluk": "#d0a3ac",
+            "vurgu": "#ff9aa8", "sicak": "#ffcf8a", "uyari": "#ff8f80",
+            "ana_yazi": "#3d0d18",
+        },
+        "mola": ["#120810", "#241019", "#401b26", "#612635", "#8a3a44"],
+        "mola_yazi": "#fff0f3", "mola_soluk": "#d9adb8",
+        "mola_halka": "#ffcf8a", "mola_parilti": "#ff9aa8",
+        "grafik": ["#ff9aa8", "#ffcf8a", "#f0a8d0", "#ff8f80", "#d8b0e8"],
+    },
+    "bakir": {
+        "ad": "Bakır",
+        "panel": {
+            "zemin": "#191512", "zemin2": "#221d18", "kart": "#2c251e",
+            "kart2": "#372e26", "cizgi": "#4b3f33",
+            "yazi": "#f8f2e9", "soluk": "#bfae97",
+            "vurgu": "#e8b478", "sicak": "#f5d49a", "uyari": "#e09a75",
+            "ana_yazi": "#2a1a0a",
+        },
+        "mola": ["#0f0c09", "#1b1611", "#2b231a", "#3e3123", "#56422c"],
+        "mola_yazi": "#fbf5ec", "mola_soluk": "#c4b39c",
+        "mola_halka": "#f5d49a", "mola_parilti": "#e8b478",
+        "grafik": ["#e8b478", "#f5d49a", "#c8b89a", "#e09a75", "#b0c095"],
+    },
     "acik": {
         "ad": "Açık (gündüz)",
         "panel": {
@@ -165,23 +274,38 @@ NANE = ""
 HALKA_IZ = ""
 
 
-def tema_uygula(ad):
+# Canlılık YALNIZCA vurgu renklerine uygulanır. Zemin, kart ve yazı
+# renkleri dokunulmaz kalır: onları oynatmak okunaklılığı bozar.
+_CANLI_ALANLAR = ("vurgu", "sicak", "uyari")
+
+
+def tema_uygula(ad, canlilik=1.0):
     """Temayı değiştir. Sözlükleri YERİNDE günceller ki
-    `P = gorunum.PANEL` diye tutulan referanslar bozulmasın."""
+    `P = gorunum.PANEL` diye tutulan referanslar bozulmasın.
+
+    canlilik: 1.0 temanın kendi renkleri. 0.6 daha sakin,
+    1.5 daha canlı. Açıklık değişmez, sadece doygunluk."""
     global MOLA_YAZI, MOLA_SOLUK, KEHRIBAR, NANE, HALKA_IZ
     t = TEMALAR.get(ad) or TEMALAR[VARSAYILAN_TEMA]
+    c = max(0.6, min(1.5, float(canlilik or 1.0)))
 
     PANEL.clear()
     PANEL.update(t["panel"])
+    for alan in _CANLI_ALANLAR:
+        if alan in PANEL:
+            PANEL[alan] = canlilik_uygula(PANEL[alan], c)
 
-    MOLA_GRADYAN[:] = t["mola"]
-    GRAFIK_RENKLERI[:] = t["grafik"]
+    # Mola ekranı 20 saniye tam ekran duruyor; en canlı ayarda bile
+    # gözü yormasın diye gradyanda çarpanı kısıyoruz (web ile aynı).
+    mola_c = 1 + (c - 1) * 0.6
+    MOLA_GRADYAN[:] = [canlilik_uygula(r, mola_c) for r in t["mola"]]
+    GRAFIK_RENKLERI[:] = [canlilik_uygula(r, c) for r in t["grafik"]]
 
     MOLA_YAZI = t["mola_yazi"]
     MOLA_SOLUK = t["mola_soluk"]
-    KEHRIBAR = t["mola_halka"]
-    NANE = t["mola_parilti"]
-    HALKA_IZ = karistir(t["mola"][2], "#ffffff", 0.12)
+    KEHRIBAR = canlilik_uygula(t["mola_halka"], c)
+    NANE = canlilik_uygula(t["mola_parilti"], c)
+    HALKA_IZ = karistir(MOLA_GRADYAN[2], "#ffffff", 0.12)
     return t
 
 
