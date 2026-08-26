@@ -28,7 +28,12 @@ import gecmis as gcm
 import egzersiz as egz
 import ses
 import tepsi
+import guncelleme as gnc
 from bilgiler import BILGILER, IPUCLARI, MOLA_CUMLELERI
+try:
+    from dunya import DUNYA        # uretilen dosya (dunya_uret.py)
+except Exception:
+    DUNYA = []                     # dosya yoksa uygulama yine calissin
 
 def kaynak_yolu(ad):
     """Dosya yolunu bul.
@@ -133,6 +138,11 @@ VARSAYILAN = {
     "kilit_ozeti": None,
     "kilit_tuz": None,
 }
+
+# Uygulamanın sürümü. GitHub Releases etiketiyle karşılaştırılıyor;
+# yeni sürüm çıkınca kullanıcıya haber veriliyor. Sürüm yükseltirken
+# BURAYI ve Releases etiketini birlikte güncelle.
+SURUM = "1.1"
 
 P = gor.PANEL
 
@@ -682,6 +692,78 @@ class Balon:
             pass
 
 
+class TelafiKarti:
+    """Mola atlanınca çıkan, kendiliğinden kapanan bilgi kartı.
+
+    NEDEN SORU KUTUSU DEĞİL: molayı atlayan kişi meşgul. Karşısına
+    cevap bekleyen bir pencere çıkarmak, atlamanın sebebini görmezden
+    gelmek olur. Bu kart hiçbir şey sormaz, birkaç saniye durur ve
+    kendi kapanır. Tıklanırsa hemen kapanır.
+
+    NEDEN GÖSTERİLİYOR: atlamayı sessizce geçiştirmek "atlamak
+    önemsizdi" mesajı veriyor. Oysa asıl anlatılacak şey tam da o an
+    lazım — neyi atladığı.
+    """
+
+    SANIYE = 9
+
+    def __init__(self, kok, baslik, metin, kaynak, plan, eylem=None):
+        self.p = tk.Toplevel(kok)
+        self.p.overrideredirect(True)
+        self.p.attributes("-topmost", True)
+        self.p.configure(bg=gor.KEHRIBAR)
+
+        ic = tk.Frame(self.p, bg=P["kart"], padx=22, pady=16)
+        ic.pack(padx=2, pady=2)
+
+        tk.Label(ic, text=baslik, font=("Segoe UI", 12, "bold"),
+                 fg=P["yazi"], bg=P["kart"], anchor="w",
+                 justify="left", wraplength=440).pack(anchor="w")
+        tk.Label(ic, text=metin, font=("Segoe UI", 10),
+                 fg=P["yazi"], bg=P["kart"], anchor="w",
+                 justify="left", wraplength=440).pack(anchor="w", pady=(6, 0))
+        if kaynak:
+            tk.Label(ic, text=kaynak, font=("Segoe UI", 8),
+                     fg=P["soluk"], bg=P["kart"], anchor="w",
+                     justify="left", wraplength=440).pack(anchor="w", pady=(4, 0))
+        tk.Label(ic, text=plan, font=("Segoe UI", 10, "bold"),
+                 fg=gor.KEHRIBAR, bg=P["kart"], anchor="w",
+                 justify="left", wraplength=440).pack(anchor="w", pady=(10, 0))
+
+        # Tıklanınca: eylem varsa onu çalıştır (ör. indirme sayfasını aç),
+        # sonra kapan. Eylem yoksa sadece kapan.
+        def _tik(_e=None):
+            if eylem:
+                try:
+                    eylem()
+                except Exception:
+                    pass
+            self.kapat()
+
+        for w in (self.p, ic):
+            w.bind("<Button-1>", _tik)
+        for c in ic.winfo_children():
+            c.bind("<Button-1>", _tik)
+
+        self.p.update_idletasks()
+        g, y = self.p.winfo_width(), self.p.winfo_height()
+        try:
+            a_sol, a_ust, a_gen, a_yuk = iz.calisma_alani()
+        except Exception:
+            a_sol, a_ust = 0, 0
+            a_gen = self.p.winfo_screenwidth()
+            a_yuk = self.p.winfo_screenheight()
+        self.p.geometry("+%d+%d" % (a_sol + (a_gen - g) // 2,
+                                    a_ust + a_yuk - y - 60))
+        self.p.after(int(self.SANIYE * 1000), self.kapat)
+
+    def kapat(self):
+        try:
+            self.p.destroy()
+        except Exception:
+            pass
+
+
 # ======================================================================
 # ANA UYGULAMA
 # ======================================================================
@@ -702,10 +784,15 @@ class Uygulama:
         self.mola_ekrani = None
         self.balon = None
         self.uzun_mola_mi = False
+        # Atlanan molanın telafisi: kaç kez üst üste atlandı ve bir
+        # sonraki mola kaç saniye olacak
+        self.telafi_sayisi = 0
+        self.telafi_suresi = None
         self.baslangic_ani = time.time()
         self.kilit_gorundu = False
         self.kart_sirasi = 0
         self.bilgi_no = random.randrange(len(BILGILER) or 1)
+        self.dunya_no = random.randrange(len(DUNYA) or 1)
         self.ipucu_no = 0
         self.son_bosta = 0.0
         self.duraklama_bitis = 0
@@ -787,6 +874,9 @@ class Uygulama:
         self._sekme_sec("programlar")
         self._analiz_izni_sor_gerekirse()
         self._acilis_izni_sor_gerekirse()
+        # İzin pencerelerinden sonra: sürüm/kayıt/ölçüm denetimi.
+        # 5 saniye, izin soruları (1,5 ve 2,6 sn) kapandıktan sonrası.
+        self.kok.after(5000, self._surum_denetimini_baslat)
         self._bekciyi_kur()
         ses.onceden_hazirla()
 
@@ -890,6 +980,18 @@ class Uygulama:
             return tam
 
         kapali_kalan = time.time() - float(d.get("kayit_ani", 0))
+
+        # ÖLÇÜLEMEYEN SÜRE — kullanıcıya dürüst olmak için.
+        # Program kapalıyken hiçbir şey ölçemiyoruz. Ama bilgisayarın
+        # ne zaman açıldığını Windows biliyor; kapalı geçen sürenin ne
+        # kadarında makinenin AÇIK olduğunu buradan sınırlayabiliyoruz.
+        # "Saymadım" demek, hiç söylememekten iyi.
+        try:
+            acik_kalan = kl.acilistan_beri_saniye()
+            self.olculemeyen_sn = max(0.0, min(kapali_kalan, acik_kalan))
+        except Exception:
+            self.olculemeyen_sn = 0.0
+
         if kapali_kalan < 0 or kapali_kalan > self.ayar["dinlenme_esigi_sn"]:
             return tam
 
@@ -1353,9 +1455,17 @@ class Uygulama:
         Sürekli aynı türde kart okumak sıkıcı; ayrıca "neden" bilmek
         yetmiyor, "ne yapacağını" da söylemek gerekiyor.
         """
-        # Altılı dizi: "durumun" kartı dört molada bir gelince fazla
-        # sık tekrarlıyordu (sekiz molada iki kez).
-        SIRA = ("neden", "ipucu", "neden", "durumun", "neden", "ipucu")
+        # Sekizli dizi. "durumun" kartı dört molada bir gelince fazla
+        # sık tekrarlıyordu; "dunya" ise sonradan eklendi.
+        #
+        # NEDEN "dunya" VAR: bütün kartlar göz sağlığı üzerineydi ve
+        # hepsi aynı yöne bakıyordu — "ekran gözünü yoruyor". Günde
+        # 20-30 mola veren biri için bu tekrara düşüyor ve kart
+        # okunmamaya başlıyor. Dünyadan genel kültür kartları araya
+        # girince mola birkaç saniyeliğine merak edilecek bir şeye
+        # dönüşüyor. Göz bilgisi hâlâ BASKIN: sekizin üçü "neden".
+        SIRA = ("neden", "ipucu", "neden", "dunya",
+                "neden", "durumun", "ipucu", "dunya")
         for _ in range(len(SIRA)):
             tur = SIRA[self.kart_sirasi % len(SIRA)]
             self.kart_sirasi += 1
@@ -1366,6 +1476,10 @@ class Uygulama:
             if tur == "ipucu" and IPUCLARI:
                 k = IPUCLARI[self.ipucu_no % len(IPUCLARI)]
                 self.ipucu_no += 1
+                return k
+            if tur == "dunya" and DUNYA:
+                k = DUNYA[self.dunya_no % len(DUNYA)]
+                self.dunya_no += 1
                 return k
             if tur == "durumun":
                 k = self._durum_karti()
@@ -1473,11 +1587,19 @@ class Uygulama:
                 self.ist["kesintisiz_sn"] = 0.0
             else:
                 self.ist["tamamlanan"] += 1
+            # Mola tamamlandı: telafi zinciri sıfırlanır
+            self.telafi_sayisi = 0
+            self.telafi_suresi = None
         self.uzun_mola_mi = False
         self._istatistik_yaz()
 
         self.durum = "calisiyor"
         self.hedef = time.time() + self.ayar["calisma_dk"] * 60
+
+        # Atlandıysa: nedenini söyle ve DAHA KISA bir molayı yakına al.
+        # Yukarıdaki tam süreli hedefin üstüne yazar.
+        if iptal:
+            self._molayi_atladi()
         # Hedef DEĞİŞTİKTEN sonra kaydet. Önce kaydedersek diske eski
         # hedef yazılıyor ve program o anda kapatılırsa sayaç yanlış
         # (geçmiş) bir değerle geri yükleniyordu.
@@ -1485,6 +1607,170 @@ class Uygulama:
 
         if not iptal and self.ist["kesintisiz_sn"] >= self.ayar["uzun_mola_esigi_dk"] * 60:
             self.kok.after(400, self._uzun_mola_sor)
+
+    # Atlanan mola kaç dakika sonra yeniden önerilsin
+    TELAFI_DK = 4
+    # Telafi molası bu saniyenin altına inmez — daha kısası gözün
+    # odağını uzağa alması için yetmiyor
+    TELAFI_ASGARI_SN = 8
+
+    def _molayi_atladi(self):
+        """Mola atlandı.
+
+        Eskiden burada hiçbir şey olmuyordu: mola sessizce düşüyor ve
+        sayaç 20 dakika baştan başlıyordu. İki sorun vardı —
+          1. Kişi NEYİ atladığını hiç öğrenmiyordu.
+          2. Atlanan mola tamamen kayboluyordu; yoğun bir günde üst
+             üste atlayan biri hiç mola almıyordu.
+
+        Yeni davranış: nedenini söyleyen bir kart çıkar ve mola birkaç
+        dakika sonraya, DAHA KISA olarak yeniden konur. Her üst üste
+        atlamada süre yarıya iner. Neden kısalıyor: atlayan kişi
+        meşgul, aynı süreyi dayatmak ikinci kez atlanmasına yol
+        açıyor. Kısa mola, hiç moladan iyi.
+        """
+        self.ist["ertelenen"] += 1
+        self.telafi_sayisi = getattr(self, "telafi_sayisi", 0) + 1
+
+        tam = int(self.ayar["mola_sn"])
+        kisa = int(round(tam / float(2 ** self.telafi_sayisi)))
+        if kisa >= tam:                      # ayar zaten çok kısaysa
+            kisa = tam // 2
+        kisa = max(self.TELAFI_ASGARI_SN, kisa)
+        self.telafi_suresi = kisa
+
+        self.hedef = time.time() + self.TELAFI_DK * 60
+        self._sayaci_kaydet()
+        self._istatistik_yaz()
+
+        # Neden önemliydi — kaynaklı bilgi, sırayla
+        try:
+            baslik, metin, kaynak = BILGILER[self.bilgi_no % len(BILGILER)]
+            self.bilgi_no += 1
+        except Exception:
+            baslik = "Gözün kırpmayı unutuyor"
+            metin = ("Ekrana bakarken göz kırpma sayısı dakikada 15'ten "
+                     "5-7'ye düşer; kuruluk ve batma buradan gelir.")
+            kaynak = "American Academy of Ophthalmology"
+
+        plan = ("%d dakika sonra %d saniyelik kısa bir mola vereceğim."
+                % (self.TELAFI_DK, kisa))
+        try:
+            TelafiKarti(self.kok, "Molayı atladın — " + baslik,
+                        metin, kaynak, plan)
+        except Exception:
+            pass
+
+    def _acilis_denetimi(self):
+        """Açılışta kendini denetler ve TEK bir kartla durumu söyler.
+
+        NEDEN TEK KART: üç ayrı bildirim üst üste çıkarsa kullanıcı
+        hepsini kapatır ve hiçbirini okumaz. Sırayla en önemlisi
+        gösteriliyor; diğerleri bir sonraki açılışa kalıyor.
+
+        Sıra:
+          1. Yeni sürüm — kullanıcı düzelttiğimiz hatayı görmeye
+             devam ediyor olabilir, en acili bu.
+          2. Açılışta başlatma kaydı silinmiş — program bir daha
+             kendiliğinden açılmaz, molalar tamamen durur.
+          3. Ölçülemeyen süre — bilgi amaçlı.
+        """
+        if getattr(self, "_acilis_karti_cikti", False):
+            return
+        self._acilis_karti_cikti = True
+
+        # --- 1) Yeni sürüm var mı ---
+        # Ağ işi ARKA PLANDA yapıldı (_surum_denetimini_baslat); burada
+        # sadece sonucu okuyoruz. Bu yöntem tkinter'ın kuralı: ağ arka
+        # planda, ekrana yazma ana thread'de.
+        try:
+            etiket, adres = getattr(self, "_yeni_surum", (None, None))
+            if etiket:
+                import webbrowser
+
+                def indir():
+                    webbrowser.open(adres)
+                    # Açtıysa bir daha sorma
+                    self.ayar["gormezden_gelinen_surum"] = etiket
+                    ayarlari_yaz(self.ayar)
+
+                TelafiKarti(
+                    self.kok,
+                    "Yeni sürüm çıktı — %s" % etiket,
+                    "Şu an %s sürümünü kullanıyorsun. Yeni sürümde "
+                    "düzeltmeler ve yeni özellikler var." % SURUM,
+                    "github.com/meteotr06/goz-molasi",
+                    "İndirme sayfasını açmak için buraya tıkla.",
+                    eylem=indir)
+                return
+        except Exception:
+            pass
+
+        # --- 2) Açılışta başlatma kaydı duruyor mu ---
+        try:
+            if self.ayar.get("acilis_izni") and not kl.acilista_baslar_mi():
+                # Kullanıcı izin vermişti ama kayıt kaybolmuş (Windows
+                # güncellemesi, temizlik programı, başka bir kurulum).
+                # İzin ZATEN VERİLMİŞ; yeniden sormuyoruz, geri koyup
+                # haber veriyoruz.
+                kl.acilista_baslat(True)
+                TelafiKarti(
+                    self.kok,
+                    "Açılışta başlatma kaydı geri kondu",
+                    "Windows açıldığında kendim başlamam için verdiğin izin "
+                    "kaybolmuştu — büyük ihtimalle bir Windows güncellemesi "
+                    "ya da temizlik programı sildi. Geri koydum.",
+                    "",
+                    "Bir şey yapmana gerek yok.")
+                return
+        except Exception:
+            pass
+
+        # --- 3) Ölçülemeyen süre ---
+        try:
+            olculemeyen = getattr(self, "olculemeyen_sn", 0.0)
+            if olculemeyen >= 600:          # 10 dakikadan azını söylemeye değmez
+                TelafiKarti(
+                    self.kok,
+                    "Kapalıyken %s ölçemedim" % sure_okunakli(olculemeyen),
+                    "Bu süre boyunca bilgisayar açıktı ama ben kapalıydım. "
+                    "Program çalışmıyorken hiçbir şey ölçemiyorum — o yüzden "
+                    "bu süre bugünkü toplama girmedi.",
+                    "",
+                    "Hep açık kalmam için pencereyi kapatman yeterli; "
+                    "kapatmak programı kapatmaz.")
+        except Exception:
+            pass
+
+    def _surum_denetimini_baslat(self):
+        """Sürüm denetimini arka planda yapar, sonucu ana thread'e taşır.
+
+        İnternet yoksa ya da GitHub yavaşsa açılış beklemesin diye.
+        Sonuç gelmezse 9 saniye sonra kart yine gösterilir — o zaman
+        yerel denetimlerden biri çıkar."""
+        import threading
+
+        self._yeni_surum = (None, None)
+
+        def calis():
+            try:
+                sonuc = gnc.denetle(self.ayar, SURUM)
+            except Exception:
+                sonuc = (None, None)
+            self._yeni_surum = sonuc
+            try:
+                ayarlari_yaz(self.ayar)
+            except Exception:
+                pass
+            # Ekrana yazma ana thread'de olmalı
+            try:
+                self.kok.after(0, self._acilis_denetimi)
+            except Exception:
+                pass
+
+        threading.Thread(target=calis, daemon=True).start()
+        # Ağ hiç cevap vermezse kart yine de çıksın
+        self.kok.after(9000, self._acilis_denetimi)
 
     def _uzun_mola_sor(self):
         cevap = Soru(
@@ -1528,7 +1814,11 @@ class Uygulama:
                     return
 
         self.uzun_mola_mi = False
-        self._molayi_baslat(self.ayar["mola_sn"])
+        # Bir önceki mola atlandıysa bu sefer daha kısa mola veriyoruz.
+        # Elle istenen mola (hemen_mola) bundan etkilenmez — orada
+        # kişi molayı bilerek istiyor, kısaltmak saygısızlık olur.
+        sure = getattr(self, "telafi_suresi", None) or self.ayar["mola_sn"]
+        self._molayi_baslat(sure)
 
     # ---------------- Kalp atışı ----------------
     def _tik(self):
@@ -1620,6 +1910,7 @@ class Uygulama:
             self._ciz(self.hedef - simdi)
             if int(simdi) % 30 == 0:
                 self._istatistik_yaz()
+                self._sayaci_kaydet()
             self.kok.after(250, self._tik)
             return
 
@@ -1647,8 +1938,15 @@ class Uygulama:
             return
 
         self._ciz(kalan)
+        # Sayacı da düzenli kaydet. Eskiden yalnızca durum değişince
+        # (mola bitince, duraklatınca) yazılıyordu. Program zorla
+        # kapatılırsa — çökme, taskkill, elektrik — diskteki kayıt
+        # eskide kalıyor, açılışta "5 dakikadan uzun kapalıydı" hesabı
+        # çıkıyor ve 20 dakika BAŞTAN başlıyordu. 30 saniyede bir
+        # yazmak bunu en fazla 30 saniyelik kayba indiriyor.
         if int(simdi) % 30 == 0:
             self._istatistik_yaz()
+            self._sayaci_kaydet()
         self.kok.after(250, self._tik)
 
     # ---------------- Çizim ----------------
