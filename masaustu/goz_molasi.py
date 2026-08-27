@@ -2304,59 +2304,51 @@ class Uygulama:
         return None
 
     def ayar_uyarisi(self):
-        """Bozuk ayar korumayi SESSIZCE kapatmasin — ekranda goster.
+        """Koruma uygulanmiyorsa ekranda SOYLE.
 
-        Kullanici karari (27.08.2026): bozuk ayarda ENGELLEME, ama UYAR.
-        Burada hicbir engel uygulanmaz; yalnizca bir metin doner.
-        Bos ya da 0 sinir "bozuk" degildir — o, "sinir yok" demektir.
+        Kullanici karari (27.08.2026): bozuk/kurcalanmis ayarda
+        ENGELLEME, ama UYAR. Burada hicbir engel uygulanmaz.
+
+        METIN NEDEN KISA: bu uyari `ipucu_yazi` tuval metnini eziyor.
+        Orada satir kirma yok ve metin saga yasli - uzun bir uyari
+        panelin SOL kenarindan tasiyor. Olculdu: 704 px'lik bir uyari
+        540 px'lik alana yaziliyordu. Kirpilan uyari, hic olmayan
+        uyaridir. Ayrinti ayar ekranina ait; ebeveyn zaten orada
+        duzeltecek. Burada: sorunu adlandir + nereye gidilecegini soyle.
+
+        Sinama: sinama_yerlesim.py her uyariyi olcuyor.
         """
         # SIRALAMA ONEMLI: "aile secili ama sifre yok" durumunda
-        # aile_kipinde_mi() False doner. Bu denetim asagida olsaydi
-        # hic calismazdi - oysa tam da uyarilmasi gereken an burasi.
-        #
-        # Olculdu (27.08.2026): `kilit` alani bosaltilinca kip sessizce
-        # uygulanmiyor, ama ayar ekraninda hala "Aile (ebeveyn
-        # kontrolu)" secili GORUNUYOR. Ebeveyn korundugunu sanir.
+        # aile_kipinde_mi() False doner. Bu denetim asagida olsaydi hic
+        # calismazdi - oysa tam da uyarilmasi gereken an burasi.
+        # Olculdu: `kilit` bosaltilinca kip sessizce uygulanmiyor ama
+        # ayar ekraninda hala "Aile" SECILI gorunuyor.
         kip = self.ayar.get("kip")
         kip = kip.strip().lower() if isinstance(kip, str) else kip
         if kip == "aile" and not kilit_kaydi(self.ayar):
-            return ("\u26a0 Aile kipi se\u00e7ili ama \u015fifre yok "
-                    "\u2014 kip UYGULANMIYOR. Ayarlardan bir \u015fifre "
-                    "koyun.")
+            return "⚠ Aile kipi şifresiz — ayarlardan şifre koyun"
         if not aile_kipinde_mi(self.ayar):
             return None
+
         ham = self.ayar.get("gunluk_sinir_dk")
+        # Bos ya da 0 sinir BOZUK DEGILDIR - o, "sinir yok" demektir.
         if ham not in (None, "", 0, "0") and sayi_oku(ham) is None:
             return "⚠ Günlük sınır okunamadı — sınır uygulanmıyor"
         if sayi_oku(ham, 0) > 0 and sayi_oku(self.ist.get("ekran_sn"), None) is None:
             return "⚠ Ekran süresi sayacı bozuk — sınır uygulanmıyor"
+
+        # GECERLI GORUNEN AMA ANLAMSIZ DEGERLER.
+        # Bozukluk denetimi bunlari yakalayamaz: hepsi gayet gecerli
+        # sayilar. Bir gunde 1440 dakika var; ustu "sinir yok" demek.
+        if sayi_oku(ham, 0) > 1440:
+            return "⚠ Sınır bir günden uzun — ayarlardan düzeltin"
+        if sayi_oku(ham, 0) < 0:
+            return "⚠ Sınır negatif — ayarlardan düzeltin"
         if self.ek_sure_supheli_mi():
-            return ("\u26a0 Ek s\u00fcre ayar\u0131 makul olmayan bir tarihe "
-                    "kurulmu\u015f \u2014 kay\u0131t dosyas\u0131 "
-                    "d\u00fczenlenmi\u015f olabilir. Ge\u00e7erli "
-                    "say\u0131lm\u0131yor, g\u00fcnl\u00fck s\u0131n\u0131r "
-                    "uygulan\u0131yor.")
-        ham_sinir = self.ayar.get("gunluk_sinir_dk")
-        # SACMA BUYUK SINIR: bir gunde 1440 dakika var. Daha buyuk bir
-        # sayi "sinir yok" demektir ama ekranda SINIR VARMIS gibi durur.
-        # Deger bozuk degil - gayet gecerli bir sayi - o yuzden bozukluk
-        # denetimleri gormuyor. Ayni sinif: gecerli gorunen deger,
-        # sessizce kalkan koruma.
-        if sayi_oku(ham_sinir, 0) > 1440:
-            return ("\u26a0 G\u00fcnl\u00fck s\u0131n\u0131r bir "
-                    "g\u00fcnden uzun yaz\u0131lm\u0131\u015f \u2014 "
-                    "yani s\u0131n\u0131r yok. Ger\u00e7ekten "
-                    "s\u0131n\u0131rlamak i\u00e7in 1440'tan k\u00fc\u00e7\u00fck "
-                    "bir de\u011fer yaz\u0131n.")
-        if sayi_oku(ham_sinir, 0) < 0:
-            return ("\u26a0 G\u00fcnl\u00fck s\u0131n\u0131r negatif "
-                    "yaz\u0131lm\u0131\u015f \u2014 s\u0131n\u0131r "
-                    "uygulanm\u0131yor. D\u00fczeltmek i\u00e7in ayarlardan "
-                    "yeniden yaz\u0131n.")
+            return "⚠ Ek süre çok ileri bir tarihte — yok sayılıyor"
         if getattr(self, "sayac_oynanmis", False):
-            return ("⚠ Ekran süresi sayacı geri alınmış — "
-                    "kayıt dosyası düzenlenmiş olabilir. Bugünün "
-                    "süresi son bilinen değerden devam ediyor.")
+            return "⚠ Ekran süresi geri alınmış — son değerden devam"
+
         ham_ek = self.ayar.get("ek_sure_bitis", 0) or 0
         if ham_ek and sayi_oku(ham_ek, None) is None:
             return "⚠ Ek süre ayarı bozuk — sınır uygulanmıyor"

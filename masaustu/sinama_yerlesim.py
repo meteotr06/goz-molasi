@@ -21,6 +21,8 @@ NE DENETLER
 ÇALIŞTIRMA
   python sinama_yerlesim.py
 """
+import io
+import os
 import sys
 import time
 import tkinter as tk
@@ -69,6 +71,9 @@ class SahtePanel(gm.Uygulama):
             self.kok.destroy()
         except Exception:
             pass
+
+
+BURASI = os.path.dirname(os.path.abspath(__file__))
 
 
 def kesisiyor_mu(a, b, pay=0):
@@ -176,9 +181,72 @@ def pencere_sigiyor_mu(hatalar):
               % (tam_g, tam_y, kul_g, kul_y, o))
 
 
+def uyarilar_sigiyor_mu(hatalar):
+    """Aile kipi uyarilari ipucu satirina SIGIYOR mu?
+
+    NEDEN VAR — 27.08.2026'da olculdu:
+      Aile kipi uyarilari `ipucu_yazi` tuval metnini eziyor. O metinde
+      `width=` YOK (satir kirilmaz) ve anchor="e" (saga yasli), yani
+      uzun metin panelin SOL kenarindan tasiyor.
+
+      Sekiz uyaridan UCU tasiyordu; en genisi 704 px, alan 540 px.
+      Normal ipucu metni 93-128 px, yani uyarilar 5-7 kati.
+
+      Bu sinamanin kendisi de bir kor noktaydi: yerlesim sinamasi
+      paneli varsayilan halinde olcuyordu, uyari durumunu HIC
+      kurmuyordu. Gorunmeyen durum, denetlenmemis durumdur.
+
+      Kirpilan uyari, hic olmayan uyaridir. Ustelik bu metinler
+      "koruma uygulanmiyor" diyen metinler - ebeveynin gormesi
+      gereken tek sey.
+    """
+    import ast
+    import tkinter as tk
+
+    TASARIM_G = 580
+    SAG_PAY = 40                    # G - kenar - o(22), en genis hâli
+    KULLANILABILIR = TASARIM_G - SAG_PAY
+
+    kaynak = io.open(
+        os.path.join(BURASI, "goz_molasi.py"), encoding="utf-8").read()
+    uyarilar = []
+    for d in ast.walk(ast.parse(kaynak)):
+        if isinstance(d, ast.FunctionDef) and d.name == "ayar_uyarisi":
+            for alt in ast.walk(d):
+                if isinstance(alt, ast.Return) and alt.value is not None:
+                    try:
+                        deger = ast.literal_eval(alt.value)
+                    except Exception:
+                        continue
+                    if isinstance(deger, str) and deger.strip():
+                        uyarilar.append(deger)
+
+    if not uyarilar:
+        hatalar.append("ayar_uyarisi icinde hic uyari metni bulunamadi "
+                       "- denetim bos gecmis olabilir")
+        return
+
+    kok = tk.Tk()
+    kok.withdraw()
+    t = tk.Canvas(kok, width=TASARIM_G, height=200)
+    kok.update_idletasks()
+    for u in uyarilar:
+        oge = t.create_text(0, 0, anchor="w", text=u, font=("Segoe UI", 9))
+        x1, _, x2, _ = t.bbox(oge)
+        t.delete(oge)
+        if x2 - x1 > KULLANILABILIR:
+            hatalar.append(
+                "uyari %d px, sigmasi gereken %d px: %r"
+                % (x2 - x1, KULLANILABILIR, u[:44]))
+    kok.destroy()
+    print("Uyari metni: %d tanesi olculdu (sinir %d px)"
+          % (len(uyarilar), KULLANILABILIR))
+
+
 def main():
     hatalar = []
     pencere_sigiyor_mu(hatalar)
+    uyarilar_sigiyor_mu(hatalar)
     # Her tema ayrı denenir: renk değil YERLEŞİM aynı olmalı, ama
     # tema değişince panel baştan çiziliyor — o yol da sınansın.
     temalar = list(gor.TEMALAR.keys())
