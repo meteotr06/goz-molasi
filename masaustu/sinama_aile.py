@@ -135,6 +135,73 @@ def main():
     dene("uyari varken engel yok (engelleme, uyar)",
          dict(t, gunluk_sinir_dk="abc"), 99999, None)
 
+    # 4c) KAYIT DOSYASI KURCALANMASI
+    #
+    # OLCULDU (27.08.2026): aile kipinde %APPDATA%\GozMolasi COCUGUN
+    # KENDI klasoru. `_istatistik_oku` dosyadaki JSON'u korlemesine
+    # `self.ist.update(veri)` ile birlestiriyordu. Cocuk `ekran_sn`
+    # degerini 0 yapinca gunluk sinir TAMAMEN kalkiyordu.
+    #
+    # BELGELENMIS ATLATMALARDAN FARKI: onlar IZ BIRAKIR.
+    #   ayarlar.json'i sil      -> aile kipi kapanir, ebeveyn GORUR
+    #   istatistik.json'i duzenle -> kip acik, sifre yerinde, sinir
+    #                                yazili, uyari yok. Ebeveyn her
+    #                                seyin calistigini SANIR.
+    # Sessiz atlatma, gurultulu atlatmadan tehlikelidir.
+    #
+    # ONLENMIYOR (dosya cocugun klasorunde), GORUNUR KILINIYOR:
+    # ekran suresi gun icinde geri gidemez.
+    bugun = time.strftime("%Y-%m-%d")
+    isaretli = dict(t, gunluk_sinir_dk=60,
+                    ekran_isareti={"gun": bugun, "sn": 3700.0})
+
+    def kurcala(ad, dosyadaki, engel_beklenen, uyari_beklenen):
+        u = SahteUygulama(isaretli, 0)
+        u.ist = {"gun": bugun, "ekran_sn": dosyadaki}
+        try:
+            u._sayac_isaretini_dogrula()
+            tur = (u.engel_sebebi() or ("YOK",))[0]
+            uyari = bool(u.ayar_uyarisi())
+        except Exception as e:
+            hatalar.append("%s -> COKME %s: %s" % (ad, type(e).__name__, e))
+            return
+        if tur != engel_beklenen:
+            hatalar.append("%s -> engel '%s' (beklenen '%s')"
+                           % (ad, tur, engel_beklenen))
+        if uyari != uyari_beklenen:
+            hatalar.append("%s -> uyari %s (beklenen %s)"
+                           % (ad, uyari, uyari_beklenen))
+
+    kurcala("sayaci sifirlama yakalaniyor", 0, "sinir", True)
+    kurcala("negatif deger yakalaniyor", -999999, "sinir", True)
+    kurcala("kucuk deger yakalaniyor", 1, "sinir", True)
+    kurcala("metin '0' yakalaniyor", "0", "sinir", True)
+    # Tolerans: isaret ve istatistik AYRI anlarda yaziliyor; kucuk bir
+    # fark mesrudur ve YANLIS ALARM vermemeli.
+    kurcala("tolerans ici dusus yanlis alarm vermiyor", 3670, "sinir", False)
+    kurcala("normal ilerleme uyarmiyor", 3800, "sinir", False)
+
+    # BIREYSEL KIPTE CALISMAMALI: kullanici kendi verisinin sahibidir,
+    # sifirlamak mesrudur. Koruma, korumasi gerekmeyen yerde davranis
+    # degistirmemeli.
+    bir = SahteUygulama({"kip": "bireysel", "gunluk_sinir_dk": 60,
+                         "ekran_isareti": {"gun": bugun, "sn": 3700.0}}, 0)
+    bir.ist = {"gun": bugun, "ekran_sn": 0}
+    bir._sayac_isaretini_dogrula()
+    if bir.ist["ekran_sn"] != 0:
+        hatalar.append("bireysel kipte kertme calisti (%r) - calismamali"
+                       % bir.ist["ekran_sn"])
+    if bir.ayar_uyarisi():
+        hatalar.append("bireysel kipte kurcalama uyarisi cikti")
+
+    # Gun degisince isaret devretmemeli - dunun isareti bugunu engellemez.
+    dun = SahteUygulama(dict(t, gunluk_sinir_dk=60,
+                             ekran_isareti={"gun": "2020-01-01", "sn": 9999}), 0)
+    dun.ist = {"gun": bugun, "ekran_sn": 10}
+    dun._sayac_isaretini_dogrula()
+    if dun.ist["ekran_sn"] != 10:
+        hatalar.append("dunun isareti bugune devretti (%r)" % dun.ist["ekran_sn"])
+
     # 5) Saat yasağı — gece yarısını aşan aralık
     a = {"yasak_acik": True, "yasak_bas": "21:00", "yasak_bit": "07:00"}
     for saat, beklenen in ((20, False), (21, True), (23, True), (2, True),

@@ -152,6 +152,10 @@ VARSAYILAN = {
 
     # Günlük ekran süresi sınırı, dakika. 0 = sınır yok.
     "gunluk_sinir_dk": 0,
+    # AILE KIPI KERTMESI: {"gun": "YYYY-AA-GG", "sn": <gorulen en yuksek>}
+    # Ekran suresi gun icinde geri gidemez. Geri giderse istatistik
+    # dosyasi kurcalanmis demektir; ebeveyne uyari cikar.
+    "ekran_isareti": None,
     # Ebeveynin verdiği ek sürenin bitiş anı (time.time()).
     # Sınır dolduğunda ebeveyn şifreyle ek süre verebiliyor.
     "ek_sure_bitis": 0,
@@ -1371,8 +1375,57 @@ class Uygulama:
                 self.ist.update(veri)
         except Exception:
             pass
+        # Dosya okundu; simdi GUVENILIR MI diye sor.
+        self._sayac_isaretini_dogrula()
+
+    # Kertme toleransi: isaret ile istatistik AYRI dosyalara, AYRI
+    # anlarda yaziliyor. Program tam aralarinda kapanirsa isaret bir
+    # kayit araligi (30 sn) kadar ileride kalabilir. 90 sn, bunu rahatca
+    # kapsar ve gercek bir geri almayi (dakikalar/saatler) kacirmaz.
+    ISARET_TOLERANSI_SN = 90
+
+    def _sayac_isaretini_dogrula(self):
+        """Ekran suresi gun icinde geri gitmis mi? Aile kipinde onemli.
+
+        Bireysel kipte hicbir sey yapmaz: orada kullanici kendi
+        verisinin sahibidir, sifirlamak mesrudur.
+        """
+        self.sayac_oynanmis = False
+        if not aile_kipinde_mi(self.ayar):
+            return
+        bugun = time.strftime("%Y-%m-%d")
+        simdiki = sayi_oku(self.ist.get("ekran_sn"), None)
+        if simdiki is None:
+            return                      # bozuk deger: ayar_uyarisi ilgileniyor
+
+        isaret = self.ayar.get("ekran_isareti")
+        if isinstance(isaret, dict) and isaret.get("gun") == bugun:
+            onceki = sayi_oku(isaret.get("sn"), None)
+            if onceki is not None and simdiki < onceki - self.ISARET_TOLERANSI_SN:
+                # Dusuk degere GUVENMIYORUZ. Sessizce duzeltmek de
+                # yanlis olurdu - ebeveyn bilmeli.
+                self.ist["ekran_sn"] = onceki
+                self.sayac_oynanmis = True
+                return
+        self._sayac_isaretini_tazele()
+
+    def _sayac_isaretini_tazele(self):
+        """Gorulen en yuksek degeri isaretler. Yalnizca ileri gider."""
+        if not aile_kipinde_mi(self.ayar):
+            return
+        bugun = time.strftime("%Y-%m-%d")
+        simdiki = sayi_oku(self.ist.get("ekran_sn"), None)
+        if simdiki is None:
+            return
+        isaret = self.ayar.get("ekran_isareti")
+        onceki = 0.0
+        if isinstance(isaret, dict) and isaret.get("gun") == bugun:
+            onceki = sayi_oku(isaret.get("sn"), 0.0)
+        if simdiki >= onceki:
+            self.ayar["ekran_isareti"] = {"gun": bugun, "sn": float(simdiki)}
 
     def _istatistik_yaz(self):
+        self._sayac_isaretini_tazele()
         try:
             os.makedirs(KAYIT_KLASOR, exist_ok=True)
             with open(IST_DOSYA, "w", encoding="utf-8") as f:
@@ -2221,6 +2274,10 @@ class Uygulama:
             return "⚠ Günlük sınır okunamadı — sınır uygulanmıyor"
         if sayi_oku(ham, 0) > 0 and sayi_oku(self.ist.get("ekran_sn"), None) is None:
             return "⚠ Ekran süresi sayacı bozuk — sınır uygulanmıyor"
+        if getattr(self, "sayac_oynanmis", False):
+            return ("⚠ Ekran süresi sayacı geri alınmış — "
+                    "kayıt dosyası düzenlenmiş olabilir. Bugünün "
+                    "süresi son bilinen değerden devam ediyor.")
         ham_ek = self.ayar.get("ek_sure_bitis", 0) or 0
         if ham_ek and sayi_oku(ham_ek, None) is None:
             return "⚠ Ek süre ayarı bozuk — sınır uygulanmıyor"
@@ -3446,7 +3503,10 @@ class Uygulama:
         tk.Label(p, text="Denendi, atlatılamıyor: sistem saatini geri ya da "
                          "ileri almak, gece yarısını bekleyip sınırı "
                          "sıfırlatmak, ayarlara girip kipi kapatmak, molayı "
-                         "kısayolla geçmek.",
+                         "kısayolla geçmek.\n"
+                         "Kayıt dosyasını düzenleyip ekran süresini geri almak "
+                         "da yakalanıyor: süre gün içinde geri gidemez ve "
+                         "denenirse burada uyarı çıkar.",
                  font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
                  wraplength=400, justify="left").pack(padx=26, pady=(6, 0),
                                                       anchor="w")

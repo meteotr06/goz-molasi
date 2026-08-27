@@ -133,6 +133,28 @@ sandığından zayıf olmasıdır. Aşağıdakiler denendi ve ölçüldü.
 | Ayarlara girip kipi kapatma | Şifre ister |
 | Molayı Ctrl+Alt+Shift ile atlama | Aile kipinde şifre ister |
 | Yaz/kış saati, NTP eşitlemesi | Sayaç bozulmuyor |
+| `istatistik.json`'u düzenleyip ekran süresini sıfırlama | Yakalanıyor: süre gün içinde geri gidemez, ebeveyne uyarı çıkar |
+
+### Sessiz atlatma vs. görünür atlatma
+
+27.08.2026'da ölçüldü ve bu ayrım en önemlisi çıktı. Çocuk
+`istatistik.json` dosyasındaki `ekran_sn` değerini sıfırlayınca günlük
+sınır tamamen kalkıyordu — **ve ebeveyn hiçbir şey görmüyordu**: kip
+açık, şifre yerinde, sınır yazılı, uyarı yok.
+
+Belgelenmiş atlatmalardan farkı buydu: onlar **iz bırakıyor**
+(ayarlar.json silinince aile kipi kapanır, ebeveyn fark eder), bu
+bırakmıyordu.
+
+Önlenemiyor — dosya çocuğun kendi kullanıcı klasöründe. Ama artık
+**görünür**: ekran süresi gün içinde geri gidemez (kertme), daha düşük
+bir değer görülürse son bilinen değer kullanılır ve ebeveyne uyarı
+çıkar. Kararlı bir çocuk `ayarlar.json`'daki işareti de düzenler — ama
+o dosyaya dokunmak zaten görünür sonuçlar doğuruyor. Kazanılan şey:
+**tek bir dosyayı değiştirerek sessizce atlatılamıyor.**
+
+> **Sessiz atlatma, gürültülü atlatmadan tehlikelidir.** Gürültülüsünde
+> ebeveyn bilir ve karar verir; sessizinde korunduğunu sanır.
 
 ### Atlatılabiliyor — ebeveyn bunları bilmeli
 
