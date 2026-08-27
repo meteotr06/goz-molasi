@@ -85,6 +85,19 @@ def damga_tutarli_mi(surum):
 
     Kök sebep her iki durumda da aynı: elle damgalamak. Aracı var
     (`surum_ekle.py`) ve tek yerden basıyor.
+
+    ⚠️ BU DENETİM HER PROJEYE UYMAZ — başka projeye kopyalamadan önce oku.
+    Burada geçerli olmasının sebebi, `surum_ekle.py`'nin BÜTÜN dosyalara
+    AYNI sürümü basması. İki geçerli strateji var:
+      • tek tip damga (burası): hepsi aynı sürüm
+      • dosya başına damga (06 Planlayıcı): her dosya kendi son
+        değişim sürümünde kalır — daha az gereksiz indirme
+    İkincisinde farklı sayılar görmek NORMALDİR. 27.08.2026'da ölçüldü:
+    Planlayıcı'da `stil.css?v=17` / betikler `?v=19` "hata" sanıldı;
+    canlı ve yerel stil.css'in md5'i BİREBİR AYNI çıktı — damga doğru
+    çalışıyordu. Görünüşe bakan denetim yanlış alarm üretti.
+    Doğru soru "damgalar eşit mi" değil, "kullanıcı eski dosyayı alıyor
+    mu" — onu ölçmek için canlı ile yereli karşılaştır.
     """
     kalan = []
     for sayfa in SAYFALAR:
