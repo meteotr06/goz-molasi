@@ -961,8 +961,11 @@
   if (!iOS && !android && !uygulamaKipi) {
     setTimeout(() => {
       if (!kurulumOlayi && serit.classList.contains('gizli')) {
-        seridiGoster('Uygulama olarak kurulabilir',
-                     'Tarayıcı çubuğu olmadan, kendi penceresinde çalışır',
+        // C() SART: bu iki metinde hic cgiosu harfi YOK, o yuzden
+        // harf tabanli dil taramasi onlari GORMUYOR. Ucuncu arguman
+        // zaten C() ile sarilmisti; ilk ikisi unutulmus.
+        seridiGoster(C('Uygulama olarak kurulabilir'),
+                     C('Tarayıcı çubuğu olmadan, kendi penceresinde çalışır'),
                      C('Nasıl?'));
       }
     }, 3000);
@@ -1036,7 +1039,28 @@
 
   function ekraniCiz(d) {
     og.govde.dataset.durum = d.durum;
-    og.durum.textContent = C(DURUM_ADI[d.durum]) || '';
+    /* DURAKLATMA TURUNU SOYLE.
+       Olculdu: suresiz ve 5 dakikalik duraklatma ekranda BIREBIR
+       ayni goruniyordu ("Duraklatildi"). Biri donecek, obru asla -
+       kullanici hangisinde oldugunu bilemiyordu.
+
+       Geri sayim DEGIL saat yaziyoruz: duraklatilmisken `tik` ve
+       `degisti` yayilmiyor, ekran yenilenmiyor. Canli sayac ilk
+       degerinde donup kalir ve yeni bir yalan olurdu. */
+    if (d.durum === 'duraklatildi') {
+      const bitis = motor.duraklatmaBitis || 0;
+      if (bitis > Date.now()) {
+        const t = new Date(bitis);
+        const ss = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+        og.durum.textContent = CS(`Duraklatıldı · ${ss}'de devam eder`,
+                                  `Paused · resumes at ${ss}`);
+      } else {
+        og.durum.textContent = CS('Duraklatıldı · sen başlatana kadar bekler',
+                                  'Paused · waits until you start it');
+      }
+    } else {
+      og.durum.textContent = C(DURUM_ADI[d.durum]) || '';
+    }
 
     if (d.durum === 'mola') {
       og.sure.textContent = `${Math.ceil(d.kalan)}`;

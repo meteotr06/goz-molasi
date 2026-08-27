@@ -186,6 +186,37 @@
     ekle('duraklatma', 'bitiş anı kayda yazılıyor',
          +kayit.duraklatmaBitis > Date.now(), String(kayit.duraklatmaBitis));
 
+    // 8) EKRANDA iki duraklatma turu AYIRT EDILEBILIYOR mu?
+    //    Olculdu: ikisi de sadece "Duraklatildi" diyordu. Biri bes
+    //    dakika sonra donecek, obru ASLA. Ayni etiket, iki farkli
+    //    davranis - kullanici hangisinde oldugunu bilemiyordu.
+    {
+      // Oge adi `durum` DEGIL `durumYazi`. Yanlis adla arayan
+      // sinama bos dizgi karsilastirip sessizce dusuyordu.
+      const etiket = () => (document.getElementById('durumYazi') || {}).textContent || '';
+      const oncekiDurum = molaMotoru.durum;
+      const oncekiBitis = molaMotoru.duraklatmaBitis;
+
+      molaMotoru.duraklat();                       // suresiz
+      const suresiz = etiket();
+      molaMotoru.devamEt();
+      molaMotoru.duraklat(300);                    // sureli
+      const sureli = etiket();
+      molaMotoru.devamEt();
+
+      ekle('duraklatma', 'süresiz duraklatma ekranda belli oluyor',
+           suresiz.length > 0 && /başlat|start/i.test(suresiz), suresiz);
+      // NOT: bu uc madde iki dilde de gecerli - kaliplar hem
+      // Turkce hem Ingilizce karsiligi ariyor.
+      ekle('duraklatma', 'süreli duraklatma ne zaman döneceğini yazıyor',
+           /\d{1,2}:\d{2}/.test(sureli), sureli);
+      ekle('duraklatma', 'iki duraklatma türü ekranda FARKLI',
+           suresiz !== sureli, suresiz + ' | ' + sureli);
+
+      molaMotoru.durum = oncekiDurum;
+      molaMotoru.duraklatmaBitis = oncekiBitis;
+    }
+
     // 7) Mola sırasında duraklatma YOK — eski kural bozulmamalı.
     const g = new MolaMotoru(A);
     g.basla(); g.molayaGec(); g.duraklat(300);
@@ -276,6 +307,23 @@
 
   /* ---------- 4. DİL ---------- */
   {
+    /* BU BOLUM YALNIZCA INGILIZCE KIPTE ANLAMLI.
+       28.08.2026'da olculdu: sayfa Turkce'yken bu maddeler dusuyordu
+       ve hicbiri kodda degildi - `C()` Turkce kipte ozgun metni
+       dondurur, dogru davranis budur. Sinamalarimi yalnizca Ingilizce
+       kipte dogrulamisim; Turkce kullanan biri suiti kossa hepsi
+       kirmizi yanar ve gercek hata sanilirdi.
+
+       Sinamanin hangi VERIYLE kostugu kadar hangi DURUMDA kostugu da
+       onemli. Dil bir durumdur.
+
+       Atlamayi SESSIZ yapmiyoruz: atlanan madde de raporlanir, yoksa
+       "gecti" ile "hic bakilmadi" ayni gorunur. */
+    const ingilizceKipte = (typeof aktifDil === 'function') && aktifDil() === 'en';
+    if (!ingilizceKipte) {
+      ekle('dil', 'çeviri denetimleri ATLANDI (sayfa Türkçe)', true,
+           'İngilizce kipte çalıştırın: dil düğmesi → EN');
+    }
     /* EGZERSİZ METİNLERİ — kaynağa bakan denetim.
        28.08.2026'da ölçüldü: İngilizce sayfada mola ekranı TÜRKÇE
        kalıyordu. "Nokta büyüyünce parmağına, küçülünce uzağa bak" —
@@ -304,7 +352,8 @@
         for (const a of OZEL2) m = m.split(a).join('');
         return /[çğıöşüÇĞİÖŞÜ]/.test(m);
       };
-      const NITELIKLER = ['aria-label', 'title', 'placeholder', 'alt'];
+      const NITELIKLER = ingilizceKipte
+        ? ['aria-label', 'title', 'placeholder', 'alt'] : [];
       const supheli = [];
       let bakilan = 0;
       for (const nit of NITELIKLER) {
@@ -320,11 +369,15 @@
       /* SIFIR SONUC "GECTI" DEMEK DEGILDIR. Bugun bu tuzaga bir kez
          dustum: yanlis adla arayip sifir oge buldum ve "hepsi
          cevrildi" dedim. Kac sey inceledigimizi de raporluyoruz. */
-      ekle('dil', 'incelenen gizli metin sayısı > 0', bakilan > 0,
-           bakilan + ' nitelik');
-      ekle('dil', 'aria-label/title metinlerinde Türkçe kalmadı',
-           supheli.length === 0,
-           supheli.length ? supheli.join(' | ') : bakilan + ' nitelik temiz');
+      if (ingilizceKipte) {
+        ekle('dil', 'incelenen gizli metin sayısı > 0', bakilan > 0,
+             bakilan + ' nitelik');
+      }
+      if (ingilizceKipte) {
+        ekle('dil', 'aria-label/title metinlerinde Türkçe kalmadı',
+             supheli.length === 0,
+             supheli.length ? supheli.join(' | ') : bakilan + ' nitelik temiz');
+      }
     }
 
     const liste = (typeof TUM_EGZERSIZLER !== 'undefined') ? TUM_EGZERSIZLER : null;
@@ -334,7 +387,7 @@
          Hiçbir şey ölçmeyen sınama, geçmiş sayılmaz. */
       ekle('dil', 'egzersiz listesi bulunamadı — ÖLÇÜM YAPILMADI', false,
            'TUM_EGZERSIZLER yok');
-    } else {
+    } else if (ingilizceKipte) {
       const eksik = [];
       for (const S of liste) {
         if (!S.ad) continue;

@@ -16,6 +16,13 @@
 const DIL_ANAHTAR = 'goz-molasi-dil';
 
 const SOZLUK = {
+  /* ---- Kurulum şeridi ----
+     DİKKAT: bu iki metinde hiç çğıöşü YOK; sınamanın harf tabanlı
+     taraması onları göremez. 28.08.2026'da gözle bulundu. */
+  'Uygulama olarak kurulabilir': 'Can be installed as an app',
+  'Tarayıcı çubuğu olmadan, kendi penceresinde çalışır':
+    'Runs in its own window, without the browser bar',
+
   /* ---- Tema adları ----
      `title` ve `aria-label` olarak yazılıyorlar; gözle görünmezler.
      DİKKAT: "Okyanus", "Kiraz", "Lavanta", "Buz", "Kum", "Zeytin",
