@@ -134,7 +134,7 @@ VARSAYILAN = {
     # KOPRU: tarayici surumu, Windows surumunun sayacini okuyabilsin.
     # Kapatilabilir olmasi onemli - kullanici istemiyorsa bilgisayarinda
     # bir ag ucu acik kalmamali.
-    "kopru": True,            # kilit açıkken zorla kapatılırsa geri açsın mı
+    "kopru": True,          # yerel okuma ucu acilsin mi            # kilit açıkken zorla kapatılırsa geri açsın mı
     # SESSİZ ÖLÇÜM: program açık kalır, ekran süresini ve hangi programda
     # ne kadar durduğunu ölçmeye devam eder, ama MOLA VERMEZ ve ekrana
     # hiçbir şey çıkarmaz. Toplantı, oyun, film, sunum için.
@@ -1926,18 +1926,42 @@ class Uygulama:
                 return varsayilan
             return int(s)
 
+        donmus = self.durum in ("bosta", "duraklatildi", "saat_disi")
         return {
             "kaynak": "windows",
+            # Tarayici bu iki alani OKUMAK ZORUNDA. Eskiden pakete
+            # konuyor ama hic okunmuyordu; butun hayalet mola hatasi
+            # buradan cikti - veri gonderilmis, karar verilmemisti.
+            "sayiyor": self.durum in ("calisiyor", "uyari"),
+            "donmus": donmus,
             "surum": SURUM,
             "an": time.time(),
             "durum": self.durum,
-            "kalan_sn": max(0, tam(self.hedef - time.time())),
+            # DONMUS DURUMLAR: bosta / duraklatildi / saat_disi iken
+            # `hedef` ILERLEMIYOR, yalnizca cizim `dondurulmus` ile
+            # donuyor. Ham `hedef - now` yayinlamak sayiyi sifira
+            # indiriyordu ve tarayici bos yere molaya giriyordu -
+            # ogle molasinda ~50 sahte mola, hepsi istatistige yazili.
+            # Kopru EKRANDA YAZAN sayiyi soyler.
+            "kalan_sn": max(0, tam(self._kopru_kalan())),
             "calisma_dk": tam(self.ayar.get("calisma_dk"), 20),
             "mola_sn": tam(self.ayar.get("mola_sn"), 20),
             "gun": time.strftime("%Y-%m-%d"),
             "tamamlanan": tam(self.ist.get("tamamlanan")),
             "ekran_sn": tam(self.ist.get("ekran_sn")),
         }
+
+    def _kopru_kalan(self):
+        """Ekranda yazan kalan sureyi verir - koprunun tek dogru kaynagi.
+
+        `_tik` icindeki cizim mantiginin aynisi:
+          donmus durumlar   -> self.dondurulmus
+          sadece_olc        -> hedef her tikte tazeleniyor, tam sure
+          normal            -> hedef - simdi
+        """
+        if self.durum in ("bosta", "duraklatildi", "saat_disi"):
+            return float(self.dondurulmus or 0)
+        return self.hedef - time.time()
 
     def cik(self):
         if not self.izin_al("Programı kapatmak için şifreni gir."):

@@ -77,6 +77,61 @@ def uygulama_tarafi(kontrol):
 
     d = Sahte({"tamamlanan": 3, "ekran_sn": 7420.7})._kopru_verisi()
     kontrol("paket: kaynak windows", d.get("kaynak") == "windows")
+
+    # ---------------- DURUMLAR ----------------
+    # 27.08.2026, bagimsiz denetimde bulundu: bu sinama YALNIZCA
+    # "calisiyor" durumunu olcuyordu. Hayalet mola hatasinin yasadigi
+    # butun durumlar (bosta / duraklatildi / saat_disi / olcuyor)
+    # hic olculmemisti. Tek durumda gecen bir sinama, o durumun
+    # disindaki hicbir sey icin kanit degildir.
+    #
+    # HATA NEYDI: donmus durumlarda `hedef` ILERLEMIYOR, yalnizca
+    # cizim `dondurulmus` ile donuyor. Kopru ham `hedef - now`
+    # yayinliyordu -> sayi sifira iniyor -> tarayici 25 saniyede bir
+    # SAHTE MOLA veriyordu. Ogle molasinda ~50 sahte mola, hepsi
+    # istatistige kalici yaziliyordu.
+    class Durumlu(Sahte):
+        def __init__(self, durum, dondurulmus=None, kalan=493):
+            Sahte.__init__(self, {}, kalan)
+            self.durum = durum
+            self.dondurulmus = dondurulmus
+
+    # (durum, dondurulmus, sayiyor_olmali, beklenen_kalan)
+    DURUMLAR = [
+        ("calisiyor",    None, True,  493),
+        ("uyari",        None, True,  493),
+        ("bosta",        630,  False, 630),
+        ("duraklatildi", 300,  False, 300),
+        ("saat_disi",    900,  False, 900),
+        ("mola",         None, False, 493),
+        ("olcuyor",      None, False, 493),
+    ]
+    for durum, dondurulmus, sayiyor, beklenen in DURUMLAR:
+        p = Durumlu(durum, dondurulmus)._kopru_verisi()
+        kontrol("durum %-13s -> sayiyor=%s" % (durum, sayiyor),
+                p.get("sayiyor") is sayiyor,
+                "sayiyor=%r" % p.get("sayiyor"))
+        kontrol("durum %-13s -> kalan %d sn" % (durum, beklenen),
+                abs(p.get("kalan_sn", -1) - beklenen) <= 1,
+                "kalan_sn=%r (beklenen %d)" % (p.get("kalan_sn"), beklenen))
+
+    # DONMUS DURUM ZAMANLA SIFIRA INMEMELI - hatanin ta kendisi buydu.
+    # `hedef`i cok geriye alip donmus sayacin ETKILENMEDIGINI gosteriyoruz.
+    donuk = Durumlu("bosta", 630)
+    donuk.hedef = time.time() - 5000        # hedef coktan gecti
+    p = donuk._kopru_verisi()
+    kontrol("bosta iken hedef gecse bile kalan DUSMUYOR",
+            abs(p["kalan_sn"] - 630) <= 1,
+            "kalan_sn=%r -> tarayici bunu 0 gorup SAHTE MOLA verirdi"
+            % p.get("kalan_sn"))
+    kontrol("bosta iken sayiyor=False (tarayici dokunmaz)",
+            p["sayiyor"] is False)
+
+    # Calisirken hedef gectiyse 0 gorunmeli (dogru davranis)
+    biten = Durumlu("calisiyor")
+    biten.hedef = time.time() - 10
+    kontrol("calisirken hedef gectiyse kalan 0",
+            biten._kopru_verisi()["kalan_sn"] == 0)
     kontrol("paket: kalan süre doğru", 490 <= d.get("kalan_sn", 0) <= 494,
             repr(d.get("kalan_sn")))
 

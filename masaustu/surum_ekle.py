@@ -30,9 +30,18 @@ print("surum:", SURUM)
 
 # Sürümlenecek yerel dosyalar (ikonlar hariç — onlar nadiren degisiyor
 # ve manifest'ten de referans veriliyor)
+# 27.08.2026: burada ELLE YAZILMIS bir dosya listesi vardi
+# (stil|cekirdek|dil|...). Yeni eklenen `kopru.js` listede olmadigi icin
+# arac onu HIC damgalamadi: surum v84'e cikti, kopru.js v83'te kaldi.
+# Sessiz hataydi - arac "10 baglanti damgalandi" deyip basariyla bitti.
+# Yakalayan sey damga_denetle.py'nin yeni tutarlilik denetimi oldu.
+#
+# Liste yerine DESEN: yereldeki her .js/.css damgalanir. Boylece yeni
+# dosya eklerken ikinci bir yeri guncellemeyi unutmak IMKANSIZ.
+# Adres icinde egik cizgi olmadigi icin dis baglantilar (https://...)
+# eslesmiyor; ikonlar zaten .png.
 HEDEF = re.compile(
-    r'(src|href)="(\./)?((?:stil|cekirdek|dil|bilgiler|bilgiler_en|'
-    r'mola_icerik|arayuz|egzersiz|reklam|dunya)\.(?:js|css))(\?s=v\d+)?"'
+    r'(src|href)="(\./)?([A-Za-z0-9_-]+\.(?:js|css))(\?s=v\d+)?"'
 )
 
 for ad in SAYFALAR:

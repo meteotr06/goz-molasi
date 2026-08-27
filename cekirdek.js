@@ -304,6 +304,37 @@ class MolaMotoru {
     return bas < bit ? (su >= bas && su < bit) : (su >= bas || su < bit);
   }
 
+  /**
+   * KÖPRÜ DEVRALMA — Windows sürümünden gelen CANLI sayacı benimser.
+   *
+   * NEDEN AYRI BİR YOL: Önce `sayaciGeriYukle` kullanılıyordu ve bu
+   * ciddi bir tasarım hatasıydı. O işlev "sekme KAPALIYDI, diskteki
+   * anlık görüntüden devam et" durumu için yazılmış; içinde iki kural
+   * var ve ikisi de canlı veride zararlı:
+   *
+   *   1. `kalan <= 0` ise "kaçırılmış mola" sayıp 25 saniye sonraya
+   *      mola kuruyor. Windows boştayken köprü 0 gönderiyordu (orada
+   *      sayaç donuyor ama `hedef` ilerlemiyordu) — tarayıcı 25
+   *      saniyede bir sahte mola veriyordu. Öğle molasında ~50 sahte
+   *      mola, hepsi istatistiğe KALICI yazılıyordu.
+   *   2. `kalan > calismaSuresi` ise reddediyor. Masaüstünde "Ders"
+   *      kipi (25 dk) seçiliyse tarayıcının 20 dk sınırını aşıyor ve
+   *      devralma HER SEFERİNDE sessizce başarısız oluyordu.
+   *
+   * Köprü canlı ve yetkili bir kaynak; diskten okunan bayat bir
+   * görüntü değil. O yüzden hiçbir tahmin kuralı uygulanmaz:
+   * gelen sayı NE İSE o kurulur.
+   *
+   * Çağıran taraf `sayiyor` alanını kontrol etmekle yükümlü —
+   * Windows saymıyorken burası çağrılmamalı.
+   */
+  kopruyuBenimse(kalanSn) {
+    const kalan = Number(kalanSn);
+    if (!Number.isFinite(kalan) || kalan < 0) return false;
+    this._asamayaGec('calisiyor', kalan);
+    return true;
+  }
+
   /* ---------- Yardımcılar ---------- */
   _asamayaGec(yeniDurum, saniye) {
     this.durum = yeniDurum;

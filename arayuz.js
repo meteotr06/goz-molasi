@@ -2149,17 +2149,31 @@
 
     const uygula = (veri) => {
       if (!veri || !devralinabilir()) return;
+
+      /* WINDOWS SAYMIYORSA SAYACA DOKUNMA.
+         Bu satır bir hata düzeltmesidir, incelik değil. Eskiden bu
+         denetim YOKTU: Windows boşta/duraklamış/çalışma saati dışında
+         iken köprü sıfıra inen bir sayı gönderiyordu ve tarayıcı 25
+         saniyede bir SAHTE MOLA veriyordu. Bir öğle molasında ~50
+         sahte mola üretiyor, hepsi istatistiğe kalıcı yazılıyordu.
+
+         Yani köprü, önlemek için yazıldığı şeyi — "süre başa sardı"
+         hissini — kendisi üretiyordu.
+
+         `sayiyor` alanı pakette VARDI ama okunmuyordu. Veri
+         gönderilmiş, karar verilmemişti. */
+      if (veri.sayiyor === false) return;
+
       const kalan = Math.max(0, Math.round(+veri.kalan_sn));
 
       // Zaten aynıysa dokunma. Her 5 saniyede sayacı yeniden kurmak
       // ekranda titreme ve ilerleme çubuğunda geri sıçrama yapar.
       if (Math.abs(motor.kalanSaniye() - kalan) < 3) return;
 
-      const uyduMu = motor.sayaciGeriYukle({
-        hedefZaman: Date.now() + kalan * 1000,
-        kayitAni: Date.now(),
-        durum: 'calisiyor',
-      });
+      // sayaciGeriYukle DEĞİL: o yol "sekme kapalıydı" durumu için ve
+      // içindeki iki tahmin kuralı canlı veride zarar veriyor.
+      // Gerekçesi cekirdek.js/kopruyuBenimse başında yazılı.
+      const uyduMu = motor.kopruyuBenimse(kalan);
       if (!uyduMu) return;
 
       // Devraldıysak "uygulama X dakika kapalıydı" notu artık yanlış:
