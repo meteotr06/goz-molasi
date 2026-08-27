@@ -1894,13 +1894,19 @@ class Uygulama:
         Açılmazsa uygulama normal çalışır; köprü bir kolaylıktır.
         """
         self.kopru = None
+        # DÜRÜSTLÜK NOTU: bu alan şu an HİÇBİR YERDE gösterilmiyor.
+        # Eskiden yanındaki yorumda "Bilgiler sekmesi bunu gösteriyor"
+        # yazıyordu — masaüstü sürümünde öyle bir sekme yok (sekmeler:
+        # Programlar, 7 gün). Yorum yanlıştı; kaldırmak yerine gerçeği
+        # yazıyoruz. Köprü açılmazsa kullanıcı bunu ancak tarayıcıda
+        # eşitleme notunun ÇIKMAMASINDAN anlar. Eksik, ama artık
+        # "gösteriliyor" diye yanlış bir güven vermiyor.
+        self.kopru_hatasi = None
         if not self.ayar.get("kopru", True):
             return
         try:
             self.kopru = kpr.Kopru(self._kopru_verisi)
             if not self.kopru.baslat():
-                # Sessizce yutmuyoruz: Bilgiler sekmesi bunu gösteriyor.
-                # "Neden eşitlenmiyor" sorusunun cevabı burada.
                 self.kopru_hatasi = self.kopru.hata
                 self.kopru = None
         except Exception as e:

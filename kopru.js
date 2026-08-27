@@ -81,7 +81,7 @@
         // Sekme arka plandayken sormanın anlamı yok: kullanıcı bakmıyor,
         // hem pil hem istek boşa gidiyor. Öne gelince zaten sorulacak.
         if (document.hidden) {
-          setTimeout(tur, aralik);
+          zamanlayici = setTimeout(tur, aralik);
           return;
         }
         const veri = await sor(ILK_ZAMAN_ASIMI);
@@ -94,16 +94,28 @@
         }
         aralik = varMi ? SORGU_ARALIGI
                        : Math.min(EN_UZUN_ARALIK, aralik * 2);
-        setTimeout(tur, aralik);
+        zamanlayici = setTimeout(tur, aralik);
       };
 
-      setTimeout(tur, SORGU_ARALIGI);
-      document.addEventListener('visibilitychange', () => {
-        // Sekmeye dönüldüğünde beklemeden tazele; "süre başa sardı"
-        // hissi en çok tam burada oluşuyor.
-        if (!document.hidden) { aralik = SORGU_ARALIGI; tur(); }
-      });
-      return () => { durduruldu = true; };
+      // TEK ZİNCİR. Eskiden `visibilitychange` bekleyen zamanlayıcıyı
+      // İPTAL ETMEDEN `tur()` çağırıyordu: her gizle→göster çevrimi bir
+      // zincir daha ekliyordu. Bir iş gününde 200 sekme geçişi = 200
+      // eşzamanlı zincir, saniyede onlarca istek, boşa giden pil.
+      // Ayrıca paylaşılan `aralik` zincirler arasında eziliyor ve geri
+      // çekilme mantığı bozuluyordu.
+      let zamanlayici = setTimeout(tur, SORGU_ARALIGI);
+      const tazele = () => {
+        if (durduruldu || document.hidden) return;
+        clearTimeout(zamanlayici);          // bekleyeni İPTAL ET
+        aralik = SORGU_ARALIGI;
+        tur();
+      };
+      document.addEventListener('visibilitychange', tazele);
+      return () => {
+        durduruldu = true;
+        clearTimeout(zamanlayici);
+        document.removeEventListener('visibilitychange', tazele);
+      };
     },
   };
 })();

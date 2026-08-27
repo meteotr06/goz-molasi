@@ -37,14 +37,30 @@ SORUN
 """
 import json
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import socket
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = 8452          # 8451 dosya sunucusunun (Telefona Sunucu Ac.bat)
 
 # Yalnızca uygulamanın kendi sayfaları. Yerel portu tek tek yazmak yerine
 # önekle bakıyoruz; kullanıcı sunucuyu hangi portta açarsa açsın çalışsın.
-IZINLI_ONEK = ("http://localhost:", "http://127.0.0.1:")
-IZINLI_TAM = ("https://meteotr06.github.io",)
+IZINLI_ONEK = ("http://localhost:", "http://127.0.0.1:", "http://[::1]:")
+# YAYINDAKI ADRES BILEREK LISTEDE DEGIL.
+#
+# Once vardi, cikarildi. Iki sebep:
+#   1) Olculdu (27.08.2026): yayindaki sayfa zaten ulasamiyor
+#      (ERR_BLOCKED_BY_CLIENT - tarayici eklentisi kesiyor). Yani izin
+#      FAYDA saglamiyordu.
+#   2) O izin, sayfadaki HER betige geciyordu - reklam betikleri dahil.
+#      Proje AdSense onayi bekliyor. Ele gecirilmis tek bir reklam ya da
+#      tek bir XSS, `ekran_sn` degerini okuyup disari yollayabilirdi:
+#      hem "bu kisi su an bilgisayarinin basinda" sinyali hem de iyi bir
+#      parmak izi. Ayrica o adreste dort uygulama birden duruyor; izin
+#      hepsine veriliyordu.
+#
+# Riski bugunden aliyor, faydayi hic vermiyordu. Yerelden acilan sayfa
+# zaten calisiyor ve garanti edilen yol o.
+IZINLI_TAM = ()
 
 
 def _izinli_mi(kaynak):
@@ -75,6 +91,25 @@ class Kopru:
         kopru = self
 
         class Islem(BaseHTTPRequestHandler):
+            # Askidaki bir baglanti butun kopruyu kilitlemesin.
+            # `telnet 127.0.0.1 8452` yazip bekleyen biri, zaman asimi
+            # olmadan `readline()` icinde sunucuyu SONSUZA KADAR tutuyordu
+            # ve bu hicbir yerde gorunmuyordu. Aile kipinde bunu bir cocuk
+            # uc kelimeyle yapabilirdi.
+            timeout = 5
+
+            def _konak_yerel_mi(self):
+                """DNS REBINDING savunmasi.
+
+                CORS tek basina yetmiyor: saldirgan `kotu.example`
+                alanini 8452 portunda yayinlar, A kaydini 127.0.0.1'e
+                dondururse tarayici icin bu AYNI-KAYNAK olur ve CORS hic
+                devreye girmez. Transmission ve Zoom ayni yoldan dustu.
+                Savunma: Host basligi yerel degilse cevap verme.
+                """
+                konak = (self.headers.get("Host") or "").rsplit(":", 1)[0]
+                return konak.strip("[]") in ("127.0.0.1", "localhost", "::1")
+
             def _yanit(self, kod, govde=b"", tur="application/json"):
                 kaynak = self.headers.get("Origin")
                 self.send_response(kod)
@@ -94,6 +129,9 @@ class Kopru:
                 self._yanit(204)
 
             def do_GET(self):
+                if not self._konak_yerel_mi():
+                    self._yanit(403, b'{"hata":"konak"}')
+                    return
                 if self.path.split("?")[0] != "/durum":
                     self._yanit(404, b'{"hata":"yok"}')
                     return
@@ -109,8 +147,17 @@ class Kopru:
             def log_message(self, *a):
                 pass
 
+        # IKINCI KOPYA TESPITI - olculdu (27.08.2026).
+        # Windows'ta SO_REUSEADDR ayni adrese IKINCI bind'e izin veriyor:
+        # ikinci kopya OSError ALMIYOR, `baslat()` True donuyor, ama tek
+        # bir istek bile ona gelmiyor. Yani kopru "acildim" saniyordu.
+        # Hatanin olmamasi, calistigi anlamina gelmez.
+        if self.port and self._baskasi_dinliyor():
+            self.hata = "port %d zaten kullaniliyor (baska bir kopya?)" % self.port
+            return False
         try:
-            self.sunucu = HTTPServer(("127.0.0.1", self.port), Islem)
+            self.sunucu = ThreadingHTTPServer(("127.0.0.1", self.port),
+                                             Islem)
         except OSError as e:
             # Port dolu olabilir (ikinci kopya, başka program). Köprüsüz
             # devam ediyoruz; kullanıcı bunu Bilgiler sekmesinde görecek.
@@ -126,10 +173,27 @@ class Kopru:
         t.start()
         return True
 
+    def _baskasi_dinliyor(self):
+        """Bu portu baska biri tutuyor mu? Baglanmayi DENEYEREK bakar."""
+        s = socket.socket()
+        s.settimeout(0.4)
+        try:
+            s.connect(("127.0.0.1", self.port))
+            return True
+        except OSError:
+            return False
+        finally:
+            s.close()
+
     def durdur(self):
         if self.sunucu:
             try:
                 self.sunucu.shutdown()
+                # server_close() SART: shutdown() yalnizca dongusu
+                # durduruyor, soketi kapatmiyor. Kapatmayi cop
+                # toplayiciya birakmak, portun ne zaman birakilacagini
+                # belirsiz yapar.
+                self.sunucu.server_close()
             except Exception:
                 pass
             self.sunucu = None

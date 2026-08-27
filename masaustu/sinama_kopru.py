@@ -218,9 +218,19 @@ def main():
 
         print("--- 5) KENDİ SAYFAMIZA İZİN VAR ---")
         for bizim in ("http://localhost:8451", "http://127.0.0.1:8455",
-                      "https://meteotr06.github.io"):
+                      "http://[::1]:8451"):
             _, _, izin = iste(kaynak=bizim)
             kontrol("izin var: %s" % bizim, izin == bizim, "izin %r" % izin)
+
+        # 27.08.2026 KARAR DEĞİŞİKLİĞİ: yayındaki adres artık izinli
+        # DEĞİL. Ölçüldü, oraya zaten ulaşılamıyor (eklenti kesiyor) ama
+        # izin sayfadaki HER betiğe geçiyordu — reklam betikleri dahil.
+        # Risk bugünden alınıyor, fayda hiç gelmiyordu.
+        # (Bu satır eskiden "izin VAR" diye ölçüyordu. Koruma değişti,
+        #  koruma sınaması da değişti — kod eskimedi, sınav eskimişti.)
+        _, _, izin = iste(kaynak="https://meteotr06.github.io")
+        kontrol("yayındaki adrese izin YOK (bilinçli karar)", izin is None,
+                "izin %r" % izin)
 
         print("--- 6) BİLİNMEYEN YOL ---")
         kod, _, _ = iste("/ayarlar")
@@ -249,6 +259,34 @@ def main():
         kp._izinli_mi = gercek
         _, _, izin = iste(kaynak="https://kotusite.example")
         kontrol("koruma geri gelince yine kapalı", izin is None)
+        print("--- 7b) DNS REBINDING (Host doğrulaması) ---")
+        # CORS tek başına yetmez: saldırgan kendi alan adını 127.0.0.1'e
+        # çözdürürse tarayıcı için AYNI-KAYNAK olur ve CORS hiç devreye
+        # girmez. Transmission ve Zoom bu yoldan düştü.
+        import http.client as _hc
+        for konak, beklenen in (("127.0.0.1", 200), ("localhost", 200),
+                                ("kotu.example", 403),
+                                ("127.0.0.1.kotu.example", 403)):
+            b = _hc.HTTPConnection("127.0.0.1", k.port, timeout=4)
+            b.putrequest("GET", "/durum", skip_host=True)
+            b.putheader("Host", "%s:%d" % (konak, k.port))
+            b.endheaders()
+            kod = b.getresponse().status
+            b.close()
+            kontrol("Host %-24s -> %d" % (konak, beklenen), kod == beklenen,
+                    "gelen %d" % kod)
+
+        print("--- 7c) İKİNCİ KOPYA ---")
+        # Windows'ta SO_REUSEADDR ikinci bind'e izin veriyor: eskiden
+        # ikinci kopya hata ALMIYOR, açıldığını sanıyor, ama tek istek
+        # bile ona gelmiyordu. Hatanın olmaması, çalıştığı demek değil.
+        ikinci = kp.Kopru(veri, port=k.port)
+        acildi = ikinci.baslat()
+        kontrol("ikinci kopya açılmıyor", not acildi)
+        kontrol("ikinci kopya sebebi yazıyor", bool(ikinci.hata),
+                "hata=%r" % ikinci.hata)
+        ikinci.durdur()
+
         print("--- 8) AĞA AÇIK MI (yalnız bu bilgisayar olmalı) ---")
         # Bu, ölçülmesi gereken bir sorudur; koda bakıp "127.0.0.1
         # yazmış" demek yetmez. Bir gün biri kolaylık olsun diye
