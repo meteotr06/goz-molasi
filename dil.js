@@ -16,6 +16,41 @@
 const DIL_ANAHTAR = 'goz-molasi-dil';
 
 const SOZLUK = {
+  /* ---- Tema adları ----
+     `title` ve `aria-label` olarak yazılıyorlar; gözle görünmezler.
+     DİKKAT: "Okyanus", "Kiraz", "Lavanta", "Buz", "Kum", "Zeytin",
+     "Beyaz" Türkçe harf TAŞIMIYOR — sınamanın harf tabanlı denetimi
+     onları göremez. Buraya elle eklendiler. */
+  'Beyaz': 'White',
+  'Gece moru': 'Night purple',
+  'Dinginlik': 'Calm',
+  'Okyanus': 'Ocean',
+  'Orman': 'Forest',
+  'Şafak': 'Dawn',
+  'Gün batımı': 'Sunset',
+  'Buz': 'Ice',
+  'Lavanta': 'Lavender',
+  'Kiraz': 'Cherry',
+  'Bakır': 'Copper',
+  'Kömür (renksiz)': 'Charcoal (colourless)',
+  'Gökyüzü': 'Sky',
+  'Kum': 'Sand',
+  'Zeytin': 'Olive',
+  'Açık (gündüz)': 'Light (daytime)',
+  'Kâğıt (açık)': 'Paper (light)',
+
+  /* ---- Gezinme etiketleri (HTML'de aria-label) ---- */
+  'Bölümler': 'Sections',
+  'Diğer uygulamalar': 'Other apps',
+
+  /* ---- Ekran okuyucu ve ipucu metinleri ----
+     Gözle görünmedikleri için görsel tarama bunları yakalayamaz.
+     28.08.2026'da ölçüldü: İngilizce sayfada grafiğin aria-label'ı
+     Türkçe okunuyordu. */
+  'Link kopyalandı': 'Link copied',
+  'Paylaş': 'Share',
+  'Linki kopyala:': 'Copy the link:',
+
   /* ---- Hafta grafiği: gün adları ----
      Grafik yalnızca VERİ VARKEN çiziliyor; boş geçmişle sınama
      koşunca bu metinler DOM'da hiç olmuyor ve sınama geçiyordu. */

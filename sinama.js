@@ -122,6 +122,45 @@
        uyarı satırı, şimdi mola ekranı).
 
        Bu yüzden burası DOM'a değil KAYNAĞA bakıyor. */
+    /* GOZLE GORUNMEYEN METIN — dorduncu yuzey.
+       Yukaridaki tarama gorunur ogeleri geziyor. aria-label, title ve
+       placeholder gozle gorunmez; ekran okuyucu kullanan biri icinse
+       ekranin KENDISI odur.
+       28.08.2026'da olculdu: Ingilizce sayfada hafta grafiginin
+       aria-label'i Turkce okunuyordu — "Son yedi gun: Cum 0, ...".
+       Hicbir kullanici bunu sikayet edemez, cunku goremez. */
+    {
+      // Kendi denetleyicisi: asagidaki `turkceMi` bu bloktan SONRA
+      // tanimli. Siraya bagli sinama, tasindiginda sessizce bozulur.
+      const OZEL2 = ['Türkiye', 'Göz Molası'];
+      const trHarfVar = (t) => {
+        let m = t;
+        for (const a of OZEL2) m = m.split(a).join('');
+        return /[çğıöşüÇĞİÖŞÜ]/.test(m);
+      };
+      const NITELIKLER = ['aria-label', 'title', 'placeholder', 'alt'];
+      const supheli = [];
+      let bakilan = 0;
+      for (const nit of NITELIKLER) {
+        document.querySelectorAll('[' + nit + ']').forEach((e) => {
+          const d = (e.getAttribute(nit) || '').trim();
+          if (!d || d.length < 4) return;
+          bakilan++;
+          if (trHarfVar(d)) {
+            supheli.push(nit + '="' + d.slice(0, 44) + '"');
+          }
+        });
+      }
+      /* SIFIR SONUC "GECTI" DEMEK DEGILDIR. Bugun bu tuzaga bir kez
+         dustum: yanlis adla arayip sifir oge buldum ve "hepsi
+         cevrildi" dedim. Kac sey inceledigimizi de raporluyoruz. */
+      ekle('dil', 'incelenen gizli metin sayısı > 0', bakilan > 0,
+           bakilan + ' nitelik');
+      ekle('dil', 'aria-label/title metinlerinde Türkçe kalmadı',
+           supheli.length === 0,
+           supheli.length ? supheli.join(' | ') : bakilan + ' nitelik temiz');
+    }
+
     const liste = (typeof TUM_EGZERSIZLER !== 'undefined') ? TUM_EGZERSIZLER : null;
     if (!liste || !liste.length) {
       /* BOŞ KÜMEDE GEÇMEK YASAK. Bu denetimin ilk hâli listeyi yanlış

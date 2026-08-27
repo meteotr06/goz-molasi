@@ -858,10 +858,11 @@
       await navigator.clipboard.writeText(`${PAYLASIM.text} ${PAYLASIM.url}`);
       const eski = og.paylas.textContent;
       og.paylas.textContent = '✓';
-      og.paylas.title = 'Link kopyalandı';
-      setTimeout(() => { og.paylas.textContent = eski; og.paylas.title = 'Paylaş'; }, 1800);
+      og.paylas.title = C('Link kopyalandı');
+      setTimeout(() => { og.paylas.textContent = eski;
+                         og.paylas.title = C('Paylaş'); }, 1800);
     } catch {
-      prompt('Linki kopyala:', PAYLASIM.url);
+      prompt(C('Linki kopyala:'), PAYLASIM.url);
     }
   });
 
@@ -1117,9 +1118,14 @@
 
     // Grafiğin tamamını ekran okuyucuya tek cümlede anlat
     og.haftaGrafik.setAttribute('role', 'img');
-    og.haftaGrafik.setAttribute('aria-label',
+    // CS() ŞART: ekran okuyucu kullanan biri için BU metin grafiğin
+    // kendisidir. Gözle görünmediği için hiçbir görsel tarama onu
+    // yakalayamaz — İngilizce sayfada Türkçe okunuyordu.
+    og.haftaGrafik.setAttribute('aria-label', CS(
       'Son yedi gün: ' + gunler.map((g) => `${g.bugunMu ? 'bugün' : g.ad} ${g.sayi}`).join(', ') +
-      `. Toplam ${toplam} mola, günlük hedef ${GUNLUK_HEDEF}.`);
+        `. Toplam ${toplam} mola, günlük hedef ${GUNLUK_HEDEF}.`,
+      'Last seven days: ' + gunler.map((g) => `${g.bugunMu ? 'today' : C(g.ad)} ${g.sayi}`).join(', ') +
+        `. ${toplam} breaks in total, daily goal ${GUNLUK_HEDEF}.`));
 
     for (const g of gunler) {
       const hucre = document.createElement('div');
@@ -1791,7 +1797,7 @@
   function temaSeciciyiKur() {
     og.temaSeridi.innerHTML = TEMALAR.map((t) => `
       <button type="button" class="tema-sec" data-tema="${t.id}" role="radio"
-              aria-checked="${t.id === tema}" title="${t.ad}" aria-label="${t.ad}"
+              aria-checked="${t.id === tema}" title="${C(t.ad)}" aria-label="${C(t.ad)}"
               style="background:${t.zemin}">
         <i class="nokta1" style="background:${t.a}"></i>
         <i class="nokta2" style="background:${t.b}"></i>
