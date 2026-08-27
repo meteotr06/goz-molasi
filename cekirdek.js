@@ -133,16 +133,43 @@ class MolaMotoru {
     }
   }
 
-  duraklat() {
+  /**
+   * Duraklat. `saniye` verilirse SÜRELİ duraklatma olur ve süre
+   * dolunca kendiliğinden devam eder.
+   *
+   * NEDEN DUVAR SAATİ, ZAMANLAYICI DEĞİL:
+   * Önceden bu iş arayüzde `setTimeout` ile yapılıyordu ve sekme
+   * kapanınca zamanlayıcı ölüyordu. Ölçüldü: kullanıcı "5 dakika
+   * duraklat" diyor, sekmeyi kapatıyor, geri dönüyor ve uygulama
+   * KALICI olarak duraklamış oluyordu. Ekranda her şey normal
+   * görünüyor ama bir daha hiç mola gelmiyor.
+   *
+   * Bitiş ANI saklanınca çalışan bir zamanlayıcıya gerek kalmıyor:
+   * sekme kapalıyken de saat ilerliyor. Masaüstü sürümü bunu zaten
+   * böyle yapıyor (`duraklama_bitis`).
+   */
+  duraklat(saniye = 0) {
     if (this.durum === 'mola') return;          // mola duraklatılamaz
     this.kalanDondurulmus = this.kalanSaniye();
     this.oncekiDurum = this.durum;
     this.durum = 'duraklatildi';
+    const sn = Number(saniye);
+    this.duraklatmaBitis = (Number.isFinite(sn) && sn > 0)
+      ? Date.now() + sn * 1000
+      : 0;                                      // 0 = süresiz
     this._duyur('degisti', this.anlikDurum());
+  }
+
+  /** Süreli duraklatmanın bitmesi gerekiyor mu? */
+  duraklatmaDoldu() {
+    return this.durum === 'duraklatildi'
+      && this.duraklatmaBitis > 0
+      && Date.now() >= this.duraklatmaBitis;
   }
 
   devamEt() {
     if (this.durum !== 'duraklatildi' && this.durum !== 'bosta') return;
+    this.duraklatmaBitis = 0;
     const kalan = this.kalanDondurulmus ?? this.ayarlar.calismaSuresi;
     this._asamayaGec('calisiyor', kalan);
   }
@@ -220,6 +247,14 @@ class MolaMotoru {
 
   /* ---------- Kalp atışı ---------- */
   tik() {
+    // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile
+    // sayaç duraklamış kalıyordu — `tik` duraklatıldı durumunda hemen
+    // dönüyor ve kimse süreyi kontrol etmiyordu.
+    if (this.duraklatmaDoldu()) {
+      this.devamEt();
+      this._duyur('degisti', this.anlikDurum());
+      return;
+    }
     if (this.durum === 'duraklatildi' || this.durum === 'hazir') return;
 
     const simdi = Date.now();
@@ -392,6 +427,10 @@ class MolaMotoru {
       istatistik: this.istatistik,
       hedefZaman: this.hedefZaman,
       durum: this.durum,
+      // Süreli duraklatmanın bitiş anı. Sekme kapalıyken saat
+      // ilerlediği için, açılışta süre dolmuşsa devam edilir.
+      duraklatmaBitis: this.duraklatmaBitis || 0,
+      kalanDondurulmus: this.kalanDondurulmus ?? null,
       // Ne zaman kaydedildi — geri yüklerken "ne kadar kapalı kaldı"
       // sorusunun cevabı bu.
       kayitAni: Date.now(),
@@ -449,8 +488,27 @@ class MolaMotoru {
     if (kalan > 0 && kalan <= this.ayarlar.calismaSuresi) {
       this._kalpAtisiBaslat();
       this.hedefZaman = hedef;
-      this.durum = veri.durum === 'duraklatildi' ? 'duraklatildi' : 'calisiyor';
-      if (this.durum === 'duraklatildi') this.kalanDondurulmus = kalan;
+      /* SURELI DURAKLATMA sekme kapaliyken de biter.
+         Olculdu: eskiden "5 dakika duraklat" deyip sekmeyi kapatan
+         kullanici geri donunce KALICI olarak duraklamis oluyordu -
+         sureyi geri acacak setTimeout sekmeyle birlikte olmustu.
+         Bitis ANI saklandigi icin artik calisan bir zamanlayiciya
+         gerek yok: saat sekme kapaliyken de ilerledi. */
+      const bitis = +veri.duraklatmaBitis || 0;
+      const sureDoldu = bitis > 0 && simdi >= bitis;
+      this.durum = (veri.durum === 'duraklatildi' && !sureDoldu)
+        ? 'duraklatildi' : 'calisiyor';
+      if (this.durum === 'duraklatildi') {
+        this.duraklatmaBitis = bitis;
+        // Kaydedilmis donmus deger varsa ONU kullan: duraklatilmis
+        // sayacta `hedef - simdi` ilerlemeye devam eder ve kalan
+        // sureyi sessizce eritir.
+        const donmus = +veri.kalanDondurulmus;
+        this.kalanDondurulmus = Number.isFinite(donmus) && donmus > 0
+          ? donmus : kalan;
+      } else {
+        this.duraklatmaBitis = 0;
+      }
       this.sonHareket = simdi;
       return true;
     }

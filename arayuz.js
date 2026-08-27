@@ -1001,16 +1001,14 @@
       setTimeout(() => { motor.basla(); motor.molayaGec(); }, 400);
       history.replaceState(null, '', location.pathname);
     } else if (eylem === 'duraklat') {
-      /* motor.duraklat() süresiz durdurur — "5 dakika" işini burada
-         kuruyoruz. Motora süreli duraklatma eklemedim: sayfa kapanınca
-         zamanlayıcı zaten ölür, motorda tutmak yanlış bir söz verirdi. */
+      /* Artık motor süreli duraklatmayı kendisi biliyor.
+         Eski hâli burada `setTimeout` kuruyordu ve sekme kapanınca o
+         zamanlayıcı ölüyordu: kullanıcı "5 dakika duraklat" diyor,
+         sekmeyi kapatıyor, geri dönüyor ve uygulama KALICI olarak
+         duraklamış oluyordu. Kısayolun adında verilen söz
+         tutulmuyordu. */
       setTimeout(() => {
-        try {
-          motor.duraklat();
-          setTimeout(() => {
-            try { motor.devamEt(); } catch {}
-          }, 5 * 60 * 1000);
-        } catch {}
+        try { motor.duraklat(5 * 60); } catch {}
       }, 300);
       history.replaceState(null, '', location.pathname);
     }

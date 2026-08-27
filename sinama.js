@@ -108,6 +108,91 @@
     ekle('kip', 'özel ayarda hiçbir kip işaretli değil', true, '(elle doğrulandı)');
   }
 
+  /* ---------- 3c. SÜRELİ DURAKLATMA ---------- */
+  {
+    /* NEDEN VAR — 28.08.2026'da ölçüldü:
+       PWA kısayolu "5 dakika duraklat" diyor. Kullanıcı basıyor,
+       sekmeyi kapatıyor, geri dönüyor ve uygulama KALICI olarak
+       duraklamış oluyordu: süreyi geri açacak `setTimeout` sekmeyle
+       birlikte ölmüştü. Ekranda her şey normal, ama bir daha hiç
+       mola gelmiyor. Kullanıcı gözünü koruduğunu sanıyor.
+
+       Kısayolun ADINDA verilmiş bir söz tutulmuyordu.
+       Verilmiş bir sözü tutmamak, hiç vermemekten kötüdür.
+
+       Çözüm çalışan bir zamanlayıcı değil, BİTİŞ ANI: sekme
+       kapalıyken de saat ilerliyor. Masaüstü bunu zaten böyle
+       yapıyor (`duraklama_bitis`). */
+    const A = { calismaSuresi: 1200, molaSuresi: 20, dinlenmeEsigi: 300,
+                kapaliDevamEsigi: 1200 };
+
+    // 1) Süreli duraklatma bitiş anını kuruyor mu?
+    const a = new MolaMotoru(A);
+    a.basla(); a.duraklat(300);
+    ekle('duraklatma', 'süreli duraklatma bitiş anı kuruyor',
+         a.durum === 'duraklatildi' && a.duraklatmaBitis > Date.now(),
+         a.durum);
+
+    // 2) SÜRESİZ duraklatma kendiliğinden devam ETMEMELİ.
+    //    Yeni özelliğin ESKİ davranışı bozmadığını ölçüyoruz —
+    //    eklenen her korumanın KAPATTIĞI durum da sınanmalı.
+    const b = new MolaMotoru(A);
+    b.basla(); b.duraklat();
+    ekle('duraklatma', 'süresiz duraklatma bitiş anı KURMUYOR',
+         b.duraklatmaBitis === 0);
+    b.tik();
+    ekle('duraklatma', 'süresiz duraklatma kendiliğinden devam etmiyor',
+         b.durum === 'duraklatildi', b.durum);
+
+    // 3) Süre dolunca tik devam ettiriyor mu?
+    const c = new MolaMotoru(A);
+    c.basla(); c.duraklat(300);
+    c.duraklatmaBitis = Date.now() - 1;      // süre doldu
+    c.tik();
+    ekle('duraklatma', 'süre dolunca sayaç devam ediyor',
+         c.durum === 'calisiyor', c.durum);
+    ekle('duraklatma', 'devam edince bitiş anı temizleniyor',
+         c.duraklatmaBitis === 0);
+
+    // 4) SEKME KAPALIYKEN süre dolarsa — asıl hata buydu.
+    const d = new MolaMotoru(A);
+    const yuklendi = d.sayaciGeriYukle({
+      hedefZaman: Date.now() + 600e3, kayitAni: Date.now() - 5000,
+      durum: 'duraklatildi', duraklatmaBitis: Date.now() - 1000,
+      kalanDondurulmus: 600,
+    });
+    ekle('duraklatma', 'kapalıyken süre dolduysa açılışta devam ediyor',
+         yuklendi && d.durum === 'calisiyor', d.durum);
+
+    // 5) Süre DOLMAMIŞSA duraklatılmış kalmalı ve kalan korunmalı.
+    const e = new MolaMotoru(A);
+    e.sayaciGeriYukle({
+      hedefZaman: Date.now() + 600e3, kayitAni: Date.now() - 5000,
+      durum: 'duraklatildi', duraklatmaBitis: Date.now() + 120e3,
+      kalanDondurulmus: 600,
+    });
+    ekle('duraklatma', 'süre dolmadıysa duraklatılmış kalıyor',
+         e.durum === 'duraklatildi', e.durum);
+    /* Kalan süre korunmalı: duraklatılmış bir sayaçta `hedef - şimdi`
+       ilerlemeye devam eder ve kalanı sessizce eritir. */
+    ekle('duraklatma', 'duraklatılmışken kalan süre erimiyor',
+         Math.abs(e.kalanSaniye() - 600) < 3,
+         Math.round(e.kalanSaniye()) + ' sn');
+
+    // 6) Kayda giriyor mu? Girmezse açılışta hiçbir şey bilinmez.
+    const f = new MolaMotoru(A);
+    f.basla(); f.duraklat(300);
+    const kayit = f.disaAktar();
+    ekle('duraklatma', 'bitiş anı kayda yazılıyor',
+         +kayit.duraklatmaBitis > Date.now(), String(kayit.duraklatmaBitis));
+
+    // 7) Mola sırasında duraklatma YOK — eski kural bozulmamalı.
+    const g = new MolaMotoru(A);
+    g.basla(); g.molayaGec(); g.duraklat(300);
+    ekle('duraklatma', 'mola sırasında duraklatılamıyor',
+         g.durum === 'mola', g.durum);
+  }
+
   /* ---------- 3b. UZUN MOLA ---------- */
   {
     /* NEDEN VAR — 28.08.2026'da olculdu:
