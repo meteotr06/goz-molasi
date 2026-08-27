@@ -1,3 +1,42 @@
+# ⚠️ ÖNCE BUNU OKU — 28.08.2026 sabahı
+
+## Windows programı ESKİ, web güncel
+
+```
+exe derlenme : 26.08 21:53
+kaynak       : 27.08 23:28
+arada        : 8 commit masaüstü işi
+```
+
+**Web sürümü v93 yayında ve her şeye sahip.** Ama bilgisayarda çalışan
+`.exe` bunların HİÇBİRİNİ içermiyor:
+
+| Eksik olan | Ne işe yarıyor |
+|---|---|
+| Köprü | Tarayıcı sürümü sayacı devralır, süre başa sarmaz |
+| Hayalet mola düzeltmesi | Boştayken sahte mola üretilmesini önler |
+| Aile kipi: 6 sessiz atlatma | Çocuk kayıt dosyasını düzenleyip sınırı kaldıramaz |
+| Ebeveyn dürüstlük metni | Neyin garanti olmadığını ayar ekranında yazar |
+| Uyarı genişliği | "Koruma uygulanmıyor" uyarıları panelden taşmaz |
+
+**Yapılacak:** `DERLE.bat` çalıştırmak. Ama o, sonunda uygulamayı
+AÇIYOR — kullanıcının kendi kararı. Sorulmadan çalıştırılmadı.
+
+Derleme sınamaları geçmeden exe üretmiyor; sınamalar şu an 8/8.
+
+## Bu gece yapılanlar
+
+Köprü (Windows ↔ tarayıcı) · hayalet mola · köprü sağlamlaştırma
+(DNS rebinding, kilitlenme, ikinci kopya) · aile kipinde 7 sessiz
+atlatma · ebeveyne dürüstlük · damga tutarlılığı + iki yeni nöbetçi ·
+okunamayan uyarılar · İngilizce çeviri kaçakları (mola ekranı, hafta
+grafiği, tema adları) · ekran okuyucu metinleri · uzun mola ·
+süreli duraklatma · duraklatma türünün ekranda görünmesi.
+
+Sınamalar: masaüstü 8/8 · web İngilizce 69/69 · web Türkçe 66/66.
+
+---
+
 # Göz Molası — ilerleme
 
 Neyin bittiğini, neyin kaldığını ve **neyin denenip bırakıldığını** tutar.
