@@ -108,6 +108,87 @@
     ekle('kip', 'özel ayarda hiçbir kip işaretli değil', true, '(elle doğrulandı)');
   }
 
+  /* ---------- 3b. UZUN MOLA ---------- */
+  {
+    /* NEDEN VAR — 28.08.2026'da olculdu:
+       cekirdek `uzunMolaOnerisi` olayini YAYIYORDU, arayuzde onu
+       DINLEYEN YOKTU. Ayar kutusu vardi, "Ders" kipi ayari aciyordu,
+       sayac iki saati dogru sayiyordu ve olay yayiliyordu... ve
+       hicbir sey olmuyordu. Ayar "acik" diyor, ozellik yok.
+
+       BILGI URETILMIS, KARAR VERILMEMIS. Bu sinif bu projede ucuncu
+       kez cikti (koprudeki `durum`, `sayiyor`, simdi bu olay).
+
+       Sonra kendi koydugum bir "koruma" ozelligi tamamen kapatti:
+       kart `durum === 'mola'` iken cikmiyordu, ama olay tam da mola
+       BITERKEN yayiliyor ve o anda durum HALA 'mola'. Makul gorunen
+       bir koruma, ozelligi sessizce kapatabilir. */
+
+    /* 1) OLAYIN DINLEYICISI VAR MI — asil hata buydu.
+          Motoru gercekten kullanmadan, dogrudan olayi tetikleyerek
+          soruyoruz: birisi buna cevap veriyor mu? */
+    const kart = document.getElementById('uzunMolaKarti');
+    ekle('uzun mola', 'öneri kartı sayfada var', !!kart);
+
+    if (kart) {
+      const oncedenGizli = kart.hidden;
+      kart.hidden = true;
+      molaMotoru._duyur('uzunMolaOnerisi', 7500);
+      /* Kart bir sonraki tikte aciliyor (mola ortusu kapansin diye),
+         o yuzden hemen bakmiyoruz. */
+      const dinleyiciVar = () => !kart.hidden;
+      setTimeout(() => {
+        ekle('uzun mola', 'olayın dinleyicisi var (kart açılıyor)',
+             dinleyiciVar(),
+             dinleyiciVar() ? '' : 'olay yayılıyor ama kimse dinlemiyor');
+        /* 2) DUGMELER — bunlar cumle icinde DEGIL, WCAG istisnasi
+              gecmez. 44x44 sart. */
+        const dugmeler = [...kart.querySelectorAll('button')];
+        ekle('uzun mola', 'kartta iki düğme var', dugmeler.length === 2,
+             dugmeler.length + ' düğme');
+        const kucuk = dugmeler.filter((b) => b.getBoundingClientRect().height < 44);
+        ekle('uzun mola', 'düğmeler 44 px yüksekliğinde',
+             dugmeler.length > 0 && kucuk.length === 0,
+             kucuk.length ? kucuk.length + ' düğme küçük' : dugmeler.length + ' düğme');
+        /* 3) METIN DOLU MU — bos kart, olmayan karttan kotudur. */
+        const metin = (document.getElementById('uzunMolaMetin') || {}).textContent || '';
+        ekle('uzun mola', 'kart metni dolu ve süreyi söylüyor',
+             metin.trim().length > 20 && /\d/.test(metin),
+             metin.slice(0, 40));
+        kart.hidden = oncedenGizli;
+      }, 150);
+    }
+
+    /* 4) CEKIRDEK TARAFI — kosullar dogru mu?
+          Motoru kopyalayarak sinariz; gercek motoru bozmayalim. */
+    {
+      const A = { calismaSuresi: 1200, molaSuresi: 20, uzunMolaAcik: true,
+                  uzunMolaEsigi: 7200, uzunMolaSuresi: 300 };
+      const kur = (acik, kesintisiz) => {
+        const t = new MolaMotoru({ ...A, uzunMolaAcik: acik });
+        let duyuldu = 0;
+        t.uzerine('uzunMolaOnerisi', () => duyuldu++);
+        t.istatistik.kesintisizSure = kesintisiz;
+        t.basla(); t.molayaGec();
+        t.hedefZaman = Date.now() - 10;
+        t.tik();
+        return duyuldu;
+      };
+      ekle('uzun mola', 'ayar kapalıyken öneri yok', kur(false, 9999) === 0);
+      ekle('uzun mola', 'süre yetmezken öneri yok', kur(true, 60) === 0);
+      ekle('uzun mola', 'koşullar tamken öneri var', kur(true, 7500) === 1);
+
+      /* 5) UZUN MOLA GERCEKTEN UZUN MU?
+            20 saniyelik bir "uzun mola" sessiz bir yalandir. */
+      const t = new MolaMotoru(A);
+      t.basla(); t.uzunMolayaGec();
+      const sn = Math.round(t.kalanSaniye());
+      ekle('uzun mola', 'uzun mola gerçekten uzun (5 dk)',
+           Math.abs(sn - A.uzunMolaSuresi) <= 2, sn + ' sn');
+      ekle('uzun mola', 'uzun mola işareti kuruldu', t.uzunMoladaMi === true);
+    }
+  }
+
   /* ---------- 4. DİL ---------- */
   {
     /* EGZERSİZ METİNLERİ — kaynağa bakan denetim.

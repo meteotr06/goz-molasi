@@ -534,13 +534,23 @@
     const bugun = (istatistik && istatistik.tamamlananMola) | 0;
     const seri = Gecmis.seri(istatistik);
 
-    og.bitisBaslik.textContent = atlandiMi ? 'Mola atlandı' : 'Mola tamam';
+    og.bitisBaslik.textContent = atlandiMi
+      ? CS('Mola atlandı', 'Break skipped')
+      : CS('Mola tamam', 'Break done');
 
     const parcalar = [];
-    if (!atlandiMi && bugun > 0) parcalar.push(`Bugün ${bugun}. molan`);
-    if (seri >= 2) parcalar.push(`${seri} gündür üst üste`);
+    if (!atlandiMi && bugun > 0) {
+      parcalar.push(CS(`Bugün ${bugun}. molan`, `Break ${bugun} today`));
+    }
+    if (seri >= 2) {
+      parcalar.push(CS(`${seri} gündür üst üste`,
+                       `${seri} ${seri === 1 ? 'day' : 'days'} in a row`));
+    }
     const dk = Math.max(1, Math.round(motor.ayarlar.calismaSuresi / 60));
-    parcalar.push(`sonraki mola ${dk} dakika sonra`);
+    // Turkcede tekil/cogul ayrimi yok, Ingilizcede var: "1 minutes"
+    // yazan bir uygulama, cevirisine ozen gosterilmemis demektir.
+    parcalar.push(CS(`sonraki mola ${dk} dakika sonra`,
+                     `next break in ${dk} ${dk === 1 ? 'minute' : 'minutes'}`));
     og.bitisAlt.textContent = parcalar.join(' · ');
 
     og.bitisKart.hidden = false;
@@ -1084,7 +1094,12 @@
 
     const toplam = gunler.reduce((t, g) => t + g.sayi, 0);
     const s = Gecmis.seri(motor.istatistik);
-    og.seriRozet.textContent = s > 0 ? `🔥 ${s} gün üst üste` : '';
+    // VERİ TARAFI: bu rozet ancak seri oluşunca beliriyor. Temiz
+    // bir tarayıcıda sınama koşunca DOM'da hiç yok ve dil taraması
+    // geçiyordu.
+    og.seriRozet.textContent = s > 0
+      ? CS(`🔥 ${s} gün üst üste`,
+           `🔥 ${s} ${s === 1 ? 'day' : 'days'} in a row`) : '';
     og.haftaGrafik.innerHTML = '';
     og.haftaGrafik.parentElement.querySelector('.hafta-not')?.remove();
 
@@ -1374,6 +1389,58 @@
   /* ============================================================
      UYARI BALONU
      ============================================================ */
+  /* UZUN MOLA ÖNERİSİ
+     Çekirdek iki saati aşan kesintisiz çalışmadan sonra
+     `uzunMolaOnerisi` yayıyordu ve BUNU DİNLEYEN YOKTU. Ayar kutusu
+     vardı, "Ders" kipi ayarı açıyordu, sayaç doğru sayıyordu — ama
+     kullanıcıya hiçbir şey ulaşmıyordu. Bilgi üretilmiş, karar
+     verilmemişti.
+
+     ZORLAMA YOK: kart engellemez, sayaç arkada dönmeye devam eder.
+     "Şimdi değil" denince bir süre bir daha sorulmaz — her mola
+     sonunda tekrar sormak, öneriyi dırdıra çevirir ve kullanıcı
+     kartı okumadan kapatmayı öğrenir. */
+  let uzunMolaSessiz = 0;          // kaç öneri atlanacak
+  function uzunMolaOner(kesintisizSn) {
+    const kart = $('uzunMolaKarti');
+    if (!kart) return;
+    if (uzunMolaSessiz > 0) { uzunMolaSessiz--; return; }
+    /* BURADA BIR KORUMA VARDI VE OZELLIGI TAMAMEN KAPATIYORDU.
+       "Mola ekrani acikken kart gorunmesin" diye `durum === 'mola'`
+       ise cikiyordum. Ama olay tam da mola BITERKEN yayiliyor ve o
+       anda durum HALA 'mola' — cekirdek `_asamayaGec('calisiyor')`
+       cagrisini olaydan SONRA yapiyor. Yani kart HIC cikmiyordu.
+       Kendi sinamam yakaladi: uc kosul da saglandigi hâlde kart gizli.
+
+       Makul gorunen bir koruma, ozelligi sessizce kapatabilir. */
+
+    const dk = Math.round((+kesintisizSn || 0) / 60);
+    const uzunDk = Math.round((motor.ayarlar.uzunMolaSuresi || 300) / 60);
+    $('uzunMolaBaslik').textContent = CS('Uzun mola zamanı', 'Time for a long break');
+    $('uzunMolaMetin').textContent = CS(
+      `${dk} dakikadır aralıksız çalışıyorsun. ${uzunDk} dakikalık bir mola `
+        + 'gözünü ve boynunu belirgin biçimde dinlendirir.',
+      `You have been working for ${dk} minutes without a real rest. `
+        + `A ${uzunDk}-minute break gives your eyes and neck a real recovery.`);
+    $('uzunMolaEvet').textContent = CS('Uzun mola ver', 'Take a long break');
+    $('uzunMolaSonra').textContent = CS('Şimdi değil', 'Not now');
+    // Bir sonraki tike birak: mola ortusu kapansin, kart sonra gorunsun.
+    setTimeout(() => { kart.hidden = false; }, 60);
+  }
+
+  function uzunMolaKapat() { const k = $('uzunMolaKarti'); if (k) k.hidden = true; }
+
+  $('uzunMolaEvet')?.addEventListener('click', () => {
+    uzunMolaKapat();
+    try { motor.uzunMolayaGec(); } catch {}
+  });
+  $('uzunMolaSonra')?.addEventListener('click', () => {
+    uzunMolaKapat();
+    // Üç öneri boyunca sessiz: ~1 saat. Reddedilen öneriyi hemen
+    // tekrarlamak, kullanıcıya saygısızlıktır.
+    uzunMolaSessiz = 3;
+  });
+
   let balonZaman = null;
   function balonGoster(saniye) {
     og.balonMetin.textContent = `${Math.ceil(saniye)} sn sonra göz molası`;
@@ -1429,6 +1496,7 @@
       og.aciklama.textContent = mesaj;
       setTimeout(() => { og.aciklama.textContent = eski; }, 8000);
     })
+    .uzerine('uzunMolaOnerisi', (kesintisizSn) => uzunMolaOner(kesintisizSn))
     .uzerine('molaAtlandi', () => {
       molaEkraniKapat();
       og.okuyucu.textContent = C('Mola atlandı.');

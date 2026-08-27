@@ -711,6 +711,33 @@ kbd {
   background: color-mix(in oklch, var(--kart) 88%, var(--vurgu));
   border: 1px solid color-mix(in oklch, var(--kart) 60%, var(--vurgu));
 }
+.uzun-mola-govde { flex: 1 1 auto; }
+.uzun-mola-dugmeler {
+  display: flex;
+  flex-wrap: wrap;          /* 320 px'te alt alta insin, tasmasin */
+  gap: 8px;
+  margin-top: 10px;
+}
+.uzun-mola-dugmeler button {
+  /* WCAG 2.5.8: 44x44. Bunlar cumle icinde DEGIL, bagimsiz dugmeler -
+     satir ici istisnasi burada gecmez. */
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.uzun-mola-evet {
+  background: var(--vurgu);
+  color: var(--zemin);
+  border: 1px solid var(--vurgu);
+  font-weight: 600;
+}
+.uzun-mola-sonra {
+  background: none;
+  color: var(--soluk);
+  border: 1px solid var(--cizgi);
+}
 .durum-notu-simge {
   font-size: 18px;
   line-height: 1.2;
