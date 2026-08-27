@@ -33,6 +33,7 @@ SINAMALAR = [
     ("damga", "damga_denetle.py", "Dosya değişti mi, sürüm damgası arttı mı"),
     ("girdi", "sinama_girdi.py", "Sayı ve saat okuma (Türkçe yazım dahil)"),
     ("aile", "sinama_aile.py", "Ebeveyn kontrolü: kip, sınır, yasak, şifre"),
+    ("kopru", "sinama_kopru.py", "Tarayıcı köprüsü: okuyor mu, fazla açık mı"),
     ("zaman", "sinama_zaman.py", "Sayaç doğruluğu ve saat oyunları"),
     ("yerlesim", "sinama_yerlesim.py", "Panelde çakışma ve taşma"),
     ("acilis", "sinama_acilis.py", "Derlenen exe açılıyor mu"),

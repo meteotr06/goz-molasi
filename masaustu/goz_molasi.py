@@ -10,10 +10,12 @@ Mola ekranı bütün monitörleri kaplar, en üstte durur, kapatılamaz.
     python  goz_molasi.py    (hata ayıklarken)
 """
 
+import math
 import hashlib
 import json
 import os
 import random
+import math as _math
 import re as _re
 import secrets
 import sys
@@ -30,6 +32,7 @@ import egzersiz as egz
 import ses
 import tepsi
 import guncelleme as gnc
+import kopru as kpr
 from bilgiler import BILGILER, IPUCLARI, MOLA_CUMLELERI
 try:
     from dunya import DUNYA        # uretilen dosya (dunya_uret.py)
@@ -127,7 +130,11 @@ VARSAYILAN = {
     # yani aydınlık panel gözü dinlendirme amacıyla çelişmiyor.
     "tema": "beyaz",
     "kilit": None,            # {"yontem","tur","tuz","ozet"} — düz metin ASLA
-    "bekci": True,            # kilit açıkken zorla kapatılırsa geri açsın mı
+    "bekci": True,
+    # KOPRU: tarayici surumu, Windows surumunun sayacini okuyabilsin.
+    # Kapatilabilir olmasi onemli - kullanici istemiyorsa bilgisayarinda
+    # bir ag ucu acik kalmamali.
+    "kopru": True,            # kilit açıkken zorla kapatılırsa geri açsın mı
     # SESSİZ ÖLÇÜM: program açık kalır, ekran süresini ve hangi programda
     # ne kadar durduğunu ölçmeye devam eder, ama MOLA VERMEZ ve ekrana
     # hiçbir şey çıkarmaz. Toplantı, oyun, film, sunum için.
@@ -330,9 +337,15 @@ def sayi_oku(metin, varsayilan=None):
     if not _re.match(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", m):
         return varsayilan
     try:
-        return float(m)
-    except ValueError:
+        sonuc = float(m)
+    except (ValueError, OverflowError):
         return varsayilan
+    # Bicim dogrulamasi "nan"/"inf" metnini eler ama COK UZUN bir rakam
+    # dizisi hala tasar: float("9"*400) -> inf. Olculdu, gercek.
+    # inf ile yapilan her karsilastirma sinirin sessizce kalkmasina yol acar.
+    if not _math.isfinite(sonuc):
+        return varsayilan
+    return sonuc
 
 
 def saat_oku(metin):
@@ -1209,6 +1222,7 @@ class Uygulama:
         # 5 saniye, izin soruları (1,5 ve 2,6 sn) kapandıktan sonrası.
         self.kok.after(5000, self._surum_denetimini_baslat)
         self._bekciyi_kur()
+        self._kopruyu_kur()
         ses.onceden_hazirla()
 
         # Tepsi simgesi. Kurulamazsa pencere görev çubuğunda kalır —
@@ -1868,6 +1882,63 @@ class Uygulama:
         self.uzun_mola_mi = False
         self._molayi_baslat(self.ayar["mola_sn"])
 
+    # ---------------- Köprü (tarayıcı sürümüyle bağlantı) ----------------
+    def _kopruyu_kur(self):
+        """Tarayıcı sürümünün sayacı okuyabileceği yerel ucu açar.
+
+        NEDEN: İki sürüm iki ayrı yere yazıyor — Windows dosyaya,
+        tarayıcı kendi deposuna. Biri 8 dakikadayken öbürü 20:00
+        gösteriyordu. Tarayıcı bilgisayardaki dosyayı okuyamaz
+        (güvenlik duvarı, izinle aşılmaz), o yüzden BİZ anlatıyoruz.
+
+        Açılmazsa uygulama normal çalışır; köprü bir kolaylıktır.
+        """
+        self.kopru = None
+        if not self.ayar.get("kopru", True):
+            return
+        try:
+            self.kopru = kpr.Kopru(self._kopru_verisi)
+            if not self.kopru.baslat():
+                # Sessizce yutmuyoruz: Bilgiler sekmesi bunu gösteriyor.
+                # "Neden eşitlenmiyor" sorusunun cevabı burada.
+                self.kopru_hatasi = self.kopru.hata
+                self.kopru = None
+        except Exception as e:
+            self.kopru_hatasi = str(e)
+            self.kopru = None
+
+    def _kopru_verisi(self):
+        """Köprünün her istekte döndürdüğü anlık durum.
+
+        Yalnızca sayaçla ilgili alanlar. Şifre, kilit özeti, program
+        listesi ve ayarlar BİLEREK dışarıda — köprü sayacı anlatmak
+        için var, uygulamayı dışa açmak için değil.
+        """
+        def tam(deger, varsayilan=0):
+            # nan/inf/metin buradan geçerse JSON bozulur ya da tarayıcı
+            # tarafında sessizce yanlış sayı olur. Bu sınıf hatayı
+            # bu projede zaten yaşadık.
+            try:
+                s = float(deger)
+            except (TypeError, ValueError):
+                return varsayilan
+            if s != s or s in (float("inf"), float("-inf")):
+                return varsayilan
+            return int(s)
+
+        return {
+            "kaynak": "windows",
+            "surum": SURUM,
+            "an": time.time(),
+            "durum": self.durum,
+            "kalan_sn": max(0, tam(self.hedef - time.time())),
+            "calisma_dk": tam(self.ayar.get("calisma_dk"), 20),
+            "mola_sn": tam(self.ayar.get("mola_sn"), 20),
+            "gun": time.strftime("%Y-%m-%d"),
+            "tamamlanan": tam(self.ist.get("tamamlanan")),
+            "ekran_sn": tam(self.ist.get("ekran_sn")),
+        }
+
     def cik(self):
         if not self.izin_al("Programı kapatmak için şifreni gir."):
             return
@@ -1878,6 +1949,8 @@ class Uygulama:
         kl.temiz_cikis_isaretle(KAYIT_KLASOR)
         if self.tepsi:
             self.tepsi.durdur()
+        if getattr(self, "kopru", None):
+            self.kopru.durdur()
         self.kok.destroy()
 
     def _bekciyi_kur(self):
@@ -2049,8 +2122,17 @@ class Uygulama:
         """
         if not aile_kipinde_mi(self.ayar):
             return None
-        # Ebeveyn ek süre verdiyse hiçbir engel yok
-        if time.time() < float(self.ayar.get("ek_sure_bitis", 0) or 0):
+        # Ebeveyn ek süre verdiyse hiçbir engel yok.
+        # `float(...)` burada da coker: "abc" -> ValueError, [1] -> TypeError.
+        # `inf` cokmez ama ek sureyi HIC bitirmez -> sinir kalici kapali.
+        # Kullanici karari (27.08.2026): bozuk ayarda engelleme, uyar.
+        # Yani bozuk ek sure "ek sure surüyor" sayilir (yeni engel eklemiyoruz)
+        # ve `ayar_uyarisi()` bunu ekranda soyler.
+        ham_ek = self.ayar.get("ek_sure_bitis", 0) or 0
+        ek = sayi_oku(ham_ek, None)
+        if ek is None:
+            return None
+        if time.time() < ek:
             return None
 
         # SAAT OYUNU — yasak saatini atlatmanın en kolay yolu sistem
@@ -2067,13 +2149,51 @@ class Uygulama:
                     % (self.ayar.get("yasak_bas", "21:00"),
                        self.ayar.get("yasak_bit", "07:00")))
 
-        sinir = int(self.ayar.get("gunluk_sinir_dk", 0) or 0)
-        if sinir > 0:
-            gecen = float(self.ist.get("ekran_sn", 0))
+        # BOZUK AYAR KORUMAYI SESSIZCE KAPATMASIN.
+        #
+        # Olculdu (27.08.2026, capraz denetim):
+        #   ekran_sn = nan        -> `nan >= sinir*60` HER ZAMAN False,
+        #                            gunluk sinir hic devreye girmiyor.
+        #                            Ebeveyn siniri acik saniyor. Sessiz.
+        #   gunluk_sinir_dk bozuk -> int() COKUYOR (ValueError/OverflowError).
+        #                            Cokme `engeli_uygula` icinde olunca HICBIR
+        #                            engel uygulanmiyor (saat yasagi dahil) ve
+        #                            hata yalnizca konsola gidiyor; arayuz
+        #                            kullanicisi konsolu gormez.
+        # Ikisi de ayni sonuca cikiyordu: koruma kapali, kimse haberdar degil.
+        #
+        # KULLANICI KARARI (27.08.2026): bozuk ayarda ENGELLEME, ama UYAR.
+        # Engellemek secilmedi -- bu uygulama bir kez gercek ekrani kilitledi,
+        # bozuk bir dosya yuzunden ekranin kilitlenmesi kabul edilmedi.
+        # Sessiz kalmak da kabul edilmedi. Uyari: `ayar_uyarisi()`.
+        # TEK cozumleyici: sayi_oku. Bu dosyaya ikinci bir tane EKLEME —
+        # 04 Muhasebe'de tam boyle uc ayri cozumleyici birikmisti, ikisi bozuktu.
+        sinir = sayi_oku(self.ayar.get("gunluk_sinir_dk"), 0)
+        gecen = sayi_oku(self.ist.get("ekran_sn"), None)
+        if sinir > 0 and gecen is not None:
             if gecen >= sinir * 60:
                 return ("sinir", "Bugünlük ekran süren doldu",
                         "Günlük sınır %d dakika. Bugün %s kullandın."
                         % (sinir, sure_okunakli(gecen)))
+        return None
+
+    def ayar_uyarisi(self):
+        """Bozuk ayar korumayi SESSIZCE kapatmasin — ekranda goster.
+
+        Kullanici karari (27.08.2026): bozuk ayarda ENGELLEME, ama UYAR.
+        Burada hicbir engel uygulanmaz; yalnizca bir metin doner.
+        Bos ya da 0 sinir "bozuk" degildir — o, "sinir yok" demektir.
+        """
+        if not aile_kipinde_mi(self.ayar):
+            return None
+        ham = self.ayar.get("gunluk_sinir_dk")
+        if ham not in (None, "", 0, "0") and sayi_oku(ham) is None:
+            return "⚠ Günlük sınır okunamadı — sınır uygulanmıyor"
+        if sayi_oku(ham, 0) > 0 and sayi_oku(self.ist.get("ekran_sn"), None) is None:
+            return "⚠ Ekran süresi sayacı bozuk — sınır uygulanmıyor"
+        ham_ek = self.ayar.get("ek_sure_bitis", 0) or 0
+        if ham_ek and sayi_oku(ham_ek, None) is None:
+            return "⚠ Ek süre ayarı bozuk — sınır uygulanmıyor"
         return None
 
     # Klavye kısayolları. Web sürümüyle AYNI harfler — aynı uygulamanın
@@ -2614,6 +2734,15 @@ class Uygulama:
                 self.ipucu_yazi,
                 text="Dokununca devam eder" if self.durum == "bosta"
                 else "%d saniye sürecek" % self.ayar["mola_sn"])
+
+        # Bozuk ayar uyarisi ipucu satirini EZER: sinir uygulanmadigi hâlde
+        # ebeveynin "koruma acik" sanmasi, bu uygulamadaki en pahali hata.
+        # Uyari yokken rengi geri almak sart, yoksa duzeltildikten sonra da
+        # kirmizi kaliyor.
+        uyari = self.ayar_uyarisi()
+        self.t.itemconfigure(self.ipucu_yazi, fill=P["sicak"] if uyari else P["soluk"])
+        if uyari:
+            self.t.itemconfigure(self.ipucu_yazi, text=uyari)
 
         # Tepsi simgesinin üstüne gelince görünen yazı
         if self.tepsi and self.tepsi.acik and int(simdi_saniye()) % 5 == 0:

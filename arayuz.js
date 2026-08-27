@@ -2122,6 +2122,77 @@
   // Hata ayıklama / test için: konsoldan molaMotoru.ayarlar ile oynayabilirsin
   window.molaMotoru = motor;
 
+  /* KÖPRÜ — Windows sürümü açıksa sayaç ORADAN devralınır.
+
+     Sorun buydu: iki sürüm iki ayrı yere yazıyor. Kullanıcı Windows
+     sürümünde 8 dakikadayken tarayıcıyı açınca 20:00 görüyor ve
+     "süre başa sardı" diyordu. İki sayaç değil, tek sayaç olmalı.
+
+     NEDEN WINDOWS KAZANIYOR: o sürüm sürekli açık ve sekme kapalıyken
+     de ölçebiliyor. Tarayıcı kapalıyken hiçbir şey ölçemez. Hangisi
+     daha çok şey biliyorsa doğru olan odur.
+
+     Köprü yoksa (Windows sürümü kapalı, ya da tarayıcı yerel adrese
+     izin vermiyor) burası SESSİZCE geçilir — olmayan bir şeyin
+     eksikliği hata değildir. */
+  (function kopruyuBagla() {
+    if (!window.Kopru) return;
+
+    // Kullanıcının içinde bulunduğu anı bozmayalım: mola ekranı
+    // açıkken sayacı değiştirmek, gözünü ekrandan ayırmış birinin
+    // molasını yarıda kesmek demek.
+    const devralinabilir = () =>
+      motor.durum === 'calisiyor' || motor.durum === 'uyari'
+      || motor.durum === 'hazir' || motor.durum === 'bosta';
+
+    let bildirildi = false;
+
+    const uygula = (veri) => {
+      if (!veri || !devralinabilir()) return;
+      const kalan = Math.max(0, Math.round(+veri.kalan_sn));
+
+      // Zaten aynıysa dokunma. Her 5 saniyede sayacı yeniden kurmak
+      // ekranda titreme ve ilerleme çubuğunda geri sıçrama yapar.
+      if (Math.abs(motor.kalanSaniye() - kalan) < 3) return;
+
+      const uyduMu = motor.sayaciGeriYukle({
+        hedefZaman: Date.now() + kalan * 1000,
+        kayitAni: Date.now(),
+        durum: 'calisiyor',
+      });
+      if (!uyduMu) return;
+
+      // Devraldıysak "uygulama X dakika kapalıydı" notu artık yanlış:
+      // süre kaybolmadı, Windows sürümü saymaya devam etmişti.
+      const eskiNot = $('durumNotu');
+      if (eskiNot) eskiNot.hidden = true;
+
+      if (!bildirildi) {
+        bildirildi = true;
+        const dk = Math.floor(kalan / 60);
+        const sn = kalan % 60;
+        const kalanYazi = `${dk}:${String(sn).padStart(2, '0')}`;
+        const not = $('durumNotu');
+        if (not) {
+          const b = $('durumNotuBaslik');
+          if (b) b.textContent = CS('Windows sürümüyle eşitlendi',
+                                    'Synced with the Windows version');
+          $('durumNotuMetin').textContent = CS(
+            `Bu bilgisayarda Göz Molası açık. Sayaç baştan başlamadı, `
+            + `oradan devraldı: ${kalanYazi} kaldı.`,
+            `Eye Break is running on this computer. The timer did not `
+            + `restart — it continued from there: ${kalanYazi} left.`);
+          not.hidden = false;
+          $('durumNotuKapat')?.addEventListener(
+            'click', () => { not.hidden = true; });
+        }
+      }
+    };
+
+    window.Kopru.ilkDurum().then(uygula);
+    window.Kopru.dinle(uygula);
+  })();
+
   // Kaydedilmiş arka plan tercihini uygula (ses ancak dokunuştan sonra açılır)
   if (arkaPlanAcik) {
     document.addEventListener('pointerdown', () => arkaPlanKipi(true), { once: true });

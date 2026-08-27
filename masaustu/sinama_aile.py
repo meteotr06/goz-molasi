@@ -48,7 +48,13 @@ def main():
 
     def dene(ad, ayar, ekran_sn, beklenen):
         u = SahteUygulama(ayar, ekran_sn)
-        sonuc = u.engel_sebebi()
+        try:
+            sonuc = u.engel_sebebi()
+        except Exception as e:
+            # Cokme = hicbir engel uygulanmaz (saat yasagi dahil) ve kimse
+            # haberdar olmaz. Sessiz gecilmemeli.
+            hatalar.append("%s -> COKME %s: %s" % (ad, type(e).__name__, e))
+            return
         tur = sonuc[0] if sonuc else None
         if tur != beklenen:
             hatalar.append("%s -> '%s' (beklenen '%s')" % (ad, tur, beklenen))
@@ -70,6 +76,64 @@ def main():
     dene("ek süre bitince engel geri gelir",
          {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
           "ek_sure_bitis": time.time() - 10}, 99999, "sinir")
+
+    # 4b) BOZUK AYAR — 26.08.2026'da olculdu: bu satirlar yokken
+    #     gunluk_sinir_dk=nan/inf/"abc" uygulamayi COKERTIYORDU; cokunce
+    #     saat yasagi dahil hicbir koruma uygulanmiyordu.
+    nan, inf = float("nan"), float("inf")
+    for etiket, deger in (("nan", nan), ("inf", inf), ("metin", "abc"),
+                          ("bos", None), ("liste", [1])):
+        dene("bozuk sinir (%s) cokertmemeli" % etiket,
+             {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": deger}, 99999, None)
+    dene("bozuk sayac (nan) cokertmemeli",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60}, nan, None)
+    # Metin olarak yazilmis gecerli sayi calismaya devam etmeli
+    dene("metin sinir '60' calisir",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": "60"}, 3700, "sinir")
+    dene("virgullu sinir '60,5' calisir",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": "60,5"}, 3700, "sinir")
+
+    # KULLANICI KARARI (27.08.2026): bozuk ayarda ENGELLEME, ama UYAR.
+    # Bozuk ek sure de cokertmemeli; `float("abc")` burada da cokuyordu.
+    for etiket, deger in (("nan", nan), ("inf", inf), ("metin", "abc"),
+                          ("liste", [1])):
+        dene("bozuk ek sure (%s) cokertmemeli" % etiket,
+             {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
+              "ek_sure_bitis": deger}, 99999, None)
+    dene("gecerli ek sure engeli kaldirir",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
+          "ek_sure_bitis": time.time() + 600}, 99999, None)
+
+    # UYARI — karar "engelleme ama uyar" oldugu icin uyarinin CIKMASI sart.
+    # Engellememek tek basina yeterli olsaydi bu sessiz yanlis olurdu.
+    def uyari_dene(ad, ayar, ekran_sn, beklenen_var):
+        u = SahteUygulama(ayar, ekran_sn)
+        try:
+            uyari = u.ayar_uyarisi()
+        except Exception as e:
+            hatalar.append("%s -> COKME %s: %s" % (ad, type(e).__name__, e))
+            return
+        if bool(uyari) != beklenen_var:
+            hatalar.append("%s -> uyari %r (beklenen %s)"
+                           % (ad, uyari, "var" if beklenen_var else "yok"))
+
+    t = {"kip": "aile", "kilit": sifre}
+    uyari_dene("bozuk sinir uyarmali", dict(t, gunluk_sinir_dk="abc"), 0, True)
+    uyari_dene("bozuk sinir (nan) uyarmali", dict(t, gunluk_sinir_dk=nan), 0, True)
+    uyari_dene("bozuk sayac uyarmali", dict(t, gunluk_sinir_dk=60), nan, True)
+    uyari_dene("bozuk ek sure uyarmali",
+               dict(t, gunluk_sinir_dk=60, ek_sure_bitis=inf), 100, True)
+    uyari_dene("saglam ayar uyarmamali", dict(t, gunluk_sinir_dk=60), 100, False)
+    uyari_dene("sinir 0 (sinirsiz) bozukluk degil",
+               dict(t, gunluk_sinir_dk=0), 100, False)
+    uyari_dene("bos sinir bozukluk degil",
+               dict(t, gunluk_sinir_dk=""), 100, False)
+    uyari_dene("bireysel kipte uyari yok",
+               {"kip": "bireysel", "gunluk_sinir_dk": "abc"}, 0, False)
+
+    # Uyari CIKARKEN engel HALA cikmamali — karar buydu.
+    dene("uyari varken engel yok (engelleme, uyar)",
+         dict(t, gunluk_sinir_dk="abc"), 99999, None)
 
     # 5) Saat yasağı — gece yarısını aşan aralık
     a = {"yasak_acik": True, "yasak_bas": "21:00", "yasak_bit": "07:00"}

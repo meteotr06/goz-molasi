@@ -33,8 +33,13 @@ GERCEK = os.path.join(os.environ.get("APPDATA", ""), "GozMolasi")
 # yazıyor — işi bu. Yalıtılamaz, çünkü yalıtılırsa neyi sınadığı
 # kalmaz. Ayrıca uygulamayı AÇIYOR; kullanıcı "bulaşmasın" dediği
 # sürece hiç çalıştırılmamalı. Sınırı gizlemek yerine yazıyoruz.
+# 27.08.2026: `sinama_girdi.py` bu listede YOKTU. Yalıtımlı olduğu
+# VARSAYILIYORDU, doğrulanmıyordu — sızıntı sınamasının kendi kör
+# noktasıydı. Varsayım, ölçüm yerine geçmez.
 SINANACAKLAR = [
     "sinama_veri.py",
+    "sinama_girdi.py",
+    "sinama_kopru.py",
     "sinama_aile.py",
     "sinama_zaman.py",
     "sinama_yerlesim.py",

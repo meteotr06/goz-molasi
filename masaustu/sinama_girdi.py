@@ -87,6 +87,15 @@ def main():
     hatalar = []
 
     print("--- SAYI OKUMA ---")
+    # TASMA — 27.08.2026'da olculdu: bicim dogrulamasi "inf" metnini eliyor
+    # ama cok uzun rakam dizisi float()'ta tasip inf oluyordu. inf ile yapilan
+    # her karsilastirma False doner => sinir SESSIZCE kalkar.
+    for uzunluk in (400, 1000):
+        girdi = "9" * uzunluk
+        if gm.sayi_oku(girdi) is not None:
+            hatalar.append("sayi_oku(%d haneli 9) -> %r (beklenen None) [tasma]"
+                           % (uzunluk, gm.sayi_oku(girdi)))
+
     for girdi, beklenen, aciklama in SAYILAR:
         sonuc = gm.sayi_oku(girdi)
         ok = sonuc == beklenen
