@@ -19,6 +19,7 @@ NE DENETLER
 ÇALIŞTIRMA
   python sinama_aile.py
 """
+import io
 import sys
 import time
 
@@ -134,6 +135,78 @@ def main():
     # Uyari CIKARKEN engel HALA cikmamali — karar buydu.
     dene("uyari varken engel yok (engelleme, uyar)",
          dict(t, gunluk_sinir_dk="abc"), 99999, None)
+
+    # 4b-2) GECERLI GORUNEN AMA KORUMAYI KALDIRAN DEGERLER
+    #
+    # OLCULDU (27.08.2026): "bozuk ayar" denetimleri yalnizca
+    # OKUNAMAYAN degerleri yakaliyordu. Oysa en tehlikelileri gayet
+    # GECERLI sayilar/metinler - o yuzden hicbir denetim gormuyordu:
+    #
+    #   kip = "aile "  (sonda bosluk)  -> esitlik tutmaz, kip YOK SAYILIR
+    #   kip = "AILE"                   -> ayni
+    #   ek_sure_bitis = simdi + 10 yil -> sinir KALICI kalkar
+    #   gunluk_sinir_dk = 10**30       -> "sinir var" gorunur, yoktur
+    #   gunluk_sinir_dk = -60          -> sessizce yok sayilir
+    #   kilit = {}                     -> kip uygulanmaz ama ayar
+    #                                     ekraninda "Aile" SECILI gorunur
+    #
+    # Hepsi ayni sinif: ebeveyn korundugunu sanir. Aile kipinde ayar
+    # dosyasi cocugun kendi klasorunde duruyor.
+    dene("kip 'aile ' (bosluk) korumayi kaldirmiyor",
+         {"kip": "aile ", "kilit": sifre, "gunluk_sinir_dk": 60}, 3700, "sinir")
+    dene("kip 'AILE' (buyuk harf) korumayi kaldirmiyor",
+         {"kip": "AILE", "kilit": sifre, "gunluk_sinir_dk": 60}, 3700, "sinir")
+    dene("10 yillik ek sure gecerli sayilmiyor",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
+          "ek_sure_bitis": time.time() + 315360000}, 3700, "sinir")
+    dene("mesru ek sure (30 dk) HALA calisiyor",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
+          "ek_sure_bitis": time.time() + 1800}, 3700, None)
+    dene("sinirdaki ek sure (3 saat) kabul ediliyor",
+         {"kip": "aile", "kilit": sifre, "gunluk_sinir_dk": 60,
+          "ek_sure_bitis": time.time() + 3 * 3600}, 3700, None)
+
+    uyari_dene("10 yillik ek sure uyariyor",
+               dict(t, gunluk_sinir_dk=60,
+                    ek_sure_bitis=time.time() + 315360000), 3700, True)
+    uyari_dene("mesru ek sure uyarmiyor",
+               dict(t, gunluk_sinir_dk=60,
+                    ek_sure_bitis=time.time() + 1800), 3700, False)
+    uyari_dene("bir gunden uzun sinir uyariyor",
+               dict(t, gunluk_sinir_dk=10 ** 30), 100, True)
+    uyari_dene("1440 dk (tam bir gun) uyarmiyor",
+               dict(t, gunluk_sinir_dk=1440), 100, False)
+    uyari_dene("negatif sinir uyariyor",
+               dict(t, gunluk_sinir_dk=-60), 100, True)
+    uyari_dene("sifresiz aile kipi uyariyor",
+               {"kip": "aile", "kilit": {}, "gunluk_sinir_dk": 60}, 100, True)
+    uyari_dene("sifresiz BIREYSEL kip uyarmiyor",
+               {"kip": "bireysel", "kilit": None}, 100, False)
+
+    # durum.json'a metin yazilinca UYGULAMA ACILMIYORDU. Acilmayan
+    # uygulamada aile kipi de dahil hicbir koruma yok - cokme, en
+    # sessiz atlatmadir.
+    class SayacUyg(SahteUygulama):
+        def __init__(self):
+            SahteUygulama.__init__(self, {"kip": "aile", "kilit": sifre}, 0)
+            self.olculemeyen_sn = 0.0
+
+    import json as _json
+    import os as _os
+    for etiket, icerik in (("metin hedef", '{"hedef": "cok sonra", '
+                            '"kayit_ani": 0, "durum": "calisiyor"}'),
+                           ("cop", "{bozuk"),
+                           ("bos", "")):
+        io.open(gm.DURUM_DOSYA, "w", encoding="utf-8").write(icerik)
+        try:
+            SayacUyg()._sayaci_geri_yukle()
+        except Exception as e:
+            hatalar.append("durum.json %s -> COKME %s: %s"
+                           % (etiket, type(e).__name__, e))
+    try:
+        _os.remove(gm.DURUM_DOSYA)
+    except OSError:
+        pass
 
     # 4c) KAYIT DOSYASI KURCALANMASI
     #

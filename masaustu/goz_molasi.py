@@ -272,7 +272,14 @@ def aile_kipinde_mi(ayar):
     Şifresiz aile kipi anlamsız — çocuk ayarlardan kipi kapatır.
     O yüzden iki koşul birden aranıyor; biri eksikse kip yok sayılır.
     """
-    return bool(ayar.get("kip") == "aile" and kilit_kaydi(ayar))
+    # OLCULDU (27.08.2026): kip degeri "aile " (sonda bosluk) ya da
+    # "AILE" yazilinca esitlik tutmuyor, aile kipi YOK SAYILIYOR ve
+    # butun koruma sessizce kalkiyordu. Uygulama bu degeri hep "aile"
+    # yaziyor - yani bu yol yalnizca ayar dosyasi ELLE duzenlenince
+    # acilir. Aile kipinde o dosya cocugun kendi klasorunde duruyor.
+    kip = ayar.get("kip")
+    kip = kip.strip().lower() if isinstance(kip, str) else kip
+    return bool(kip == "aile" and kilit_kaydi(ayar))
 
 
 def kilit_kaydi(ayar):
@@ -1344,7 +1351,11 @@ class Uygulama:
         if kapali_kalan < 0 or kapali_kalan > self.ayar["dinlenme_esigi_sn"]:
             return tam
 
-        kalan = float(d.get("hedef", 0)) - time.time()
+        # `float()` burada cokuyordu: durum.json'a "cok sonra" gibi bir
+        # metin yazilinca ValueError dusuyor ve UYGULAMA HIC ACILMIYOR.
+        # Acilmayan uygulamada aile kipi de dahil hicbir koruma yok -
+        # cokme, en sessiz atlatmadir.
+        kalan = sayi_oku(d.get("hedef"), 0.0) - time.time()
         if 0 < kalan <= self.ayar["calisma_dk"] * 60:
             return time.time() + kalan
 
@@ -2193,6 +2204,24 @@ class Uygulama:
             return False
         return True
 
+    # Ebeveyn arayuzden en fazla 30 dk ek sure veriyor (bkz. EngelEkrani).
+    # Bu esik onun sekiz kati; asan deger elle yazilmis demektir.
+    EK_SURE_AZAMI_SN = 4 * 3600
+
+    def ek_sure_supheli_mi(self):
+        """Ek sure makul bir tarihe mi kurulmus?
+
+        Hem `engel_sebebi` hem `ayar_uyarisi` bunu ayri ayri
+        CAGIRIYOR - biri otekinin yan etkisine bagli DEGIL. Onceki hali
+        bayrak kullaniyordu ve arayuz uyariyi once sorarsa uyari hic
+        cikmiyordu. Kendi sinamam yakaladi.
+        """
+        ham = self.ayar.get("ek_sure_bitis", 0) or 0
+        ek = sayi_oku(ham, None)
+        if ek is None:
+            return False
+        return (ek - time.time()) > self.EK_SURE_AZAMI_SN
+
     def engel_sebebi(self):
         """Şu an kullanımı engellemek gerekiyor mu?
 
@@ -2215,7 +2244,21 @@ class Uygulama:
         ek = sayi_oku(ham_ek, None)
         if ek is None:
             return None
-        if time.time() < ek:
+        # MAKUL SINIR - bozukluk denetimi bunu yakalayamaz.
+        # Olculdu (27.08.2026): `ek_sure_bitis` = simdi + 10 yil
+        # yazilinca gunluk sinir KALICI olarak kalkiyordu. Deger bozuk
+        # DEGIL, gayet gecerli bir sayi; o yuzden "bozuk ayar"
+        # denetimlerinin hicbiri gormuyordu. Sessiz ve kalici bir
+        # atlatma.
+        #
+        # Ebeveyn arayuzden en fazla 30 dakika veriyor. 4 saat, mesru
+        # kullanimin sekiz kati - bu esigi asan bir deger elle
+        # yazilmistir. Guvenmiyoruz ve sebebini soyluyoruz.
+        # Yanlis tarafa dusme yonu bilincli: kurcalamaya kanmaktansa
+        # ebeveynin ek suresini bir kez daha vermesi iyidir.
+        if self.ek_sure_supheli_mi():
+            pass                       # guvenmiyoruz: ek sure yokmus gibi
+        elif time.time() < ek:
             return None
 
         # SAAT OYUNU — yasak saatini atlatmanın en kolay yolu sistem
@@ -2267,6 +2310,19 @@ class Uygulama:
         Burada hicbir engel uygulanmaz; yalnizca bir metin doner.
         Bos ya da 0 sinir "bozuk" degildir — o, "sinir yok" demektir.
         """
+        # SIRALAMA ONEMLI: "aile secili ama sifre yok" durumunda
+        # aile_kipinde_mi() False doner. Bu denetim asagida olsaydi
+        # hic calismazdi - oysa tam da uyarilmasi gereken an burasi.
+        #
+        # Olculdu (27.08.2026): `kilit` alani bosaltilinca kip sessizce
+        # uygulanmiyor, ama ayar ekraninda hala "Aile (ebeveyn
+        # kontrolu)" secili GORUNUYOR. Ebeveyn korundugunu sanir.
+        kip = self.ayar.get("kip")
+        kip = kip.strip().lower() if isinstance(kip, str) else kip
+        if kip == "aile" and not kilit_kaydi(self.ayar):
+            return ("\u26a0 Aile kipi se\u00e7ili ama \u015fifre yok "
+                    "\u2014 kip UYGULANMIYOR. Ayarlardan bir \u015fifre "
+                    "koyun.")
         if not aile_kipinde_mi(self.ayar):
             return None
         ham = self.ayar.get("gunluk_sinir_dk")
@@ -2274,6 +2330,29 @@ class Uygulama:
             return "⚠ Günlük sınır okunamadı — sınır uygulanmıyor"
         if sayi_oku(ham, 0) > 0 and sayi_oku(self.ist.get("ekran_sn"), None) is None:
             return "⚠ Ekran süresi sayacı bozuk — sınır uygulanmıyor"
+        if self.ek_sure_supheli_mi():
+            return ("\u26a0 Ek s\u00fcre ayar\u0131 makul olmayan bir tarihe "
+                    "kurulmu\u015f \u2014 kay\u0131t dosyas\u0131 "
+                    "d\u00fczenlenmi\u015f olabilir. Ge\u00e7erli "
+                    "say\u0131lm\u0131yor, g\u00fcnl\u00fck s\u0131n\u0131r "
+                    "uygulan\u0131yor.")
+        ham_sinir = self.ayar.get("gunluk_sinir_dk")
+        # SACMA BUYUK SINIR: bir gunde 1440 dakika var. Daha buyuk bir
+        # sayi "sinir yok" demektir ama ekranda SINIR VARMIS gibi durur.
+        # Deger bozuk degil - gayet gecerli bir sayi - o yuzden bozukluk
+        # denetimleri gormuyor. Ayni sinif: gecerli gorunen deger,
+        # sessizce kalkan koruma.
+        if sayi_oku(ham_sinir, 0) > 1440:
+            return ("\u26a0 G\u00fcnl\u00fck s\u0131n\u0131r bir "
+                    "g\u00fcnden uzun yaz\u0131lm\u0131\u015f \u2014 "
+                    "yani s\u0131n\u0131r yok. Ger\u00e7ekten "
+                    "s\u0131n\u0131rlamak i\u00e7in 1440'tan k\u00fc\u00e7\u00fck "
+                    "bir de\u011fer yaz\u0131n.")
+        if sayi_oku(ham_sinir, 0) < 0:
+            return ("\u26a0 G\u00fcnl\u00fck s\u0131n\u0131r negatif "
+                    "yaz\u0131lm\u0131\u015f \u2014 s\u0131n\u0131r "
+                    "uygulanm\u0131yor. D\u00fczeltmek i\u00e7in ayarlardan "
+                    "yeniden yaz\u0131n.")
         if getattr(self, "sayac_oynanmis", False):
             return ("⚠ Ekran süresi sayacı geri alınmış — "
                     "kayıt dosyası düzenlenmiş olabilir. Bugünün "
