@@ -16,6 +16,35 @@
 const DIL_ANAHTAR = 'goz-molasi-dil';
 
 const SOZLUK = {
+  /* ---- Hafta grafiği: gün adları ----
+     Grafik yalnızca VERİ VARKEN çiziliyor; boş geçmişle sınama
+     koşunca bu metinler DOM'da hiç olmuyor ve sınama geçiyordu. */
+  'Bugün': 'Today',
+  'Paz': 'Sun', 'Pzt': 'Mon', 'Sal': 'Tue', 'Çar': 'Wed',
+  'Per': 'Thu', 'Cum': 'Fri', 'Cmt': 'Sat',
+
+  /* ---- Mola ekranı: egzersizler ----
+     BURASI SONRADAN ÜRETİLEN İÇERİK. Sayfa kurulduktan sonra
+     yazıldığı için `sayfayiCevir` onu göremez; yazan satır `C()`
+     kullanmak zorunda (arayuz.js, molaEkraniAc yakını).
+     28.08.2026'da ölçüldü: İngilizce sayfada mola ekranı Türkçe
+     kalıyordu — kullanıcının NE YAPACAĞINI söyleyen tek metin. */
+  'Uzağa bak': 'Look far away',
+  'Pencereden dışarı ya da odanın en uzak köşesine bak':
+    'Look out the window, or at the farthest corner of the room',
+  'Göz kırp': 'Blink',
+  'Kapak kapandığında sen de tam kırp — gözünü sıkıca kapat':
+    'Blink as the lid closes — shut your eyes tightly',
+  'Yakın — uzak': 'Near — far',
+  'Nokta büyüyünce parmağına, küçülünce uzağa bak':
+    'Look at your finger as the dot grows, far away as it shrinks',
+  'Gözünü kapat': 'Close your eyes',
+  'Gözlerini kapat, yavaşça nefes al — bitince ses gelecek':
+    'Close your eyes and breathe slowly — a sound plays when it ends',
+  'Boynunu gevşet': 'Relax your neck',
+  'Başını yavaşça çevir — omuzlarını geriye at':
+    'Turn your head slowly — roll your shoulders back',
+
   /* ---- Başlık ve kimlik ---- */
   'Göz Molası — Ekran Başında Göz Yorgunluğu İçin 20-20-20 Hatırlatıcısı':
     'Eye Break — 20-20-20 Reminder for Screen Eye Strain',

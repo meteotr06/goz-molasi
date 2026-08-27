@@ -1103,10 +1103,14 @@
     // çubuk %12 yükseklikte kalıyor ve kart 240 piksel boşluk oluyor.
     const doluGun = gunler.filter((g) => g.sayi > 0).length;
     if (doluGun <= 1) {
-      og.haftaOzet.textContent = `Bugün ${toplam} mola · geçmiş birikiyor`;
+      og.haftaOzet.textContent = CS(
+        `Bugün ${toplam} mola · geçmiş birikiyor`,
+        `${toplam} breaks today · history is building up`);
     } else {
       const ortalama = Math.round((toplam / 7) * 10) / 10;
-      og.haftaOzet.textContent = `${toplam} mola · günde ortalama ${ortalama}`;
+      og.haftaOzet.textContent = CS(
+        `${toplam} mola · günde ortalama ${ortalama}`,
+        `${toplam} breaks · ${ortalama} per day on average`);
     }
 
     const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
@@ -1123,7 +1127,8 @@
         + (g.sayi >= GUNLUK_HEDEF ? ' hedefte' : '')
         + (g.bugunMu ? ' bugun' : '');
       // Fare üstüne gelince kesin sayı görünsün
-      hucre.title = `${g.bugunMu ? 'Bugün' : g.ad}: ${g.sayi} mola`
+      hucre.title = CS(`${g.bugunMu ? 'Bugün' : g.ad}: ${g.sayi} mola`,
+                       `${g.bugunMu ? 'Today' : C(g.ad)}: ${g.sayi} breaks`)
                   + (g.sayi >= GUNLUK_HEDEF ? ' — hedef tamam' : '');
 
       const sayi = document.createElement('b');
@@ -1136,7 +1141,7 @@
       alan.appendChild(cubuk);
 
       const ad = document.createElement('span');
-      ad.textContent = g.bugunMu ? 'Bugün' : g.ad;
+      ad.textContent = C(g.bugunMu ? 'Bugün' : g.ad);
 
       hucre.append(sayi, alan, ad);
       og.haftaGrafik.appendChild(hucre);
@@ -1152,8 +1157,11 @@
     if (doluGun <= 1) {
       const not = document.createElement('p');
       not.className = 'hafta-not';
-      not.textContent = 'Grafik her gün biraz daha dolacak. '
-                      + `Kesikli çizgi günlük hedef: ${GUNLUK_HEDEF} mola.`;
+      not.textContent = CS(
+        'Grafik her gün biraz daha dolacak. '
+          + `Kesikli çizgi günlük hedef: ${GUNLUK_HEDEF} mola.`,
+        'The chart fills in a little more each day. '
+          + `Dashed line is the daily goal: ${GUNLUK_HEDEF} breaks.`);
       og.haftaGrafik.after(not);
     }
   }
@@ -1215,8 +1223,11 @@
     egzersizBaslangic = Date.now();
     sonYonerge = null;
 
-    og.molaBaslik.textContent = Sinif.ad;
-    og.molaAlt.textContent = Sinif.yonerge;
+    // C() ŞART: bu metinler `egzersiz.js` içinde sınıf sabiti ve
+    // sayfa kurulduktan SONRA yazılıyor — `sayfayiCevir` onları
+    // göremez. C()'siz hâlinde İngilizce sayfada Türkçe kalıyordu.
+    og.molaBaslik.textContent = C(Sinif.ad);
+    og.molaAlt.textContent = C(Sinif.yonerge);
 
     // İlk kareyi hemen çiz — rAF beklemeden ekranda bir şey olsun
     try { egzersiz.ciz(0, motor.ayarlar.molaSuresi); } catch {}
@@ -2219,9 +2230,14 @@
     not.className = 'kaynak';
     not.style.display = 'block';
     not.style.marginTop = '8px';
-    not.textContent = 'Telefonda: uygulama açıkken hatırlatır. Ekran kilitliyken '
-      + 'tarayıcılar sayacı dondurur — bu bir telefon sınırı, uygulama hatası değil. '
-      + 'Ayarlardan “Arka planda çalışmaya devam et” bunu büyük ölçüde çözer.';
+    not.textContent = CS(
+      'Telefonda: uygulama açıkken hatırlatır. Ekran kilitliyken '
+        + 'tarayıcılar sayacı dondurur — bu bir telefon sınırı, uygulama hatası değil. '
+        + 'Ayarlardan “Arka planda çalışmaya devam et” bunu büyük ölçüde çözer.',
+      'On a phone it reminds you while the app is open. When the screen is '
+        + 'locked, browsers freeze the timer — that is a phone limitation, not '
+        + 'an app bug. “Keep running in the background” in Settings largely '
+        + 'solves it.');
     document.querySelector('.alt-bilgi')?.appendChild(not);
   }
 

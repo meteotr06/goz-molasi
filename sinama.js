@@ -110,6 +110,41 @@
 
   /* ---------- 4. DİL ---------- */
   {
+    /* EGZERSİZ METİNLERİ — kaynağa bakan denetim.
+       28.08.2026'da ölçüldü: İngilizce sayfada mola ekranı TÜRKÇE
+       kalıyordu. "Nokta büyüyünce parmağına, küçülünce uzağa bak" —
+       yani kullanıcıya NE YAPACAĞINI söyleyen tek metin.
+
+       NEDEN AŞAĞIDAKİ TARAMA YAKALAMADI: o tarama yalnızca GÖRÜNÜR
+       öğeleri geziyor (`e.offsetParent`). Mola ekranı sınama koşarken
+       gizli. Görünmeyen durum, denetlenmemiş durumdur — bu dersi bu
+       projede üçüncü kez ödüyoruz (gizli sekme içeriği, masaüstü
+       uyarı satırı, şimdi mola ekranı).
+
+       Bu yüzden burası DOM'a değil KAYNAĞA bakıyor. */
+    const liste = (typeof TUM_EGZERSIZLER !== 'undefined') ? TUM_EGZERSIZLER : null;
+    if (!liste || !liste.length) {
+      /* BOŞ KÜMEDE GEÇMEK YASAK. Bu denetimin ilk hâli listeyi yanlış
+         adla arıyordu, sıfır öğe buldu ve "hepsi çevrildi" dedi.
+         Hiçbir şey ölçmeyen sınama, geçmiş sayılmaz. */
+      ekle('dil', 'egzersiz listesi bulunamadı — ÖLÇÜM YAPILMADI', false,
+           'TUM_EGZERSIZLER yok');
+    } else {
+      const eksik = [];
+      for (const S of liste) {
+        if (!S.ad) continue;
+        if (C(S.ad) === S.ad && /[çğıöşüÇĞİÖŞÜ]/.test(S.ad)) eksik.push(S.ad);
+        if (S.yonerge && C(S.yonerge) === S.yonerge
+            && /[çğıöşüÇĞİÖŞÜ]/.test(S.yonerge)) eksik.push(S.yonerge.slice(0, 32));
+      }
+      const enAz = 5;                       // bugün 5 egzersiz var
+      ekle('dil', `egzersiz sayısı en az ${enAz}`, liste.length >= enAz,
+           `${liste.length} egzersiz`);
+      ekle('dil', 'mola ekranı egzersiz metinleri çevrilebiliyor',
+           eksik.length === 0,
+           eksik.length ? 'sözlükte yok: ' + eksik.join(' | ') : `${liste.length} egzersiz`);
+    }
+
     /* OZEL ADLAR Turkce harf tasir ama cevrilmez.
        "Türkiye" ulkenin INGILIZCEDEKI resmi adi; sinama onu
        "cevrilmemis Turkce metin" sayip yanlis alarm veriyordu.
