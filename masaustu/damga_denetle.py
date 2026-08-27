@@ -68,6 +68,58 @@ def kaydet():
         ensure_ascii=False, indent=1) + "\n")
 
 
+SAYFALAR = ["index.html", "rehber.html", "guide.html", "gizlilik.html"]
+
+
+def damga_tutarli_mi(surum):
+    """HER sayfadaki HER damga, sw.js'teki SURUM ile aynı mı?
+
+    27.08.2026'da ölçüldü: `kopru.js` eklerken index.html'i ELLE
+    v83'e çektim, öbür üç sayfa v82'de kaldı. Takım YEŞİL geçti —
+    bu denetim yalnızca "dosya değişti ama SURUM artmadı" diye
+    bakıyordu, TERSİNİ hiç sormuyordu.
+
+    Aynı hata Planlayıcı'da da bulundu: `stil.css?v=17` iken
+    betikler `?v=19` idi. Geride kalan CSS olunca kimse fark etmez,
+    çünkü uygulama çalışır — yalnızca GÖRÜNÜM eski kalır.
+
+    Kök sebep her iki durumda da aynı: elle damgalamak. Aracı var
+    (`surum_ekle.py`) ve tek yerden basıyor.
+    """
+    kalan = []
+    for sayfa in SAYFALAR:
+        yol = os.path.join(KOK, sayfa)
+        if not os.path.exists(yol):
+            continue
+        metin = io.open(yol, encoding="utf-8-sig").read()
+        for damga in set(re.findall(r"\?s=(v\d+)", metin)):
+            if damga != surum:
+                kalan.append("%s -> %s (sw.js: %s)" % (sayfa, damga, surum))
+    return kalan
+
+
+def onbellekte_eksik():
+    """HTML'e eklenen yerel dosya, sw.js'in önbellek listesinde var mı?
+
+    Yeni bir betik eklerken sw.js listesini güncellemeyi unutmak
+    sessiz bir hata: çevrimiçiyken her şey çalışır, ÇEVRİMDIŞIYKEN
+    o dosya gelmez ve uygulama yarım açılır. `kopru.js` eklenirken
+    bu tam bir adım uzaktaydı.
+    """
+    sw = io.open(os.path.join(KOK, "sw.js"), encoding="utf-8-sig").read()
+    liste = set(re.findall(r"'\./([^']+)'", sw))
+    kalan = []
+    for sayfa in SAYFALAR:
+        yol = os.path.join(KOK, sayfa)
+        if not os.path.exists(yol):
+            continue
+        metin = io.open(yol, encoding="utf-8-sig").read()
+        for dosya in set(re.findall(r'(?:src|href)="([a-zA-Z0-9_.-]+\.(?:js|css))\?s=', metin)):
+            if dosya not in liste:
+                kalan.append("%s -> %s sw.js önbellek listesinde YOK" % (sayfa, dosya))
+    return kalan
+
+
 def main():
     surum = surum_oku()
     if not surum:
@@ -78,6 +130,18 @@ def main():
         kaydet()
         print("İlk kayıt oluşturuldu (%s). Bundan sonra denetlenecek." % surum)
         return 0
+
+    # Bu iki denetim KAYITTAN BAĞIMSIZ: dosya değişmemiş olsa da
+    # tutarsızlık durabilir. Erken dönüşlerin ÖNÜNDE olmalılar.
+    sorunlar = damga_tutarli_mi(surum) + onbellekte_eksik()
+    if sorunlar:
+        print("BAŞARISIZ — damga/önbellek tutarsız:")
+        for s in sorunlar:
+            print("  -", s)
+        print()
+        print("Yapılacak: python masaustu/surum_ekle.py")
+        print("           (elle damgalama; araç tek yerden basıyor)")
+        return 1
 
     eski = json.load(io.open(KAYIT, encoding="utf-8-sig"))
     simdi = ozetler()

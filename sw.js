@@ -63,7 +63,9 @@ self.addEventListener('fetch', (e) => {
       if (cevap && cevap.ok) onbellek.put(e.request, cevap.clone());
       return cevap;
     } catch {
-      // ignoreSearch: dosya adreslerinde ?s=v55 gibi sürüm etiketi var.
+      // ignoreSearch: dosya adreslerinde ?s=<sürüm> etiketi var.
+      // (Buraya örnek sürüm YAZILMIYOR: yayın nöbetçisi kaynak taramasında
+      //  yorumdaki sayıyı gerçek damga sanıp yanlış alarm veriyordu.)
       // Tam eşleşme aransa çevrimdışı yedek hiç bulunamazdı.
       return (await onbellek.match(e.request, { ignoreSearch: true }))
         || (await onbellek.match('./index.html'))

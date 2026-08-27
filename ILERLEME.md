@@ -227,3 +227,29 @@ değil. Sınır ebeveyne açıkça yazılıyor.
 5. **Masaüstü ile web aynı kuralı paylaşmaz.** "5 dakika uzak kalındıysa
    gözler dinlendi" masaüstünde doğru (program hep açık), web'de yanlış
    (sekmenin kapalı olması uzaklaşma değil). Ayrı eşik gerekti.
+
+## Köprü — Windows ↔ tarayıcı (27.08.2026)
+
+İki sürüm iki ayrı yere yazıyordu, sayaç kopuyordu. Windows sürümü artık
+`127.0.0.1:8452`'de bir **okuma** ucu açıyor; tarayıcı sürümü oradan
+devralıyor.
+
+**ÇALIŞTIĞI YER — ve çalışmadığı yer.** Ölçüldü:
+
+| Sayfa nereden açıldı | Köprüyü gördü mü |
+|---|---|
+| `http://localhost:...` (yerel sunucu, `Telefona Sunucu Ac.bat`) | **evet** |
+| `https://meteotr06.github.io` (yayın) | **hayır** — `ERR_BLOCKED_BY_CLIENT` |
+
+Yayındaki sayfayı bu makinede bir tarayıcı eklentisi kesiyor. Başka
+makinede çalışabilir ama **söz verilmiyor**. Eşitleme isteyen kullanıcı
+tarayıcı sürümünü yerel sunucudan açmalı.
+
+Köprü ulaşılamazsa uygulama bugünkü gibi çalışır ve **hata gösterilmez** —
+olmayan bir şeyin eksikliği hata değildir.
+
+**Kapatılabilir:** `ayarlar.json` içinde `"kopru": false`.
+
+**Yön tek:** Windows → tarayıcı. Windows sürümü sürekli açık ve sekme
+kapalıyken de ölçebiliyor; hangisi daha çok şey biliyorsa doğru odur.
+Tarayıcıda verilen mola Windows tarafına GEÇMEZ — bilinen sınır.

@@ -194,7 +194,44 @@ def main():
         kp._izinli_mi = gercek
         _, _, izin = iste(kaynak="https://kotusite.example")
         kontrol("koruma geri gelince yine kapalı", izin is None)
-        print("--- 8) UYGULAMANIN VERDİĞİ PAKET ---")
+        print("--- 8) AĞA AÇIK MI (yalnız bu bilgisayar olmalı) ---")
+        # Bu, ölçülmesi gereken bir sorudur; koda bakıp "127.0.0.1
+        # yazmış" demek yetmez. Bir gün biri kolaylık olsun diye
+        # "0.0.0.0" yazarsa aynı Wi-Fi'daki herkes ekran sürenizi
+        # okuyabilir ve kimse fark etmez — hiçbir şey bozulmaz.
+        kontrol("dinlenen adres 127.0.0.1",
+                k.sunucu.server_address[0] == "127.0.0.1",
+                str(k.sunucu.server_address[0]))
+
+        # Yapılandırmaya değil DAVRANIŞA bak: ağ IP'sinden bağlanmayı dene.
+        import socket
+        yerel_ip = None
+        try:
+            for bilgi in socket.getaddrinfo(socket.gethostname(), None,
+                                            socket.AF_INET):
+                aday = bilgi[4][0]
+                if not aday.startswith(("127.", "169.254.")):
+                    yerel_ip = aday
+                    break
+        except Exception:
+            pass
+        if yerel_ip:
+            s = socket.socket()
+            s.settimeout(2)
+            try:
+                s.connect((yerel_ip, k.port))
+                acik = True
+            except Exception:
+                acik = False
+            finally:
+                s.close()
+            kontrol("ağ IP'sinden (%s) erişilemiyor" % yerel_ip, not acik,
+                    "AĞA AÇIK — aynı Wi-Fi'daki herkes okuyabilir")
+        else:
+            # Ölçemediğimizi gizlemiyoruz.
+            print("  %-52s %s" % ("ağ IP'si bulunamadı — ölçülemedi", "ATLA"))
+
+        print("--- 9) UYGULAMANIN VERDİĞİ PAKET ---")
         uygulama_tarafi(kontrol)
     finally:
         k.durdur()
