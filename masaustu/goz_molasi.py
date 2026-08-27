@@ -3400,12 +3400,46 @@ class Uygulama:
         yasak_bit_alan.insert(0, self.ayar.get("yasak_bit", "07:00"))
         yasak_bit_alan.pack(side="left", padx=6, ipady=3)
 
-        tk.Label(p, text="Bu bir güvenlik duvarı değildir. Görev Yöneticisi'nden "
-                         "kapatılabilir; “Zorla kapatılırsa geri aç” ayarı bunu "
-                         "zorlaştırır ama kararlı biri yine de aşar. Amaç "
-                         "engellemek değil, sınırı görünür kılmak.",
+        # ---- EBEVEYNE DÜRÜSTLÜK ----
+        # Ebeveyn bu kipi ÇOCUĞU için açıyor. Neyin garanti olduğunu,
+        # neyin olmadığını bilmezse korunmadığı hâlde korunduğunu sanar.
+        # Elimizde ölçülmüş bir atlatma listesi var (ILERLEME.md); burada
+        # onun ebeveyni ilgilendiren kısmı yazılı. Eskiden yalnızca
+        # "güvenlik duvarı değildir" yazıyordu — doğruydu ama EN KOLAY
+        # atlatma yolunu ve gerçek çözümü söylemiyordu.
+        tk.Frame(p, bg=P["cizgi"], height=1).pack(fill="x", padx=26,
+                                                  pady=(12, 8))
+        tk.Label(p, text="Bu kip ne yapar, ne yapmaz",
+                 font=("Segoe UI", 9, "bold"), fg=P["yazi"],
+                 bg=P["kart"]).pack(padx=26, anchor="w")
+
+        tk.Label(p, text="Denendi, atlatılamıyor: sistem saatini geri ya da "
+                         "ileri almak, gece yarısını bekleyip sınırı "
+                         "sıfırlatmak, ayarlara girip kipi kapatmak, molayı "
+                         "kısayolla geçmek.",
                  font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
-                 wraplength=400, justify="left").pack(padx=26, pady=(8, 0),
+                 wraplength=400, justify="left").pack(padx=26, pady=(6, 0),
+                                                      anchor="w")
+
+        tk.Label(p, text="Atlatılabiliyor — bilmen gerekir:\n"
+                         "•  Ayar dosyası silinirse kip tümüyle kalkar. Dosya "
+                         "çocuğun kendi kullanıcı klasöründe duruyor; bunu "
+                         "engelleyemeyiz.\n"
+                         "•  Görev Yöneticisi'nden iki süreç birden "
+                         "kapatılabilir.\n"
+                         "•  Windows güvenli kipte açılırsa hiçbir program "
+                         "başlamaz.\n"
+                         "•  Tarayıcıdaki sürümde aile kipi yoktur.",
+                 font=("Segoe UI", 8), fg="#ffb27a", bg=P["kart"],
+                 wraplength=400, justify="left").pack(padx=26, pady=(6, 0),
+                                                      anchor="w")
+
+        tk.Label(p, text="Gerçek koruma için çocuğa yönetici hakkı olmayan "
+                         "AYRI bir Windows hesabı açın. Bu uygulama onun "
+                         "yerini tutmaz; amacı engellemek değil, sınırı "
+                         "görünür kılmaktır.",
+                 font=("Segoe UI", 8), fg=P["soluk"], bg=P["kart"],
+                 wraplength=400, justify="left").pack(padx=26, pady=(6, 0),
                                                       anchor="w")
 
         def kip_degisti(*_):
