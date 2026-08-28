@@ -862,6 +862,8 @@ kbd {
   max-width: min(92vw, 30rem);
 }
 
+/* (Bu blok dosyanın SONUNA taşındı — kısa ekran kuralı sonra
+   geldiği için burada eziliyordu.) */
 /* ---------------- YENİ SÜRÜM ŞERİDİ ---------------- */
 .guncelleme-serit {
   position: fixed;
@@ -905,7 +907,12 @@ kbd {
   flex-direction: column;
   align-items: center;
   gap: 22px;
-  padding: 24px;
+  /* GÜVENLİ ALAN. Çentikli telefonlarda başlık, alttaki gezinti
+     çubuğunun olduğu yerde ise kaynak satırı kesiliyordu. */
+  padding: calc(24px + env(safe-area-inset-top, 0px))
+           calc(24px + env(safe-area-inset-right, 0px))
+           calc(24px + env(safe-area-inset-bottom, 0px))
+           calc(24px + env(safe-area-inset-left, 0px));
   text-align: center;
   /* Gece mavisinden mora, oradan şafak tonuna — masaüstü sürümüyle
      aynı gradyan. Siyah değil ama yine de koyu: göz dinlenecek.
@@ -1522,7 +1529,18 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    kalıyor. Ölçülen sorun: 1280x600'de başlık 39px yukarıda, "atla"
    düğmesi 39px aşağıda kalıyordu. Aşağıdaki daraltmalar bunu kapatıyor. */
 @media (max-height: 760px) {
-  .mola-ekran { gap: 14px; padding: 16px; }
+  /* DİKKAT: burada `padding` KISAYOLU kullanmak, yukarıdaki güvenli
+     alan dolgusunu (ve tam ekran payını) topluca siler. Ölçüldü:
+     kısayol yüzünden hesaplanan dolgu 16px'e düşüyordu ve telefon
+     tam ekranda tam bu kurala giriyor — yani düzeltme hiç
+     işlemiyordu. Uzun yazım şart. */
+  .mola-ekran {
+    gap: 14px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  }
   .mola-baslik { font-size: clamp(18px, 4vw, 22px); }
   .mola-alt { font-size: 14px; }
   .mola-sayi { font-size: clamp(28px, 6vh, 38px); }
@@ -1821,4 +1839,31 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .ikinci-kutu h2 { margin: 0; font-size: 19px; line-height: 1.3; }
 .ikinci-kutu p {
   margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--yazi-soluk);
+}
+
+
+/* ============================================================
+   TAM EKRANDA ALT KENAR ÖRTÜLÜYOR — DOSYANIN SONUNDA, BİLEREK.
+
+   Kullanıcının ekran görüntüsü gösterdi: Chrome tam ekranda kendi
+   mesajını basıyor ("çıkmak için yukarıdan sürükleyin") ve telefonun
+   gezinti çubuğu geri gelebiliyor. İkisi de "Neden?" kartının alt
+   satırlarını örtüyordu; kaynak satırı okunmaz hâldeydi.
+
+   `env(safe-area-inset-bottom)` bunu TEK BAŞINA çözmüyor: Chrome'un
+   mesajı güvenli alanın parçası değil, üstüne çizilen geçici bir
+   katman. Bu yüzden dokunmatikte ek pay veriliyor.
+
+   NEDEN EN SONDA: ilk hâlini dosyanın ortasına koymuştum ve
+   `@media (max-height: 760px)` kuralı SONRA geldiği için eziliyordu.
+   Ölçüldü — hesaplanan dolgu 16px çıktı, yani düzeltme hiç
+   işlemiyordu. Telefon tam ekranda tam o kurala giriyor.
+
+   ÖLÇÜLMEDİ: bu ortamda yerleşim ölçülemiyor (clientWidth: 0).
+   Kullanıcıdan doğrulanacak.
+   ============================================================ */
+@media (pointer: coarse) {
+  .mola-ekran {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px) + 64px);
+  }
 }

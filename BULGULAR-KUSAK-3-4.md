@@ -147,3 +147,68 @@ sanıldı. `Object.defineProperty` şart — ve sınama artık taklidin
 yerleştiğini de ayrı bir madde olarak ölçüyor. Ayrıca hava özelliği
 kapalıyken konum satırı `display:none`; açılmadan yapılan tıklama
 hiçbir şey ölçmez.
+
+---
+
+## 9. KUŞAK — Dil ve yerelleştirme
+
+### Yöntem: harfe değil DAVRANIŞA bakmak
+
+Mevcut denetim `çğıöşü` harflerini arıyordu ve dosyanın kendi yorumu
+sınırını yazıyordu: “Beyaz”, “Okyanus”, “Kiraz” gibi Türkçe harf
+taşımayanları göremiyor, onlar **gözle** bulunmuş. Gözle bulmak yöntem
+değildir.
+
+Yeni yöntem: sayfa iki dilde ayrı ayrı açılıp metin düğümleri
+karşılaştırılıyor. İki dilde **birebir aynı** kalan her metin aday.
+Dilin kendisine değil, çevirinin **olup olmadığına** bakıyor.
+
+| | sayı |
+|---|---|
+| karşılaştırılan metin düğümü (payda) | 338 |
+| iki dilde aynı kalan | 34 |
+| çalışma anında çevrilen (gizli varsayılan, kaçak değil) | 3 |
+| meşru (uygulama adlarımız, tuş adı, dil seçici, simge) | 8 |
+| **gerçek kaçak** | **23** |
+| eski harf tabanlı taramanın görebileceği | 19 / 34 → **15'i görünmez** |
+
+Düzeltmeden sonra: **0 gerçek kaçak.**
+
+### Üç ayrı sebep, üç ayrı düzeltme
+
+1. **Sözlükte yoktu** (çoğunluk) → `dil.js`'e 20 madde. Cümle parçaları
+   ayrı anahtar: `<b>` araya girince metin çok düğüme bölünüyor ve
+   sözlük tam eşleşme istiyor.
+2. **Sözlükte VARDI ama çağrılmıyordu.** `og.temaAdi.textContent = s.ad`
+   — iki satır yukarıda `title` için `C(t.ad)` yazılmışken görünen
+   etiket ham geçiyordu: ekran okuyucu “White” derken ekranda “Beyaz”.
+   **Sözlüğe eklemek yetmez, çağırmak da gerekir.**
+3. **Çalışma anında üretiliyordu.** `sayfayiCevir` yüklemede bir kez
+   geziyor; sonradan yazılan metne uğramıyor. Süre özeti cümlesi ve
+   atlama etiketi `CS` ile kuruldu.
+
+### Saat biçimi
+
+Saatler elle `getHours()` + `padStart` ile yazılıyordu: **her dilde 24
+saat**. Dili çevirip saat biçimini çevirmemek yarım yerelleştirmedir.
+`dil.js`'e `saatYaz()` eklendi. **“İngilizce = 12 saat” DEMİYORUZ** —
+en-GB de 24 saat kullanır; karar tarayıcının bölgesine bırakıldı.
+Ölçüldü: `tr → 14:30`, `en-US → 02:30 PM`.
+
+### Ölçüm dersleri (üçü de bu kuşakta yaşandı)
+
+1. **Kendi izim bulguyu uydurdu.** “Tarayıcı en-US ama uygulama Türkçe
+   açılıyor” diye bir bulgu yazacaktım. Ölçütüm “sayfada Türkçe harf
+   var mı” idi — oysa **yarım yükleme uyarısı bilerek iki dilli** ve
+   her zaman Türkçe harf taşıyor. Temizleyince dil seçimi doğru çıktı.
+2. **Gizli varsayılan kaçak değildir.** Tarama gizli öğeleri de geziyor;
+   bazı metinler gösterilmeden önce `CS` ile değiştiriliyor. Kaynak
+   kodda `CS(` içinde geçip geçmediğine bakılarak ayrıldı: 34 adayın
+   3'ü böyle çıktı. **“Kaç bulundu” demeden önce “kaçı gerçekten”.**
+3. **Hiç çalışmayan dal ölçülemez.** `dk <= 10` dalındaki not `CS`
+   kullanmıyordu; komşu iki dal kullanıyordu. DOM karşılaştırması
+   göremedi çünkü o koşul hiç sağlanmadı — **koşula bağlı metin ancak
+   koşul sağlanırsa ölçülür.** Kaynak okunarak bulundu.
+4. **Yanlış şeyi ölçen kırmızı.** Saat ölçütüm ekrandaki her `\d\d:\d\d`
+   desenine bakıyordu ve **geri sayımı** (dakika:saniye) saat sandı.
+   Kırmızıyı hata olmayan şeye harcamak, kırmızının anlamını götürür.

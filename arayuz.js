@@ -1136,7 +1136,7 @@
       const bitis = motor.duraklatmaBitis || 0;
       if (bitis > Date.now()) {
         const t = new Date(bitis);
-        const ss = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+        const ss = saatYaz(t);
         og.durum.textContent = CS(`Duraklatıldı · ${ss}'de devam eder`,
                                   `Paused · resumes at ${ss}`);
       } else {
@@ -1594,7 +1594,7 @@
     }, HOLD_SURE);
   }
   function atlaEtiketi() {
-    return 'Atlamak için basılı tut';
+    return CS('Atlamak için basılı tut', 'Press and hold to skip');
   }
   function holdIptal() {
     clearTimeout(holdZaman);
@@ -2032,7 +2032,8 @@
     document.documentElement.style.setProperty('--canlilik', (yuzde / 100).toFixed(2));
     if (kaydet) { try { localStorage.setItem(CANLILIK_ANAHTAR, String(yuzde)); } catch {} }
     if (og.canlilikDurum) {
-      const ad = yuzde <= 75 ? 'Sakin' : yuzde >= 130 ? 'Canlı' : 'Dengeli';
+      const ad = yuzde <= 75 ? CS('Sakin', 'Calm')
+        : yuzde >= 130 ? CS('Canlı', 'Vivid') : CS('Dengeli', 'Balanced');
       if (og.ayCanlilikDeger) og.ayCanlilikDeger.textContent = `${ad} · %${yuzde}`;
       const destek = CSS.supports('color', 'oklch(from white l c h)');
       og.canlilikDurum.textContent = destek
@@ -2116,8 +2117,8 @@
     const molaSayisi = Math.floor((saat * 60) / dk);
     const toplamSn = molaSayisi * sn;
     const toplam = toplamSn >= 60
-      ? `${Math.round(toplamSn / 60)} dakika`
-      : `${toplamSn} saniye`;
+      ? `${Math.round(toplamSn / 60)} ` + CS('dakika', 'minutes')
+      : `${toplamSn} ` + CS('saniye', 'seconds');
 
     let not = '';
     if (dk > 30) {
@@ -2132,12 +2133,23 @@
         '⚠ A break shorter than 15 seconds may not let the focusing muscle relax.')
         + '</span>';
     } else if (dk <= 10) {
-      not = '<span class="uyari-notu">Sık mola: 2023 çalışması 10 dakikayı destekliyor, ' +
-            'ama işini bölebilir.</span>';
+      /* Komsu iki dal `CS` kullaniyordu, bu dal kullanmiyordu. DOM
+         karsilastirmasi bunu GOREMEDI cunku dal hic calismamisti:
+         kosula bagli metin, ancak kosul saglanirsa olculur. */
+      not = '<span class="uyari-notu">' + CS(
+        'Sık mola: 2023 çalışması 10 dakikayı destekliyor, ama işini bölebilir.',
+        'Frequent breaks: a 2023 study supports 10 minutes, but it may interrupt your work.')
+        + '</span>';
     }
 
-    og.sureOzeti.innerHTML =
-      `8 saatlik bir günde <b>${molaSayisi} mola</b> · toplam <b>${toplam}</b> göz dinlenmesi` + not;
+    /* CALISMA ANINDA URETILEN METIN SOZLUGE UGRAMAZ.
+       `sayfayiCevir` sayfa yuklenirken bir kez geziyor; burasi sonradan
+       yaziliyor. Sozluge eklemek yetmez, `CS` ile kurmak gerekir.
+       Olculdu (test-dil.html): bu cumlenin bes parcasi Ingilizce kipte
+       Turkce kaliyordu. */
+    og.sureOzeti.innerHTML = CS(
+      `8 saatlik bir günde <b>${molaSayisi} mola</b> · toplam <b>${toplam}</b> göz dinlenmesi`,
+      `In an 8-hour day: <b>${molaSayisi} breaks</b> · <b>${toplam}</b> of eye rest in total`) + not;
   }
 
   function uzunMolayiTazele() {
@@ -2188,7 +2200,12 @@
       d.setAttribute('aria-checked', d.dataset.tema === tema ? 'true' : 'false');
     });
     const s = TEMALAR.find((t) => t.id === tema);
-    og.temaAdi.textContent = s ? s.ad
+    /* `C()` UNUTULMUSTU. Iki satir yukarida `title`/`aria-label` icin
+       `C(t.ad)` yaziliyor ama gorunen etiket ham `s.ad` aliyordu: ekran
+       okuyucu "White" derken ekranda "Beyaz" yaziyordu. Olculdu
+       (test-dil.html): "Beyaz" sozlukte VARDI ama buraya ugramiyordu --
+       sozluge eklemek yetmiyor, cagirmak da gerekiyor. */
+    og.temaAdi.textContent = s ? C(s.ad)
       : CS('Seçince hemen uygulanır', 'Applies immediately');
   }
 

@@ -16,6 +16,46 @@
 const DIL_ANAHTAR = 'goz-molasi-dil';
 
 const SOZLUK = {
+  /* ---- 28.08.2026: HARF TABANLI OLMAYAN TARAMAYLA BULUNANLAR ----
+     Yontem: sayfa iki dilde ayri ayri acilip metin dugumleri
+     karsilastirildi; iki dilde BIREBIR AYNI kalan her metin aday
+     sayildi (test-dil.html). Payda 338 metin, 34 aday.
+
+     Neden onemli: eski denetim `cgiosu` harflerini ariyordu ve 34
+     adayin ancak 19'unu gorebiliyordu -- 15'i harf tasimadigi ya da
+     cumle parcasi oldugu icin gorunmuyordu. Harfe bakmak yerine iki
+     dili karsilastirmak, dilin kendisine degil DAVRANISA bakiyor.
+
+     Cumle parcalari da ayri anahtar: HTML'de `<b>` araya girince metin
+     birden cok dugume boluniyor ve sozluk tam eslesme istiyor. */
+  'seç': 'select',
+  'Şimdi değil': 'Not now',
+  'Bilgiler sekmesi': 'Info tab',
+  'Sayaç sekmesi': 'Timer tab',
+  'Atlamak için basılı tut': 'Press and hold to skip',
+  'Küçük bir çalışmada daha iyi': 'Better in a small study',
+  'Windows sürümünü': 'the Windows version',
+  'Uygulamadaki bütün bilgiler burada. Her sağlık iddiasının kaynağı altında yazıyor; kanıtı zayıf olanlarda bunu açıkça söylüyoruz.':
+    'Everything the app knows is here. Every health claim cites its source underneath, and where the evidence is weak we say so plainly.',
+  'Telefonda:': 'On phones:',
+  'uygulamayı ana ekrana kurduysan simgeye basılı tutunca “Şimdi mola ver”, “5 dakika duraklat” ve “Rehber” kısayolları çıkar.':
+    'if you added the app to your home screen, press and hold the icon for the “Take a break now”, “Pause 5 minutes” and “Guide” shortcuts.',
+  'Mola ekranındayken kısayollar çalışmaz — 20 saniye tuşla geçilebilseydi mola olmazdı.':
+    'Shortcuts do not work while the break screen is up — if 20 seconds could be skipped with a key, it would not be a break.',
+
+  /* Istatistik cumlesi `<b>` ile parcalanmis: dort ayri dugum. */
+  '8 saatlik bir günde': 'In an 8-hour day',
+  '· toplam': '· total',
+  'göz dinlenmesi': 'of eye rest',
+
+  /* Bosta esigi cumlesi de parcali. */
+  'Telefonda': 'On phones',
+  ', bilgisayarda': ', on computers',
+  'kapalı': 'off',
+  'açık': 'on',
+  'geliyor. Sebebi: telefonda başka uygulamaya geçmek ekrandan kalkmak değildir, hâlâ ekrana bakıyorsundur. Açıkken 5 dakikadan uzun uzaklaşırsan sayaç baştan başlar; kapalıyken hiç sıfırlanmaz, saatler sonra açsan bile kaldığın yerden devam eder.':
+    'by default. Why: on a phone, switching to another app is not the same as looking away — you are still at the screen. When it is on, stepping away for more than 5 minutes restarts the timer; when it is off it never resets, so it carries on from where you left it even hours later.',
+
   /* ---- Kurulum şeridi ----
      DİKKAT: bu iki metinde hiç çğıöşü YOK; sınamanın harf tabanlı
      taraması onları göremez. 28.08.2026'da gözle bulundu. */
@@ -448,6 +488,27 @@ function dilYaz(d) {
 }
 
 let AKTIF_DIL = dilOku();
+
+/** Saati kullanıcının bölgesine göre yazar.
+
+    NEDEN VAR: saatler elle `getHours()` + `padStart(2,'0')` ile
+    yazılıyordu, yani HER dilde 24 saat. Ölçüldü (test-dil.html):
+    İngilizce kipte ekranda "00:25" görünüyordu, AM/PM hiç yoktu.
+    Dili çevirip saat biçimini çevirmemek yarım yerelleştirmedir;
+    "resumes at 14:30" bir Amerikalı için okunaklı değil.
+
+    "İngilizce = 12 saat" DEMİYORUZ: en-GB de 24 saat kullanır.
+    Karar tarayıcının bölgesine bırakılıyor — varsayım değil, bilgi.
+    Türkçe seçilmişse tr-TR (24 saat) sabit. */
+function saatYaz(tarih) {
+  const yerel = AKTIF_DIL === 'tr' ? 'tr-TR' : (navigator.language || 'en');
+  try {
+    return tarih.toLocaleTimeString(yerel, { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return String(tarih.getHours()).padStart(2, '0') + ':' +
+           String(tarih.getMinutes()).padStart(2, '0');
+  }
+}
 
 /** Tek bir metni çevir. Sözlükte yoksa olduğu gibi döner —
     çevrilmemiş metin, boş metinden iyidir. */
