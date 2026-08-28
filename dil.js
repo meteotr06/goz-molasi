@@ -485,6 +485,18 @@ const SOZLUK = {
   'Ayrı sayfada aç': 'Open in a separate page',
   'Bu tarayıcı canlılık ayarını desteklemiyor; tema renkleri olduğu gibi kullanılıyor.': 'This browser does not support the vividness setting; theme colours are used as they are.',
   'Bu cihaz titreşimi desteklemiyor': 'This device does not support vibration',
+
+  /* 28.08.2026 - konum ve hava yazilari. Konum izni
+     reddedilince Ingilizce arayuzde TURKCE cumle cikiyordu.
+     Ceviri artik `havaDurumunuGoster` icinde yapiliyor, yani
+     bu anahtarlar sozlukten geciyor ve eksigi `sinama_sozluk.py`
+     yakaliyor. */
+  'Konum alınıyor…': 'Getting your location…',
+  'Konum unutuldu.': 'Location forgotten.',
+  'Cihazın konum desteklemiyor.': 'Your device does not support location.',
+  'Konum izni verilmedi. Aşağıdan şehir arayabilirsin.': 'Location permission was denied. You can search for a city below, or allow location from the padlock icon in the address bar.',
+  'Konum alınamadı. Aşağıdan şehir arayabilirsin.': 'Could not get your location. You can search for a city below.',
+  'her birkaç molada bir hava durumu gösterilir': 'the weather is shown every few breaks',
 };
 
 

@@ -738,12 +738,22 @@
     const konum = MolaIcerik.konumOku();
     og.havaKonumSatir.classList.toggle('gizli', !og.ayHava.checked);
     og.konumSilDugme.classList.toggle('gizli', !konum);
-    if (mesaj) { og.havaDurum.textContent = mesaj; return; }
+    /* MESAJI BURADA ÇEVİRİYORUZ, ÇAĞIRANDA DEĞİL.
+
+       Ölçüldü (28.08.2026): konum izni reddedilince İngilizce arayüzde
+       Türkçe cümle çıkıyordu — "Konum izni verilmedi. Aşağıdan şehir
+       arayabilirsin." Çünkü mesajlar çağıranlarda düz yazı olarak
+       veriliyor ve buraya olduğu gibi yazılıyordu.
+
+       Çeviriyi görüntüleyen işleve bağlamak, sınıfı da kapatıyor:
+       çağıran kim olursa olsun metin sözlükten geçiyor ve eksik bir
+       çeviri varsa `sinama_sozluk.py` onu kendiliğinden yakalıyor. */
+    if (mesaj) { og.havaDurum.textContent = C(mesaj); return; }
     if (!og.ayHava.checked) {
       og.havaDurum.textContent = C('Kapalı — molalarda yalnızca göz bilgisi gösterilir');
     } else if (konum) {
       og.havaDurum.textContent = (konum.ad ? konum.ad + ' · ' : '') +
-        'her birkaç molada bir hava durumu gösterilir';
+        C('her birkaç molada bir hava durumu gösterilir');
     } else {
       og.havaDurum.textContent = C('Açık — önce konum ver ya da şehir ara');
     }

@@ -68,11 +68,11 @@ kullanıcının kendi ekranında bakılmalı.
 | 31 | Boşta durdurma | ✅ | **Canlı görüldü**: 90 sn dokunmayınca sayaç durdu ve durum yazısı sebebini söyledi (“Idle — timer paused”) |
 | 32 | Mola kilidi | 🟡 | Ayar açık/kapalı doğru kaydediliyor; **mola ekranından çıkamama davranışı telefonda ölçülmeli** |
 | 33 | Etkinlik izni (masaüstü) | ✅ | Dört hâl de var. **Hata bulundu**: üçünün yazısı çeviriden geçmiyordu ve “reddedildi” hâli ne kaybedildiğini söylemiyordu (v135) |
-| 34 | Hava durumu molada | ⬜ | — |
-| 35 | Konum bul / unut / şehir ara | ⬜ | Çevrimdışı dalı da denenmeli |
+| 34 | Hava durumu molada | ✅ | Açılıyor, konum satırı ve gizlilik notu geliyor. **Molada hava kartının çıktığı ölçülmedi** (gerçek konum gerekiyordu) |
+| 35 | Konum bul / unut / şehir ara | ✅ | **Hata bulundu**: izin reddedilince İngilizce arayüzde Türkçe yazı çıkıyordu (v136). Reddetme benzetildi — artık çevrili ve iki çıkış yolu birden yazıyor. “Konumu unut” çalışıyor |
 | 36 | PIN kur / kaldır | ✅ | Kuruldu (**düz metin değil**, tuzlu özet); silme şifre sordu, yanlış şifre reddedildi ve deneme hakkı sayıldı, doğru şifre geçti |
-| 37 | Canlılık kaydırıcısı | ⬜ | — |
-| 38 | Tema (18 tema) | ⬜ | — |
+| 37 | Canlılık kaydırıcısı | ✅ | 100 → 150; CSS değişkeni `--canlilik` **1.50** oldu, yani ayar gerçekten çizime ulaşıyor |
+| 38 | Tema (18 tema) | ✅ | 18 tema sayıldı; ilk ve son denendi, kök özniteliği `beyaz` → `kagit` değişti. **Renklerin göze nasıl göründüğü buradan ölçülemez** |
 | 39 | Dil (TR / EN) | ✅ | Ekran taraması 0 hata verdi; **kural denetimi 6 gerçek eksik buldu** (çevrildi, bekçi kuruldu) |
 | 40 | Hepsini sil | ✅ | **Hata bulundu**: geçmişi silmiyordu (v134). Şimdi bütün kayıtlar kuralla siliniyor; sınama eklendi ve düzeltme geri alınınca yakaladığı doğrulandı |
 | 41 | Ayar kaydet / vazgeç | ✅ | 90→33 değiştirip **Vazgeç** → 90'a döndü, sayaç bozulmadı; **Kaydet** → 33:00 uygulandı |
@@ -130,7 +130,7 @@ silinince geçti.
 
 ## Toplam
 
-**48 özelliğin 39'u denendi** (✅ 38, 🟡 1). **9'u açık.**
+**48 özelliğin 43'ü denendi** (✅ 42, 🟡 1). **5'i açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.

@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 136,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Konum izni reddedilince çıkan yazı İngilizce arayüzde Türkçe kalıyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'İngilizce kullananlar için: <b>konum izni reddedildiğinde</b> çıkan yazı Türkçe kalıyordu — hem de tam kafa karıştıran anda. Konum ve hava durumuyla ilgili bütün yazılar çevrildi.',
+            'O yazı artık <b>iki yolu birden</b> söylüyor: aşağıdan şehir arayabilirsin, ya da adres çubuğundaki kilit simgesinden konuma izin verebilirsin.',
+        ],
+    },
+    {
         'surum': 135,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

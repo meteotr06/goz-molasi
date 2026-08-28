@@ -30,6 +30,34 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 136,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Konum izni reddedilince çıkan yazı İngilizce arayüzde Türkçe '
+        + 'kalıyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'İngilizce kullananlar için: <b>konum izni reddedildiğinde</b> çıkan '
+        + 'yazı Türkçe kalıyordu — hem de tam kafa karıştıran anda. '
+        + 'Konum ve hava durumuyla ilgili bütün yazılar çevrildi.',
+      'O yazı artık <b>iki yolu birden</b> söylüyor: aşağıdan şehir '
+        + 'arayabilirsin, ya da adres çubuğundaki kilit simgesinden konuma '
+        + 'izin verebilirsin.',
+    ],
+    ozetEn: 'The message shown when location permission is denied stayed '
+        + 'in Turkish in the English interface.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'For people using English: the message shown when <b>location '
+        + 'permission is denied</b> stayed in Turkish — at exactly the '
+        + 'confusing moment. All location and weather texts are now '
+        + 'translated.',
+      'That message now offers <b>both ways out</b>: search for a city '
+        + 'below, or allow location from the padlock icon in the address '
+        + 'bar.',
+    ],
+  },
+  {
     surum: 135,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',
