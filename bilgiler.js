@@ -28,8 +28,8 @@ const BILGILER = [
   {
     baslik: 'Türkiye’de de yaygın',
     metin: 'Pandemi dönemi ölçümlerinde Türkiye’de dijital göz yorgunluğu görülme oranı yaklaşık %48 çıktı. ' +
-           'Sağlık Bakanlığı da 20-20-20 kuralını halka öneriyor.',
-    kaynak: 'BMC Public Health, 2024 · T.C. Sağlık Bakanlığı, 2023',
+           'Sağlık Bakanlığına bağlı hastanelerin hasta bilgilendirme sayfalarında da bu kural öneriliyor.',
+    kaynak: 'BMC Public Health, 2024 · T.C. Sağlık Bakanlığı — Diyarbakır Çocuk Hastalıkları Hastanesi hasta bilgilendirme sayfası, 24.08.2023 (Bakanlık genelgesi değil, bağlı bir hastanenin bilgilendirmesi)',
   },
   {
     baslik: 'Neden tam 6 metre?',

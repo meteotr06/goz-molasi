@@ -1809,9 +1809,18 @@
      Telefonda sayı kutusuna elle yazmak zahmetli. Sık kullanılan
      dörtlü tek dokunuşla seçiliyor; elle değiştirme de duruyor.
      ============================================================ */
+  /* CEKINCE, KARARIN VERILDIGI YERDE DURMALI.
+     Ikinci secenegin etiketi once "2023 calismasi bunu oneriyor"
+     idi. Ilgili bilgi karti dogru yazilmis: "KUCUK bir calismada"
+     diyor ve kaynagi veriyor (Johnson & Rosenfield, Optom Vis Sci,
+     2023). Ama kullanici sureyi bu DUGMEDEN seciyor; karti hic
+     acmayabilir. Cekince kartta kalirsa, kararin verildigi yerde
+     yok demektir -- kucuk bir calismanin bulgusu, bir oneri gibi
+     okunur. Wishnofsky ornegindeki ile ayni sinif: aktarilirken
+     cekince dusuyor. */
   const SURE_SECENEKLERI = [
     { dk: 20, sn: 20, ad: '20 dk · 20 sn', not: 'Klasik 20-20-20 kuralı' },
-    { dk: 10, sn: 20, ad: '10 dk · 20 sn', not: '2023 çalışması bunu öneriyor' },
+    { dk: 10, sn: 20, ad: '10 dk · 20 sn', not: 'Küçük bir çalışmada daha iyi' },
     { dk: 30, sn: 30, ad: '30 dk · 30 sn', not: 'Daha seyrek, daha uzun' },
     { dk: 45, sn: 60, ad: '45 dk · 1 dk', not: 'Odak bloğu sevenler için' },
   ];
@@ -2387,17 +2396,46 @@
      sessiz kalmaktan iyi. */
   (function sifirlanmaNotu() {
     const sebep = motor.sifirlanmaSebebi;
-    if (!sebep || sebep.tur !== 'uzun-kapali') return;
+    const gec = motor.gecikmisMola;
+
+    /* Üç ayrı şey söylenebilir ve üçü de söyleniyor. Eskiden yalnız
+       'uzun-kapali' anlatılıyordu; mola ekranı açıkken kapanma yolu
+       sebebi hiç kurmadığı için kullanıcı SESSİZ bir sıfırlama
+       görüyordu — telefonda en sık yaşanan yol tam buydu. */
     const not = $('durumNotu');
     if (!not) return;
-    const dk = Math.max(1, sebep.dakika | 0);
-    $('durumNotuMetin').textContent = CS(
-      `Uygulama ${dk} dakika kapalıydı. Tarayıcı, sekmesi kapalıyken hiçbir `
-      + `şey ölçemez — bu bir ayar değil, teknik bir sınır. Bilgisayarında `
-      + `kapalıyken de ölçmesi için Windows sürümünü kullanabilirsin.`,
-      `The app was closed for ${dk} minutes. A browser cannot measure `
-      + `anything while its tab is closed — that is a technical limit, not `
-      + `a setting. On a computer, the Windows version keeps measuring.`);
+
+    let metin = null;
+    if (gec) {
+      const g = Math.max(1, gec.dakika | 0);
+      metin = CS(
+        `Mola sen uzaktayken geldi (${g} dakika). Sayaç sıfırlanmadı — `
+        + `molan birazdan başlıyor.`,
+        `Your break came due while you were away (${g} min). The timer was `
+        + `not reset — your break starts shortly.`);
+    } else if (sebep && sebep.tur === 'mola-sirasinda') {
+      const d = Math.max(1, sebep.dakika | 0);
+      metin = CS(
+        `Mola ekranı açıkken ${d} dakika ayrılmışsın. O molayı verilmiş `
+        + `saydık ve sayaç yeniden başladı.`,
+        `You left for ${d} minutes while the break screen was open. We `
+        + `counted that break as taken and the timer restarted.`);
+    } else if (sebep && sebep.tur === 'uzun-kapali') {
+      const dk = Math.max(1, sebep.dakika | 0);
+      metin = CS(
+        `Uygulama ${dk} dakika kapalıydı, o yüzden sayaç yeniden başladı — `
+        + `o kadar süre ekrandan uzaktaysan gözlerin zaten dinlendi. `
+        + `Tarayıcı, sekmesi kapalıyken hiçbir şey ölçemez; bu bir ayar `
+        + `değil, teknik bir sınır. Bilgisayarında kapalıyken de ölçmesi `
+        + `için Windows sürümünü kullanabilirsin.`,
+        `The app was closed for ${dk} minutes, so the timer restarted — `
+        + `if you were away from the screen that long, your eyes already `
+        + `rested. A browser cannot measure anything while its tab is `
+        + `closed; that is a technical limit, not a setting. On a `
+        + `computer, the Windows version keeps measuring.`);
+    }
+    if (!metin) return;
+    $('durumNotuMetin').textContent = metin;
     not.hidden = false;
     $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });
   })();

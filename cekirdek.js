@@ -467,7 +467,18 @@ class MolaMotoru {
     const hedef = +veri.hedefZaman;
     const kayitAni = +veri.kayitAni;
     if (!Number.isFinite(hedef) || !Number.isFinite(kayitAni)) return false;
-    if (veri.durum === 'mola' || veri.durum === 'hazir') return false;
+    /* Mola ekranı açıkken kapanmışsa sayaç geri yüklenmiyor —
+       molanın ortasından devam etmenin anlamı yok. AMA sebebi
+       yazıyoruz: eskiden bu satır sebebi KURMADAN dönüyordu ve
+       kullanıcı sayacın neden başa döndüğünü hiç öğrenmiyordu.
+       Sessiz sıfırlama, kullanıcıya "bozuk" gibi görünüyor. */
+    if (veri.durum === 'mola' || veri.durum === 'hazir') {
+      this.sifirlanmaSebebi = {
+        tur: 'mola-sirasinda',
+        dakika: Math.round((Date.now() - kayitAni) / 60000),
+      };
+      return false;
+    }
 
     const simdi = Date.now();
     const kapaliKalan = (simdi - kayitAni) / 1000;
@@ -512,14 +523,35 @@ class MolaMotoru {
       this.sonHareket = simdi;
       return true;
     }
-    // Hedef kapalıyken geçmiş: kısa kapanmaysa molayı kaçırma
-    if (kalan <= 0 && kapaliKalan <= 60) {
+    /* MOLA SEN UZAKTAYKEN GELDİ.
+
+       Bu pencere 60 SANİYEYDİ ve telefondaki asıl hata buydu: molanın
+       düştüğü andan itibaren bir dakika içinde dönmediysen sayaç başa
+       sarıyordu. Başka bir uygulamaya geçip dönmek dakikalar sürer,
+       yani telefonda bu pencere pratikte hiç tutmuyordu. Kullanıcının
+       gördüğü şey "sayaç hep yeniden başlıyor" ve "mola hiç gelmiyor"
+       oluyordu — ölçüldü: 25 dk uzak kalınca ekran 20:00.
+
+       Yeni pencere `dinlenmeEsigi`. O ayarın tanımı zaten bu: bundan
+       kısa bir uzaklaşmada gözler dinlenmiş sayılmaz. Mola hâlâ borç,
+       o yüzden veriliyor. */
+    const molaPenceresi = this.ayarlar.dinlenmeEsigi || 300;
+    if (kalan <= 0 && kapaliKalan <= molaPenceresi) {
       this._kalpAtisiBaslat();
       this.hedefZaman = simdi + 25000;
       this.durum = 'calisiyor';
       this.sonHareket = simdi;
+      this.gecikmisMola = { dakika: Math.round(kapaliKalan / 60) };
       return true;
     }
+
+    /* Buraya düşmek = gerçekten uzun kalınmış. Sayaç temiz başlıyor ve
+       bu DOĞRU: o kadar süre uzaktaysan gözlerin dinlendi. Yanlış olan,
+       eskiden bunun sessizce olmasıydı. */
+    this.sifirlanmaSebebi = {
+      tur: 'uzun-kapali',
+      dakika: Math.round(kapaliKalan / 60),
+    };
     return false;
   }
 }
