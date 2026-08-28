@@ -1875,3 +1875,17 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px) + 64px);
   }
 }
+
+
+/* Mola sayısı ile süre farklı zaman tabanından gelir. Fark büyüdüğünde
+   sebebi ekranda yazılır — ipucunda (title) duramaz, telefonda hover
+   yok ve oradaki cümle kullanıcıya hiç ulaşmıyor. */
+.sure-uyari {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  opacity: 0.85;
+  border-left: 3px solid var(--vurgu, #7c6cf0);
+  border-radius: 4px;
+}

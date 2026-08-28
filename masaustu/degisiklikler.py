@@ -7,6 +7,49 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 130,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Yan yana duran iki sayı birbirini yalanlıyordu; sebebi artık ekranda yazıyor. Bir de yanlış cümle düzeltildi.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            '“Tamamlanan mola” ile “bu sekmede geçen süre” <b>aynı şeyi ölçmüyor</b>: molalar saate göre gelir (uygulama kapalıyken de süre işler), süre ise yalnız uygulama açıkken sayılır. Yan yana durunca “3 mola ama 9 dakika” gibi <b>imkânsız görünen</b> bir tablo çıkıyordu. Artık fark büyüdüğünde sebebi ekranda yazıyor.',
+            'Mola ekranı açıkken uygulamadan ayrılınca çıkan yazı “o molayı verilmiş saydık” diyordu. <b>Doğru değildi</b> — o mola sayılmıyor. Yazı artık ne olduğunu doğru söylüyor.',
+            'Bilgi ekranı “5 egzersiz” yazıp beşini listeliyordu; molalarda <b>yalnızca dördü çıkabiliyordu</b>. Liste artık gerçekten çıkanlardan üretiliyor.',
+        ],
+    },
+    {
+        'surum': 126,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Telefonda sayacın hâlâ sıfırlanmasına yol açan hata düzeltildi — önceki düzeltme yalnızca yeni kurulumlara ulaşıyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Telefonda sayaç sıfırlanmasın diye getirdiğimiz ayar, <b>zaten uygulamayı kullananlara ulaşmıyordu</b>: ayar bir kez cihazına kaydedildiği için yeni varsayılan onu değiştiremiyordu. Artık telefonda bir kereye mahsus yeni davranışa geçiliyor.',
+            'Bu ayarı <b>kendin değiştirdiysen dokunulmuyor</b> — seçimin korunuyor. “Uzun süre uzak kalınca sayacı sıfırla” ayarından her zaman geri alabilirsin.',
+            'Mola ekranının alt kenarı telefonda tarayıcı mesajı ve gezinti çubuğu tarafından örtülüyordu; kaynak satırı okunmuyordu. Artık altta yer bırakılıyor.',
+            'Sayfanın altında artık <b>sürüm numarası</b> yazıyor — bir sorun bildirirken hangi sürümde olduğunu söyleyebilirsin.',
+            'Kayıt yapılamadığında (depolama doluysa) uygulama artık bunu söylüyor. Eskiden sessizce kaydetmiyordu.',
+        ],
+    },
+    {
+        'surum': 111,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.2',
+        'ozet': 'Telefonda sayaç artık her dönüşte baştan başlamıyor ve mola geri tuşuyla kazayla kapanmıyor.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Telefonda başka uygulamaya geçip dönünce sayaç <b>baştan başlıyordu</b>. Molanın düştüğü andan sonra bir dakika içinde dönmediysen sayaç sıfırlanıyordu — telefonda bu neredeyse hiç tutmaz. Artık molan seni bekliyor.',
+            '<b>Yeni ayar:</b> “Uzun süre uzak kalınca sayacı sıfırla”. <b>Telefonda kapalı</b>, bilgisayarda açık geliyor. Sebebi: telefonda başka uygulamaya geçmek ekrandan kalkmak değildir, hâlâ ekrana bakıyorsundur. İstediğin gibi değiştirebilirsin.',
+            '<b>Yeni ayar:</b> “Molada kazayla çıkmayı önle”. Açık geliyor. Mola sürerken geri tuşu molayı bitirmiyor. Seni kilitlemez: Esc her zaman çıkarır ve molayı yine atlayabilirsin.',
+            'Sayaç sıfırlandığında artık <b>nedenini söylüyor</b>. Eskiden sessizce başa dönüyordu ve bozuk gibi duruyordu.',
+            'Cihazın saati değişince (yaz saati ya da elle ayar) uygulama “kapalıydın” diyordu — oysa hiç ayrılmamış olabilirsin. Artık saat değişimini ayırt ediyor.',
+            'Bildirime izin verilmediğinde ekran artık <b>ne kaybettiğini ve nasıl geri alacağını</b> yazıyor.',
+            'Arka planda çalışma sözü <b>küçültüldü</b>: telefonda tarayıcı sayfayı uyutabilir ve mola uyarısı gelmeyebilir. Gelmeyecek bir uyarıyı vaat etmektense sınırı yazmayı seçtik.',
+            'Gizli sekmede uygulamanın <b>hiç açılmamasına</b> yol açabilecek bir hata kapatıldı.',
+        ],
+    },
+    {
         'surum': 93,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.1',

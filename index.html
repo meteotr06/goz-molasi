@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v129">
+<link rel="stylesheet" href="stil.css?s=v130">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -248,6 +248,9 @@
     <div class="kutucuk"><b id="istAtlanan">0</b><span>atlanan mola</span></div>
     <div class="kutucuk" id="sureKutucuk" title="Bu sayaç yalnızca uygulama açıkken işler."><b id="istSure">0 dk</b><span id="istSureEtiket">takip edilen süre</span></div>
   </section>
+  <!-- Mola sayısı ile süre farklı zaman tabanından gelir; fark
+       büyüdüğünde sebebi burada yazılır (K-53). -->
+  <p id="sureUyari" class="sure-uyari" hidden aria-live="polite"></p>
 
   <!-- SON 7 GÜN -->
   <section class="hafta-kart" aria-label="Son 7 gün">
@@ -783,17 +786,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v129"></script>
-  <script src="dil.js?s=v129"></script>
-  <script src="bilgiler.js?s=v129"></script>
-  <script src="bilgiler_en.js?s=v129"></script>
-  <script src="dunya.js?s=v129"></script>
-  <script src="egzersiz.js?s=v129"></script>
-  <script src="reklam.js?s=v129"></script>
-  <script src="kopru.js?s=v129"></script>
-  <script src="cekirdek.js?s=v129"></script>
-  <script src="mola_icerik.js?s=v129"></script>
-  <script src="arayuz.js?s=v129"></script>
+  <script src="degisiklikler.js?s=v130"></script>
+  <script src="dil.js?s=v130"></script>
+  <script src="bilgiler.js?s=v130"></script>
+  <script src="bilgiler_en.js?s=v130"></script>
+  <script src="dunya.js?s=v130"></script>
+  <script src="egzersiz.js?s=v130"></script>
+  <script src="reklam.js?s=v130"></script>
+  <script src="kopru.js?s=v130"></script>
+  <script src="cekirdek.js?s=v130"></script>
+  <script src="mola_icerik.js?s=v130"></script>
+  <script src="arayuz.js?s=v130"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

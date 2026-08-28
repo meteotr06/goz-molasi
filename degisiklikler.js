@@ -30,6 +30,45 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 130,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Yan yana duran iki sayı birbirini yalanlıyordu; sebebi artık '
+        + 'ekranda yazıyor. Bir de yanlış cümle düzeltildi.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      '“Tamamlanan mola” ile “bu sekmede geçen süre” <b>aynı şeyi '
+        + 'ölçmüyor</b>: molalar saate göre gelir (uygulama kapalıyken de '
+        + 'süre işler), süre ise yalnız uygulama açıkken sayılır. Yan yana '
+        + 'durunca “3 mola ama 9 dakika” gibi <b>imkânsız görünen</b> bir '
+        + 'tablo çıkıyordu. Artık fark büyüdüğünde sebebi ekranda yazıyor.',
+      'Mola ekranı açıkken uygulamadan ayrılınca çıkan yazı “o molayı '
+        + 'verilmiş saydık” diyordu. <b>Doğru değildi</b> — o mola '
+        + 'sayılmıyor. Yazı artık ne olduğunu doğru söylüyor.',
+      'Bilgi ekranı “5 egzersiz” yazıp beşini listeliyordu; molalarda '
+        + '<b>yalnızca dördü çıkabiliyordu</b>. Liste artık gerçekten '
+        + 'çıkanlardan üretiliyor.',
+    ],
+    ozetEn: 'Two numbers shown side by side contradicted each other; the '
+        + 'reason is now stated on screen. A false message was also fixed.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      '“Breaks completed” and “time in this tab” <b>do not measure the '
+        + 'same thing</b>: breaks are timed by the clock (time passes even '
+        + 'while the app is closed), while the duration only counts while '
+        + 'the app is open. Side by side this produced <b>impossible '
+        + 'looking</b> figures such as “3 breaks but 9 minutes”. When the '
+        + 'gap is large, the reason is now shown on screen.',
+      'The message shown after leaving while the break screen was open '
+        + 'said “we counted that break as taken”. That was <b>not true</b> '
+        + '— the break is not counted. The message now says what actually '
+        + 'happened.',
+      'The info screen said “5 exercises” and listed five, but <b>only '
+        + 'four could ever appear</b> in breaks. The list is now derived '
+        + 'from the ones that actually appear.',
+    ],
+  },
+  {
     surum: 126,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

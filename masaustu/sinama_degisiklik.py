@@ -108,9 +108,14 @@ bak("gorulenSurum" not in arayuz.split("function kaydet()")[-1][:900],
     "arayuz.js: işaret `kaydet()` alanları arasına girmiş — 15 sn'de silinir")
 
 # ---------- 6) Üretilen masaüstü dosyası taze ----------
+# `errors="replace"` ŞART: üreticinin çıktısı Windows konsol
+# kodlamasıyla gelirse çözümleme çöküyor ve HATA GERÇEK BİR
+# BAŞARISIZLIĞI MASKELİYOR. Ölçüldü: okuma iş parçacığı
+# UnicodeDecodeError ile düştü, sınama yine "TAMAM" dedi.
 u = subprocess.run([sys.executable, os.path.join(KOK, "masaustu",
                                                  "degisiklikler_uret.py")],
-                   capture_output=True, text=True, encoding="utf-8")
+                   capture_output=True, text=True,
+                   encoding="utf-8", errors="replace")
 bak(u.returncode == 0, "degisiklikler_uret.py hata verdi: %s" % u.stderr.strip())
 py = oku(os.path.join("masaustu", "degisiklikler.py"))
 bak("Family mode" not in py,

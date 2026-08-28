@@ -1,4 +1,4 @@
-﻿# Derleme ciktilari
+# Derleme ciktilari
 masaustu/build/
 masaustu/dist/
 masaustu/__pycache__/
@@ -11,5 +11,11 @@ desktop.ini
 .claude/
 
 # Ic sinama sayfalari yayina gitmez (K-48)
-sinama-web.html
+#
+# ESKIDEN TEK TEK AD SAYILIYORDU ve bu yuzden delindi: kural
+# yazildiktan SONRA eklenen `sinama-donus.html` listeye girmedi,
+# depoya alindi ve CANLI SITEDE yayinlandi (olculdu: 200 dondu,
+# `sinama-web.html` ise 404). Ad listesi yeni dosyayi gormez;
+# desen gorur. Kural artik sinifi kapsiyor.
+sinama-*.html
 test-*.html

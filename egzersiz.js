@@ -372,6 +372,18 @@ function egzersizSec(sayac) {
 
 const TUM_EGZERSIZLER = [UzagaBak, GozKirp, YakinUzak, GozKapat, Boyun];
 
+/* MOLADA GERÇEKTEN ÇIKANLAR — bilgi ekranı bunu göstermeli.
+
+   Ölçüldü: bilgi ekranı `TUM_EGZERSIZLER` gösteriyordu, yani "5
+   egzersiz" yazıp beşini de listeliyordu. Ama `KISA_SIRA` yalnızca
+   dördünü kullanıyor; "Gözünü kapat" hiçbir molada çıkmıyor —
+   sınıf yazılmış ve çalışır durumda, sadece hiçbir sıraya bağlı
+   değil. Ekranda yanlış bir sayı duruyordu.
+
+   Listeyi sıradan TÜRETİYORUZ ki bir daha ayrışamasın: sıra
+   değişirse bilgi ekranı kendiliğinden doğru kalır. */
+const CIKAN_EGZERSIZLER = [...new Set(KISA_SIRA)];
+
 if (typeof module !== 'undefined') {
-  module.exports = { egzersizSec, TUM_EGZERSIZLER, Egzersiz };
+  module.exports = { egzersizSec, TUM_EGZERSIZLER, CIKAN_EGZERSIZLER, Egzersiz };
 }

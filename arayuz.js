@@ -68,6 +68,7 @@
     etkinlikDurum: $('etkinlikDurum'),
     istSureEtiket: $('istSureEtiket'),
     sureKutucuk: $('sureKutucuk'),
+    sureUyari: $('sureUyari'),
     ayHava: $('ayHava'),
     havaDurum: $('havaDurum'),
     havaKonumSatir: $('havaKonumSatir'),
@@ -1201,6 +1202,42 @@
       // ve "saymamış" sanılıyor. Etiket ne ölçtüğünü açıkça söylüyor.
       og.istSureEtiket.textContent = C(etkinlikDedektoru
         ? 'cihaz başında süre' : 'bu sekmede geçen süre');
+      /* DEĞİŞMEZ DENETİMİ (K-53) — ekranda canlı.
+
+         Kullanıcının gördüğü: "3 tamamlanan mola · 9 dk". 20 dakikalık
+         kipte üç mola en az ~60 dakika demek. İki sayı yan yana durup
+         birbirini yalanlıyor.
+
+         Ölçüldü, ikisi de KENDİ İÇİNDE doğru:
+           • mola vadesi DUVAR SAATİNDEN gelir (`hedefZaman - simdi`),
+             sekme kapalıyken de işler;
+           • ekran süresi yalnız ÖN PLANDA işleyen tıklardan birikir
+             (`ekranSuresi += 0.25`), sekme arka plandayken saymaz.
+
+         Yan yana durdukları için yalan söylüyorlar. Etiket tek başına
+         yetmedi — kullanıcı "bu sekmede geçen süre" yazısını GÖRÜP
+         yine yanıldı. Bu yüzden fark büyüdüğünde sebebini açıkça
+         yazıyoruz. Uyarı ipucunda (`title`) duramaz: telefonda hover
+         yok, oradaki cümle kullanıcıya hiç ulaşmıyor. */
+      if (og.sureUyari) {
+        const molaSay = (d.istatistik.tamamlananMola || 0)
+                      + (d.istatistik.atlananMola || 0);
+        const beklenen = molaSay * (motor.ayarlar.calismaSuresi || 1200);
+        const olculen = d.istatistik.ekranSuresi || 0;
+        // Yarısından azını görmüşsek fark kullanıcıya çelişki gibi gelir.
+        const celisik = molaSay >= 2 && olculen < beklenen * 0.5;
+        og.sureUyari.hidden = !celisik;
+        if (celisik) {
+          og.sureUyari.textContent = CS(
+            'Molalar saate göre geliyor, süre ise yalnız uygulama '
+            + 'açıkken sayılıyor. Bu yüzden mola sayısı süreden fazla '
+            + 'görünebilir — ikisi de doğru, aynı şeyi ölçmüyorlar.',
+            'Breaks are timed by the clock, while the duration only '
+            + 'counts while the app is open. That is why the break count '
+            + 'can look larger than the time — both are correct, they '
+            + 'measure different things.');
+        }
+      }
       og.sureKutucuk.title = etkinlikDedektoru
         ? C('Cihaz etkinliği izniyle ölçülüyor — sekme arka plandayken de sayar.')
         : C('Bu sayaç sekme açıldığından beri işler. Bilgisayarın açık olduğu her anı ölçmek için Windows sürümünü kullan.');
@@ -1888,10 +1925,10 @@
     // 3) Egzersizler
     try {
       parcalar.push(bilgiBolumu(
-        C('Molalardaki egzersizler'), TUM_EGZERSIZLER.length,
+        C('Molalardaki egzersizler'), CIKAN_EGZERSIZLER.length,
         C('Mola ekranında sırayla çıkarlar. "Uzağa bak" asıl olan; '
           + 'diğerleri ekranın ezberlenip görünmez olmasını önlüyor.'),
-        TUM_EGZERSIZLER.map((E) => bilgiOgesi(E.ad, E.yonerge, ''))));
+        CIKAN_EGZERSIZLER.map((E) => bilgiOgesi(E.ad, E.yonerge, ''))));
     } catch {}
 
     // 4) Dünyadan — İngilizcede henüz yok
@@ -2787,11 +2824,22 @@
         + `not reset — your break starts shortly.`);
     } else if (sebep && sebep.tur === 'mola-sirasinda') {
       const d = Math.max(1, sebep.dakika | 0);
+      /* ESKİ METİN YALANDI. "O molayı verilmiş saydık" yazıyordu.
+
+         Ölçüldü: `tamamlananMola` yalnızca TEK yerde artıyor
+         (cekirdek.js, `tik()` içinde, mola ekranı ekranda süresini
+         doldurunca). Bu yol oraya hiç uğramıyor — sebebi yazıp
+         `return false` yapıyor. Yani mola SAYILMIYORDU; cümle
+         sayıldığını söylüyordu.
+
+         Kullanıcı sayılara zaten güvenmiyordu; sayı hakkında yanlış
+         cümle kurmak, yanlış sayı kadar zararlı. */
       metin = CS(
-        `Mola ekranı açıkken ${d} dakika ayrılmışsın. O molayı verilmiş `
-        + `saydık ve sayaç yeniden başladı.`,
-        `You left for ${d} minutes while the break screen was open. We `
-        + `counted that break as taken and the timer restarted.`);
+        `Mola ekranı açıkken ${d} dakika ayrılmışsın. Sayaç yeniden `
+        + `başladı — o mola sayılmadı, çünkü ekranda geçmedi.`,
+        `You left for ${d} minutes while the break screen was open. The `
+        + `timer restarted — that break was not counted, because it did `
+        + `not run on screen.`);
     } else if (sebep && sebep.tur === 'saat-degisti') {
       /* "Kapalıydın" DEMİYORUZ: kullanıcı hiç ayrılmamış olabilir.
          Ölçüldü: saat 1 saat ileri alınınca uygulama "60 dakika
