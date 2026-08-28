@@ -34,10 +34,10 @@ kullanıcının kendi ekranında bakılmalı.
 | 7 | Bilgi kartı — kaynak | ✅ | "Source: American Optometric Association" |
 | 8 | Mola tamamlanınca sayım | ✅ | Mola sayısı **1 → 2**, sayaç 20:00'a döndü |
 | 9 | Molayı atla (basılı tut) | ✅ | Ayar KAPALIYKEN zorla tetiklendi: mola açık kaldı, atlanan 0. Ayar açıkken basılı tutma molayı bitirdi, atlanan **0→1** |
-| 10 | Ertele 5 dk | ⬜ | — |
-| 11 | Hemen mola (uyarı anında) | ⬜ | — |
+| 10 | Ertele 5 dk | ✅ | Uyarı balonu yakalandı; sayaç **00:51 → 04:59**, balon kapandı |
+| 11 | Hemen mola (uyarı anında) | ✅ | Balon 00:55'te yakalandı; mola ekranı açıldı, geri sayım ve egzersiz geldi |
 | 12 | "Burada devam et" (çok sekme) | ✅ | **Hata bulundu**: ikinci sekme de sayıyordu (v133). Ölçüldü — ikinci sekmenin sayacı **donuyor**, lider düzgün sayıyor; lider kapanınca öteki devralıp kaldığı yerden sürüyor; “Use here” elle devir çalışıyor |
-| 13 | Uzun mola önerisi + ver/sonra | ⬜ | — |
+| 13 | Uzun mola önerisi + ver/sonra | ✅ | Kesintisiz süre 7300 sn kuruldu → kart çıktı, **“122 dakika” doğru hesaplandı**. “Şimdi değil” kapatıyor (tekrar sormaması **bilinçli**, kodda yazılı). “Uzun mola ver” **299 sn**'lik molayı başlattı |
 | 14 | Mola çıkış koruması | ⬜ | Telefonda ölçülmeli |
 
 ## 2) Kipler ve hazır süreler
@@ -48,7 +48,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 16 | Kip: Ders | ✅ | Tıklandı → **25:00** |
 | 17 | Kip: Toplantı | ✅ | Tıklandı → **60:00** |
 | 18 | Kip: Film · oyun | ✅ | Tıklandı → **90:00**; yeniden açılışta korundu, sayaç 89:42'den devam etti |
-| 19 | Hazır süreler (4 seçenek) | ⬜ | — |
+| 19 | Hazır süreler (4 seçenek) | ✅ | Dördü de doğru: 20/20 · 10/20 · 30/30 · 45/60 |
 
 ## 3) Ayarlar
 
@@ -81,11 +81,11 @@ kullanıcının kendi ekranında bakılmalı.
 
 | # | Özellik | Durum | Nasıl ölçüldü |
 |---|---|---|---|
-| 42 | Sekmeler: Sayaç / Bilgiler | ⬜ | — |
+| 42 | Sekmeler: Sayaç / Bilgiler | ✅ | Geçiş çalışıyor, `aria-selected` tekil |
 | 43 | Bildirim izni | ⬜ | **Reddedildi** dalı önemli |
 | 44 | Uygulama olarak kur (+ iOS yolu) | ⬜ | — |
 | 45 | Paylaş | ⬜ | — |
-| 46 | Kısayollar penceresi | ⬜ | — |
+| 46 | Kısayollar penceresi | ✅ | Açılıyor, içeriği dolu, kapanıyor |
 | 47 | Yenilik şeridi + ayrıntı | ✅ | Üç dal: yükselten kullanıcıya çıkıyor (doğru metinle), görmüş kullanıcıya çıkmıyor, **yeni kullanıcıya “güncellendi” denmiyor** |
 | 48 | İstatistik + 7 gün + seri | ✅ | Bilinen geçmiş kuruldu; grafik (5-12-3-8-9-10), toplam **47**, ortalama **6.7**, seri **3** birebir tuttu. Seri ikinci dalı (bugün de hedefi tutuyor) **2** verdi; sınırdaki 8 hedefe sayıldı |
 
@@ -130,7 +130,7 @@ silinince geçti.
 
 ## Toplam
 
-**48 özelliğin 30'u denendi** (✅ 29, 🟡 1). **18'i açık.**
+**48 özelliğin 36'sı denendi** (✅ 35, 🟡 1). **12'si açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.
