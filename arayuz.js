@@ -2379,7 +2379,47 @@
         // nesne onu taşıyor.
         kayitAni: Date.now(),
       }));
-    } catch {}
+      kayitHatasi = 0;
+    } catch {
+      /* KAYIT SESSİZCE BAŞARISIZ OLMASIN.
+
+         Ölçüldü: depo kotası dolduğunda uygulama çalışmaya devam
+         ediyor ama kullanıcıya hiçbir şey söylenmiyor. Molaları,
+         serisi ve ayarları kaydedilmiyor; bir dahaki açılışta hepsi
+         gitmiş oluyor ve sebebini bilmiyor.
+
+         Tek seferlik hata için uyarmıyoruz — geçici bir kilit
+         olabilir ve her seferinde uyarmak uyarıyı değersizleştirir.
+         Üst üste üç başarısızlık gerçek bir sorundur. */
+      kayitHatasi++;
+      if (kayitHatasi === 3) kayitUyarisiniGoster();
+    }
+  }
+
+  let kayitHatasi = 0;
+  let kayitUyarisiVerildi = false;
+
+  function kayitUyarisiniGoster() {
+    if (kayitUyarisiVerildi) return;
+    kayitUyarisiVerildi = true;
+    try {
+      const not = $('durumNotu');
+      if (!not) return;
+      $('durumNotuBaslik').textContent = CS('Kayıt yapılamıyor', 'Cannot save');
+      $('durumNotuMetin').textContent = CS(
+        'Cihazın depolama alanı dolu olabilir ya da tarayıcı site '
+        + 'verilerini engelliyor. Sayaç çalışmaya devam eder, ama bugünün '
+        + 'molaları, serin ve ayarların KAYDEDİLMİYOR — uygulamayı '
+        + 'kapatırsan kaybolurlar. Tarayıcı ayarlarından yer açabilir ya da '
+        + 'bu siteye veri saklama izni verebilirsin.',
+        'Your device storage may be full, or the browser is blocking site '
+        + 'data. The timer keeps running, but today\u2019s breaks, your '
+        + 'streak and your settings are NOT being saved \u2014 they will be '
+        + 'lost if you close the app. You can free up space or allow site '
+        + 'data for this site in your browser settings.');
+      not.hidden = false;
+      $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });
+    } catch { }
   }
   setInterval(kaydet, 15000);
   window.addEventListener('pagehide', kaydet);
