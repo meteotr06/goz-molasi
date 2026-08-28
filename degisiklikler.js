@@ -30,6 +30,43 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 135,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'İngilizce arayüzde Türkçe kalan dört yazı daha; paylaşımın '
+        + 'son çaresi artık sessizce kaybolmuyor.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'İngilizce kullananlar için: <b>cihaz etkinliği izninin üç '
+        + 'durumu</b> ve tanıtımdaki örnek mola yazısı Türkçe kalıyordu. '
+        + 'Dördü de çevrildi.',
+      '<b>Paylaş</b> düğmesi: telefon paylaşım penceresi yoksa ve panoya '
+        + 'kopyalama da engellenmişse, uygulama tarayıcının küçük '
+        + 'penceresine düşüyordu. Tarayıcılar o pencereyi çoğu zaman '
+        + '<b>engelliyor</b> ve o zaman ekranda hiçbir şey olmuyordu. '
+        + 'Artık link <b>uygulamanın kendi kutusunda</b> görünüyor, '
+        + 'seçili hâlde.',
+      'Cihaz etkinliği izni reddedildiğinde artık <b>ne kaybettiğin</b> '
+        + 'de yazıyor — eskiden yalnızca nasıl geri açılacağı yazıyordu.',
+    ],
+    ozetEn: 'Four more texts that stayed in Turkish in the English '
+        + 'interface; the share fallback no longer disappears silently.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'For people using English: the <b>three states of the device '
+        + 'activity permission</b> and the sample-break text in the '
+        + 'introduction stayed in Turkish. All four are now translated.',
+      'The <b>Share</b> button: when the phone share sheet is missing and '
+        + 'copying to the clipboard is blocked too, the app fell back to '
+        + 'the browser\u2019s small dialog. Browsers <b>block</b> that '
+        + 'dialog in many situations, and then nothing at all appeared. '
+        + 'The link is now shown <b>inside the app</b>, already selected.',
+      'When the device activity permission is denied, the app now also '
+        + 'says <b>what you lose</b> — previously it only said how to '
+        + 'turn it back on.',
+    ],
+  },
+  {
     surum: 134,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

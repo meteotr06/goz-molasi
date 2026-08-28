@@ -67,7 +67,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 30 | Uzak kalınca sıfırla | ✅ | Telefon taklidiyle 3 dal: göç olur / seçim korunur / tekrarlamaz |
 | 31 | Boşta durdurma | ✅ | **Canlı görüldü**: 90 sn dokunmayınca sayaç durdu ve durum yazısı sebebini söyledi (“Idle — timer paused”) |
 | 32 | Mola kilidi | 🟡 | Ayar açık/kapalı doğru kaydediliyor; **mola ekranından çıkamama davranışı telefonda ölçülmeli** |
-| 33 | Etkinlik izni (masaüstü) | ⬜ | İzin **reddedildi** dalı da denenmeli |
+| 33 | Etkinlik izni (masaüstü) | ✅ | Dört hâl de var. **Hata bulundu**: üçünün yazısı çeviriden geçmiyordu ve “reddedildi” hâli ne kaybedildiğini söylemiyordu (v135) |
 | 34 | Hava durumu molada | ⬜ | — |
 | 35 | Konum bul / unut / şehir ara | ⬜ | Çevrimdışı dalı da denenmeli |
 | 36 | PIN kur / kaldır | ✅ | Kuruldu (**düz metin değil**, tuzlu özet); silme şifre sordu, yanlış şifre reddedildi ve deneme hakkı sayıldı, doğru şifre geçti |
@@ -82,9 +82,9 @@ kullanıcının kendi ekranında bakılmalı.
 | # | Özellik | Durum | Nasıl ölçüldü |
 |---|---|---|---|
 | 42 | Sekmeler: Sayaç / Bilgiler | ✅ | Geçiş çalışıyor, `aria-selected` tekil |
-| 43 | Bildirim izni | ⬜ | **Reddedildi** dalı önemli |
+| 43 | Bildirim izni | ✅ | Bu tarayıcıda **gerçekten reddedilmiş** hâlde ölçüldü: ne kaybedildiği **ve** nasıl geri alınacağı yazılı; “hiç sorulmadı” hâli ayrı (tıklanabilir düğme). Reddedilmişken uygulamanın geri kalanı tam çalışıyor |
 | 44 | Uygulama olarak kur (+ iOS yolu) | ⬜ | — |
-| 45 | Paylaş | ⬜ | — |
+| 45 | Paylaş | ✅ | **Hata bulundu**: son çare `window.prompt`'tu ve engellenirse ekranda iz kalmıyordu (v135). Pano reddi benzetildi — `prompt` **hiç çağrılmadı**, link uygulamanın kutusunda çıktı |
 | 46 | Kısayollar penceresi | ✅ | Açılıyor, içeriği dolu, kapanıyor |
 | 47 | Yenilik şeridi + ayrıntı | ✅ | Üç dal: yükselten kullanıcıya çıkıyor (doğru metinle), görmüş kullanıcıya çıkmıyor, **yeni kullanıcıya “güncellendi” denmiyor** |
 | 48 | İstatistik + 7 gün + seri | ✅ | Bilinen geçmiş kuruldu; grafik (5-12-3-8-9-10), toplam **47**, ortalama **6.7**, seri **3** birebir tuttu. Seri ikinci dalı (bugün de hedefi tutuyor) **2** verdi; sınırdaki 8 hedefe sayıldı |
@@ -130,7 +130,7 @@ silinince geçti.
 
 ## Toplam
 
-**48 özelliğin 36'sı denendi** (✅ 35, 🟡 1). **12'si açık.**
+**48 özelliğin 39'u denendi** (✅ 38, 🟡 1). **9'u açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.

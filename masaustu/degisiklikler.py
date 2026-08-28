@@ -7,6 +7,18 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 135,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'İngilizce arayüzde Türkçe kalan dört yazı daha; paylaşımın son çaresi artık sessizce kaybolmuyor.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'İngilizce kullananlar için: <b>cihaz etkinliği izninin üç durumu</b> ve tanıtımdaki örnek mola yazısı Türkçe kalıyordu. Dördü de çevrildi.',
+            '<b>Paylaş</b> düğmesi: telefon paylaşım penceresi yoksa ve panoya kopyalama da engellenmişse, uygulama tarayıcının küçük penceresine düşüyordu. Tarayıcılar o pencereyi çoğu zaman <b>engelliyor</b> ve o zaman ekranda hiçbir şey olmuyordu. Artık link <b>uygulamanın kendi kutusunda</b> görünüyor, seçili hâlde.',
+            'Cihaz etkinliği izni reddedildiğinde artık <b>ne kaybettiğin</b> de yazıyor — eskiden yalnızca nasıl geri açılacağı yazıyordu.',
+        ],
+    },
+    {
         'surum': 134,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

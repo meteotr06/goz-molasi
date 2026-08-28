@@ -592,9 +592,11 @@
     motor.molayaGec();
     // Süreyi hemen geri al: motor asamaya gecerken degeri zaten kopyaladi
     motor.ayarlar.molaSuresi = gercekSure;
-    og.tanitimMetin.textContent =
-      'İşte böyle görünüyor. Gerçeğinde 20 saniye sürecek ve ' +
-      'kapatılamayacak.';
+    og.tanitimMetin.textContent = CS(
+      'İşte böyle görünüyor. Gerçeğinde 20 saniye sürecek ve '
+      + 'kapatılamayacak.',
+      'That is how it looks. The real one lasts 20 seconds and cannot '
+      + 'be dismissed.');
     og.tanitimGoster.textContent = C('Tekrar göster');
     og.tanitimAnladim.textContent = C('Anladım, başla');
   });
@@ -663,25 +665,47 @@
     if (d === 'desteklenmiyor') {
       og.etkinlikDugme.disabled = true;
       og.etkinlikDugme.textContent = C('Desteklenmiyor');
-      og.etkinlikDurum.textContent =
-        'Bu tarayıcı cihaz etkinliğini paylaşmıyor (Chrome ve Edge destekliyor). ' +
-        'Sayaç yalnızca bu sekmedeki hareketi görüyor.';
+      og.etkinlikDurum.textContent = CS(
+        'Bu tarayıcı cihaz etkinliğini paylaşmıyor (Chrome ve Edge '
+        + 'destekliyor). Sayaç yalnızca bu sekmedeki hareketi görüyor.',
+        'This browser does not share device activity (Chrome and Edge do). '
+        + 'The timer only sees movement in this tab.');
       return;
     }
     if (acik) {
       og.etkinlikDugme.textContent = C('Kapat');
-      og.etkinlikDurum.textContent =
-        'Açık — sekme arka plandayken de cihazda hareket olup olmadığı görülüyor. ' +
-        'Sadece "etkin mi, ekran kilitli mi" bilgisi; ne yaptığın değil.';
+      og.etkinlikDurum.textContent = CS(
+        'Açık — sekme arka plandayken de cihazda hareket olup olmadığı '
+        + 'görülüyor. Sadece "etkin mi, ekran kilitli mi" bilgisi; ne '
+        + 'yaptığın değil.',
+        'On — activity on the device is seen even while this tab is in the '
+        + 'background. Only "active or not, screen locked or not"; never '
+        + 'what you are doing.');
     } else if (d === 'denied') {
       og.etkinlikDugme.textContent = C('İzin ver');
-      og.etkinlikDurum.textContent =
-        C('İzin reddedilmiş. Adres çubuğundaki kilit simgesinden açabilirsin.');
+      /* NE KAYBETTİĞİNİ DE SÖYLE.
+
+         Bildirim izninde bu ders zaten öğrenilmişti ("ne kaybediyorsun"
+         + "geri nasıl alırsın"), ama KARDEŞ izinde uygulanmamıştı:
+         burada yalnızca geri alma yolu yazıyordu. Kullanıcı neyi
+         kaçırdığını bilmeden "izin vereyim mi" diye karar veremez. */
+      og.etkinlikDurum.textContent = CS(
+        'İzin reddedilmiş. Ne kaybediyorsun: sekme arka plandayken '
+        + 'cihazda hareket olup olmadığı görülemiyor, başka pencerede '
+        + 'çalışırken sayaç seni "boşta" sanıp durabilir. Geri vermek '
+        + 'için: adres çubuğundaki kilit simgesinden açabilirsin.',
+        'Permission was denied. What you lose: activity on the device '
+        + 'cannot be seen while this tab is in the background, so while '
+        + 'you work in another window the timer may think you are idle '
+        + 'and pause. To allow it again: use the padlock icon in the '
+        + 'address bar.');
     } else {
       og.etkinlikDugme.textContent = C('İzin ver');
-      og.etkinlikDurum.textContent =
-        'Kapalı — sayaç yalnızca bu sekmedeki hareketi görüyor. ' +
-        'Başka pencerede çalışırken "boşta" sanılabilir.';
+      og.etkinlikDurum.textContent = CS(
+        'Kapalı — sayaç yalnızca bu sekmedeki hareketi görüyor. '
+        + 'Başka pencerede çalışırken "boşta" sanılabilir.',
+        'Off — the timer only sees movement in this tab. While you work in '
+        + 'another window it may think you are idle.');
     }
   }
 
@@ -994,9 +1018,44 @@
       setTimeout(() => { og.paylas.textContent = eski;
                          og.paylas.title = C('Paylaş'); }, 1800);
     } catch {
-      prompt(C('Linki kopyala:'), PAYLASIM.url);
+      /* GERİ DÜŞME YOLU, ASIL YOLDAN DAHA KIRILGAN OLMASIN.
+
+         Eskiden burada `window.prompt` vardı. Pano izni yoksa ya da
+         bağlam güvenli değilse oraya düşülüyordu — ama tarayıcılar
+         `prompt`'u pek çok durumda ENGELLİYOR (sekme önde değilken,
+         kullanıcı "bu sayfa bir daha pencere açmasın" dedikten sonra,
+         gömülü bağlamlarda). Engellenince `prompt` hata atmaz, sessizce
+         `null` döner: kullanıcı "Paylaş"a basar ve EKRANDA HİÇBİR ŞEY
+         OLMAZ. Ne linki alır, ne neden alamadığını öğrenir.
+
+         Kendi kutumuz tarayıcıya bağlı değil: link ekranda durur,
+         kullanıcı seçip kopyalar. */
+      linkiEkrandaGoster();
     }
   });
+
+  /* Paylaşımın son çaresi: linki uygulamanın kendi notunda göster. */
+  function linkiEkrandaGoster() {
+    try {
+      const not = $('durumNotu');
+      if (!not) return;
+      $('durumNotuBaslik').textContent = CS('Linki kopyala', 'Copy the link');
+      const metin = $('durumNotuMetin');
+      metin.textContent = PAYLASIM.url;
+      metin.style.userSelect = 'all';
+      not.hidden = false;
+      // Bir dokunuşta seçili gelsin: kopyalamak tek adım kalsın.
+      try {
+        const aralik = document.createRange();
+        aralik.selectNodeContents(metin);
+        const secim = window.getSelection();
+        secim.removeAllRanges();
+        secim.addRange(aralik);
+      } catch { }
+      $('durumNotuKapat')?.addEventListener('click',
+        () => { not.hidden = true; }, { once: true });
+    } catch { }
+  }
 
   /* ============================================================
      UYGULAMA OLARAK KURMA

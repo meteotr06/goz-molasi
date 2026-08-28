@@ -32,6 +32,8 @@ SINAMALAR = [
     ("veri", "sinama_veri.py", "Bilgilerin kaynağı ve sürümler arası tutarlılık"),
     ("degisiklik", "sinama_degisiklik.py", "\"Neler değişti\" bildirimi sessizce kaybolmuş mu"),
     ("depo", "sinama_depo.py", "Gizli sekmede depo istisnası uygulamayı öldürür mü"),
+    ("dil", "sinama_dil.py",
+     "Ekrana yazilan Turkce metin ceviriden geciyor mu"),
     ("sozluk", "sinama_sozluk.py",
      "C() ile cevrilen her metin sozlukte var mi"),
     ("yayin", "sinama_yayin.py", "İç sınama sayfası depoda izleniyor mu (yayına sızar)"),
