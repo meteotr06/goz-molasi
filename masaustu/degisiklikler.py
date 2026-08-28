@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 131,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'İngilizce arayüzde Türkçe kalan altı yazı çevrildi.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'İngilizce kullananlar için: uygulamanın <b>altı yazısı Türkçe kalıyordu</b> — titreşim ve canlılık desteklenmediğinde çıkan uyarılar, rehber yüklenemediğinde çıkan not, kurulum ipucu ve egzersiz bölümünün açıklaması. Hepsi çevrildi.',
+            'Bunlar göze çarpmıyordu çünkü her biri <b>yalnızca belirli bir durumda</b> ekrana geliyor. Artık bir denetim, çevrilmesi gereken her yazının sözlükte olduğunu <b>tek tek değil topluca</b> ölçüyor.',
+        ],
+    },
+    {
         'surum': 130,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

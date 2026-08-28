@@ -30,6 +30,37 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 131,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'İngilizce arayüzde Türkçe kalan altı yazı çevrildi.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'İngilizce kullananlar için: uygulamanın <b>altı yazısı Türkçe '
+        + 'kalıyordu</b> — titreşim ve canlılık desteklenmediğinde çıkan '
+        + 'uyarılar, rehber yüklenemediğinde çıkan not, kurulum ipucu ve '
+        + 'egzersiz bölümünün açıklaması. Hepsi çevrildi.',
+      'Bunlar göze çarpmıyordu çünkü her biri <b>yalnızca belirli bir '
+        + 'durumda</b> ekrana geliyor. Artık bir denetim, çevrilmesi '
+        + 'gereken her yazının sözlükte olduğunu <b>tek tek değil '
+        + 'topluca</b> ölçüyor.',
+    ],
+    ozetEn: 'Six pieces of text that stayed in Turkish in the English '
+        + 'interface are now translated.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'For people using English: <b>six pieces of text stayed in '
+        + 'Turkish</b> — the notices shown when vibration or the vividness '
+        + 'setting is unsupported, the note shown when the guide fails to '
+        + 'load, the install hint, and the description of the exercises '
+        + 'section. All are now translated.',
+      'These went unnoticed because each one only appears in <b>a '
+        + 'particular state</b>. A check now verifies that every text '
+        + 'needing translation is in the dictionary — <b>as a rule, not '
+        + 'a list</b>.',
+    ],
+  },
+  {
     surum: 130,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

@@ -473,6 +473,18 @@ const SOZLUK = {
   'Hava Durumu': 'Weather',
   'Türkiye geneli, saatlik ve 7 günlük': 'All of Türkiye, hourly and 7-day',
   'Döviz, altın ve kur tahmini': 'Currencies, gold and rate forecasts',
+
+  /* 28.08.2026 - `C()` ile cevrilen ama sozlukte OLMAYAN
+     metinler. Bunlar Ingilizce arayuzde TURKCE cikiyordu;
+     her biri yalnizca belirli bir DURUMDA ekrana geldigi icin
+     goze carpmamislardi. Ekranda o an duran metni taramak
+     yetmedi; kurali `sinama_sozluk.py` yaziyor. */
+  'Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas': 'Tap the install icon at the right of the address bar',
+  'Molada ya da masa başında yapabileceğin küçük şeyler.': 'Small things you can do during a break or at your desk.',
+  'Rehber şu an yüklenemedi.': 'The guide could not be loaded right now.',
+  'Ayrı sayfada aç': 'Open in a separate page',
+  'Bu tarayıcı canlılık ayarını desteklemiyor; tema renkleri olduğu gibi kullanılıyor.': 'This browser does not support the vividness setting; theme colours are used as they are.',
+  'Bu cihaz titreşimi desteklemiyor': 'This device does not support vibration',
 };
 
 
