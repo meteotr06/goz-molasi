@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 141,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Ekrandaki bir sağlık bilgisi, dayandığı kaynağın söylediğinden farklıydı.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            '“2 saat eşiği” bilgi kartı, Amerikan Optometri Birliği’ne dayandırılıyordu ama <b>Birliğin söylediğinden farklı bir şey</b> yazıyordu. Kaynak “en yüksek risk <b>iki saat ve üzeri</b> kesintisiz kullananlarda” diyor; kart ise “risk 2 saati <b>aşınca başlıyor</b>” diyordu. Kartın metni kaynağa uyduruldu.',
+            'Kaynağın <b>adını yazıyorsak</b>, söylediğini de doğru aktarmamız gerekir. Bu yazı Türkçe, İngilizce ve Windows sürümünde ayrı ayrı duruyordu; üçü de düzeltildi.',
+        ],
+    },
+    {
         'surum': 140,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

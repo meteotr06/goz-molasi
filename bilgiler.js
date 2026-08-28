@@ -47,8 +47,9 @@ const BILGILER = [
   },
   {
     baslik: '2 saat eşiği',
-    metin: 'Amerikan Optometri Birliği’ne göre risk, günde 2 saati aşan kesintisiz ekran kullanımında başlıyor. ' +
-           'Kuralın orijinal ifadesi: "Her 20 dakikada bir, 20 saniye boyunca 20 fit (6 m) uzağa bak."',
+    metin: 'Amerikan Optometri Birliği, en yüksek riskin günde iki saat ve üzeri kesintisiz ekran ' +
+           'kullananlarda olduğunu söylüyor. Kuralın orijinal ifadesi: "Her 20 dakikada bir, ' +
+           '20 saniye boyunca 20 fit (6 m) uzağa bak."',
     kaynak: 'American Optometric Association (AOA)',
   },
   {

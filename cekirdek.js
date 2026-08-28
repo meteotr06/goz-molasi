@@ -41,7 +41,11 @@ const VARSAYILAN_AYARLAR = {
   molaAtlanabilir: false,   // VARSAYILAN: mola atlanamaz. 20 sn kesin.
   sesAcik: true,
 
-  uzunMolaEsigi: 7200,      // saniye — 2 saat kesintisiz çalışma (AOA risk eşiği)
+  uzunMolaEsigi: 7200,      // saniye — 2 saat kesintisiz çalışma.
+  // AOA "en yüksek risk" grubunu günde İKİ SAAT VE ÜZERİ kesintisiz
+  // ekran kullananlar diye tanımlıyor; bir eşik değil, risk grubu.
+  // Eskiden burada "AOA risk eşiği" yazıyordu — kaynağın söylediğini
+  // eşiğe çeviren bu okuma, kullanıcıya gösterilen metne de geçmişti.
   uzunMolaSuresi: 300,      // saniye — 5 dakika
   uzunMolaAcik: false,      // uzun mola önerilsin mi
 

@@ -30,6 +30,38 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 141,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Ekrandaki bir sağlık bilgisi, dayandığı kaynağın söylediğinden '
+        + 'farklıydı.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      '“2 saat eşiği” bilgi kartı, Amerikan Optometri Birliği’ne '
+        + 'dayandırılıyordu ama <b>Birliğin söylediğinden farklı bir şey</b> '
+        + 'yazıyordu. Kaynak “en yüksek risk <b>iki saat ve üzeri</b> '
+        + 'kesintisiz kullananlarda” diyor; kart ise “risk 2 saati '
+        + '<b>aşınca başlıyor</b>” diyordu. Kartın metni kaynağa uyduruldu.',
+      'Kaynağın <b>adını yazıyorsak</b>, söylediğini de doğru aktarmamız '
+        + 'gerekir. Bu yazı Türkçe, İngilizce ve Windows sürümünde ayrı '
+        + 'ayrı duruyordu; üçü de düzeltildi.',
+    ],
+    ozetEn: 'A health fact shown in the app did not match what its cited '
+        + 'source actually says.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'The “two-hour threshold” card credited the American Optometric '
+        + 'Association but <b>said something different from what the '
+        + 'Association says</b>. The source says those at greatest risk '
+        + 'are people with <b>two or more</b> continuous hours; the card '
+        + 'said risk <b>begins past</b> two hours. The card now matches '
+        + 'the source.',
+      'If we <b>name a source</b>, we have to report it correctly. This '
+        + 'text existed separately in Turkish, English and the Windows '
+        + 'version; all three were corrected.',
+    ],
+  },
+  {
     surum: 140,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

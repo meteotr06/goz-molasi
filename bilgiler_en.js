@@ -48,8 +48,9 @@ const BILGILER_EN = [
   },
   {
     baslik: 'The two-hour threshold',
-    metin: 'The American Optometric Association considers more than two continuous hours at a screen a ' +
-           'risk threshold for digital eye strain. If you are past two hours, a longer break is worth it.',
+    metin: 'The American Optometric Association says those at greatest risk are people who spend ' +
+           'two or more continuous hours at a screen every day. Once you are around that mark, ' +
+           'a longer break is worth it.',
     kaynak: 'American Optometric Association',
   },
   {
