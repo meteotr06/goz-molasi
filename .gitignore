@@ -9,3 +9,7 @@ masaustu/*.spec
 Thumbs.db
 desktop.ini
 .claude/
+
+# Ic sinama sayfalari yayina gitmez (K-48)
+sinama-web.html
+test-*.html
