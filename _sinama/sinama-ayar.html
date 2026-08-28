@@ -235,6 +235,53 @@
       a7.uzunMolaSuresi + ' sn', beklenen7 + ' sn',
       a7.uzunMolaSuresi === beklenen7);
 
+  /* ---------- 8) HEPSINI SIL, GERCEKTEN HEPSINI SILSIN ----------
+
+     Olculdu (28.08.2026): silme yalnizca `goz-molasi-v1` anahtarini
+     kaldiriyordu. Kullaniciya "Ayarlar, sayaclar ve sifre silinir"
+     deniyor ama SAYACLAR ayri bir anahtarta (`goz-molasi-gecmis`).
+     Silme sonrasi sayac 0 gosteriyor, ekranda hala "8 mola bugun"
+     yaziyor, grafikte cubuk duruyor, seri rozeti "1 gun ust uste"
+     diyordu. Kullanici her seyi sildigini saniyor; kullanim gecmisi
+     cihazda kaliyordu. */
+  var fSil = await uygulamayiAc();
+  var dSil = fSil.contentDocument;
+  var wSil = fSil.contentWindow;
+  try {
+    wSil.localStorage.setItem('goz-molasi-gecmis', JSON.stringify({
+      '2026-08-27': { mola: 9, atlanan: 2, ekran: 3000 },
+      '2026-08-26': { mola: 8, atlanan: 0, ekran: 2400 }
+    }));
+    wSil.localStorage.setItem('goz-molasi-hava-acik', '1');
+  } catch (e) { }
+
+  var oncekiGun = 0;
+  try {
+    oncekiGun = Object.keys(JSON.parse(
+      wSil.localStorage.getItem('goz-molasi-gecmis') || '{}')).length;
+  } catch (e) { }
+
+  dSil.getElementById('ayarDugme').click();
+  await bekle(400);
+  dSil.getElementById('hepsiniSilDugme').click();   // 1. bas: onay iste
+  await bekle(600);
+  dSil.getElementById('hepsiniSilDugme').click();   // 2. bas: sil
+  await bekle(2500);
+
+  var kalanGun = null, havaKaldi = null;
+  try {
+    var yeniW = cerceve.contentWindow;
+    kalanGun = Object.keys(JSON.parse(
+      yeniW.localStorage.getItem('goz-molasi-gecmis') || '{}'))
+      .filter(function (g) { return g < '2026-08-28'; }).length;
+    havaKaldi = yeniW.localStorage.getItem('goz-molasi-hava-acik');
+  } catch (e) { kalanGun = 'okunamadi'; }
+
+  yaz('“Hepsini sil” geçmişi de siler', oncekiGun + ' gün vardı',
+      kalanGun + ' eski gün kaldı', '0 eski gün', kalanGun === 0);
+  yaz('…ve öteki anahtarları da (hava ayarı)', 'vardı',
+      String(havaKaldi), 'null', havaKaldi === null);
+
   if (cerceve) cerceve.remove();
 
   var o = document.getElementById('ozet');

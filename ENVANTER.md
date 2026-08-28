@@ -70,11 +70,11 @@ kullanıcının kendi ekranında bakılmalı.
 | 33 | Etkinlik izni (masaüstü) | ⬜ | İzin **reddedildi** dalı da denenmeli |
 | 34 | Hava durumu molada | ⬜ | — |
 | 35 | Konum bul / unut / şehir ara | ⬜ | Çevrimdışı dalı da denenmeli |
-| 36 | PIN kur / kaldır | ⬜ | — |
+| 36 | PIN kur / kaldır | ✅ | Kuruldu (**düz metin değil**, tuzlu özet); silme şifre sordu, yanlış şifre reddedildi ve deneme hakkı sayıldı, doğru şifre geçti |
 | 37 | Canlılık kaydırıcısı | ⬜ | — |
 | 38 | Tema (18 tema) | ⬜ | — |
 | 39 | Dil (TR / EN) | ✅ | Ekran taraması 0 hata verdi; **kural denetimi 6 gerçek eksik buldu** (çevrildi, bekçi kuruldu) |
-| 40 | Hepsini sil | ⬜ | Geri alınamaz — dikkatli |
+| 40 | Hepsini sil | ✅ | **Hata bulundu**: geçmişi silmiyordu (v134). Şimdi bütün kayıtlar kuralla siliniyor; sınama eklendi ve düzeltme geri alınınca yakaladığı doğrulandı |
 | 41 | Ayar kaydet / vazgeç | ✅ | 90→33 değiştirip **Vazgeç** → 90'a döndü, sayaç bozulmadı; **Kaydet** → 33:00 uygulandı |
 
 ## 4) Kabuk ve bildirimler
@@ -130,7 +130,7 @@ silinince geçti.
 
 ## Toplam
 
-**48 özelliğin 28'i denendi** (✅ 27, 🟡 1). **20'si açık.**
+**48 özelliğin 30'u denendi** (✅ 29, 🟡 1). **18'i açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.

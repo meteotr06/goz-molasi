@@ -212,8 +212,16 @@
 
   /* ============================================================
      KİLİT (KATI MOD)
-     Şifre konunca molayı atlamak, duraklatmak, sıfırlamak ve
-     ayarları değiştirmek şifre ister.
+     Şifre konunca ŞİFREYİ DEĞİŞTİRMEK, ŞİFREYİ KALDIRMAK ve
+     VERİLERİ SİLMEK şifre ister. Başka bir şey istemez.
+
+     DÜZELTME (28.08.2026): burada eskiden "molayı atlamak,
+     duraklatmak, sıfırlamak ve ayarları değiştirmek şifre ister"
+     yazıyordu. Ölçüldü — istemiyor: `sifreSor()` yalnızca üç yerden
+     çağrılıyor. Kullanıcıya gösterilen yazı DOĞRUYDU ("şifreyi
+     değiştirme ve verileri silme korumalı"); yanlış olan yalnızca
+     buradaki açıklamaydı. Bir sonraki geliştiriciyi yanıltırdı —
+     nitekim bir süre beni yanılttı.
 
      Şifre DÜZ METİN olarak saklanmaz; tuzlanıp özeti (SHA-256)
      saklanır. Yine de bu bir cihaz güvenliği değildir — amacı
@@ -2402,7 +2410,31 @@
     }
     clearTimeout(silmeZaman);
     silindi = true;
-    try { localStorage.removeItem(KAYIT_ANAHTARI); } catch {}
+    /* TEK ANAHTAR DEĞİL, BÜTÜN VERİ.
+
+       Eskiden yalnızca `KAYIT_ANAHTARI` siliniyordu. Ama kullanıcıya
+       "Ayarlar, sayaçlar ve şifre silinir" diyoruz ve SAYAÇLAR ayrı
+       bir anahtarta duruyor (`goz-molasi-gecmis` — 7 gün grafiği ve
+       seri). Ölçüldü (28.08.2026): silme sonrası sayaç 0 gösteriyor
+       ama ekranda hâlâ "8 mola bugün" yazıyor, grafikte çubuk duruyor
+       ve seri rozeti "1 gün üst üste" diyor. Kullanıcı her şeyi
+       sildiğini sanıyor; kullanım geçmişi cihazda kalıyor.
+
+       Anahtarları TEK TEK saymıyoruz: bugün öğrendiğimiz gibi ad
+       listesi, kendisinden sonra doğan anahtarı göremez. Önekle
+       silmek kural yazmaktır — sonradan eklenen her `goz-molasi*`
+       anahtarı kendiliğinden kapsanır. */
+    try {
+      const silinecek = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const a = localStorage.key(i);
+        if (a && a.indexOf('goz-molasi') === 0) silinecek.push(a);
+      }
+      // Her anahtar AYRI korunuyor: biri istisna atarsa (gizli
+      // sekme, kota) kalanlar yine silinsin. Yarim silme, hic
+      // silmemekten iyidir.
+      silinecek.forEach((a) => { try { localStorage.removeItem(a); } catch {} });
+    } catch {}
     location.reload();
   });
 

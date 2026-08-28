@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 134,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': '“Hepsini sil” geçmişi silmiyordu — silindikten sonra ekranda eski sayılar duruyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            '<b>“Verileri sıfırla”</b> yalnızca ayarları ve bugünün sayaçlarını siliyordu; <b>7 günlük geçmiş ve seri cihazda kalıyordu</b>. Silme sonrası sayaç 0 gösteriyor ama ekranda hâlâ “8 mola bugün” yazıyor, grafikte çubuk duruyor ve seri rozeti görünüyordu. Artık gerçekten hepsi siliniyor.',
+            'Silme artık <b>tek tek anahtar saymıyor</b>: uygulamanın bütün kayıtları kuralla temizleniyor, yani sonradan eklenen bir kayıt da kendiliğinden kapsanıyor.',
+        ],
+    },
+    {
         'surum': 133,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

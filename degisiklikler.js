@@ -30,6 +30,38 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 134,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: '“Hepsini sil” geçmişi silmiyordu — silindikten sonra ekranda '
+        + 'eski sayılar duruyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      '<b>“Verileri sıfırla”</b> yalnızca ayarları ve bugünün sayaçlarını '
+        + 'siliyordu; <b>7 günlük geçmiş ve seri cihazda kalıyordu</b>. '
+        + 'Silme sonrası sayaç 0 gösteriyor ama ekranda hâlâ “8 mola '
+        + 'bugün” yazıyor, grafikte çubuk duruyor ve seri rozeti '
+        + 'görünüyordu. Artık gerçekten hepsi siliniyor.',
+      'Silme artık <b>tek tek anahtar saymıyor</b>: uygulamanın bütün '
+        + 'kayıtları kuralla temizleniyor, yani sonradan eklenen bir '
+        + 'kayıt da kendiliğinden kapsanıyor.',
+    ],
+    ozetEn: '“Erase all data” did not erase the history — old numbers '
+        + 'stayed on screen afterwards.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      '<b>“Reset all data”</b> only cleared the settings and today\u2019s '
+        + 'counters; the <b>7-day history and streak stayed on the '
+        + 'device</b>. After erasing, the counter showed 0 but the screen '
+        + 'still said “8 breaks today”, the bar was still in the chart and '
+        + 'the streak badge was still there. Everything is now really '
+        + 'erased.',
+      'Erasing no longer works from <b>a list of individual keys</b>: all '
+        + 'of the app\u2019s records are cleared by rule, so anything '
+        + 'added later is covered automatically.',
+    ],
+  },
+  {
     surum: 133,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',
