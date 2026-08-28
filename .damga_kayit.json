@@ -1,13 +1,13 @@
 {
- "surum": "v93",
+ "surum": "v99",
  "ozetler": {
-  "stil.css": "05595b3780c4ad36",
+  "stil.css": "7274e63c82663a41",
   "cekirdek.js": "95c713d7bceb7aa5",
-  "dil.js": "10bec5926227ff82",
+  "dil.js": "52f5ff165f783bd8",
   "bilgiler.js": "18414752eddd696a",
   "bilgiler_en.js": "1be66658ccc34a84",
   "mola_icerik.js": "53d807426fedb081",
-  "arayuz.js": "b6a8415d29f73f36",
+  "arayuz.js": "055f0e9399b2ef6e",
   "egzersiz.js": "757b092f61fb8b8d",
   "reklam.js": "f93e1124096439f2",
   "dunya.js": "514cc26e5e0ad6cc"

@@ -584,6 +584,29 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
    beyanı, görünüm tercihi değil. */
 [hidden] { display: none !important; }
 
+/* Şeritteki bağlantı: görünüm aynı, dokunma alanı büyük.
+   Ortak `.baglanti-dugme` `padding:0` taşıyor ve 21px kalıyor —
+   telefonda dar. Sınıfı değiştirmiyoruz, orada da kullanılıyor;
+   yalnızca burada dolgu veriyoruz. Negatif kenar boşluğu, büyüyen
+   kutunun yerleşimi itmesini engelliyor. */
+#yenilikAyrinti {
+  padding: 12px 8px;
+  margin: -8px -8px -4px;
+}
+
+/* NELER DEĞİŞTİ listesi (K-44) */
+.degisiklik-kayit { margin-top: 10px; }
+.degisiklik-kayit ul { margin: 6px 0 0; padding-left: 18px; }
+.degisiklik-kayit li { margin: 4px 0; font-size: 14px; line-height: 1.5; }
+.onemli-not {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-left: 3px solid var(--uyari, #b54708);
+  background: color-mix(in oklch, var(--kart) 92%, var(--uyari, #b54708));
+  border-radius: 0 8px 8px 0;
+}
+
 /* ---------------- SEKME ÇUBUĞU ---------------- */
 .sekme-cubugu {
   display: flex;

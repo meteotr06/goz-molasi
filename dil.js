@@ -275,6 +275,7 @@ const SOZLUK = {
   'Vazgeç': 'Cancel',
   'Onayla': 'Confirm',
   'Kapat': 'Close',
+  'Neler değişti?': 'What changed?',
   'Ekle': 'Add',
   'Kur': 'Install',
   'İzin ver': 'Allow',

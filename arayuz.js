@@ -1577,6 +1577,31 @@
   }
 
   let bilgilerKuruldu = false;
+  /* NELER DEĞİŞTİ listesi (K-44) — Bilgiler sekmesinde.
+     Tek kaynak `degisiklikler.js`; şerit de aynı diziyi okuyor.
+     İki yerde ayrı metin tutmak, ikisinin ayrışması demektir —
+     bu projede `bilgiler.py`/`bilgiler.js` ikizinde yaşandı. */
+  function degisiklikleriKur() {
+    const kap = $('degisiklikListesi');
+    if (!kap || typeof DEGISIKLIKLER === 'undefined') return;
+    if (kap.dataset.kuruldu) return;
+    kap.dataset.kuruldu = '1';
+    kap.innerHTML =
+      '<h2 class="kutu-baslik">' + CS('Neler değişti', 'What changed') + '</h2>' +
+      DEGISIKLIKLER.map((d) =>
+        '<div class="degisiklik-kayit">' +
+        '<b>' + CS(d.tarih, d.tarihEn || d.tarih) + '</b>' +
+        (d.ayarGozdenGecir
+          ? '<p class="onemli-not">' + CS(
+              'Aile kipi kullanıyorsan ayarlarını bir kez daha gözden geçir.',
+              'If you use Family mode, review your settings once more.') + '</p>'
+          : '') +
+        '<ul>' + CS(d.maddeler, d.maddelerEn || d.maddeler)
+          .map((m) => '<li>' + m + '</li>').join('') + '</ul>' +
+        '</div>').join('');
+    sayfayiCevir(kap);
+  }
+
   async function bilgileriKur() {
     if (bilgilerKuruldu) return;
     bilgilerKuruldu = true;
@@ -1652,6 +1677,8 @@
         + '">' + kacis(C('Ayrı sayfada aç')) + '</a></p>';
     }
     try { sayfayiCevir(kap); } catch {}
+    // Şeritteki "Neler değişti?" bağlantısı buraya kaydırıyor.
+    try { degisiklikleriKur(); } catch {}
   }
 
   /* ---------- Sekme değiştirme ---------- */
@@ -2029,6 +2056,15 @@
      ============================================================ */
   let silindi = false;   // sıfırlamadan sonra kayıt geri yazılmasın
 
+  /* DİKKAT — buraya alan EKLEMEK kolay, alan KORUMAK değil.
+     Aşağıdaki nesne her seferinde SIFIRDAN kuruluyor. Listede
+     olmayan hiçbir alan hayatta kalmaz: 15 saniyede bir ve her
+     sayfa kapanışında silinir. Başka bir yerde `localStorage`a
+     yazdığın bir alan varsa ya buraya ekle ya da AYRI anahtar
+     kullan. "Neler değişti" işareti tam bu yüzden ayrı anahtarda
+     (`goz-molasi-gorulen`) duruyor — buraya konduğunda ölçüldü:
+     kullanıcı şeridi kapatıyor, 15 saniye sonra işaret siliniyor,
+     bir dahaki açılışta şerit yine çıkıyordu. */
   function kaydet() {
     if (silindi) return;
     // Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
@@ -2366,6 +2402,80 @@
     $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });
   })();
 
+  /* NE DEĞİŞTİ (K-44) — güncellendikten SONRA bir kez.
+
+     Bugüne kadar sessizce yayınladık: şerit "Yeni sürüm hazır"
+     diyordu, doğru ama bilgisiz. Aile kipinde bu daha ağır — bir
+     ebeveyn korumanın çalıştığını sanarak kurmuş olabilir ve
+     düzelttiğimiz açıklar tam o sınıftı.
+
+     Sürüm yüklü damgadan okunuyor. Ayrı bir sabit tutmak ikinci bir
+     elle yazılan sayı olurdu; bugün masaüstünde tam bu yüzden
+     bildirim hiç çıkmıyordu. */
+  function yenilikNotunuGoster() {
+    if (typeof DEGISIKLIKLER === 'undefined') return;
+    const b = document.querySelector('script[src*="arayuz.js"]');
+    const m = b && (b.getAttribute('src') || '').match(/[?&]s=v(\d+)/);
+    const damga = m ? parseInt(m[1], 10) : null;
+    if (!damga) return;
+
+    // İlk ziyarette çıkmaz: yeni kullanıcı hiçbirini görmemiş.
+    const onceki = gorulenSurumOku();
+    if (!onceki) { gorulenSurumYaz(damga); return; }
+
+    /* Damgaya EŞİT kayıt aramıyoruz — bilerek.
+       Damga her yayında artıyor (bir yazım düzeltmesi bile artırıyor),
+       kayıt ise yalnızca anlatılacak bir şey olunca yazılıyor. İkisi
+       kaçınılmaz olarak ayrışır ve eşitlik arayan kod SESSİZCE hiç
+       çıkmaz. Ölçüldü: damga v94, kayıt 93, şerit yok. Sayıları elle
+       hizalamak çözüm değil; aynı tuzağı bir sonraki yayına erteler. */
+    const yeniler = DEGISIKLIKLER.filter((d) => d.surum > onceki);
+    gorulenSurumYaz(damga);
+    if (!yeniler.length) return;
+    const kayit = yeniler[0];
+
+    const not = $('yenilikNotu');
+    if (!not) return;
+    $('yenilikBaslik').textContent = CS('Uygulama güncellendi',
+                                        'The app was updated');
+    // Kayit iki dilli; CS zaten aktif dile gore seciyor.
+    let metin = CS(kayit.ozet, kayit.ozetEn || kayit.ozet);
+    if (kayit.ayarGozdenGecir) {
+      metin += CS(' Aile kipi kullanıyorsan ayarlarını bir kez daha gözden geçir.',
+                  ' If you use Family mode, review your settings once more.');
+    }
+    $('yenilikMetin').textContent = metin;
+    not.hidden = false;
+    $('yenilikAyrinti')?.addEventListener('click', () => {
+      not.hidden = true;
+      gorulenSurumYaz(damga);
+      sekmeSec('sekmeBilgiler');
+      setTimeout(() => {
+        document.getElementById('degisiklikListesi')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    });
+    $('yenilikKapat')?.addEventListener('click', () => {
+      not.hidden = true;
+      gorulenSurumYaz(damga);
+    });
+  }
+
+  /* AYRI ANAHTAR — bilerek, ayarların içinde değil.
+     `kaydet()` ayar nesnesini alan alan YENİDEN KURUYOR; o listede
+     olmayan her alan 15 saniyede bir siliniyor. Bu işaret oraya
+     konduğunda ölçtüm: yazıldı, sonraki kayıtta kayboldu. Sonucu
+     kullanıcı için şuydu — şeridi kapat, 15 saniye sonra işaret
+     silinsin, bir dahaki açılışta şerit yine çıksın. Sonsuza kadar. */
+  const GORULEN_ANAHTARI = 'goz-molasi-gorulen';
+  function gorulenSurumOku() {
+    try { return parseInt(localStorage.getItem(GORULEN_ANAHTARI), 10) || null; }
+    catch { return null; }
+  }
+  function gorulenSurumYaz(s) {
+    try { localStorage.setItem(GORULEN_ANAHTARI, String(s)); } catch { }
+  }
+
   /* SERVİS İŞÇİSİ + "yeni sürüm hazır" bildirimi
 
      Sorun: servis işçisi yeni dosyaları indirip önbelleğe alıyor ama
@@ -2395,6 +2505,8 @@
       setTimeout(() => { serit.hidden = true; }, 400);
     });
   }
+
+  try { yenilikNotunuGoster(); } catch (e) { }
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').then((kayit) => {
