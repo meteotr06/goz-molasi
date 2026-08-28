@@ -33,6 +33,10 @@ import ses
 import tepsi
 import guncelleme as gnc
 import kopru as kpr
+try:
+    import degisiklikler as dgs
+except Exception:
+    dgs = None
 from bilgiler import BILGILER, IPUCLARI, MOLA_CUMLELERI
 try:
     from dunya import DUNYA        # uretilen dosya (dunya_uret.py)
@@ -130,11 +134,13 @@ VARSAYILAN = {
     # yani aydınlık panel gözü dinlendirme amacıyla çelişmiyor.
     "tema": "beyaz",
     "kilit": None,            # {"yontem","tur","tuz","ozet"} — düz metin ASLA
-    "bekci": True,
+    "bekci": True,          # kilit açıkken zorla kapatılırsa geri açsın mı
     # KOPRU: tarayici surumu, Windows surumunun sayacini okuyabilsin.
     # Kapatilabilir olmasi onemli - kullanici istemiyorsa bilgisayarinda
     # bir ag ucu acik kalmamali.
-    "kopru": True,          # yerel okuma ucu acilsin mi            # kilit açıkken zorla kapatılırsa geri açsın mı
+    "kopru": True,          # yerel okuma ucu acilsin mi
+    # Son calisan surum. Degistiyse "ne degisti" karti cikar (K-44).
+    "son_gorulen_surum": None,
     # SESSİZ ÖLÇÜM: program açık kalır, ekran süresini ve hangi programda
     # ne kadar durduğunu ölçmeye devam eder, ama MOLA VERMEZ ve ekrana
     # hiçbir şey çıkarmaz. Toplantı, oyun, film, sunum için.
@@ -2534,6 +2540,39 @@ class Uygulama:
         if getattr(self, "_acilis_karti_cikti", False):
             return
         self._acilis_karti_cikti = True
+
+        # --- 0) GÜNCELLENDİK Mİ? Ne değiştiğini söyle (K-44) ---
+        #
+        # Bu, aşağıdaki "yeni sürüm çıktı" kartından FARKLI: o henüz
+        # güncellemeyene "indir" der, bu güncellemiş olana "ne değişti"
+        # der. En başta çünkü aile kipi kullanan bir ebeveynin ayarını
+        # gözden geçirmesi gerekebilir — diğerlerinden acil.
+        try:
+            onceki = self.ayar.get("son_gorulen_surum")
+            kayit = dgs.son(SURUM) if dgs else None
+            # Ilk kurulumda `onceki` bos olur; yeni kullaniciya
+            # "sunlari duzelttik" demek anlamsiz, hicbirini gormemis.
+            if kayit and onceki and onceki != SURUM:
+                self.ayar["son_gorulen_surum"] = SURUM
+                ayarlari_yaz(self.ayar)
+                govde = kayit["ozet"]
+                if kayit.get("ayar_gozden_gecir") and aile_kipinde_mi(self.ayar):
+                    govde += (" Aile kipi kullanıyorsun: ayarlarını bir kez "
+                              "daha gözden geçir.")
+                TelafiKarti(
+                    self.kok,
+                    "Güncellendi — %s" % SURUM,
+                    govde,
+                    "Ayrıntı: Bilgiler sekmesi",
+                    "%d değişiklik var." % len(kayit["maddeler"]))
+                return
+            if onceki != SURUM:
+                # Kart cikmasa bile surumu isaretle: bir dahaki
+                # acilista "guncellendi" sanilmasin.
+                self.ayar["son_gorulen_surum"] = SURUM
+                ayarlari_yaz(self.ayar)
+        except Exception:
+            pass
 
         # --- 1) Yeni sürüm var mı ---
         # Ağ işi ARKA PLANDA yapıldı (_surum_denetimini_baslat); burada
