@@ -444,6 +444,13 @@ class MolaMotoru {
       // Ne zaman kaydedildi — geri yüklerken "ne kadar kapalı kaldı"
       // sorusunun cevabı bu.
       kayitAni: Date.now(),
+      /* SAAT DİLİMİ FARKI. Yaz saati geçişinde ya da kullanıcı
+         saati elle değiştirince `Date.now()` sıçrar ve geçen süre
+         YANLIŞ hesaplanır. Ölçüldü: saat 1 saat ileri alınınca
+         uygulama "60 dakika kapalıydı" diyordu — kullanıcı hiç
+         ayrılmamışken. Fark değiştiyse ölçümün güvenilmez
+         olduğunu biliyoruz ve öyle söylüyoruz. */
+      saatFarki: new Date().getTimezoneOffset(),
     };
   }
 
@@ -499,6 +506,14 @@ class MolaMotoru {
     const kapaliKalan = (simdi - kayitAni) / 1000;
     // Sekme kapalıyken geçen süre için dinlenmeEsigi DEĞİL
     // kapaliDevamEsigi kullanılır — sebebi ayarın yanında yazılı.
+    /* SAAT AYARI DEĞİŞMİŞ Mİ? Değiştiyse "ne kadar kapalı kaldı"
+       ölçümü güvenilmez: yaz saati geçişi ya da elle saat değişimi
+       geçen süreyi olduğundan büyük/küçük gösterir. Kullanıcıya
+       "kapalıydın" demek YANLIŞ olur — hiç ayrılmamış olabilir. */
+    const eskiFark = veri.saatFarki;
+    const saatDegisti = Number.isFinite(+eskiFark)
+      && +eskiFark !== new Date().getTimezoneOffset();
+
     /* Kullanıcı "uzak kalınca sıfırlama" ayarını kapattıysa süre
        sınırı yok: ne kadar uzak kalırsa kalsın sayaç devam eder.
        Saatin geriye alınması (kapaliKalan < 0) yine ayrı tutuluyor —
@@ -510,10 +525,9 @@ class MolaMotoru {
     if (kapaliKalan < 0 || kapaliKalan > esik) {
       // Kullanıcıya NEDEN sıfırlandığını söyleyebilmek için sebebi
       // tutuyoruz. Sessizce sıfırlanan sayaç "bozuk" gibi duruyor.
-      this.sifirlanmaSebebi = {
-        tur: 'uzun-kapali',
-        dakika: Math.round(kapaliKalan / 60),
-      };
+      this.sifirlanmaSebebi = saatDegisti
+        ? { tur: 'saat-degisti' }
+        : { tur: 'uzun-kapali', dakika: Math.round(kapaliKalan / 60) };
       return false;
     }
 
@@ -575,10 +589,9 @@ class MolaMotoru {
     /* Buraya düşmek = gerçekten uzun kalınmış. Sayaç temiz başlıyor ve
        bu DOĞRU: o kadar süre uzaktaysan gözlerin dinlendi. Yanlış olan,
        eskiden bunun sessizce olmasıydı. */
-    this.sifirlanmaSebebi = {
-      tur: 'uzun-kapali',
-      dakika: Math.round(kapaliKalan / 60),
-    };
+    this.sifirlanmaSebebi = saatDegisti
+      ? { tur: 'saat-degisti' }
+      : { tur: 'uzun-kapali', dakika: Math.round(kapaliKalan / 60) };
     return false;
   }
 }

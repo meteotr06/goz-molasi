@@ -1910,7 +1910,17 @@
   const CANLILIK_ANAHTAR = 'goz-molasi-canlilik';
 
   function canlilikOku() {
-    const d = parseInt(localStorage.getItem(CANLILIK_ANAHTAR) || '100', 10);
+    /* try ŞART. Bu işlev AÇILIŞTA, en üst düzeyde çağrılıyor; gizli
+       sekmede ya da site verileri engelliyken `getItem` istisna atar
+       ve o istisna bütün betiği düşürür — uygulama HİÇ açılmaz.
+       En ağır başarısızlık bu: kullanıcı boş ekran görür.
+
+       Hemen aşağıdaki `setItem` zaten sarılıydı; yazma korunmuş,
+       okuma unutulmuştu. Aynı satırın iki yarısı farklı korunuyorsa
+       bu bir gözden kaçmadır, tercih değil. */
+    let d = NaN;
+    try { d = parseInt(localStorage.getItem(CANLILIK_ANAHTAR) || '100', 10); }
+    catch { return 100; }
     return Number.isFinite(d) ? Math.min(150, Math.max(60, d)) : 100;
   }
 
@@ -2228,6 +2238,9 @@
         kilitOzeti,
         kilitTuz,
         kilitSifirlandi: KILIT_SIFIRLAMA_DAMGASI,
+        // `disaAktar()` zaten `saatFarki` veriyor; burada tekrar
+        // yazmıyoruz ama listeden DÜŞMESİN diye not: yayılan
+        // nesne onu taşıyor.
         kayitAni: Date.now(),
       }));
     } catch {}
@@ -2557,6 +2570,18 @@
         + `saydık ve sayaç yeniden başladı.`,
         `You left for ${d} minutes while the break screen was open. We `
         + `counted that break as taken and the timer restarted.`);
+    } else if (sebep && sebep.tur === 'saat-degisti') {
+      /* "Kapalıydın" DEMİYORUZ: kullanıcı hiç ayrılmamış olabilir.
+         Ölçüldü: saat 1 saat ileri alınınca uygulama "60 dakika
+         kapalıydı" diyordu. Ne olduğunu bilmediğimizde, bilmediğimizi
+         söylemek uydurmaktan iyidir. */
+      metin = CS(
+        'Cihazın saati değişmiş görünüyor (yaz saati ya da elle ayar). '
+        + 'Geçen süreyi güvenilir ölçemediğimiz için sayaç yeniden '
+        + 'başladı — kapalı kaldığın için değil.',
+        'Your device clock appears to have changed (daylight saving or a '
+        + 'manual adjustment). We cannot measure the elapsed time '
+        + 'reliably, so the timer restarted — not because you were away.');
     } else if (sebep && sebep.tur === 'uzun-kapali') {
       const dk = Math.max(1, sebep.dakika | 0);
       metin = CS(
