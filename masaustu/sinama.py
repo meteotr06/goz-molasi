@@ -32,6 +32,8 @@ SINAMALAR = [
     ("veri", "sinama_veri.py", "Bilgilerin kaynağı ve sürümler arası tutarlılık"),
     ("degisiklik", "sinama_degisiklik.py", "\"Neler değişti\" bildirimi sessizce kaybolmuş mu"),
     ("depo", "sinama_depo.py", "Gizli sekmede depo istisnası uygulamayı öldürür mü"),
+    ("surum", "sinama_surum.py",
+     "Kod, degisiklik kaydi ve yayin ayni surumu mu soyluyor"),
     ("dil", "sinama_dil.py",
      "Ekrana yazilan Turkce metin ceviriden geciyor mu"),
     ("sozluk", "sinama_sozluk.py",

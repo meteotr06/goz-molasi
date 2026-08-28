@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- YAYINA GITMEMELI. `.gitignore` deseni ve `sinama_yayin.py` bunu
+     denetliyor; `_sinama/` klasoru Jekyll tarafindan yayinlanmiyor. -->
+<title>Göz Molası — yazı ölçeği ve görünüm parmak izi</title>
+<style>
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 20px; max-width: 1100px; }
+  h1 { font-size: 18px; }
+  .g { color: #0a7a3d; } .k { color: #b42318; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  td, th { border-bottom: 1px solid #ddd; padding: 5px 7px; text-align: left;
+           vertical-align: top; font-size: 12px; }
+  #ozet { margin-top: 14px; padding: 10px 12px; border-radius: 8px;
+          background: #f3f4f6; font-weight: 600; }
+  .not { background: #fff8e6; border-left: 4px solid #b54708; padding: 10px 12px;
+         margin: 12px 0; font-size: 13px; }
+  button { font: inherit; padding: 6px 12px; margin-right: 8px; }
+  iframe { width: 390px; height: 844px; border: 1px solid #ccc; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Yazı ölçeği — görünüm parmak izi</h1>
+
+<div class="not">
+  <b>Niye var.</b> Uygulamanın bütün punto bildirimleri <code>px</code>'ti
+  (97 tane). Bu, telefonun <b>“yazıları büyüt”</b> ayarının uygulamayı
+  <b>hiç büyütmemesi</b> demek — bir göz sağlığı uygulamasında ağır bir eksik.
+  <code>rem</code>'e çevirmek <b>görünümü bozma riski</b> taşıyor, o yüzden
+  önce parmak izi alınıyor.
+  <br /><br />
+  <b>Niye iframe.</b> Tarayıcı bölmesi sık sık işlemeyi durduruyor
+  (<code>clientWidth: 32</code>); o hâlde ölçülen genişlik/yükseklik
+  <b>gerçeği söylemiyor</b>. Çerçeve içinde yerleşim ölçülebiliyor.
+  <br /><br />
+  <b>Nasıl kullanılır.</b> Değişiklikten <b>önce</b> “Parmak izi al (ÖNCE)”,
+  değişiklikten <b>sonra</b> “Karşılaştır (SONRA)”. Fark yoksa görünüm
+  bozulmamış demektir. “%200 yazı” düğmesi kök puntoyu iki katına çıkarıp
+  <b>taşma</b> arar.
+</div>
+
+<p>
+  <button id="once">1) Parmak izi al (ÖNCE)</button>
+  <button id="sonra">2) Karşılaştır (SONRA)</button>
+  <button id="buyuk">3) %200 yazı — taşma var mı</button>
+  <span id="kayitDurum"></span>
+</p>
+
+<div id="ozet">hazır</div>
+<table id="sonuc"><thead>
+  <tr><th style="width:34%">Öge</th><th>Önce</th><th>Sonra</th><th>Fark</th></tr>
+</thead><tbody></tbody></table>
+
+<div id="yuva"></div>
+
+<script>
+(function () {
+  var ANAHTAR = '__olcek_parmakizi';
+  var govde = document.querySelector('#sonuc tbody');
+  var ozet = document.getElementById('ozet');
+  var yuva = document.getElementById('yuva');
+
+  function bekle(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function temizle() { govde.innerHTML = ''; }
+
+  function satir(ad, once, sonra, fark, iyi) {
+    var s = document.createElement('tr');
+    s.innerHTML = '<td>' + ad + '</td><td>' + once + '</td><td>' + sonra +
+      '</td><td class="' + (iyi ? 'g' : 'k') + '">' + fark + '</td>';
+    govde.appendChild(s);
+  }
+
+  /* Uygulamayi TEMIZ bir durumda ac: kurgu veri olcumu kaydirmasin. */
+  async function uygulamayiAc(kokPunto) {
+    yuva.innerHTML = '';
+    var f = document.createElement('iframe');
+    f.src = '../index.html?olcek=' + Date.now();
+    yuva.appendChild(f);
+    await new Promise(function (r) { f.onload = r; });
+    try {
+      f.contentWindow.localStorage.setItem('goz-molasi-tanitim', '1');
+    } catch (e) { }
+    if (kokPunto) {
+      f.contentDocument.documentElement.style.fontSize = kokPunto;
+    }
+    await bekle(1400);
+    return f;
+  }
+
+  /* Parmak izi: her gorunur ogenin puntosu ve yerlesimi. */
+  function parmakIzi(f) {
+    var d = f.contentDocument;
+    var liste = [];
+    var hepsi = d.querySelectorAll('*');
+    for (var i = 0; i < hepsi.length; i++) {
+      var e = hepsi[i];
+      var s = f.contentWindow.getComputedStyle(e);
+      if (s.display === 'none' || s.visibility === 'hidden') continue;
+      var k = e.getBoundingClientRect();
+      if (k.width === 0 && k.height === 0) continue;
+      var ad = e.tagName.toLowerCase()
+             + (e.id ? '#' + e.id : '')
+             + (typeof e.className === 'string' && e.className
+                 ? '.' + e.className.split(' ')[0] : '')
+             + '@' + i;
+      liste.push([ad, s.fontSize, Math.round(k.width), Math.round(k.height),
+                  Math.round(k.top), Math.round(k.left)]);
+    }
+    return liste;
+  }
+
+  document.getElementById('once').addEventListener('click', async function () {
+    temizle();
+    ozet.textContent = 'ölçülüyor…';
+    var f = await uygulamayiAc(null);
+    if (f.contentDocument.body.clientWidth < 200) {
+      ozet.textContent = 'ÖLÇÜLEMEDİ — çerçeve işlemiyor (genişlik '
+        + f.contentDocument.body.clientWidth + ')';
+      ozet.style.background = '#fdeceb';
+      return;
+    }
+    var p = parmakIzi(f);
+    localStorage.setItem(ANAHTAR, JSON.stringify(p));
+    ozet.textContent = 'ÖNCE alındı: ' + p.length + ' öge · kök punto '
+      + f.contentWindow.getComputedStyle(f.contentDocument.documentElement).fontSize
+      + ' · çerçeve genişliği ' + f.contentDocument.body.clientWidth;
+    ozet.style.background = '#eef2ff';
+  });
+
+  document.getElementById('sonra').addEventListener('click', async function () {
+    temizle();
+    var ham = localStorage.getItem(ANAHTAR);
+    if (!ham) {
+      ozet.textContent = 'ÖNCE parmak izi yok — önce 1. düğmeye bas.';
+      ozet.style.background = '#fdeceb';
+      return;
+    }
+    ozet.textContent = 'ölçülüyor…';
+    var once = JSON.parse(ham);
+    var f = await uygulamayiAc(null);
+    if (f.contentDocument.body.clientWidth < 200) {
+      ozet.textContent = 'ÖLÇÜLEMEDİ — çerçeve işlemiyor';
+      ozet.style.background = '#fdeceb';
+      return;
+    }
+    var sonra = parmakIzi(f);
+
+    var haritaOnce = {};
+    once.forEach(function (x) { haritaOnce[x[0]] = x; });
+    var fark = 0, bakilan = 0;
+
+    sonra.forEach(function (y) {
+      var x = haritaOnce[y[0]];
+      if (!x) { return; }
+      bakilan++;
+      var alanlar = ['punto', 'genişlik', 'yükseklik', 'üst', 'sol'];
+      for (var i = 1; i <= 5; i++) {
+        var a = String(x[i]), b = String(y[i]);
+        if (a !== b) {
+          fark++;
+          if (fark <= 25) {
+            satir(y[0] + ' · ' + alanlar[i - 1], a, b,
+                  'DEĞİŞTİ', false);
+          }
+        }
+      }
+    });
+
+    var eksik = once.length - bakilan;
+    ozet.textContent = fark === 0
+      ? ('DEĞİŞİKLİK YOK — ' + bakilan + ' öge, 5 ölçü (punto, genişlik, '
+         + 'yükseklik, üst, sol) birebir aynı.')
+      : (fark + ' ölçü DEĞİŞTİ (' + bakilan + ' öge incelendi).');
+    if (eksik) ozet.textContent += ' Eşleşmeyen öge: ' + eksik + '.';
+    ozet.style.background = fark === 0 ? '#e8f6ee' : '#fdeceb';
+  });
+
+  document.getElementById('buyuk').addEventListener('click', async function () {
+    temizle();
+    ozet.textContent = 'ölçülüyor…';
+    var f = await uygulamayiAc('32px');    // %200
+    var d = f.contentDocument, w = f.contentWindow;
+    if (d.body.clientWidth < 200) {
+      ozet.textContent = 'ÖLÇÜLEMEDİ — çerçeve işlemiyor';
+      ozet.style.background = '#fdeceb';
+      return;
+    }
+    var kok = w.getComputedStyle(d.documentElement).fontSize;
+    var govdeYazi = w.getComputedStyle(d.body).fontSize;
+
+    /* TASMA: gorunur bir ogenin sag kenari govdeyi asiyor mu. */
+    var genislik = d.body.clientWidth;
+    var tasan = [];
+    var hepsi = d.querySelectorAll('*');
+    for (var i = 0; i < hepsi.length; i++) {
+      var e = hepsi[i];
+      var s = w.getComputedStyle(e);
+      if (s.display === 'none' || s.visibility === 'hidden') continue;
+      var k = e.getBoundingClientRect();
+      if (k.width === 0) continue;
+      if (k.right > genislik + 2) {
+        tasan.push([e.tagName.toLowerCase() + (e.id ? '#' + e.id : ''),
+                    Math.round(k.right), genislik]);
+      }
+    }
+    tasan.slice(0, 20).forEach(function (t) {
+      satir(t[0], 'sağ kenar ' + t[1] + 'px', 'çerçeve ' + t[2] + 'px',
+            'TAŞIYOR', false);
+    });
+
+    var buyudu = parseFloat(govdeYazi) > 16.5;
+    satir('Kök punto %200 yapıldı', '16px', kok, buyudu ? 'gövde büyüdü' : 'GÖVDE BÜYÜMEDİ', buyudu);
+
+    ozet.textContent = 'Kök punto ' + kok + ' · gövde yazısı ' + govdeYazi
+      + ' · taşan öge: ' + tasan.length
+      + (buyudu ? '' : '  ← YAZI BÜYÜMÜYOR: punto bildirimleri px demektir');
+    ozet.style.background = (buyudu && tasan.length === 0) ? '#e8f6ee' : '#fff8e6';
+  });
+})();
+</script>
+</body>
+</html>

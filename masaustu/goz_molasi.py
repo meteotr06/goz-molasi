@@ -181,7 +181,11 @@ VARSAYILAN = {
 # Uygulamanın sürümü. GitHub Releases etiketiyle karşılaştırılıyor;
 # yeni sürüm çıkınca kullanıcıya haber veriliyor. Sürüm yükseltirken
 # BURAYI ve Releases etiketini birlikte güncelle.
-SURUM = "1.1"
+# Degisiklik kaydindaki EN YENI `masaustu_surum` ile ayni olmali.
+# 28.08.2026: kayit 1.3 diyordu, kod 1.1 -- derleme yapilmadigi icin
+# kod geride kalmisti. Ayrisirsa `sinama_surum.py` dusuyor:
+# kayit, olmayan bir surumu varmis gibi anlatir.
+SURUM = "1.3"
 
 P = gor.PANEL
 
