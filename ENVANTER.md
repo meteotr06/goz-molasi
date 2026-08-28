@@ -176,6 +176,23 @@ kayıyor**. Teşhis buraya kadar: gövde bir esnek sütun; kardeş ögeler
 (174 öge × 5 ölçü, sıfır fark) — yani zararsızdılar, ama **faydaları
 ölçülemedi**. Ölçülmemiş fayda taşınmaz; geri alındılar.
 
+**Teşhis nerede kaldı (ikinci tur, çalışma anında denenerek):**
+
+- `#sekmeSayac`'ın **iç kaydırması yok**: `scrollWidth = clientWidth =
+  offsetWidth = 364`. Yani öge gerçekten o kadar geniş.
+- Panele `min-width: 0` vermek **hiçbir şey değiştirmiyor** (364'te kalıyor)
+  — demek ki genişliği kendi `min-width`'inden gelmiyor.
+- Çocuklara da `min-width: 0` verilince panel 358'e iniyor ama sayfanın
+  `scrollWidth`'i **439**'a çıkıyor: taşma küçülmüyor, **büyüyor**.
+- `max-width: 100%` eklenince panel 313'e (doğru genişlik) iniyor, ama
+  `scrollWidth` yine **434**.
+
+**Sonuç: sebep panel değil, içindeki bir ögenin asgari genişliği.** Paneli
+sıkıştırmak o ögeyi dışarı taşırıyor. Doğru çözüm o ögeyi bulup kendi
+içinde kırılabilir/kaydırılabilir yapmak — panele dokunmak değil.
+(Karşılaştırma tablosu zaten `.tablo-kaydir` içinde kaydırılabiliyor;
+suçlu o değil.)
+
 **Gerileme değil:** bu hâl v137'den önce de kötüydü, sadece
 *ulaşılamıyordu* (yazı zaten büyümüyordu). Normal boyutta hiçbir şey
 bozulmadı.
