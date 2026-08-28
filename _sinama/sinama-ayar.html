@@ -142,9 +142,26 @@
     };
   });
   var a2 = s2.kayit.ayarlar || {};
+  /* BEKLENTİ, KODDAN DEĞİL KULLANICININ İSTEDİĞİNDEN GELMELİ.
+
+     Bu satır önce `=== 55` diye yazılmıştı. 55, v132 düzeltmesinin
+     seçtiği payın (çalışma − 5 sn) sonucuydu — yani beklenti
+     doğrudan KODDAN geliyordu. Öyle bir sınama, payı yarın 5'ten
+     30'a çıkaran biri için boşuna kırılır; daha kötüsü, pay
+     yanlış seçilmiş olsa bile "geçti" der.
+     Beklentisi koddan gelen sınama, hatayı korur.
+
+     Kullanıcının istediği şuydu: "beni olabildiğince erken uyar."
+     Sınama artık onu soruyor:
+       - sıfır OLMAMALI (asıl hata buydu: sessizce kapanıyordu),
+       - çalışma aralığını AŞMAMALI (sınırın kendisi doğru),
+       - istenene YAKIN olmalı (yarısından fazlası verilmiş olmalı).
+     Pay 5 sn de olur 10 sn de; üçü sağlandığı sürece doğru. */
+  var istenen = 60, calismaSn = a2.calismaSuresi, uy = a2.uyariSuresi;
+  var kural = (uy > 0) && (uy <= calismaSn) && (uy >= istenen / 2);
   yaz('UÇ DEĞER: çalışma 1 dk + uyarı 60 sn', s2.ekranda.uyari + ' sn',
-      a2.uyariSuresi + ' sn', '55 sn (sınırın altı — 0 DEĞİL)',
-      a2.uyariSuresi === 55);
+      uy + ' sn', '0 değil · çalışmayı aşmıyor · istenene yakın',
+      kural);
   yaz('…ve çalışma aralığı bozulmadı', s2.ekranda.calisma + ' dk',
       a2.calismaSuresi + ' sn', '60 sn', a2.calismaSuresi === 60);
 
