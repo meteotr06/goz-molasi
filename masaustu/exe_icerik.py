@@ -1,0 +1,139 @@
+# -*- coding: utf-8 -*-
+"""EXE İÇERİK DENETİMİ — düzeltmeler gerçekten programa girdi mi?
+
+`exe_tazelik.py` "exe kaynaktan eski mi?" diye sorar — tarihe bakar.
+Bu betik farklı bir soru sorar ve daha zor olanıdır:
+
+  > Derleme yapıldı. Peki düzeltmeler GERÇEKTEN içine girdi mi?
+
+  Tarih yeni olabilir ama derleme yarıda kalmış, yanlış klasörden
+  yapılmış ya da eski bir kopyayı paketlemiş olabilir. "Derledim"
+  bir niyettir; "içinde var" bir ölçümdür.
+
+NASIL — uygulama ÇALIŞTIRILMADAN
+  PyInstaller arşivi okunuyor ve `goz_molasi` modülünün derlenmiş
+  hâli çıkarılıyor. Değişken ve yöntem adları bytecode içinde metin
+  olarak durur; aranan işaret orada varsa kod da oradadır.
+
+  Uygulama AÇILMIYOR. Bu önemli: bu program bir kez kullanıcının
+  ekranını kilitledi, ve aile kipi tam ekran engel açabiliyor.
+
+NEDEN BAYT ARAMASI DEĞİL
+  Ölçüldü (28.08.2026): `--onefile` arşivi sıkıştırıyor. Ham exe
+  içinde `gunluk_sinir_dk` aramak 0 sonuç veriyor; "aile" ise 67
+  rastlantısal eşleşme veriyor. Yani ham arama hem KAÇIRIR hem
+  YANLIŞ ALARM verir - iki yönlü güvenilmez.
+
+BU DENETİMİN SINIRI — yazıyoruz, gizlemiyoruz
+  Ad araması, VAR OLAN bir fonksiyonun İÇİNİN değiştiğini göremez.
+  Örnek: `sayi_oku` eski exe'de de var; bu gece ona taşma koruması
+  eklendi ama ad aynı kaldı, yani denetim farkı GÖRMEZ. Bu yüzden
+  `sayi_oku` işaret listesine konmadı — ayırt etmeyen işaret,
+  denetimi kalabalıklaştırır ve yanlış güven verir.
+
+  Listedeki her işaret, gecenin YENİ eklenen bir adı. Yeni ad =
+  kesin ayrım. İçerik değişimleri için `exe_tazelik.py` (tarih) ve
+  sınama takımı var; üçü birlikte bakılır.
+
+ÇALIŞTIRMA
+  python exe_icerik.py
+  Çıkış kodu 0 = bütün işaretler içeride, 1 = eksik var,
+  2 = ölçülemedi (arşiv okunamadı).
+"""
+import os
+import sys
+
+BURASI = os.path.dirname(os.path.abspath(__file__))
+KOK = os.path.dirname(BURASI)
+
+# (işaret, hangi düzeltmeyi temsil ediyor)
+#
+# Her işaret 27-28.08.2026 gecesinde eklenen GERÇEK bir düzeltmenin
+# kod içindeki adı. Metin değil AD seçildi: metinler değişir, ad
+# değişince zaten kod değişmiş demektir.
+ISARETLER = [
+    ("ekran_isareti",
+     "Aile kipi: çocuk kayıt dosyasını düzenleyip günlük sınırı "
+     "kaldıramaz (kertme)"),
+    ("_sayac_isaretini_dogrula",
+     "Aile kipi: ekran süresi geri alınırsa yakalanır ve ebeveyne "
+     "söylenir"),
+    ("EK_SURE_AZAMI_SN",
+     "Aile kipi: 10 yıllık sahte 'ek süre' sınırı kalıcı olarak "
+     "kaldıramaz"),
+    ("ayar_uyarisi",
+     "Koruma uygulanmıyorsa ekranda yazar (sessizce kapanmaz)"),
+    ("_kopru_kalan",
+     "Köprü ekranda yazan süreyi söyler — hayalet mola üretmez"),
+    ("_kopru_verisi",
+     "Köprü: tarayıcı sürümü sayacı devralır, süre başa sarmaz"),
+    ("saat_oku",
+     "Saat alanları doğrulanır — '25:00' kabul edilmez, hatalı "
+     "yazım sessizce varsayılana dönmez"),
+]
+
+
+def modulu_cikar():
+    """(veri, hata) döndürür. Uygulama ÇALIŞTIRILMAZ."""
+    exe = None
+    for ad in sorted(os.listdir(KOK)):
+        if ad.lower().endswith(".exe"):
+            exe = os.path.join(KOK, ad)
+            break
+    if not exe:
+        return None, "kök klasörde .exe yok"
+    try:
+        from PyInstaller.archive.readers import CArchiveReader
+    except Exception as e:
+        return None, "PyInstaller okuyucusu yok (%s)" % type(e).__name__
+    try:
+        ham = CArchiveReader(exe).extract("goz_molasi")
+    except Exception as e:
+        return None, "arşiv okunamadı: %s: %s" % (type(e).__name__, e)
+    veri = ham[1] if isinstance(ham, tuple) else ham
+    if not veri:
+        return None, "goz_molasi modülü arşivde bulunamadı"
+    return veri, None
+
+
+def main():
+    veri, hata = modulu_cikar()
+    if veri is None:
+        # ÖLÇÜLEMEDİ, "temiz" DEĞİL. Ölçemediğini geçmiş saymak,
+        # bu projede gün boyu kovaladığımız hatanın ta kendisi.
+        print("ÖLÇÜLEMEDİ — %s" % hata)
+        print("Bu bir 'geçti' değil. exe'nin içeriği hakkında hiçbir")
+        print("şey bilmiyoruz.")
+        return 2
+
+    print("Okunan modül: %d bayt (uygulama açılmadı)" % len(veri))
+    print()
+    eksik = []
+    for isaret, aciklama in ISARETLER:
+        var = isaret.encode("utf-8") in veri
+        print("  %-26s %s" % (isaret, "VAR" if var else "EKSİK"))
+        print("      %s" % aciklama)
+        if not var:
+            eksik.append((isaret, aciklama))
+
+    print()
+    if not eksik:
+        print("SONUÇ: bütün düzeltmeler programın içinde (%d/%d)."
+              % (len(ISARETLER), len(ISARETLER)))
+        return 0
+
+    print("SONUÇ: %d düzeltme programda YOK:" % len(eksik))
+    for isaret, aciklama in eksik:
+        print("  - %s" % aciklama)
+    print()
+    print("Kullanıcı bu programı çalıştırdığında yukarıdaki korumalar")
+    print("ÇALIŞMIYOR. Kaynakta düzeltilmiş olması yetmez.")
+    print()
+    print("Yapılacak: DERLE.bat")
+    print("UYARI: DERLE.bat sonunda uygulamayı AÇAR — kullanıcının")
+    print("       kendi kararı olmadan çalıştırılmaz.")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
