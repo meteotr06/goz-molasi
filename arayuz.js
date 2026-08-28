@@ -170,9 +170,32 @@
      Kullanıcı ayarı bir kez elle değiştirirse seçimi korunur. */
   const dokunmatik = window.matchMedia
     && window.matchMedia('(pointer: coarse)').matches;
+  let uzakSifirlaGocu = kayit.uzakSifirlaGocu === true;
   let uzakSifirla = (kayit.uzakSifirla === undefined)
     ? !dokunmatik
     : kayit.uzakSifirla !== false;
+  let uzakSifirlaSecildi = kayit.uzakSifirlaSecildi === true;
+
+  /* GÖÇ — telefon varsayılanı ESKİ kullanıcıya ulaşmıyordu.
+
+     Bu ayar v104'te HERKES için açık varsayılanıyla eklendi ve
+     `kaydet()` onu hemen kullanıcının deposuna yazdı. v112'de
+     varsayılanı cihaza bağladım, ama varsayılan yalnızca "kayıtta
+     hiç yoksa" işler — deposunda `true` yazan kullanıcı yeni
+     davranışın DIŞINDA kaldı.
+
+     Ölçüldü: dokunmatik + depoda `true` → ekran 20:00, sayaç
+     sıfırlanıyor. Kullanıcı bunu dört kez bildirdi; düzeltmelerim
+     yalnızca temiz kurulumu kapsıyordu.
+
+     Kullanıcının BİLİNÇLİ seçimini ezmiyoruz — ama hiç dokunmadığı
+     eski bir varsayılanı "seçim" saymıyoruz. Göçten sonra bayrak
+     konuyor; bir daha dokunulmuyor. */
+  if (dokunmatik && uzakSifirla && !uzakSifirlaSecildi
+      && kayit.uzakSifirlaGocu !== true) {
+    uzakSifirla = false;
+    uzakSifirlaGocu = true;
+  }
   // Varsayilan ACIK: kullanici bunu acikca istedi.
   let molaKilit = kayit.molaKilit !== false;
   motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
@@ -2277,6 +2300,10 @@
     motor.ayarlar.molaAtlanabilir = og.ayAtla.checked;
     motor.ayarlar.sesAcik = og.aySes.checked;
     bostaAcik = og.ayBosta.checked;
+    if (og.ayUzakSifirla.checked !== uzakSifirla) {
+      // Kullanıcı bu ayara BİLEREK dokundu; bir daha ezmeyiz.
+      uzakSifirlaSecildi = true;
+    }
     uzakSifirla = og.ayUzakSifirla.checked;
     molaKilit = og.ayMolaKilit.checked;
     motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
@@ -2383,6 +2410,8 @@
         ...gonderilecek,
         bostaAcik,
         uzakSifirla,
+        uzakSifirlaSecildi,
+        uzakSifirlaGocu,
         molaKilit,
         otomatikBasla,
         titresimAcik,
@@ -2951,6 +2980,16 @@
       catch { }
     }, 150);
   });
+
+  /* Sürüm numarası YÜKLÜ DAMGADAN okunuyor — ayrı bir sabit
+     tutmak ikinci bir elle yazılan sayı olurdu ve bugün tam bu
+     yüzden üç projede bildirim sessizce hiç çıkmamıştı. */
+  try {
+    const b = document.querySelector('script[src*="arayuz.js"]');
+    const m = b && (b.getAttribute('src') || '').match(/[?&]s=v(\d+)/);
+    const e = $('surumSatiri');
+    if (e && m) e.textContent = CS('Sürüm ' + m[1], 'Version ' + m[1]);
+  } catch (e) { }
 
   try { yenilikNotunuGoster(); } catch (e) { }
 

@@ -359,6 +359,45 @@
     });
   });
 
+  /* ---- GÖÇ: telefon varsayılanı ESKİ kullanıcıya ulaşıyor mu ----
+     Kullanıcı aynı hatayı DÖRT kez bildirdi. Sebebi: ayar v104'te
+     herkes için açık varsayılanıyla eklendi ve cihaza kaydedildi;
+     sonraki cihaz-bağımlı varsayılan kayıtlı değeri EZEMİYOR.
+     Yani düzeltmeler yalnızca temiz kurulumu kapsıyordu.
+
+     NOT: bu düzenek dokunmatik cihazı taklit EDEMİYOR (`pointer:
+     coarse` iframe'de de masaüstü). O yüzden burada göçün kendisi
+     değil, KULLANICININ SEÇİMİNİN KORUNDUĞU ölçülüyor — göçün
+     çalıştığı tarayıcıda ayrıca ölçüldü. */
+  ekle('Kullanıcı seçimi göçle ezilmiyor', function (D) {
+    return kur('calisiyor', 10, 60,
+               { uzakSifirla: true, uzakSifirlaSecildi: true }).then(function (f) {
+      var kutu = f.contentDocument.getElementById('ayUzakSifirla');
+      D('seçim korunsun (açık kalsın)',
+        kutu ? String(kutu.checked) : 'kutu yok',
+        !!kutu && kutu.checked === true);
+    });
+  });
+
+  ekle('Göç bir kez çalışır, tekrarlamaz', function (D) {
+    return kur('calisiyor', 10, 60,
+               { uzakSifirla: true, uzakSifirlaGocu: true }).then(function (f) {
+      var kutu = f.contentDocument.getElementById('ayUzakSifirla');
+      D('ikinci kez ezmesin',
+        kutu ? String(kutu.checked) : 'kutu yok',
+        !!kutu && kutu.checked === true);
+    });
+  });
+
+  ekle('Sürüm numarası görünüyor mu', function (D) {
+    return kur('calisiyor', 1, 600).then(function (f) {
+      var e = f.contentDocument.getElementById('surumSatiri');
+      var m = e ? e.textContent.match(/(\d+)/) : null;
+      D('damgadan üretilsin', e ? e.textContent : 'yok',
+        !!m && parseInt(m[1], 10) > 0);
+    });
+  });
+
   // ---- 6) Bozuk kayıt uygulamayı öldürmesin ----
   // Acilmayan uygulama en agir basarisizlik: kullanici bir daha giremez.
   ekle('Bozuk kayıt', function (D) {

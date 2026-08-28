@@ -30,6 +30,49 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 126,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Telefonda sayacın hâlâ sıfırlanmasına yol açan hata düzeltildi — '
+        + 'önceki düzeltme yalnızca yeni kurulumlara ulaşıyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Telefonda sayaç sıfırlanmasın diye getirdiğimiz ayar, <b>zaten '
+        + 'uygulamayı kullananlara ulaşmıyordu</b>: ayar bir kez cihazına '
+        + 'kaydedildiği için yeni varsayılan onu değiştiremiyordu. Artık '
+        + 'telefonda bir kereye mahsus yeni davranışa geçiliyor.',
+      'Bu ayarı <b>kendin değiştirdiysen dokunulmuyor</b> — seçimin '
+        + 'korunuyor. “Uzun süre uzak kalınca sayacı sıfırla” ayarından '
+        + 'her zaman geri alabilirsin.',
+      'Mola ekranının alt kenarı telefonda tarayıcı mesajı ve gezinti '
+        + 'çubuğu tarafından örtülüyordu; kaynak satırı okunmuyordu. '
+        + 'Artık altta yer bırakılıyor.',
+      'Sayfanın altında artık <b>sürüm numarası</b> yazıyor — bir sorun '
+        + 'bildirirken hangi sürümde olduğunu söyleyebilirsin.',
+      'Kayıt yapılamadığında (depolama doluysa) uygulama artık bunu '
+        + 'söylüyor. Eskiden sessizce kaydetmiyordu.',
+    ],
+    ozetEn: 'Fixed a fault that still reset the timer on phones — the '
+        + 'earlier fix only reached fresh installations.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'The setting that stops the timer resetting on phones <b>was not '
+        + 'reaching people who already used the app</b>: once saved to the '
+        + 'device, the new default could not change it. Phones now switch '
+        + 'over once.',
+      'If you changed this setting yourself, it is <b>left alone</b> — your '
+        + 'choice is kept. You can always change it back under “Reset the '
+        + 'timer after a long absence”.',
+      'The bottom of the break screen was covered by the browser message '
+        + 'and the navigation bar on phones, hiding the source line. There '
+        + 'is now room for them.',
+      'The page footer now shows a <b>version number</b>, so you can say '
+        + 'which version you are on when reporting a problem.',
+      'When saving fails (for example if storage is full) the app now says '
+        + 'so. It used to fail silently.',
+    ],
+  },
+  {
     surum: 111,
     masaustuSurum: '1.2',
     tarih: '28 Ağustos 2026',
