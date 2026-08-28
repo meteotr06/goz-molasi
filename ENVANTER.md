@@ -241,6 +241,29 @@ panel 402px'e çıkıp ekranı taşırıyordu.
 
 **Normal boyutta üç ölçümde de sıfır fark** (375 TR, 360 TR, 375 EN).
 
+### Sınıf taraması — `min-width: auto` başka yüzeylerde de var mı? (yok)
+
+v140'ta düzelttiğim hata sekme panellerindeydi. *"Bu tek mi, örnek mi?"*
+diye sorup uygulamanın **bütün yüzeylerini** Türkçe %200 yazıda taradım
+(360 ve 375 genişlik):
+
+| Yüzey | Ölçüm geçerli mi | Taşan |
+|---|---|---|
+| Ayar penceresi | açık, 211 görünür öge | **0** |
+| Kısayol penceresi | açık, 41 görünür öge | **0** |
+| Mola ekranı | açık, 15 görünür öge | **0** |
+| Başlık (header) | — | **0** |
+| Alt bilgi | — | **0** |
+
+**Sonuç: tek örnekti**, sınıf değil.
+
+**Ölçümün kendisi bir kez geçersiz çıktı ve yakalandı:** ilk turda mola
+ekranı "0 taşan" verdi ama **görünür çocuk sayısı da 0'dı** — yani
+hiçbir şey ölçülmemişti. Bölme işlemediği için görünürlük geçişi
+donuyor. Geçişler kapatılınca (`transition: none`) 15 görünür öge çıktı
+ve ölçüm geçerli hâle geldi. **"0 taşan" ile "0 ölçüldü" aynı şey
+değil** — payda yazılmadan sonuç okunmamalı.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
