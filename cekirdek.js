@@ -124,6 +124,10 @@ class MolaMotoru {
   }
 
   /* ---------- Olay sistemi (arayüz buradan haber alır) ---------- */
+  /** Bu sekme sayacı işletmesin mi? Çok sekmeli kullanımda
+      yalnızca lider sekme işletir. */
+  askida = false;
+
   uzerine(olay, fn) {
     (this.dinleyiciler[olay] ||= []).push(fn);
     return this;
@@ -154,6 +158,8 @@ class MolaMotoru {
       (eski tarayıcı, katı güvenlik ayarı) setInterval'e düşüyoruz —
       o zaman mola geç bitebilir ama çalışmaya devam eder. */
   _kalpAtisiBaslat() {
+    // Askıdaki sekme, durum geçişi olsa bile sayacı işletmez.
+    if (this.askida) return;
     if (this._zamanlayici || this._isci) return;
 
     try {
@@ -324,7 +330,33 @@ class MolaMotoru {
     return true;
   }
 
+  /* ASKIYA ALMA — bu sekme sayacı İŞLETMESİN.
+
+     Neden gerekli: `liderligiBirak()` ikinci sekmede kalp atışını
+     durduruyordu, ama `_asamayaGec()` HER durum geçişinde kalp
+     atışını yeniden başlatıyor (o da ayrı bir düzeltmeydi: kayıttan
+     geri yüklenen sayaç hiç işlemiyordu). İki koruma birbirini
+     iptal ediyordu.
+
+     Ölçüldü (28.08.2026): iki sekme açıkken ikinci sekme kendini
+     "ikinci sekme" olarak gösteriyor AMA sayacı işliyordu; üstelik
+     liderden 8 saniye ayrışmıştı — aynı uygulamanın iki penceresi
+     iki ayrı sayı gösteriyordu.
+
+     Tek bayrak, tek boğaz: `tik()` ve `_kalpAtisiBaslat()` ikisi de
+     bayrağa bakıyor. Böylece hangi yoldan gelinirse gelinsin askıya
+     alınmış sekme sayacı ilerletemez. */
+  askiyaAl() {
+    this.askida = true;
+    this._kalpAtisiDurdur();
+  }
+
+  askidanCikar() {
+    this.askida = false;
+  }
+
   tik() {
+    if (this.askida) return;
     if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
 
     // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile

@@ -30,6 +30,32 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 133,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Uygulamayı iki sekmede açtığında iki sayaç birden işliyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Uygulamayı <b>iki sekmede</b> açtığında ikinci sekme “burada '
+        + 'devam et” yazısını gösteriyor ama <b>kendi sayacını da '
+        + 'işletiyordu</b>. İki pencere <b>farklı süreler</b> gösteriyor, '
+        + 'ikisi de ayrı ayrı mola veriyordu. Artık yalnızca bir sekme '
+        + 'sayar; ötekinin sayacı durur.',
+      'Sayan sekmeyi kapatırsan ya da öteki sekmede <b>“burada devam et”</b> '
+        + 'dersen, sayaç <b>kaldığı yerden</b> orada sürer.',
+    ],
+    ozetEn: 'Opening the app in two tabs ran two timers at once.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'When the app was open in <b>two tabs</b>, the second tab showed the '
+        + '“use here” notice but <b>also kept running its own timer</b>. '
+        + 'The two windows showed <b>different times</b> and each gave its '
+        + 'own breaks. Now only one tab counts; the other one stops.',
+      'If you close the counting tab, or press <b>“Use here”</b> in the '
+        + 'other one, the timer <b>carries on where it left off</b> there.',
+    ],
+  },
+  {
     surum: 132,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

@@ -36,7 +36,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 9 | Molayı atla (basılı tut) | ✅ | Ayar KAPALIYKEN zorla tetiklendi: mola açık kaldı, atlanan 0. Ayar açıkken basılı tutma molayı bitirdi, atlanan **0→1** |
 | 10 | Ertele 5 dk | ⬜ | — |
 | 11 | Hemen mola (uyarı anında) | ⬜ | — |
-| 12 | "Burada devam et" (çok sekme) | ⬜ | — |
+| 12 | "Burada devam et" (çok sekme) | ✅ | **Hata bulundu**: ikinci sekme de sayıyordu (v133). Ölçüldü — ikinci sekmenin sayacı **donuyor**, lider düzgün sayıyor; lider kapanınca öteki devralıp kaldığı yerden sürüyor; “Use here” elle devir çalışıyor |
 | 13 | Uzun mola önerisi + ver/sonra | ⬜ | — |
 | 14 | Mola çıkış koruması | ⬜ | Telefonda ölçülmeli |
 
@@ -86,7 +86,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 44 | Uygulama olarak kur (+ iOS yolu) | ⬜ | — |
 | 45 | Paylaş | ⬜ | — |
 | 46 | Kısayollar penceresi | ⬜ | — |
-| 47 | Yenilik şeridi + ayrıntı | ⬜ | — |
+| 47 | Yenilik şeridi + ayrıntı | ✅ | Üç dal: yükselten kullanıcıya çıkıyor (doğru metinle), görmüş kullanıcıya çıkmıyor, **yeni kullanıcıya “güncellendi” denmiyor** |
 | 48 | İstatistik + 7 gün + seri | ✅ | Bilinen geçmiş kuruldu; grafik (5-12-3-8-9-10), toplam **47**, ortalama **6.7**, seri **3** birebir tuttu. Seri ikinci dalı (bugün de hedefi tutuyor) **2** verdi; sınırdaki 8 hedefe sayıldı |
 
 ### Bugün ayrıca ölçülenler (özellik değil, davranış)
@@ -118,7 +118,7 @@ kapatılan sızıntıyı geri açar, o yüzden önce canlıda doğrulanmalı.
 
 ## Toplam
 
-**48 özelliğin 26'sı denendi** (✅ 25, 🟡 1). **22'si açık.**
+**48 özelliğin 28'i denendi** (✅ 27, 🟡 1). **20'si açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.

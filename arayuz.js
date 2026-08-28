@@ -391,6 +391,7 @@
 
   function lideriDevral() {
     liderMiyim = true;
+    try { motor.askidanCikar(); } catch {}
     liderDamgala();
     og.ikinciSekme.hidden = true;
     // Sayaç kaydı ortak; devralan sekme kaldığı yerden sürdürür.
@@ -404,8 +405,12 @@
   function liderligiBirak() {
     liderMiyim = false;
     og.ikinciSekme.hidden = false;
-    // Sayaç bu sekmede işlemesin; ölçüm çift sayılmasın.
-    try { motor._kalpAtisiDurdur(); } catch {}
+    /* Sayaç bu sekmede işlemesin; ölçüm çift sayılmasın.
+       Yalnızca kalp atışını durdurmak YETMİYORDU: `_asamayaGec()`
+       her durum geçişinde onu yeniden başlatıyor. Ölçüldü — ikinci
+       sekme kendini ikinci sekme gösterip yine sayıyordu, üstelik
+       liderden farklı bir sayı. Artık motor askıya alınıyor. */
+    try { motor.askiyaAl(); } catch {}
   }
 
   /** İki saniyede bir: liderim damgala, değilsem devralınabilir mi bak. */

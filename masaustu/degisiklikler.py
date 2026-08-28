@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 133,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Uygulamayı iki sekmede açtığında iki sayaç birden işliyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Uygulamayı <b>iki sekmede</b> açtığında ikinci sekme “burada devam et” yazısını gösteriyor ama <b>kendi sayacını da işletiyordu</b>. İki pencere <b>farklı süreler</b> gösteriyor, ikisi de ayrı ayrı mola veriyordu. Artık yalnızca bir sekme sayar; ötekinin sayacı durur.',
+            'Sayan sekmeyi kapatırsan ya da öteki sekmede <b>“burada devam et”</b> dersen, sayaç <b>kaldığı yerden</b> orada sürer.',
+        ],
+    },
+    {
         'surum': 132,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',
