@@ -2651,6 +2651,44 @@
     });
   }
 
+  /* KLAVYE AÇILINCA PENCERE EKRAN DIŞINDA KALMASIN.
+
+     `dvh` tarayıcı çubuklarını hesaba katar ama EKRAN KLAVYESİNİ
+     KATMAZ. Telefonda şifre alanına dokununca pencere klavyenin
+     altında kalabilir — ve buradaki pencere aile kipinin şifresini
+     soruyor: ebeveyn kendi kilidini açamazsa özellik işe yaramaz.
+
+     `visualViewport` gerçekten görünen alanı verir. Yoksa hiçbir şey
+     değişmiyor, CSS `88dvh`e düşüyor.
+
+     DÜRÜSTLÜK NOTU: bu ortamda ekran klavyesi üretilemedi, yani
+     düzeltmenin İŞE YARADIĞI ölçülmedi — yalnızca bir şeyi
+     bozmadığı ölçüldü. Telefonda bakılmalı. */
+  if (window.visualViewport) {
+    const gorunuruOlc = () => {
+      document.documentElement.style.setProperty(
+        '--gorunur-yukseklik', (visualViewport.height * 0.88) + 'px');
+    };
+    visualViewport.addEventListener('resize', gorunuruOlc);
+    visualViewport.addEventListener('scroll', gorunuruOlc);
+    /* `window.resize` de dinleniyor: ölçüldü ki bazı ortamlarda
+       görünen alan değişirken `visualViewport.resize` hiç
+       gelmiyor ve değişken bayat kalıyor. */
+    window.addEventListener('resize', gorunuruOlc);
+    window.addEventListener('orientationchange', gorunuruOlc);
+    gorunuruOlc();
+  }
+
+  // Odaklanan alanı görünür alanın ortasına al.
+  document.addEventListener('focusin', (e) => {
+    const alan = e.target;
+    if (!alan.closest || !alan.closest('dialog[open]')) return;
+    setTimeout(() => {
+      try { alan.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      catch { }
+    }, 150);
+  });
+
   try { yenilikNotunuGoster(); } catch (e) { }
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

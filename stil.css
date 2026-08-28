@@ -1002,7 +1002,14 @@ dialog.ayarlar {
   border-radius: 22px;
   padding: 0;
   width: min(460px, calc(100vw - 32px));
-  max-height: min(88dvh, 900px);
+  /* `visualViewport` varsa gerçek görünen alan; yoksa 88dvh.
+     Sebebi: `dvh` ekran klavyesini hesaba katmıyor. */
+  /* Değişken yalnızca DARALTIR; `88dvh` her zaman üst sınır.
+     Sebebi ölçüldü: değişken bayat kalınca pencere 420 px'lik
+     ekranda 715 px'te takıldı ve taştı — yani "düzeltme" tam
+     yardım etmesi gereken yerde zarar verdi. Bir değişkene
+     güvenmek yerine iki sınırın küçüğü alınıyor. */
+  max-height: min(var(--gorunur-yukseklik, 88dvh), 88dvh, 900px);
   box-shadow: var(--golge);
   flex-direction: column;
   overflow: hidden;
