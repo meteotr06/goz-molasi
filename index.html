@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v127">
+<link rel="stylesheet" href="stil.css?s=v128">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -765,17 +765,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v127"></script>
-  <script src="dil.js?s=v127"></script>
-  <script src="bilgiler.js?s=v127"></script>
-  <script src="bilgiler_en.js?s=v127"></script>
-  <script src="dunya.js?s=v127"></script>
-  <script src="egzersiz.js?s=v127"></script>
-  <script src="reklam.js?s=v127"></script>
-  <script src="kopru.js?s=v127"></script>
-  <script src="cekirdek.js?s=v127"></script>
-  <script src="mola_icerik.js?s=v127"></script>
-  <script src="arayuz.js?s=v127"></script>
+  <script src="degisiklikler.js?s=v128"></script>
+  <script src="dil.js?s=v128"></script>
+  <script src="bilgiler.js?s=v128"></script>
+  <script src="bilgiler_en.js?s=v128"></script>
+  <script src="dunya.js?s=v128"></script>
+  <script src="egzersiz.js?s=v128"></script>
+  <script src="reklam.js?s=v128"></script>
+  <script src="kopru.js?s=v128"></script>
+  <script src="cekirdek.js?s=v128"></script>
+  <script src="mola_icerik.js?s=v128"></script>
+  <script src="arayuz.js?s=v128"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
@@ -800,10 +800,33 @@
 </div>
 <script>
 (function () {
-  /* Motor kurulduysa `window.molaMotoru` var. 2 saniye bekliyoruz:
-     yavaş cihazda açılış uzayabilir, erken uyarmak yanlış alarm olur. */
-  setTimeout(function () {
-    if (window.molaMotoru) return;
+  /* SABİT SÜRE BEKLEMEK YERİNE SONUCU YOKLA.
+
+     İlk hâli 2 saniye bekleyip bakıyordu. Bu ortamda motor 94-242 ms'de
+     kuruluyor, yani pay bol görünüyordu — AMA asıl risk yavaş ağda ilk
+     açılış: betikler inerken 2 saniye kolayca aşılır ve kullanıcı
+     SAĞLAM bir uygulamanın üstünde "eksik yüklendi" ekranı görür.
+     Tam ekranı kaplayan koyu bir kutu, kullanıcıya "uygulama kendini
+     kapattı" gibi görünür.
+
+     Artık süre değil DURUM ölçülüyor: yükleme bitmeden (readyState
+     'complete') asla uyarmıyoruz; bittikten sonra da motora bir pay
+     tanıyoruz. Uyarı yalnızca "yükleme bitti VE motor hâlâ yok"
+     olduğunda çıkıyor — o zaman gerçekten bir şey gelmemiştir. */
+  var yoklamaBasi = Date.now();
+  var bitisAni = 0;
+  function motorYok() {
+    if (window.molaMotoru) return;                    // sağlam, sus
+
+    if (document.readyState !== 'complete') {
+      bitisAni = 0;
+      if (Date.now() - yoklamaBasi < 60000) setTimeout(motorYok, 250);
+      return;
+    }
+    // Yükleme bitti; motora 1,5 saniye daha tanı.
+    if (!bitisAni) bitisAni = Date.now();
+    if (Date.now() - bitisAni < 1500) { setTimeout(motorYok, 250); return; }
+
     var u = document.getElementById('baslamadiUyari');
     if (!u) return;
     u.hidden = false;
@@ -826,7 +849,8 @@
       Promise.all(isler)["catch"](function () {})
         .then(function () { location.reload(true); });
     });
-  }, 2000);
+  }
+  setTimeout(motorYok, 400);
 }());
 </script>
 
