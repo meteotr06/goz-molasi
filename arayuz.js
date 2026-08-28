@@ -855,12 +855,42 @@
 
   function bildirimDurumunuGoster(izin = (window.Notification?.permission)) {
     if (!('Notification' in window)) { og.bildirim.classList.add('gizli'); return; }
+    /* DURUM BILDIRMEK YETMIYOR.
+       Eskiden yalnizca "izin verilmedi" yaziyor ve dugmeyi
+       kapatiyordu: cikmaz sokak. Kullanici NE KAYBETTIGINI ve
+       GERI NASIL ALACAGINI bilmiyordu. Tarayici bir kez
+       reddedildikten sonra tekrar sormamiza izin vermiyor, o yuzden
+       yolu tarif etmek zorundayiz. */
+    const not = $('bildirimSiniri');
     if (izin === 'granted') {
       og.bildirim.textContent = C('🔔 Bildirimler açık');
       og.bildirim.disabled = true;
+      if (not) {
+        not.textContent = CS(
+          'Bildirimler açık. Yine de telefon kilitliyken ya da tarayıcı '
+          + 'arka plandayken uyarı gelmeyebilir; bunun için verilerin bir '
+          + 'sunucuya gitmesi gerekirdi, göndermiyoruz.',
+          'Notifications are on. Even so, if your phone is locked or the '
+          + 'browser is in the background the alert may not arrive — '
+          + 'delivering it would mean sending your data to a server, and '
+          + 'we do not.');
+      }
     } else if (izin === 'denied') {
       og.bildirim.textContent = C('🔕 Bildirimlere izin verilmedi');
       og.bildirim.disabled = true;
+      if (not) {
+        not.textContent = CS(
+          'İzin verilmedi. Ne kaybediyorsun: bu sekme önde değilken mola '
+          + 'vakti geldiğinde haber alamazsın. Sayaç yine çalışır ve '
+          + 'sekmeye döndüğünde molan seni bekler. Geri vermek için: '
+          + 'adres çubuğundaki kilit simgesine dokun, bu site için '
+          + 'bildirimlere izin ver.',
+          'Permission was refused. What you lose: you will not be told '
+          + 'when a break falls due while this tab is not in front. The '
+          + 'timer still runs, and your break waits for you when you come '
+          + 'back. To allow it again: tap the padlock icon in the address '
+          + 'bar and turn notifications on for this site.');
+      }
     }
   }
 
