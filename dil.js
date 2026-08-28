@@ -242,8 +242,8 @@ const SOZLUK = {
   'Başka uygulamaya geçsen de sayaç dönmeye devam eder. Pili biraz daha çok kullanır.':
     'The timer keeps running when you switch apps. Uses a little more battery.',
   'Uzun süre uzak kalınca sayacı sıfırla': 'Reset the timer after a long absence',
-  'Açıkken: 5 dakikadan uzun uzaklaşırsan gözlerin dinlendi sayılır, sayaç baştan başlar. Kapatırsan sayaç hiç sıfırlanmaz — uygulamayı kapatıp saatler sonra açsan bile kaldığın yerden devam eder ve hak ettiğin mola verilir.':
-    'When on: if you are away for more than 5 minutes, your eyes are considered rested and the timer starts over. When off, the timer is never reset — even if you close the app and open it hours later, it carries on and gives you the break you are owed.',
+  'Telefonda <b>kapalı</b>, bilgisayarda <b>açık</b> geliyor. Sebebi: telefonda başka uygulamaya geçmek ekrandan kalkmak değildir, hâlâ ekrana bakıyorsundur. Açıkken 5 dakikadan uzun uzaklaşırsan sayaç baştan başlar; kapalıyken hiç sıfırlanmaz, saatler sonra açsan bile kaldığın yerden devam eder.':
+    'Off by default on phones, on by default on computers. The reason: on a phone, switching to another app is not the same as looking away from a screen — you are still looking at one. When on, being away for more than 5 minutes restarts the timer; when off it is never reset, and carries on even if you open the app hours later.',
   'Molada kazayla çıkmayı önle': 'Prevent leaving the break by accident',
   'Mola boyunca tam ekrana geçer ve geri tuşu molayı bitirmez. Kilitlemez: Esc her zaman çıkarır, istersen molayı yine atlayabilirsin.':
     'Goes full screen during the break and the back button no longer ends it. It does not lock you in: Esc always exits, and you can still skip the break.',

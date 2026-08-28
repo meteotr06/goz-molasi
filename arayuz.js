@@ -137,6 +137,12 @@
   let kayit = {};
   try { kayit = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}'); } catch { kayit = {}; }
 
+  /* ESKİ KULLANICI MI? Bu soruyu BURADA sormak zorundayız: birkaç
+     satır aşağıda kilit sıfırlama bloğu kayda yazıyor ve o andan
+     sonra herkes "kaydı var" görünüyor. `kayit` ise diskten
+     okunmuş HAM hâli. */
+  const eskiKullanici = Object.keys(kayit).length > 0;
+
   const motor = new MolaMotoru();
 
   /* SIRA ÖNEMLİ: `iceAktar` geri yükleme kararını BURADA veriyor.
@@ -145,8 +151,26 @@
      sıfırlanmadı" dedi — motor iki kez çağrılınca iki bayrak birden
      kalmıştı ve kullanıcı ekranla çelişen bir cümle okuyordu. */
   let bostaAcik = kayit.bostaAcik !== false;
-  // Varsayilan acik: kayitta yoksa bugunku davranis surer.
-  let uzakSifirla = kayit.uzakSifirla !== false;
+  /* VARSAYILAN CİHAZA GÖRE — ve bu bilerek böyle.
+
+     "5 dakikadan uzun uzaklaşma dinlenmedir" varsayımı BİLGİSAYAR
+     varsayımıdır: orada sekme açık kalır, uzaklaşmak gerçekten
+     ekrandan kalkmaktır.
+
+     TELEFONDA BU YANLIŞ. Başka uygulamaya geçmek normal kullanımdır
+     ve kişi hâlâ ekrana bakıyordur. Kullanıcı 10 dakika mesajlaşıp
+     dönüyor ve sayacı sıfırlanmış buluyordu — aynı şikâyeti iki kez
+     bildirdi. Yani düzelttiğimiz şey telefonda hâlâ her seferinde
+     oluyordu, çünkü varsayımı değil yalnızca eşiği düzeltmiştik.
+
+     `pointer: coarse` dokunmatik cihazı gösterir. Ekran genişliği
+     KULLANILMIYOR: dar bir masaüstü penceresi telefon değildir.
+     Kullanıcı ayarı bir kez elle değiştirirse seçimi korunur. */
+  const dokunmatik = window.matchMedia
+    && window.matchMedia('(pointer: coarse)').matches;
+  let uzakSifirla = (kayit.uzakSifirla === undefined)
+    ? !dokunmatik
+    : kayit.uzakSifirla !== false;
   // Varsayilan ACIK: kullanici bunu acikca istedi.
   let molaKilit = kayit.molaKilit !== false;
   motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
@@ -2620,7 +2644,22 @@
     if (!damga) return;
 
     // İlk ziyarette çıkmaz: yeni kullanıcı hiçbirini görmemiş.
-    const onceki = gorulenSurumOku();
+    let onceki = gorulenSurumOku();
+
+    /* İŞARETİ YOK AMA YENİ DEĞİL.
+       Ölçüldü: v90'dan gelen bir kullanıcı — 42 molalık geçmişi,
+       teması, ayarları duruyor — işaret anahtarı bulunmadığı için
+       "ilk ziyaret" sayılıyordu ve "neler değişti" şeridini HİÇ
+       görmüyordu. Yani K-44, en çok gerektiği anda (geçişte) tam
+       hedef kitlesini ıskalıyordu.
+
+       Daha kötüsü: bugün eklenen "molada kazayla çıkmayı önle"
+       ayarı onda AÇIK başlıyor. Yani davranışı değişiyor ve haberi
+       olmuyor — sessiz değişikliğin ta kendisi.
+
+       Kaydı olan ama işareti olmayan kişi ESKİ kullanıcıdır. */
+    if (!onceki && eskiKullanici) onceki = 1;
+
     if (!onceki) { gorulenSurumYaz(damga); return; }
 
     /* Damgaya EŞİT kayıt aramıyoruz — bilerek.

@@ -30,6 +30,69 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 111,
+    masaustuSurum: '1.2',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Telefonda sayaç artık her dönüşte baştan başlamıyor ve mola '
+        + 'geri tuşuyla kazayla kapanmıyor.',
+    // İki yeni ayar AÇIK geliyor; davranış değiştiği için anlatılmalı.
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Telefonda başka uygulamaya geçip dönünce sayaç <b>baştan '
+        + 'başlıyordu</b>. Molanın düştüğü andan sonra bir dakika içinde '
+        + 'dönmediysen sayaç sıfırlanıyordu — telefonda bu neredeyse hiç '
+        + 'tutmaz. Artık molan seni bekliyor.',
+      '<b>Yeni ayar:</b> “Uzun süre uzak kalınca sayacı sıfırla”. '
+        + '<b>Telefonda kapalı</b>, bilgisayarda açık geliyor. Sebebi: '
+        + 'telefonda başka uygulamaya geçmek ekrandan kalkmak değildir, '
+        + 'hâlâ ekrana bakıyorsundur. İstediğin gibi değiştirebilirsin.',
+      '<b>Yeni ayar:</b> “Molada kazayla çıkmayı önle”. Açık geliyor. '
+        + 'Mola sürerken geri tuşu molayı bitirmiyor. Seni kilitlemez: '
+        + 'Esc her zaman çıkarır ve molayı yine atlayabilirsin.',
+      'Sayaç sıfırlandığında artık <b>nedenini söylüyor</b>. Eskiden '
+        + 'sessizce başa dönüyordu ve bozuk gibi duruyordu.',
+      'Cihazın saati değişince (yaz saati ya da elle ayar) uygulama '
+        + '“kapalıydın” diyordu — oysa hiç ayrılmamış olabilirsin. Artık '
+        + 'saat değişimini ayırt ediyor.',
+      'Bildirime izin verilmediğinde ekran artık <b>ne kaybettiğini ve '
+        + 'nasıl geri alacağını</b> yazıyor.',
+      'Arka planda çalışma sözü <b>küçültüldü</b>: telefonda tarayıcı '
+        + 'sayfayı uyutabilir ve mola uyarısı gelmeyebilir. Gelmeyecek bir '
+        + 'uyarıyı vaat etmektense sınırı yazmayı seçtik.',
+      'Gizli sekmede uygulamanın <b>hiç açılmamasına</b> yol açabilecek '
+        + 'bir hata kapatıldı.',
+    ],
+    ozetEn: 'On phones the timer no longer restarts every time you come '
+        + 'back, and the back button no longer ends a break by accident.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'On phones, switching to another app and coming back <b>restarted '
+        + 'the timer</b>. Unless you returned within one minute of the '
+        + 'break falling due, it reset — which almost never happens on a '
+        + 'phone. Your break now waits for you.',
+      '<b>New setting:</b> “Reset the timer after a long absence”. '
+        + '<b>Off by default on phones</b>, on by default on computers. '
+        + 'The reason: on a phone, switching to another app is not the '
+        + 'same as looking away from a screen. You can change it.',
+      '<b>New setting:</b> “Prevent leaving the break by accident”. On by '
+        + 'default. The back button no longer ends a break. It does not '
+        + 'lock you in: Esc always exits and you can still skip the break.',
+      'When the timer does reset, it now <b>says why</b>. It used to go '
+        + 'back to the start silently, which looked like a fault.',
+      'When the device clock changed (daylight saving or a manual '
+        + 'adjustment) the app claimed you had been away. It now tells '
+        + 'the difference.',
+      'When notifications are refused, the screen now says <b>what you '
+        + 'lose and how to allow them again</b>.',
+      'The background promise was <b>made smaller</b>: on a phone the '
+        + 'browser may suspend the page and the break alert may not '
+        + 'arrive. We would rather state the limit than promise an alert '
+        + 'that never comes.',
+      'Fixed a fault that could stop the app opening at all in a private '
+        + 'window.',
+    ],
+  },
+  {
     surum: 93,
     /* Masaustu AYRI surumleniyor: web damga sayiyor (93), masaustu
        anlamli surum kullaniyor. Ikisi ayni artifakt degil, ayni anda
