@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v113">
+<link rel="stylesheet" href="stil.css?s=v115">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -436,7 +436,13 @@
   </div>
 
   <!-- MOLA EKRANI (tam ekran örtü) -->
+  <!-- `tabindex="-1"` ŞART: `aria-modal` bir pencere açıldığını
+       söylüyor ama odak kendiliğinden gelmiyor. Kod zaten
+       `.focus()` çağırıyordu; düz bir div odaklanamadığı için
+       çağrı SESSİZCE hiçbir şey yapmıyordu. Ölçüldü: mola
+       açıkken odak hâlâ BODY üzerindeydi. -->
   <div class="mola-ekran" id="molaEkran" role="dialog" aria-modal="true"
+       tabindex="-1"
        aria-labelledby="molaBaslik" aria-describedby="molaAlt">
     <h2 class="mola-baslik" id="molaBaslik">Gözünü ekrandan ayır</h2>
     <p class="mola-alt" id="molaAlt">Odayı, pencereyi, uzaktaki bir noktayı süz. Yaklaşık 6 metre.</p>
@@ -451,7 +457,9 @@
       <canvas class="egzersiz-tuval" id="egzersizTuval" aria-hidden="true"></canvas>
     </div>
 
-    <div class="mola-sayac">
+    <!-- Sayı her saniye değişiyor; canlı okutulursa ekran okuyucu
+     20 kez konuşur. Süre bir kez, molanın başında duyuruluyor. -->
+    <div aria-hidden="true" class="mola-sayac">
       <span class="mola-sayi" id="molaSayi">20</span>
       <span class="mola-sayi-alt">saniye</span>
     </div>
@@ -738,17 +746,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v113"></script>
-  <script src="dil.js?s=v113"></script>
-  <script src="bilgiler.js?s=v113"></script>
-  <script src="bilgiler_en.js?s=v113"></script>
-  <script src="dunya.js?s=v113"></script>
-  <script src="egzersiz.js?s=v113"></script>
-  <script src="reklam.js?s=v113"></script>
-  <script src="kopru.js?s=v113"></script>
-  <script src="cekirdek.js?s=v113"></script>
-  <script src="mola_icerik.js?s=v113"></script>
-  <script src="arayuz.js?s=v113"></script>
+  <script src="degisiklikler.js?s=v115"></script>
+  <script src="dil.js?s=v115"></script>
+  <script src="bilgiler.js?s=v115"></script>
+  <script src="bilgiler_en.js?s=v115"></script>
+  <script src="dunya.js?s=v115"></script>
+  <script src="egzersiz.js?s=v115"></script>
+  <script src="reklam.js?s=v115"></script>
+  <script src="kopru.js?s=v115"></script>
+  <script src="cekirdek.js?s=v115"></script>
+  <script src="mola_icerik.js?s=v115"></script>
+  <script src="arayuz.js?s=v115"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

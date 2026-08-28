@@ -1450,9 +1450,28 @@
     ipucuZaman = setTimeout(() => { e.hidden = true; }, 2500);
   }
 
+  /* EKRAN OKUYUCUYA DUYUR.
+     `#ekranOkuyucu` alanı vardı, `og.okuyucu` diye kayıtlıydı ve
+     HİÇ YAZILMIYORDU — düzenek kurulmuş, bağlanmamış. Ekran okuyucu
+     kullanan biri molanın başladığını hiç duymuyordu. Bu bir göz
+     sağlığı uygulaması; az gören kullanıcı burada normalden fazla
+     olabilir. */
+  function okuyucuyaSoyle(metin) {
+    if (!og.okuyucu) return;
+    // Aynı metni üst üste yazmak duyurulmuyor; kısa bir boşluk şart.
+    og.okuyucu.textContent = '';
+    setTimeout(() => { og.okuyucu.textContent = metin; }, 60);
+  }
+
   function molaEkraniAc() {
     molaAcik = true;
     molaCikisKorumasiKur();
+    const sn = Math.round(motor.ayarlar.molaSuresi);
+    okuyucuyaSoyle(CS(
+      `Göz molası başladı. ${sn} saniye. Gözünü ekrandan ayır, ` +
+      'yaklaşık 6 metre uzağa bak.',
+      `Eye break started. ${sn} seconds. Look away from the screen, ` +
+      'about 6 metres.'));
     og.molaEkran.classList.add('acik');
     // Doğrudan çağırıyoruz, requestAnimationFrame ile değil:
     // sekme arka plandayken rAF hiç çalışmıyor ve egzersiz hiç
@@ -1503,11 +1522,32 @@
     titret([120, 80, 120]);         // iki kısa: "dur"
     uyanikTut();
     bildirimGonder('Göz molası', 'Gözünü ekrandan ayır, 6 metre uzağa bak.');
-    og.molaEkran.focus?.();
+    /* ODAK, ÖGE GÖRÜNÜR OLDUKTAN SONRA.
+       `.acik` sınıfı opacity/visibility geçişi başlatıyor; geçiş
+       bitmeden `focus()` çağırmak SESSİZCE hiçbir şey yapmıyor —
+       görünmez öge odak almaz. Ölçüldü: mola açıkken odak hâlâ
+       BODY üzerindeydi, yani `aria-modal` bir pencere açılıyor ama
+       ekran okuyucu kullanıcısı içine girmiyordu.
+
+       Hem geçiş bitimini dinliyoruz hem de kısa bir yedek süre
+       koyuyoruz: geçiş hiç çalışmazsa (hareket azaltma açıkken
+       süre 0.001ms) `transitionend` gelmeyebilir. */
+    const odakla = () => {
+      if (!molaAcik) return;
+      if (getComputedStyle(og.molaEkran).visibility === 'hidden') return;
+      og.molaEkran.focus?.();
+    };
+    og.molaEkran.addEventListener('transitionend', odakla, { once: true });
+    setTimeout(odakla, 80);
+    setTimeout(odakla, 400);
   }
 
   function molaEkraniKapat() {
     molaCikisKorumasiniKaldir();
+    if (molaAcik) {
+      okuyucuyaSoyle(CS('Mola bitti. Sayaç yeniden başladı.',
+                        'Break finished. The timer has restarted.'));
+    }
     molaAcik = false;
     egzersiziDurdur();
     og.molaEkran.classList.remove('acik', 'bitmek-uzere');
