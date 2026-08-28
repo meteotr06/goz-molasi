@@ -30,6 +30,34 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 137,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Telefonun “yazıları büyüt” ayarı artık uygulamayı da büyütüyor.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Telefonunda ya da bilgisayarında <b>yazıları büyüttüysen</b>, bu '
+        + 'uygulama onu <b>dinlemiyordu</b>: yazılar sabit boyuttaydı. '
+        + 'Göz için yapılmış bir uygulamada bu ters bir durumdu. Artık '
+        + 'bütün yazılar senin ayarınla birlikte büyüyor.',
+      'Görünüm <b>aynı kaldı</b>: normal boyutta ekrandaki her ögenin '
+        + 'yazı boyu, genişliği, yüksekliği ve yeri tek tek ölçülüp '
+        + 'karşılaştırıldı — hiçbiri değişmedi.',
+    ],
+    ozetEn: 'Your device\u2019s “larger text” setting now enlarges the app '
+        + 'as well.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'If you have made <b>text larger</b> on your phone or computer, this '
+        + 'app <b>was not listening</b>: its text stayed at a fixed size. '
+        + 'That was backwards for an app made for your eyes. All text now '
+        + 'grows together with your setting.',
+      'The appearance is <b>unchanged</b>: at normal size, every element '
+        + 'on screen had its text size, width, height and position '
+        + 'measured and compared one by one — none of them moved.',
+    ],
+  },
+  {
     surum: 136,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

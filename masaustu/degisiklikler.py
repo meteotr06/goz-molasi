@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 137,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Telefonun “yazıları büyüt” ayarı artık uygulamayı da büyütüyor.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Telefonunda ya da bilgisayarında <b>yazıları büyüttüysen</b>, bu uygulama onu <b>dinlemiyordu</b>: yazılar sabit boyuttaydı. Göz için yapılmış bir uygulamada bu ters bir durumdu. Artık bütün yazılar senin ayarınla birlikte büyüyor.',
+            'Görünüm <b>aynı kaldı</b>: normal boyutta ekrandaki her ögenin yazı boyu, genişliği, yüksekliği ve yeri tek tek ölçülüp karşılaştırıldı — hiçbiri değişmedi.',
+        ],
+    },
+    {
         'surum': 136,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

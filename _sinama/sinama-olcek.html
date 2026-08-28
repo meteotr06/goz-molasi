@@ -74,6 +74,31 @@
     govde.appendChild(s);
   }
 
+  /* GURULTU DENETIMI - ARACIN KENDISI YANLIS ALARM VERMESIN.
+
+     28.08.2026'da bu arac once 183 "gerileme" bildirdi. Hicbiri
+     gercek degildi:
+       1) Bilgi karti her acilista RASTGELE bir bilgi gosteriyor;
+          farkli uzunluktaki metin sayfayi uzatiyor. Ayni kodla iki
+          olcum arasinda 76 fark ciktigi olculdu.
+       2) Kurulum seridi tarayici olayiyla SONRADAN beliriyor; iki
+          olcum arasinda ortaya cikip her seyi 86px asagi kaydirdi.
+
+     Ikisi de bastirilmadan bu araca guvenilmez. Bastirildiktan sonra
+     ayni kodla iki olcum 0 fark verdi - gurultu tabani sifir. */
+  function gurultuyuBastir(f) {
+    var d = f.contentDocument;
+    ['anaBilgiMetin', 'anaBilgiBaslik', 'anaBilgiKaynak'].forEach(function (id) {
+      var e = d.getElementById(id);
+      if (e) e.textContent = 'SABIT OLCUM METNI';
+    });
+    ['kurulumSerit', 'guncellemeSerit', 'yenilikNotu', 'durumNotu',
+     'sureUyari', 'baslamadiUyari'].forEach(function (id) {
+      var e = d.getElementById(id);
+      if (e) { e.hidden = true; e.style.display = 'none'; }
+    });
+  }
+
   /* Uygulamayi TEMIZ bir durumda ac: kurgu veri olcumu kaydirmasin. */
   async function uygulamayiAc(kokPunto) {
     yuva.innerHTML = '';
@@ -93,6 +118,7 @@
 
   /* Parmak izi: her gorunur ogenin puntosu ve yerlesimi. */
   function parmakIzi(f) {
+    gurultuyuBastir(f);
     var d = f.contentDocument;
     var liste = [];
     var hepsi = d.querySelectorAll('*');
