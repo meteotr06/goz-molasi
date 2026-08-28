@@ -154,6 +154,32 @@ Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
    örtüyordu — düzeltildi, doğrulanmadı)
 5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
 
+### Açık bulgu — dar ekran + %200 yazı (ölçüldü, düzeltilmedi)
+
+Yazı büyütme (v137) çalışıyor, ama **çok dar bir ekranda** yan etkisi var.
+Ölçüldü (iframe, sıfırdan yükleyerek):
+
+| Ölçü | Yatay kayma | Taşan öge |
+|---|---|---|
+| 375×812 · normal | yok | 0 |
+| 360×640 · normal | yok | 0 |
+| 375×812 · %200 yazı | yok | 1 (uyarı balonu yazısı) |
+| **360×640 · %200 yazı** | **var** (354 > 345) | **15** |
+
+Yani en küçük telefonda yazı iki katına çıkarılırsa sayfa **9px yatay
+kayıyor**. Teşhis buraya kadar: gövde bir esnek sütun; kardeş ögeler
+313px'e sığarken `#sekmeSayac` 364px kalıyor.
+
+**Denendi, çözmedi** (bu yüzden taşınmadı): `minmax(0, 1fr)` sütunlar ·
+`.kutucuk { min-width: 0; overflow-wrap: anywhere }` · `#sekmeSayac
+{ min-width: 0 }`. Üçü de normal boyutta **hiçbir şeyi değiştirmiyordu**
+(174 öge × 5 ölçü, sıfır fark) — yani zararsızdılar, ama **faydaları
+ölçülemedi**. Ölçülmemiş fayda taşınmaz; geri alındılar.
+
+**Gerileme değil:** bu hâl v137'den önce de kötüydü, sadece
+*ulaşılamıyordu* (yazı zaten büyümüyordu). Normal boyutta hiçbir şey
+bozulmadı.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
