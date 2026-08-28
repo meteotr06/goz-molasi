@@ -289,6 +289,10 @@ const SOZLUK = {
     'Goes full screen during the break and the back button no longer ends it. It does not lock you in: Esc always exits, and you can still skip the break.',
   'Ekran birazdan kararacak': 'The screen is about to go dark',
   'Şimdi molaya geç': 'Take the break now',
+  'Çalışma saatleri — başlangıç': 'Working hours — start',
+  'Çalışma saatleri — bitiş': 'Working hours — end',
+  'Şehir ara': 'Search for a city',
+  'Şifre': 'Password',
   'Boşta durdurma': 'Pause when idle',
   "Dokunulmazsa sayaç durur; 5 dk'dan uzun uzak kalırsan baştan sayar":
     'The timer pauses if untouched; away longer than 5 min and it restarts',

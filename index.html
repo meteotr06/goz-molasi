@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v128">
+<link rel="stylesheet" href="stil.css?s=v129">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -570,9 +570,19 @@
       <div class="satir gizli" id="saatAyar">
         <label for="ayBasSaat">Saat aralığı</label>
         <span style="display:flex;gap:8px;align-items:center">
-          <input type="time" id="ayBasSaat" value="09:00">
-          <span style="color:var(--yazi-soluk)">—</span>
-          <input type="time" id="ayBitSaat" value="18:00">
+          <!-- İKİ YARISI DA ADLANDIRILIR.
+               Ölçüldü: `ayBasSaat`in `<label for>`i vardı, `ayBitSaat`in
+               HİÇBİR ŞEYİ yoktu (`labels.length = 0`). Ekran okuyucu
+               kullanan biri ilkini "Saat aralığı" diye duyuyor, ikincisini
+               adsız bir alan olarak buluyor ve hangisinin başlangıç
+               hangisinin bitiş olduğunu bilemiyor.
+               Görünen etiket grubu adlandırıyor; her alan kendi adını
+               `aria-label` ile taşıyor. -->
+          <input type="time" id="ayBasSaat" value="09:00"
+                 aria-label="Çalışma saatleri — başlangıç">
+          <span style="color:var(--yazi-soluk)" aria-hidden="true">—</span>
+          <input type="time" id="ayBitSaat" value="18:00"
+                 aria-label="Çalışma saatleri — bitiş">
         </span>
       </div>
 
@@ -678,7 +688,10 @@
           <button type="button" class="dugme kucuk" id="konumBulDugme">Konumumu kullan</button>
           <button type="button" class="dugme kucuk gizli" id="konumSilDugme">Konumu unut</button>
         </div>
+        <!-- `placeholder` erişilebilir ad SAYILMAZ: yazmaya başlayınca
+             kayboluyor ve bazı ekran okuyucular hiç okumuyor. -->
         <input type="search" id="sehirAlan" autocomplete="off"
+               aria-label="Şehir ara"
                placeholder="ya da şehir ara — örn. İzmir, Berlin" style="width:100%">
         <div id="sehirSonuc" class="sehir-sonuc"></div>
       </div>
@@ -751,7 +764,12 @@
       <p style="margin:0;font-size:14px;color:var(--yazi-soluk)" id="sifreAciklama">
         Bu işlem kilitli. Devam etmek için şifreni gir.
       </p>
+      <!-- Aile kipi şifresi. Açıklama YANINDA duruyordu ama
+           programatik bağı yoktu; ekran okuyucu adsız bir parola
+           alanı buluyordu. Ebeveyn kendi kilidini açamazsa özellik
+           işe yaramaz. -->
       <input type="password" id="sifreAlan" inputmode="numeric" autocomplete="off"
+             aria-label="Şifre" aria-describedby="sifreAciklama"
              style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--cizgi);
                     background:var(--zemin);color:var(--yazi);font:inherit;
                     text-align:center;letter-spacing:6px;font-size:20px">
@@ -765,17 +783,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v128"></script>
-  <script src="dil.js?s=v128"></script>
-  <script src="bilgiler.js?s=v128"></script>
-  <script src="bilgiler_en.js?s=v128"></script>
-  <script src="dunya.js?s=v128"></script>
-  <script src="egzersiz.js?s=v128"></script>
-  <script src="reklam.js?s=v128"></script>
-  <script src="kopru.js?s=v128"></script>
-  <script src="cekirdek.js?s=v128"></script>
-  <script src="mola_icerik.js?s=v128"></script>
-  <script src="arayuz.js?s=v128"></script>
+  <script src="degisiklikler.js?s=v129"></script>
+  <script src="dil.js?s=v129"></script>
+  <script src="bilgiler.js?s=v129"></script>
+  <script src="bilgiler_en.js?s=v129"></script>
+  <script src="dunya.js?s=v129"></script>
+  <script src="egzersiz.js?s=v129"></script>
+  <script src="reklam.js?s=v129"></script>
+  <script src="kopru.js?s=v129"></script>
+  <script src="cekirdek.js?s=v129"></script>
+  <script src="mola_icerik.js?s=v129"></script>
+  <script src="arayuz.js?s=v129"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
