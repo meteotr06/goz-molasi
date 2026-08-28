@@ -264,6 +264,33 @@ donuyor. Geçişler kapatılınca (`transition: none`) 15 görünür öge çıkt
 ve ölçüm geçerli hâle geldi. **"0 taşan" ile "0 ölçüldü" aynı şey
 değil** — payda yazılmadan sonuç okunmamalı.
 
+### Masaüstü kopyası neyi kaçırıyor (ölçüldü, 29.08.2026)
+
+Ön listenin 10. maddesi: *"Kaynakta düzeltmek, kullanıcıya ulaştırmak
+değildir."* Kullanıcının çalıştırdığı `.exe` **26.08 21:53**'ten.
+
+**Yanlış çerçeve:** "40'tan fazla düzeltme exe'de yok." Bugünkü işlerin
+**çoğu web tarafındaydı** (`arayuz.js`, `stil.css`, `cekirdek.js`) —
+masaüstü ayrı Python kodu, o dosyalar exe'ye hiç girmiyor.
+
+**Doğru sayı: masaüstü davranışını değiştiren 9 iş.** (Exe'ye giren
+modüller `goz_molasi.py`, `kopru.py`, `kilit.py`, `tepsi.py`, … olarak
+ayrıldı; `sinama_*.py` ve üretici betikler paketlenmiyor.)
+
+| Ne | Kaç iş | Neden önemli |
+|---|---|---|
+| **Aile kipi: 7 sessiz atlatma** | 3 | Çocuk molayı sessizce atlayabiliyor; koruma çalışmıyor |
+| **Hayalet mola + köprü** | 3 | Sahte molalar istatistiğe yazılıyordu; sayaç paylaşımı |
+| Panele sığmayan 3 uyarı | 1 | Uyarı okunamıyor |
+| Güncellenince ne değişti | 1 | Kullanıcı ne kazandığını görmüyor |
+| Sürüm zinciri | 1 | Sürüm numarası tutarlılığı |
+
+**En ağırı:** aile kipinin **yedi sessiz atlatma yolu** kullanıcının
+kopyasında **hâlâ açık**. Ebeveyn korumanın çalıştığını sanıyor.
+
+**Tek çıkış derleme** — ve `DERLE.bat` uygulamayı açtığı için onu
+kullanıcı başlatmalı (K-25).
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
