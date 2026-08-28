@@ -2329,7 +2329,18 @@
     const dk = Math.min(90, Math.max(1, +og.ayCalisma.value || 20));
     const ml = Math.min(180, Math.max(5, +og.ayMola.value || 20));
     let uy = Math.min(60, Math.max(0, +og.ayUyari.value || 0));
-    if (uy >= dk * 60) uy = 0;              // uyarı, çalışmadan uzun olamaz
+    /* UYARI ÇALIŞMADAN UZUN OLAMAZ — ama SIFIRLAMAK yanlış cevaptı.
+
+       Ölçüldü (28.08.2026): çalışma 1 dakikaya, uyarı en yükseğe (60 sn)
+       çekilince `60 >= 60` tutuyor ve uyarı **0** oluyordu. Kullanıcı
+       "60 saniye önceden uyar" diyor, hiç uyarı almıyordu. Kaydırıcı o an
+       hâlâ 60 gösteriyordu; ekranla depo birbirini yalanlıyordu.
+
+       Kullanıcının istediği şey aslında "beni hemen uyar". Bunun doğru
+       karşılığı sıfır değil, çalışma süresinin hemen altı. Sıfır yalnızca
+       kullanıcı BİLEREK sıfır seçtiğinde ya da Toplantı/Film kipinde
+       kalır — orada sıfır "uyarma" demektir ve doğrudur. */
+    if (uy >= dk * 60) uy = Math.max(0, dk * 60 - 5);
 
     motor.ayarlar.calismaSuresi = dk * 60;
     motor.ayarlar.molaSuresi = ml;

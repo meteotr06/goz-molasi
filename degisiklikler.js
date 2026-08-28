@@ -30,6 +30,35 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 132,
+    masaustuSurum: '1.3',
+    tarih: '28 Ağustos 2026',
+    ozet: 'Erken uyarı ayarı, belirli bir kombinasyonda sessizce kapanıyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Çalışma aralığını <b>1 dakikaya</b>, erken uyarıyı <b>en yükseğe '
+        + '(60 sn)</b> alırsan uyarı sessizce <b>kapanıyordu</b>: ayar '
+        + 'ekranı 60 gösteriyor, ama hiç uyarı gelmiyordu. Artık uyarı '
+        + 'kapanmıyor, çalışma aralığının hemen altına çekiliyor.',
+      'Uyarıyı <b>kendin sıfıra çektiysen</b> ya da Toplantı / Film '
+        + 'kipindeysen sıfır olduğu gibi kalır — orada sıfır zaten '
+        + '“uyarma” demek.',
+    ],
+    ozetEn: 'The advance-warning setting switched itself off silently in '
+        + 'one particular combination.',
+    tarihEn: '28 August 2026',
+    maddelerEn: [
+      'If you set the work interval to <b>1 minute</b> and the advance '
+        + 'warning to its <b>maximum (60 s)</b>, the warning was silently '
+        + '<b>turned off</b>: the settings screen showed 60, but no '
+        + 'warning ever came. The warning is no longer switched off; it '
+        + 'is brought just under the work interval instead.',
+      'If you set the warning to zero <b>yourself</b>, or you are in '
+        + 'Meeting / Film mode, zero stays as it is — there zero already '
+        + 'means “do not warn”.',
+    ],
+  },
+  {
     surum: 131,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

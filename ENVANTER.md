@@ -33,7 +33,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 6 | Mola ekranı — bilgi kartı | ✅ | "Why? — Screen position matters too" |
 | 7 | Bilgi kartı — kaynak | ✅ | "Source: American Optometric Association" |
 | 8 | Mola tamamlanınca sayım | ✅ | Mola sayısı **1 → 2**, sayaç 20:00'a döndü |
-| 9 | Molayı atla (basılı tut) | ⬜ | — |
+| 9 | Molayı atla (basılı tut) | ✅ | Ayar KAPALIYKEN zorla tetiklendi: mola açık kaldı, atlanan 0. Ayar açıkken basılı tutma molayı bitirdi, atlanan **0→1** |
 | 10 | Ertele 5 dk | ⬜ | — |
 | 11 | Hemen mola (uyarı anında) | ⬜ | — |
 | 12 | "Burada devam et" (çok sekme) | ⬜ | — |
@@ -54,18 +54,18 @@ kullanıcının kendi ekranında bakılmalı.
 
 | # | Özellik | Durum | Nasıl ölçüldü |
 |---|---|---|---|
-| 20 | Çalışma süresi kaydırıcısı | ⬜ | — |
+| 20 | Çalışma süresi kaydırıcısı | ✅ | 1 / 20 / 90 dk denendi; sayaç ve depo birebir uydu |
 | 21 | Mola süresi kaydırıcısı | ⬜ | — |
-| 22 | Uyarı süresi kaydırıcısı | ⬜ | — |
+| 22 | Uyarı süresi kaydırıcısı | ✅ | **Hata bulundu**: uç değerde uyarı sessizce 0 oluyordu (v132'de düzeltildi). Üç dal ölçüldü: uç 60→55, olağan 15 sabit, kipteki bilerek 0 korundu |
 | 23 | Uzun mola aç + süresi | ⬜ | — |
 | 24 | Çalışma saatleri (baş/bit) | ⬜ | — |
-| 25 | Molayı atlamaya izin | ⬜ | — |
+| 25 | Molayı atlamaya izin | ✅ | Koruma **görüntüde değil gerçek**: kapalıyken zorla tıklama molayı bitirmedi |
 | 26 | Ses | ⬜ | — |
 | 27 | Otomatik başla | ⬜ | — |
 | 28 | Titreşim | ⬜ | Telefonda ölçülmeli |
 | 29 | Arka planda çalış | ⬜ | — |
 | 30 | Uzak kalınca sıfırla | ✅ | Telefon taklidiyle 3 dal: göç olur / seçim korunur / tekrarlamaz |
-| 31 | Boşta durdurma | 🟡 | Durum yazısı ayrı: “Boşta — sayaç durdu” (sessiz durma yok). 90 sn bekleyerek **denenmedi** |
+| 31 | Boşta durdurma | ✅ | **Canlı görüldü**: 90 sn dokunmayınca sayaç durdu ve durum yazısı sebebini söyledi (“Idle — timer paused”) |
 | 32 | Mola kilidi | ⬜ | — |
 | 33 | Etkinlik izni (masaüstü) | ⬜ | İzin **reddedildi** dalı da denenmeli |
 | 34 | Hava durumu molada | ⬜ | — |
@@ -87,7 +87,7 @@ kullanıcının kendi ekranında bakılmalı.
 | 45 | Paylaş | ⬜ | — |
 | 46 | Kısayollar penceresi | ⬜ | — |
 | 47 | Yenilik şeridi + ayrıntı | ⬜ | — |
-| 48 | İstatistik + 7 gün + seri | 🟡 | Sayılar okundu; **7 gün grafiği ve seri denenmedi** |
+| 48 | İstatistik + 7 gün + seri | ✅ | Bilinen geçmiş kuruldu; grafik (5-12-3-8-9-10), toplam **47**, ortalama **6.7**, seri **3** birebir tuttu. Seri ikinci dalı (bugün de hedefi tutuyor) **2** verdi; sınırdaki 8 hedefe sayıldı |
 
 ### Bugün ayrıca ölçülenler (özellik değil, davranış)
 
@@ -101,7 +101,7 @@ kullanıcının kendi ekranında bakılmalı.
 
 ## Toplam
 
-**48 özelliğin 17'si denendi** (✅ 15, 🟡 2). **31'i açık.**
+**48 özelliğin 21'i denendi** (✅ 21). **27'si açık.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.

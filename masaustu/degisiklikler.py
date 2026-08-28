@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 132,
+        'tarih': '28 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Erken uyarı ayarı, belirli bir kombinasyonda sessizce kapanıyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Çalışma aralığını <b>1 dakikaya</b>, erken uyarıyı <b>en yükseğe (60 sn)</b> alırsan uyarı sessizce <b>kapanıyordu</b>: ayar ekranı 60 gösteriyor, ama hiç uyarı gelmiyordu. Artık uyarı kapanmıyor, çalışma aralığının hemen altına çekiliyor.',
+            'Uyarıyı <b>kendin sıfıra çektiysen</b> ya da Toplantı / Film kipindeysen sıfır olduğu gibi kalır — orada sıfır zaten “uyarma” demek.',
+        ],
+    },
+    {
         'surum': 131,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',
