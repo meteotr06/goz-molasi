@@ -30,6 +30,36 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 139,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Yazıyı büyütenlerde “ekran birazdan kararacak” uyarısı '
+        + 'ekranın dışına taşıyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Yazıları büyüttüysen, molaya az kala çıkan <b>“ekran birazdan '
+        + 'kararacak”</b> uyarısı balonun ve ekranın dışına taşıyor, '
+        + 'yani <b>tam okunamıyordu</b>. Yazı artık satır atlayarak '
+        + 'balonun içinde kalıyor.',
+      'Bu uyarı, uygulamanın asıl işi. Yazıyı büyüten kişi çoğu zaman '
+        + 'tam da <b>görmekte zorlanan</b> kişi — o yüzden bunu bir '
+        + 'görünüm ayrıntısı değil, <b>işlev</b> olarak ele aldık.',
+    ],
+    ozetEn: 'For people using larger text, the “the screen is about to '
+        + 'go dark” warning ran off the screen.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'If you use larger text, the <b>“the screen is about to go '
+        + 'dark”</b> warning shown shortly before a break ran outside '
+        + 'the bubble and off the screen, so it <b>could not be read in '
+        + 'full</b>. The text now wraps and stays inside the bubble.',
+      'That warning is the app\u2019s core job. Someone who enlarges '
+        + 'text is often exactly the person who <b>has trouble '
+        + 'seeing</b> — so we treated this as <b>function</b>, not as a '
+        + 'visual detail.',
+    ],
+  },
+  {
     surum: 137,
     masaustuSurum: '1.3',
     tarih: '28 Ağustos 2026',

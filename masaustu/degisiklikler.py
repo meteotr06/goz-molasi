@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 139,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Yazıyı büyütenlerde “ekran birazdan kararacak” uyarısı ekranın dışına taşıyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Yazıları büyüttüysen, molaya az kala çıkan <b>“ekran birazdan kararacak”</b> uyarısı balonun ve ekranın dışına taşıyor, yani <b>tam okunamıyordu</b>. Yazı artık satır atlayarak balonun içinde kalıyor.',
+            'Bu uyarı, uygulamanın asıl işi. Yazıyı büyüten kişi çoğu zaman tam da <b>görmekte zorlanan</b> kişi — o yüzden bunu bir görünüm ayrıntısı değil, <b>işlev</b> olarak ele aldık.',
+        ],
+    },
+    {
         'surum': 137,
         'tarih': '28 Ağustos 2026',
         'masaustu_surum': '1.3',

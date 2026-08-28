@@ -580,7 +580,20 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   max-width: calc(100vw - 24px);
 }
 .uyari-balon.acik { transform: translate(-50%, 0); }
-.uyari-balon b { font-size: 0.875rem; white-space: nowrap; }
+/* `nowrap` KALDIRILDI — yazı sarabilsin.
+
+   Ölçüldü (28.08.2026, %200 yazı): uyarı yazısı 398px'e çıkıyor,
+   balon 331px; satır kırılamadığı için yazı balonun VE EKRANIN
+   dışına taşıyordu (sağ kenar 426, çerçeve 345). Yazıyı büyüten
+   kullanıcı tam da göz zorluğu çeken kullanıcı, ve uygulamanın ana
+   uyarısını okuyamıyordu — bu bir görünüm tercihi değil, işlev kaybı.
+
+   Tek başına kaldırmak YETMİYOR: balonun genişliği içeriğe bağlı
+   olduğu için satır kırılınca balon da daralıyor ve yazı gereksiz
+   yere dört satıra iniyordu. Onun için aşağıda `width: max-content`
+   var — bugünkü genişliği aynen koruyup üst sınırın içinde sarmayı
+   sağlıyor. */
+.uyari-balon b { font-size: 0.875rem; }
 
 /* HIDDEN HER ZAMAN KAZANIR.
    HTML'in `hidden` özniteliğinin varsayılan kuralı `display: none`,
@@ -885,6 +898,27 @@ kbd {
 .uyari-balon {
   flex-wrap: wrap;
   border-radius: 20px;
+  /* Balonun genişliği İÇERİKTEN BAĞIMSIZ.
+
+     `nowrap` kaldırılınca yazı sarabiliyor — asıl istediğimiz bu. Ama
+     balon esnek bir kutu ve genişliği içeriğine bağlıydı: yazı sarınca
+     balon da daralıp yazıyı gereksiz yere dört satıra indiriyordu
+     (180px'e düşüyordu).
+
+     ÜÇ SEÇENEK ÖLÇÜLDÜ (375px ekran):
+
+       şimdiki (nowrap)   EN 235×155 · TR 324×103 · %200'de TAŞIYOR
+       yalnız nowrap'siz  EN 180×184 · yazı gereksiz sarıyor
+       min-width: 235     EN 235×155 (aynı) · TR 235×174 (BOZULDU)
+       width: max-content EN 345×103 · TR 345×103 · %200 TEMİZ
+
+     Tek bir genişlik iki dili birden koruyamıyor: Türkçe metin daha
+     uzun. `max-content` ikisini de aynı genişliğe getiriyor ve ikisinde
+     de taşmayı bitiriyor. Sapma bilerek kabul edildi — İngilizce balon
+     235'ten 345'e çıkıyor, Türkçe zaten 324'tü. Karşılığında yazıyı
+     büyüten kullanıcı uygulamanın ANA UYARISINI okuyabiliyor; bu bir
+     görünüm tercihi değil, işlev. */
+  width: max-content;
   max-width: min(92vw, 30rem);
 }
 

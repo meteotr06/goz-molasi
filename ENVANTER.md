@@ -189,37 +189,30 @@ Büyümeyen 3 öge, bilerek px bırakılan sayaç/mola yazıları.
 354'ten 439'a **büyüttü**; `max-width: 100%` — panel doğru genişliğe
 indi ama taşma 434'te kaldı. Üçü de sebebe dokunmuyordu.
 
-### Açık bulgu — uyarı balonu %200 yazıda taşıyor (çözüm ARANDI, taşınmadı)
+### Kapanan bulgu — uyarı balonu %200 yazıda taşıyordu (v139)
 
-`.uyari-balon b` kuralında `white-space: nowrap` var. Ölçüldü
-(360×640 ve 375×812, %200 yazı): uyarı yazısı **398px**'e çıkıyor, balon
-**331px**; satır kırılamadığı için yazı balonun **ve ekranın** dışına
-taşıyor (sağ kenar 426, çerçeve 345). Kullanıcı *"ekran birazdan
-kararacak"* uyarısını **tam okuyamıyor**. Sayfa yatay kaymıyor, yani
-yazı sessizce kesiliyor.
+`.uyari-balon b` kuralındaki `white-space: nowrap` yüzünden uyarı yazısı
+%200 yazıda **398px**'e çıkıyor, balon **331px** kalıyordu: yazı balonun
+**ve ekranın** dışına taşıyor, kullanıcı *"ekran birazdan kararacak"*
+uyarısını **tam okuyamıyordu**.
 
-**`nowrap` kaldırılması denendi — taşma bitiyor ama normal boyutta
-görünüm değişiyor:**
+**Üç seçenek ölçüldü** (375px ekran, iki dil):
 
-| | balon | yazı |
-|---|---|---|
-| şimdiki, normal | 235 × 155 | 199 × 19 (tek satır) |
-| nowrap'siz, normal | 180 × 184 | 144 × **38 (iki satır)** |
-| şimdiki, %200 | 345 × 195 | **398 (taşıyor)** |
-| nowrap'siz, %200 | 180 × 374 | 144 × 111 (taşmıyor) |
+| Seçenek | İngilizce (normal) | Türkçe (normal) | %200 |
+|---|---|---|---|
+| şimdiki (`nowrap`) | 235×155 | 324×103 | **taşıyor** |
+| yalnız `nowrap`'siz | 180×184 | — | yazı gereksiz sarıyor |
+| `min-width: 235` | 235×155 (aynı) | **235×174 (bozuldu)** | temiz |
+| **`width: max-content`** | **345×103** | **345×103** | **temiz** |
 
-Balonun genişliği içeriğe bağlı: satır kırılınca balon da daralıyor ve
-yazı gereksiz yere 4 satıra iniyor. Yani düzeltme **normal boyutta
-ölçülmüş bir zarar** üretiyor.
+**Tek bir genişlik iki dili birden koruyamıyor** — Türkçe metin daha
+uzun. `max-content` ikisini de aynı genişliğe getiriyor ve ikisinde de
+taşmayı bitiriyor. **Sapma bilerek kabul edildi:** İngilizce balon
+235→345, Türkçe zaten 324'tü.
 
-**Taşınmadı.** Bu gece koyduğum kural: *zararı ölçülmüş bir değişiklik,
-faydası daha büyük olduğu gösterilmeden taşınmaz.* Doğru çözüm balonun
-genişliğini içerikten bağımsız hâle getirmek gibi görünüyor — ama bu
-balonun bütün yerleşimini etkiler ve gece yapılacak iş değil.
-
-**Türkçe için not:** Türkçe metin daha uzun; normal boyutta bile
-`nowrap` ile balonu zorluyor olabilir. Ölçülmedi — Türkçe arayüzde
-tekrar bakılmalı.
+**Doğrulandı — 8 durumun 8'i temiz:** 375 ve 360 genişlik × iki dil ×
+normal ve %200 → hiçbirinde taşma ya da yatay kayma yok. Değişikliğin
+kapsamı da ölçüldü: 150 ögede 14 fark, **hepsi balonun kendi içinde**.
 
 ### Ayrıca ölçülemeyenler
 
