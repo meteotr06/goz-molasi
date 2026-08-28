@@ -19,3 +19,7 @@ desktop.ini
 # desen gorur. Kural artik sinifi kapsiyor.
 sinama-*.html
 test-*.html
+
+sinama*
+test*
+!sinama_*.py
