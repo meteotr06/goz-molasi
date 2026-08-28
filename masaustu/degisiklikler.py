@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 140,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Türkçe arayüzde yazıyı büyütünce sayfa yana kayıyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            '<b>Türkçe kullanıyorsan ve yazıları büyüttüysen</b>, sayfa yana kayıyor ve içerik ekranın dışına taşıyordu. Küçük telefonlarda daha belirgindi. Artık taşma yok.',
+            'Sebep, Türkçe yazıların daha uzun olmasıydı — aynı ekran İngilizcede sorunsuz görünüyordu. Bundan sonra dar ekran <b>iki dilde birden</b> ölçülüyor.',
+        ],
+    },
+    {
         'surum': 139,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

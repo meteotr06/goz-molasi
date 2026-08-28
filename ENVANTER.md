@@ -214,6 +214,33 @@ taşmayı bitiriyor. **Sapma bilerek kabul edildi:** İngilizce balon
 normal ve %200 → hiçbirinde taşma ya da yatay kayma yok. Değişikliğin
 kapsamı da ölçüldü: 150 ögede 14 fark, **hepsi balonun kendi içinde**.
 
+### Kapanan bulgu — Türkçe arayüz + dar ekran (v140)
+
+**Bugüne kadarki bütün dar ekran ölçümlerim İngilizce koştu.** Türkçeye
+geçince yeni bir hata çıktı — aynı ekran İngilizcede temiz, Türkçede
+bozuk:
+
+| Ölçü | Önce | Sonra |
+|---|---|---|
+| 360 · normal | temiz | temiz |
+| 375 · %200 · **TR** | **18 taşan, sayfa kayıyor** | **0** |
+| 360 · %200 · **TR** | **37 taşan, sayfa kayıyor** | **0** |
+| 375 · %200 · EN | 0 | 0 (bozulmadı) |
+
+**Sebep:** uzun Türkçe düğme yazıları. "🔕 Bildirimlere izin verilmedi"
+%200'de 201px'ten **356px**'e çıkıyor (çerçeve 360), "⬇ Windows sürümünü
+indir" 189'dan 349'a. Esnek ögelerin varsayılan `min-width: auto`
+değeri, ögenin kendi en küçük içeriğinin altına inmesini engelliyor;
+panel 402px'e çıkıp ekranı taşırıyordu.
+
+**Elenen adaylar** (hiçbiri işe yaramadı — sayılarıyla):
+`.dugme { max-width: 100% }` → 18, değişmedi · `#sekmeSayac
+{ min-width: 0 }` → 18, değişmedi · `#sekmeSayac * { max-width: 100% }`
+→ 18, değişmedi. **İşe yarayan, en azı:** `#sekmeSayac * { min-width: 0 }`
+→ 0, panel 402→328.
+
+**Normal boyutta üç ölçümde de sıfır fark** (375 TR, 360 TR, 375 EN).
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi

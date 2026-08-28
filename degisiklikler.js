@@ -30,6 +30,32 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 140,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Türkçe arayüzde yazıyı büyütünce sayfa yana kayıyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      '<b>Türkçe kullanıyorsan ve yazıları büyüttüysen</b>, sayfa yana '
+        + 'kayıyor ve içerik ekranın dışına taşıyordu. Küçük telefonlarda '
+        + 'daha belirgindi. Artık taşma yok.',
+      'Sebep, Türkçe yazıların daha uzun olmasıydı — aynı ekran '
+        + 'İngilizcede sorunsuz görünüyordu. Bundan sonra dar ekran '
+        + '<b>iki dilde birden</b> ölçülüyor.',
+    ],
+    ozetEn: 'With the Turkish interface and larger text, the page '
+        + 'scrolled sideways.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      '<b>If you use Turkish and have made text larger</b>, the page '
+        + 'scrolled sideways and content ran off the screen — more so on '
+        + 'small phones. That is fixed.',
+      'The cause was that Turkish text is longer: the same screen looked '
+        + 'fine in English. Narrow screens are now measured in <b>both '
+        + 'languages</b>.',
+    ],
+  },
+  {
     surum: 139,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

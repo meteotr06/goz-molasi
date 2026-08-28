@@ -1941,3 +1941,26 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   border-left: 3px solid var(--vurgu, #7c6cf0);
   border-radius: 4px;
 }
+
+/* TÜRKÇE + BÜYÜK YAZI: içerik kabına sığabilsin.
+
+   Ölçüldü (29.08.2026, Türkçe arayüz, %200 yazı): sayfa yatay kayıyor
+   — 375px'te 18, 360px'te 37 öge taşıyor. İngilizce arayüzde ÇIKMIYOR.
+   Sebep uzun Türkçe düğme yazıları: "🔕 Bildirimlere izin verilmedi"
+   201px'ten 356px'e çıkıyor, "⬇ Windows sürümünü indir" 189'dan 349'a.
+
+   Esnek/ızgara ögelerin varsayılan `min-width: auto` değeri, ögenin
+   kendi en küçük içerik genişliğinin altına inmesini engelliyor; o
+   yüzden panel 402px'e çıkıp ekranı taşırıyordu.
+
+   ELENEN ADAYLAR (hiçbiri işe yaramadı, sayılarıyla):
+     `.dugme { max-width: 100% }`      -> taşan 18, değişmedi
+     `#sekmeSayac { min-width: 0 }`    -> taşan 18, değişmedi
+     `#sekmeSayac * { max-width:100% }`-> taşan 18, değişmedi
+   İŞE YARAYAN, en azı:
+     `#sekmeSayac * { min-width: 0 }`  -> taşan 0, panel 402->328
+
+   Normal boyutta hiçbir şey değişmiyor: orada zaten kimse sığmazlık
+   yapmıyor, kural yalnızca yer daraldığında devreye giriyor. */
+#sekmeSayac *,
+#sekmeBilgiler * { min-width: 0; }
