@@ -189,6 +189,38 @@ Büyümeyen 3 öge, bilerek px bırakılan sayaç/mola yazıları.
 354'ten 439'a **büyüttü**; `max-width: 100%` — panel doğru genişliğe
 indi ama taşma 434'te kaldı. Üçü de sebebe dokunmuyordu.
 
+### Açık bulgu — uyarı balonu %200 yazıda taşıyor (çözüm ARANDI, taşınmadı)
+
+`.uyari-balon b` kuralında `white-space: nowrap` var. Ölçüldü
+(360×640 ve 375×812, %200 yazı): uyarı yazısı **398px**'e çıkıyor, balon
+**331px**; satır kırılamadığı için yazı balonun **ve ekranın** dışına
+taşıyor (sağ kenar 426, çerçeve 345). Kullanıcı *"ekran birazdan
+kararacak"* uyarısını **tam okuyamıyor**. Sayfa yatay kaymıyor, yani
+yazı sessizce kesiliyor.
+
+**`nowrap` kaldırılması denendi — taşma bitiyor ama normal boyutta
+görünüm değişiyor:**
+
+| | balon | yazı |
+|---|---|---|
+| şimdiki, normal | 235 × 155 | 199 × 19 (tek satır) |
+| nowrap'siz, normal | 180 × 184 | 144 × **38 (iki satır)** |
+| şimdiki, %200 | 345 × 195 | **398 (taşıyor)** |
+| nowrap'siz, %200 | 180 × 374 | 144 × 111 (taşmıyor) |
+
+Balonun genişliği içeriğe bağlı: satır kırılınca balon da daralıyor ve
+yazı gereksiz yere 4 satıra iniyor. Yani düzeltme **normal boyutta
+ölçülmüş bir zarar** üretiyor.
+
+**Taşınmadı.** Bu gece koyduğum kural: *zararı ölçülmüş bir değişiklik,
+faydası daha büyük olduğu gösterilmeden taşınmaz.* Doğru çözüm balonun
+genişliğini içerikten bağımsız hâle getirmek gibi görünüyor — ama bu
+balonun bütün yerleşimini etkiler ve gece yapılacak iş değil.
+
+**Türkçe için not:** Türkçe metin daha uzun; normal boyutta bile
+`nowrap` ile balonu zorluyor olabilir. Ölçülmedi — Türkçe arayüzde
+tekrar bakılmalı.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
