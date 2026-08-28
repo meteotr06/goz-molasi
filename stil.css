@@ -840,6 +840,14 @@ kbd {
 }
 .durum-notu-kapat:hover { color: var(--yazi); }
 
+.konum-notu {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--yazi-soluk);
+  max-width: 46ch;
+}
+
 .uyari-dugmeler {
   display: flex;
   gap: 8px;

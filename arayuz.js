@@ -72,6 +72,7 @@
     havaDurum: $('havaDurum'),
     havaKonumSatir: $('havaKonumSatir'),
     konumBulDugme: $('konumBulDugme'),
+    konumNotu: $('konumNotu'),
     konumSilDugme: $('konumSilDugme'),
     sehirAlan: $('sehirAlan'),
     sehirSonuc: $('sehirSonuc'),
@@ -688,6 +689,18 @@
   }
 
   og.ayHava.addEventListener('change', () => havaDurumunuGoster());
+
+  /* Konumun nereye gittiğini BASMADAN ÖNCE yaz. Basıldıktan sonra
+     söylemek, izni alındıktan sonra söylemek demek. */
+  if (og.konumNotu) {
+    og.konumNotu.textContent = CS(
+      'Konumun hava durumu için open-meteo.com sunucusuna gönderilir. '
+      + 'Yaklaşık konuma yuvarlanır (yaklaşık 100 metre); tam adresin '
+      + 'gönderilmez. İstemezsen aşağıdan şehir arayabilirsin.',
+      'Your location is sent to open-meteo.com to fetch the weather. '
+      + 'It is rounded to about 100 metres; your exact position is not '
+      + 'sent. If you prefer, search for a city below instead.');
+  }
 
   og.konumBulDugme.addEventListener('click', async () => {
     og.konumBulDugme.disabled = true;

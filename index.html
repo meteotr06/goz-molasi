@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v120">
+<link rel="stylesheet" href="stil.css?s=v122">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -662,6 +662,13 @@
       </div>
 
       <div class="satir gizli" id="havaKonumSatir" style="display:block">
+        <!-- BASMADAN ÖNCE SÖYLE — ve okuma sırasında da ÖNCE.
+             Konum, hava durumu için üçüncü bir sunucuya (open-meteo)
+             gidiyor. İlk hâlinde bu not düğmenin ALTINDAYDI: ekran
+             okuyucu önce düğmeyi okuyordu, yani izni isteyen şeyi
+             açıklamasından önce duyuyordu. Metin `arayuz.js` içinde
+             CS() ile kuruluyor; `dil.js` başka bir oturumda. -->
+        <p class="konum-notu" id="konumNotu"></p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           <button type="button" class="dugme kucuk" id="konumBulDugme">Konumumu kullan</button>
           <button type="button" class="dugme kucuk gizli" id="konumSilDugme">Konumu unut</button>
@@ -753,17 +760,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v120"></script>
-  <script src="dil.js?s=v120"></script>
-  <script src="bilgiler.js?s=v120"></script>
-  <script src="bilgiler_en.js?s=v120"></script>
-  <script src="dunya.js?s=v120"></script>
-  <script src="egzersiz.js?s=v120"></script>
-  <script src="reklam.js?s=v120"></script>
-  <script src="kopru.js?s=v120"></script>
-  <script src="cekirdek.js?s=v120"></script>
-  <script src="mola_icerik.js?s=v120"></script>
-  <script src="arayuz.js?s=v120"></script>
+  <script src="degisiklikler.js?s=v122"></script>
+  <script src="dil.js?s=v122"></script>
+  <script src="bilgiler.js?s=v122"></script>
+  <script src="bilgiler_en.js?s=v122"></script>
+  <script src="dunya.js?s=v122"></script>
+  <script src="egzersiz.js?s=v122"></script>
+  <script src="reklam.js?s=v122"></script>
+  <script src="kopru.js?s=v122"></script>
+  <script src="cekirdek.js?s=v122"></script>
+  <script src="mola_icerik.js?s=v122"></script>
+  <script src="arayuz.js?s=v122"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
