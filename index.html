@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v112">
+<link rel="stylesheet" href="stil.css?s=v113">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -738,16 +738,70 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v112"></script>
-  <script src="dil.js?s=v112"></script>
-  <script src="bilgiler.js?s=v112"></script>
-  <script src="bilgiler_en.js?s=v112"></script>
-  <script src="dunya.js?s=v112"></script>
-  <script src="egzersiz.js?s=v112"></script>
-  <script src="reklam.js?s=v112"></script>
-  <script src="kopru.js?s=v112"></script>
-  <script src="cekirdek.js?s=v112"></script>
-  <script src="mola_icerik.js?s=v112"></script>
-  <script src="arayuz.js?s=v112"></script>
+  <script src="degisiklikler.js?s=v113"></script>
+  <script src="dil.js?s=v113"></script>
+  <script src="bilgiler.js?s=v113"></script>
+  <script src="bilgiler_en.js?s=v113"></script>
+  <script src="dunya.js?s=v113"></script>
+  <script src="egzersiz.js?s=v113"></script>
+  <script src="reklam.js?s=v113"></script>
+  <script src="kopru.js?s=v113"></script>
+  <script src="cekirdek.js?s=v113"></script>
+  <script src="mola_icerik.js?s=v113"></script>
+  <script src="arayuz.js?s=v113"></script>
+<!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
+
+     Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
+     yarım kurulum, depo tasfiyesi) sayfa AÇILMIŞ GİBİ görünüyor —
+     başlık, düğmeler, hatta "20:00" duruyor — ama motor hiç
+     kurulmuyor ve SAYAÇ SAYMIYOR. Kullanıcı çalıştığını sanıp
+     hiç mola almıyor. Sessiz başarısızlığın en pahalısı.
+
+     Bu denetim SATIR İÇİ ve en sonda: hangi dosya gelmezse gelmesin
+     kendisi çalışır. Sözlüğe de bağlı değil — `dil.js` eksik olabilir,
+     o yüzden metin iki dilde sabit yazılı. -->
+<div id="baslamadiUyari" hidden>
+  <div>
+    <b>Uygulama eksik yüklendi — sayaç çalışmıyor.</b>
+    <p>Bazı dosyalar gelmedi. Aşağıdaki düğme önbelleği temizleyip
+       yeniden dener. İnternete bağlı olman gerekebilir.</p>
+    <p lang="en"><b>The app loaded incompletely — the timer is not
+       running.</b> Some files did not arrive. The button below clears
+       the cache and tries again; you may need to be online.</p>
+    <button type="button" id="baslamadiYenile">Temizle ve yenile · Clear and reload</button>
+  </div>
+</div>
+<script>
+(function () {
+  /* Motor kurulduysa `window.molaMotoru` var. 2 saniye bekliyoruz:
+     yavaş cihazda açılış uzayabilir, erken uyarmak yanlış alarm olur. */
+  setTimeout(function () {
+    if (window.molaMotoru) return;
+    var u = document.getElementById('baslamadiUyari');
+    if (!u) return;
+    u.hidden = false;
+    var d = document.getElementById('baslamadiYenile');
+    if (!d) return;
+    d.addEventListener('click', function () {
+      d.disabled = true;
+      d.textContent = 'Temizleniyor…';
+      var isler = [];
+      if (window.caches) {
+        isler.push(caches.keys().then(function (a) {
+          return Promise.all(a.map(function (x) { return caches.delete(x); }));
+        }));
+      }
+      if (navigator.serviceWorker) {
+        isler.push(navigator.serviceWorker.getRegistrations().then(function (r) {
+          return Promise.all(r.map(function (x) { return x.unregister(); }));
+        }));
+      }
+      Promise.all(isler)["catch"](function () {})
+        .then(function () { location.reload(true); });
+    });
+  }, 2000);
+}());
+</script>
+
 </body>
 </html>
