@@ -154,48 +154,40 @@ Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
    örtüyordu — düzeltildi, doğrulanmadı)
 5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
 
-### Açık bulgu — dar ekran + %200 yazı (ölçüldü, düzeltilmedi)
+### Kapanan bulgu — dar ekran + %200 yazı (sebep bulundu, düzeltildi)
 
-Yazı büyütme (v137) çalışıyor, ama **çok dar bir ekranda** yan etkisi var.
-Ölçüldü (iframe, sıfırdan yükleyerek):
+**Ve burada yanılmışım: bu gerileme BENİM ÜRETTİĞİMDİ.** Önce "eski hâl
+zaten kötüydü, sadece ulaşılamıyordu" demiştim. Ölçünce tersi çıktı.
 
-| Ölçü | Yatay kayma | Taşan öge |
+**Sebep** (paneli zorla daraltıp en derindeki sığmayanı arayarak
+bulundu): sayaç halkası `.halka-ic` 238px'e çıkıp sıkışamıyordu. Çünkü
+px→rem dönüşümünde `clamp()` **alt sınırlarını** da rem yapmıştım:
+
+```
+clamp(38px, 12vw, 56px)   →   clamp(2.375rem, 12vw, 3.5rem)
+```
+
+Kök punto 32px olunca taban 38px yerine **76px** oluyor. Sayaç yazısı
+iki katına çıkıyor, halka sıkışamıyor, sayfa yatay kayıyor.
+
+**Düzeltme:** o altı `clamp()` px'e geri alındı. Zaten duyarlılar —
+ortadaki `vw`/`vh` ekrana göre ölçekliyor. "Yazıları büyüt" ayarının
+asıl hedefi gövde yazısı; ekran boyu sayacı ayrıca büyütmek gerekmiyor.
+
+**Ölçüldü (sonrası):**
+
+| Ölçü | Yatay kayma | Büyüyen yazı |
 |---|---|---|
-| 375×812 · normal | yok | 0 |
-| 360×640 · normal | yok | 0 |
-| 375×812 · %200 yazı | yok | 1 (uyarı balonu yazısı) |
-| **360×640 · %200 yazı** | **var** (354 > 345) | **15** |
+| 360×640 · normal | yok | — (normal boyutta değişiklik yok) |
+| 375×812 · %200 | yok | 209 / 213 |
+| 360×640 · %200 | **yok** (345 = 345) | 210 / 213 |
 
-Yani en küçük telefonda yazı iki katına çıkarılırsa sayfa **9px yatay
-kayıyor**. Teşhis buraya kadar: gövde bir esnek sütun; kardeş ögeler
-313px'e sığarken `#sekmeSayac` 364px kalıyor.
+Büyümeyen 3 öge, bilerek px bırakılan sayaç/mola yazıları.
 
-**Denendi, çözmedi** (bu yüzden taşınmadı): `minmax(0, 1fr)` sütunlar ·
-`.kutucuk { min-width: 0; overflow-wrap: anywhere }` · `#sekmeSayac
-{ min-width: 0 }`. Üçü de normal boyutta **hiçbir şeyi değiştirmiyordu**
-(174 öge × 5 ölçü, sıfır fark) — yani zararsızdılar, ama **faydaları
-ölçülemedi**. Ölçülmemiş fayda taşınmaz; geri alındılar.
-
-**Teşhis nerede kaldı (ikinci tur, çalışma anında denenerek):**
-
-- `#sekmeSayac`'ın **iç kaydırması yok**: `scrollWidth = clientWidth =
-  offsetWidth = 364`. Yani öge gerçekten o kadar geniş.
-- Panele `min-width: 0` vermek **hiçbir şey değiştirmiyor** (364'te kalıyor)
-  — demek ki genişliği kendi `min-width`'inden gelmiyor.
-- Çocuklara da `min-width: 0` verilince panel 358'e iniyor ama sayfanın
-  `scrollWidth`'i **439**'a çıkıyor: taşma küçülmüyor, **büyüyor**.
-- `max-width: 100%` eklenince panel 313'e (doğru genişlik) iniyor, ama
-  `scrollWidth` yine **434**.
-
-**Sonuç: sebep panel değil, içindeki bir ögenin asgari genişliği.** Paneli
-sıkıştırmak o ögeyi dışarı taşırıyor. Doğru çözüm o ögeyi bulup kendi
-içinde kırılabilir/kaydırılabilir yapmak — panele dokunmak değil.
-(Karşılaştırma tablosu zaten `.tablo-kaydir` içinde kaydırılabiliyor;
-suçlu o değil.)
-
-**Gerileme değil:** bu hâl v137'den önce de kötüydü, sadece
-*ulaşılamıyordu* (yazı zaten büyümüyordu). Normal boyutta hiçbir şey
-bozulmadı.
+**Elenen adaylar** (bir sonraki tur aynı kapıları çalmasın): panele
+`min-width: 0` — hiçbir şey değiştirmedi; çocuklara da vermek — taşmayı
+354'ten 439'a **büyüttü**; `max-width: 100%` — panel doğru genişliğe
+indi ama taşma 434'te kaldı. Üçü de sebebe dokunmuyordu.
 
 ### Ayrıca ölçülemeyenler
 
