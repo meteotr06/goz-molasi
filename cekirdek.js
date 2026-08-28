@@ -52,9 +52,51 @@ const VARSAYILAN_AYARLAR = {
   bitSaat: '18:00',
 };
 
+/* SÜRE AYARLARININ SINIRLARI — tek yerde.
+
+   Arayüzdeki kaydırıcı 0 girilmesine izin vermiyor ama ayarlar bir de
+   DEPODAN geliyor ve orada doğrulama yoktu. Ölçüldü: `calismaSuresi`
+   0 / negatif / null / NaN olunca uygulama doğrudan MOLA durumunda
+   başlıyor ve mola hiç bitmiyor; `"yirmi"` yazınca ekranda `NaN:NaN`.
+
+   Kullanıcı bunu arayüzden yapamaz — ama depo elle düzenlenebilir,
+   eski sürümden bozuk veri gelebilir, başka bir sekme bozuk yazabilir.
+   "Kullanıcı giremiyor" korumanın kendisi değil, yalnızca bir yolun
+   kapalı olmasıdır.
+
+   TEK SÜZGEÇ, İKİ ÇAĞRI YERİ: yapıcı ve `iceAktar`. İki ayrı
+   doğrulama listesi er geç ayrışır — bu projede damgada tam bunu
+   yaşadık. */
+const SURE_SINIRLARI = {
+  calismaSuresi:    [60, 4 * 3600],
+  molaSuresi:       [5, 600],
+  uyariSuresi:      [0, 300],
+  bostaEsigi:       [10, 3600],
+  dinlenmeEsigi:    [30, 4 * 3600],
+  kapaliDevamEsigi: [30, 8 * 3600],
+  uzunMolaEsigi:    [600, 12 * 3600],
+  uzunMolaSuresi:   [30, 3600],
+};
+
+function ayarlariSuz(ayarlar) {
+  const c = { ...ayarlar };
+  for (const [ad, [enAz, enCok]] of Object.entries(SURE_SINIRLARI)) {
+    if (!(ad in c)) continue;
+    const s = Number(c[ad]);
+    // Sayı değilse ya da aralık dışıysa varsayılana dön. Sessizce
+    // kırpmak yerine varsayılan: 0 girilmişse niyet belirsizdir,
+    // 60'a kırpmak kullanıcının istemediği bir değeri "seçilmiş"
+    // gibi gösterirdi.
+    c[ad] = (Number.isFinite(s) && s >= enAz && s <= enCok)
+      ? s
+      : VARSAYILAN_AYARLAR[ad];
+  }
+  return c;
+}
+
 class MolaMotoru {
   constructor(ayarlar = {}) {
-    this.ayarlar = { ...VARSAYILAN_AYARLAR, ...ayarlar };
+    this.ayarlar = ayarlariSuz({ ...VARSAYILAN_AYARLAR, ...ayarlar });
     this.durum = 'hazir';
     this.oncekiDurum = null;
 
@@ -456,7 +498,11 @@ class MolaMotoru {
 
   iceAktar(veri) {
     if (!veri) return;
-    if (veri.ayarlar) this.ayarlar = { ...this.ayarlar, ...veri.ayarlar };
+    // Depodan gelen ayar da süzgeçten geçer — asıl bozuk veri
+    // buradan giriyordu.
+    if (veri.ayarlar) {
+      this.ayarlar = ayarlariSuz({ ...this.ayarlar, ...veri.ayarlar });
+    }
     if (veri.istatistik) {
       // Gün değiştiyse günlük sayaçlar sıfırlanır
       if (veri.istatistik.gun === this._bugun()) {
@@ -627,12 +673,28 @@ const Gecmis = {
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
   },
 
+  /* ARTAN SAYAÇLAR ASLA AZALMAZ.
+
+     Ölçüldü (iki sekme): B sekmesinde 9 mola birikti ve kayda yazıldı.
+     Sonra hâlâ 3'te olan ESKİ A sekmesi kapandı; `pagehide` → `kaydet()`
+     → günlük geçmiş 3'e GERİ DÖNDÜ. Kayıp oturumluk değil KALICI:
+     7 gün grafiği ve seri sayısı buradan besleniyor, yani kullanıcı
+     kendini gerçekte olduğundan az dinlenmiş sanıyor.
+
+     Çökme yok, uyarı yok — sadece yanlış sayı. Sessiz yanlış sayının
+     tam tanımı.
+
+     Bir günün tamamlanmış mola sayısı geriye gidemez; hangi sekme
+     yazarsa yazsın büyük olan kalır. Doğru gün için doğru: aynı gün
+     içinde bu sayılar yalnızca artar. */
   gunuIsle(gun, istatistik) {
     const veri = this.oku();
+    const eski = veri[gun] || {};
+    const buyuk = (a, b) => Math.max(a | 0, b | 0);
     veri[gun] = {
-      mola: istatistik.tamamlananMola | 0,
-      atlanan: istatistik.atlananMola | 0,
-      ekran: Math.round(istatistik.ekranSuresi || 0),
+      mola: buyuk(eski.mola, istatistik.tamamlananMola),
+      atlanan: buyuk(eski.atlanan, istatistik.atlananMola),
+      ekran: buyuk(eski.ekran, Math.round(istatistik.ekranSuresi || 0)),
     };
     this.yaz(veri);
   },

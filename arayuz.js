@@ -2287,11 +2287,43 @@
     if (silindi) return;
     // Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
     try {
+      // NOT: `gunuIsle` kendi içinde de MAX alıyor; buradaki çağrı
+      // motorun anlık değerini veriyor, orası küçüğü yazmaz.
       Gecmis.gunuIsle(motor.istatistik.gun || Gecmis.gunAdi(), motor.istatistik);
     } catch {}
+    /* ESKİ SEKME YENİ SAYIYI EZMESİN.
+
+       Ölçüldü: B sekmesinde 9 mola birikti; hâlâ 3'te olan eski A
+       sekmesi kapanınca `pagehide` → `kaydet()` → kayıt 3'e döndü.
+       Kapanan sekme, en son gördüğü dünyayı yazıyor.
+
+       Çözüm: yazmadan ÖNCE depoyu yeniden oku ve yalnızca ARTAN
+       sayaçlar için büyüğü al. `kesintisizSure` buna dahil DEĞİL —
+       o gerçekten sıfırlanabilen bir değer, MAX almak onu asla
+       sıfırlanmaz yapardı.
+
+       GÜN DENETİMİ ŞART: farklı bir güne aitse birleştirme yok,
+       yoksa dünün 9 molası bugünü 9'da tutardı. */
+    const gonderilecek = { ...motor.disaAktar() };
+    try {
+      const depodaki = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
+      const e = depodaki.istatistik;
+      const y = gonderilecek.istatistik;
+      if (e && y && e.gun && e.gun === y.gun) {
+        const buyuk = (a, b) => Math.max(a | 0, b | 0);
+        gonderilecek.istatistik = {
+          ...y,
+          tamamlananMola: buyuk(e.tamamlananMola, y.tamamlananMola),
+          atlananMola: buyuk(e.atlananMola, y.atlananMola),
+          ekranSuresi: buyuk(e.ekranSuresi, y.ekranSuresi),
+          uzunMola: buyuk(e.uzunMola, y.uzunMola),
+        };
+      }
+    } catch { }
+
     try {
       localStorage.setItem(KAYIT_ANAHTARI, JSON.stringify({
-        ...motor.disaAktar(),
+        ...gonderilecek,
         bostaAcik,
         uzakSifirla,
         molaKilit,
