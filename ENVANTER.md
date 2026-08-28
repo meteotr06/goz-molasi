@@ -61,9 +61,9 @@ kullanıcının kendi ekranında bakılmalı.
 | 24 | Çalışma saatleri (baş/bit) | ✅ | 08:30 / 17:45 metin olarak birebir kaydedildi |
 | 25 | Molayı atlamaya izin | ✅ | Koruma **görüntüde değil gerçek**: kapalıyken zorla tıklama molayı bitirmedi |
 | 26 | Ses | ✅ | Açık/kapalı iki dal depoya doğru yazıldı (sesin duyulduğu **ölçülmedi**) |
-| 27 | Otomatik başla | ⬜ | — |
+| 27 | Otomatik başla | ✅ | İki dal: **kapalıyken** 20:00'da bekliyor (“Ready”), **açıkken** kendi başlıyor (19:59→19:54, “Running”) |
 | 28 | Titreşim | ⬜ | Telefonda ölçülmeli |
-| 29 | Arka planda çalış | ⬜ | — |
+| 29 | Arka planda çalış | 🟡 | Ayar kaydediliyor ve pencereye yansıyor. **Etkisi ölçülemedi**: duyulmayan 30 Hz'lik bir ses üreterek tarayıcının sekmeyi daha az kısmasını sağlıyor; işe yaradığı sayfanın içinden görülemez |
 | 30 | Uzak kalınca sıfırla | ✅ | Telefon taklidiyle 3 dal: göç olur / seçim korunur / tekrarlamaz |
 | 31 | Boşta durdurma | ✅ | **Canlı görüldü**: 90 sn dokunmayınca sayaç durdu ve durum yazısı sebebini söyledi (“Idle — timer paused”) |
 | 32 | Mola kilidi | 🟡 | Ayar açık/kapalı doğru kaydediliyor; **mola ekranından çıkamama davranışı telefonda ölçülmeli** |
@@ -130,13 +130,37 @@ silinince geçti.
 
 ## Toplam
 
-**48 özelliğin 43'ü denendi** (✅ 42, 🟡 1). **5'i açık.**
+**48 özelliğin 45'i denendi** (✅ 43, 🟡 2). **3'ü açık — üçü de gerçek telefon istiyor.**
 
 Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir —
 "muhtemelen çalışıyordur" bir ölçüm değildir.
 
-## Denenemeyecekler (K-24 — şimdiden yazılı)
+## Buradan ölçülemeyenler — kullanıcıya sorular
 
-- **Titreşim** ve **mola çıkış koruması**: gerçek telefon gerekiyor.
-- **Bildirim izni "reddedildi"**: tarayıcı izni sıfırlamak elle yapılır.
-- **Renk / okunurluk hükmü**: bölme işlemediği için buradan verilemez.
+Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
+Üçü de kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
+
+1. **Mola ekranından çıkılabiliyor mu?** “Yanlışlıkla çıkmayı
+   önle” açıkken, mola sürerken geri tuşu / kenardan kaydırma ile
+   ekrandan çıkabiliyor musun?
+2. **Titreşim geliyor mu?** Mola başlarken ve uyarı anında telefon
+   titriyor mu?
+3. **“Uygulama olarak kur” çalışıyor mu?** Ana ekrana ekleniyor mu,
+   eklendikten sonra açılıyor mu?
+
+Önceki turlardan **hâlâ cevapsız** olanlar:
+
+4. **Mola ekranının alt kenarı okunuyor mu?** (tarayıcı çubuğu
+   örtüyordu — düzeltildi, doğrulanmadı)
+5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
+
+### Ayrıca ölçülemeyenler
+
+- **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
+  durduruyor; göze dair hükmü buradan veremem.
+- **Arka planda çalış ayarının etkisi**: mekanizma sayfanın
+  içinden görülemiyor.
+- **Bildirim izninin “hiç sorulmamış” hâli**: bu tarayıcıda izin
+  zaten reddedilmiş. (“Reddedilmiş” ve “verilmiş” hâlleri
+  ölçüldü.)
+- **Molada hava kartı**: gerçek konum gerekiyordu.
