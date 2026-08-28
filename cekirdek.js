@@ -298,7 +298,35 @@ class MolaMotoru {
   }
 
   /* ---------- Kalp atışı ---------- */
+  /* GÜN DEĞİŞTİ Mİ? Sekme açıkken de bakılmalı.
+
+     Gün karşılaştırması yalnızca `iceAktar` içinde vardı, yani
+     AÇILIŞTA. Bu uygulama açık bırakılmak için yapılmış bir sayaç;
+     gece yarısını açık geçmek normal kullanımdır.
+
+     Ölçüldü: sekme gece yarısını açık geçince `istatistik.gun` dünde
+     kalıyor ve BUGÜNÜN molaları DÜNE yazılıyor. Bugün 0 görünüyor,
+     dün şişiyor. Çökme yok, uyarı yok — sadece yanlış sayı.
+
+     Kalıcı geçmişe artık `Math.max` ile yazdığımız için şişen dünkü
+     sayı geri de alınamıyordu: bir düzeltme, başka bir hatanın
+     sonucunu kalıcı yapmıştı. İkisi birlikte kapanmalıydı. */
+  _gunuTazele() {
+    const bugun = this._bugun();
+    if (this.istatistik.gun === bugun) return false;
+    this.istatistik.gun = bugun;
+    this.istatistik.tamamlananMola = 0;
+    this.istatistik.atlananMola = 0;
+    this.istatistik.ekranSuresi = 0;
+    this.istatistik.uzunMola = 0;
+    // `kesintisizSure` SIFIRLANMAZ: gece yarısı geçti diye kişinin
+    // kesintisiz çalışması bitmiş olmuyor.
+    return true;
+  }
+
   tik() {
+    if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
+
     // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile
     // sayaç duraklamış kalıyordu — `tik` duraklatıldı durumunda hemen
     // dönüyor ve kimse süreyi kontrol etmiyordu.
@@ -718,6 +746,13 @@ const Gecmis = {
   /** Kaç gündür üst üste hedefi tutturuyor?
       Bugün henüz hedefe ulaşmadıysa seri bozulmuş sayılmaz —
       sabahın köründe "serin bitti" demek haksızlık olur. */
+  /* Seri, SAKLANAN_GUN'e takılabilir: daha eski veri silindiği için
+     bilinemez. Arayüz bunu "120+" diye göstersin diye pencereyi
+     dışarı açıyoruz. Ölçüldü: 3 yıllık kesintisiz seri "120 gün"
+     görünüyordu — yanlış değil ama EKSİK, ve eksik olduğu
+     söylenmiyordu. */
+  saklananGun: SAKLANAN_GUN,
+
   seri(bugunIstatistik = null, hedef = GUNLUK_HEDEF) {
     const veri = this.oku();
     const bugun = new Date();

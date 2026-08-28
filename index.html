@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v117">
+<link rel="stylesheet" href="stil.css?s=v120">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -411,9 +411,16 @@
   </dialog>
 
   <!-- MOLA ÖNCESİ UYARI BALONU -->
-  <div class="uyari-balon" id="uyariBalon" role="status">
-    <b id="uyariMetin">15 sn sonra göz molası</b>
-    <button class="dugme sade kucuk" id="erteleDugme">5 dk ertele</button>
+  <!-- MOLA ÖNCESİ UYARI. Kullanıcının isteği: "uyar sen, telefon
+       kapanacak diye; gerisi kullanıcıya kalmış."
+       Bilgi değil SORU: iki seçenek sunuyor. Sessizlik reddetme
+       değildir — hiçbir şey yapılmazsa mola normal başlar. -->
+  <div class="uyari-balon" id="uyariBalon" role="alert" aria-live="assertive">
+    <b id="uyariMetin">Ekran birazdan kararacak</b>
+    <div class="uyari-dugmeler">
+      <button class="dugme ana kucuk" id="hemenMolaDugme">Şimdi molaya geç</button>
+      <button class="dugme sade kucuk" id="erteleDugme">5 dk ertele</button>
+    </div>
   </div>
 
   <!-- BAŞKA SEKMEDE AÇIK ÖRTÜSÜ
@@ -746,17 +753,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v117"></script>
-  <script src="dil.js?s=v117"></script>
-  <script src="bilgiler.js?s=v117"></script>
-  <script src="bilgiler_en.js?s=v117"></script>
-  <script src="dunya.js?s=v117"></script>
-  <script src="egzersiz.js?s=v117"></script>
-  <script src="reklam.js?s=v117"></script>
-  <script src="kopru.js?s=v117"></script>
-  <script src="cekirdek.js?s=v117"></script>
-  <script src="mola_icerik.js?s=v117"></script>
-  <script src="arayuz.js?s=v117"></script>
+  <script src="degisiklikler.js?s=v120"></script>
+  <script src="dil.js?s=v120"></script>
+  <script src="bilgiler.js?s=v120"></script>
+  <script src="bilgiler_en.js?s=v120"></script>
+  <script src="dunya.js?s=v120"></script>
+  <script src="egzersiz.js?s=v120"></script>
+  <script src="reklam.js?s=v120"></script>
+  <script src="kopru.js?s=v120"></script>
+  <script src="cekirdek.js?s=v120"></script>
+  <script src="mola_icerik.js?s=v120"></script>
+  <script src="arayuz.js?s=v120"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

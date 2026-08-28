@@ -42,6 +42,7 @@
     balon: $('uyariBalon'),
     balonMetin: $('uyariMetin'),
     ertele: $('erteleDugme'),
+    hemenMola: $('hemenMolaDugme'),
 
     molaEkran: $('molaEkran'),
     molaBaslik: $('molaBaslik'),
@@ -583,8 +584,9 @@
       parcalar.push(CS(`Bugün ${bugun}. molan`, `Break ${bugun} today`));
     }
     if (seri >= 2) {
-      parcalar.push(CS(`${seri} gündür üst üste`,
-                       `${seri} ${seri === 1 ? 'day' : 'days'} in a row`));
+      const seriYazi = seri >= Gecmis.saklananGun ? `${seri}+` : `${seri}`;
+      parcalar.push(CS(`${seriYazi} gündür üst üste`,
+                       `${seriYazi} ${seri === 1 ? 'day' : 'days'} in a row`));
     }
     const dk = Math.max(1, Math.round(motor.ayarlar.calismaSuresi / 60));
     // Turkcede tekil/cogul ayrimi yok, Ingilizcede var: "1 minutes"
@@ -1189,9 +1191,12 @@
     // VERİ TARAFI: bu rozet ancak seri oluşunca beliriyor. Temiz
     // bir tarayıcıda sınama koşunca DOM'da hiç yok ve dil taraması
     // geçiyordu.
+    /* Seri saklama penceresine dayandıysa gerçek değer daha büyük
+       olabilir; "120" demek eksik bilgi vermek olurdu. */
+    const sYazi = s >= Gecmis.saklananGun ? `${s}+` : `${s}`;
     og.seriRozet.textContent = s > 0
-      ? CS(`🔥 ${s} gün üst üste`,
-           `🔥 ${s} ${s === 1 ? 'day' : 'days'} in a row`) : '';
+      ? CS(`🔥 ${sYazi} gün üst üste`,
+           `🔥 ${sYazi} ${s === 1 ? 'day' : 'days'} in a row`) : '';
     og.haftaGrafik.innerHTML = '';
     og.haftaGrafik.parentElement.querySelector('.hafta-not')?.remove();
 
@@ -1657,11 +1662,24 @@
        `'15 sn sonra göz molası'` diye tek bir değer vardı, yani
        yalnız 15'te çevriliyordu; 14'te Türkçeye dönüyordu. */
     const kalanSn = Math.ceil(saniye);
-    og.balonMetin.textContent = CS(`${kalanSn} sn sonra göz molası`,
-                                   `Eye break in ${kalanSn} s`);
+    /* NE OLACAĞINI SÖYLE. Eskiden "15 sn sonra göz molası" diyordu;
+       ne olacağını bilmeyen biri için bu bir uyarı değil, bir etiket.
+       Kullanıcının kendi cümlesi: "uyar sen, telefon kapanacak diye." */
+    const molaSn = Math.round(motor.ayarlar.molaSuresi);
+    og.balonMetin.textContent = CS(
+      `${kalanSn} sn sonra ekran ${molaSn} saniye kararacak`,
+      `The screen goes dark for ${molaSn} s in ${kalanSn} s`);
     og.balon.classList.add('acik');
     calSes(1100, 0.18);
-    bildirimGonder('Mola geliyor', `${Math.ceil(saniye)} saniye sonra göz molası.`);
+    /* Bildirim metni SABİT TÜRKÇEYDİ — İngilizce kullanan biri
+       Türkçe bildirim alıyordu. Ayrıca ne olacağını söylemiyordu. */
+    bildirimGonder(
+      CS('Ekran birazdan kararacak', 'The screen is about to go dark'),
+      CS(`${Math.ceil(saniye)} saniye sonra ekran ${molaSn} saniye kararacak.`,
+         `In ${Math.ceil(saniye)} s the screen goes dark for ${molaSn} s.`));
+    // Uyarı anında da titret: telefonda 15 saniyelik bir balonu
+    // kaçırmak kolay, cepteyken hiç görünmez.
+    titret([40, 60, 40]);
     clearTimeout(balonZaman);
     balonZaman = setTimeout(balonGizle, saniye * 1000);
   }
@@ -1730,6 +1748,15 @@
       motor.basla();
     }
   });
+  /* Balondaki "Şimdi molaya geç": kullanıcı beklemek yerine
+     hemen halletmek isteyebilir. Sessizlik reddetme değil —
+     hiçbir şey yapılmazsa mola normal başlar. */
+  og.hemenMola?.addEventListener('click', () => {
+    og.balon.classList.remove('acik');
+    if (motor.durum === 'hazir') motor.basla();
+    motor.molayaGec();
+  });
+
   og.mola.addEventListener('click', () => {
     if (motor.durum === 'hazir') motor.basla();
     motor.molayaGec();

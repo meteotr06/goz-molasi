@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#141130">
 <meta name="google-adsense-account" content="ca-pub-4471538043632173">
 <link rel="icon" href="ikon-192.png">
-<link rel="stylesheet" href="stil.css?s=v117">
+<link rel="stylesheet" href="stil.css?s=v120">
 <style>
   body { display: block; max-width: 780px; margin: 0 auto; }
   .metin { line-height: 1.75; font-size: 15px; }
@@ -49,23 +49,35 @@
     <li>Son 120 günün özeti: gün başına mola sayısı (7 gün grafiği ve seri için)</li>
     <li>Kilit şifresi koyduysan: şifrenin kendisi değil, geri döndürülemez
         <b>özeti</b> (PBKDF2-HMAC-SHA256)</li>
+    <li><b>Hava durumunu açtıysan</b> ve “Konumumu kullan” dediysen: yaklaşık
+        konumun (yalnızca üç ondalık basamak, <b>yaklaşık 110 metre</b>) ve
+        bulunan yerin adı. Ayarlardaki <b>“Konumu unut”</b> düğmesiyle silinir.
+        Hava durumunu kullanmıyorsan konum hiç istenmez.</li>
   </ul>
 
   <h2>Hangi veriler saklanmıyor?</h2>
   <ul>
     <li>Adın, e-postan, telefon numaran veya herhangi bir kimlik bilgisi</li>
-    <li>Konumun</li>
     <li>Hangi siteleri gezdiğin, hangi uygulamaları kullandığın</li>
     <li>Kameran veya mikrofonun — bu uygulama bunlara hiç erişmez</li>
   </ul>
 
   <h2>Veriler nereye gidiyor?</h2>
-  <p>Hiçbir yere. Bu uygulamanın sunucusu yok. Site <b>GitHub Pages</b> üzerinde
+  <p><b>Hava durumunu kullanmıyorsan hiçbir yere.</b> Bu uygulamanın sunucusu yok. Site <b>GitHub Pages</b> üzerinde
      duruyor; GitHub, tüm web siteleri gibi erişim kayıtları (IP adresi, tarayıcı
      bilgisi) tutabilir. Bu kayıtlara bizim erişimimiz yok.
      GitHub'ın politikası:
      <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement"
         rel="noopener" target="_blank">GitHub Gizlilik Bildirimi</a>.</p>
+
+  <p><b>Tek istisna: hava durumu.</b> Bu özelliği açıp konumunu verirsen,
+     <b>yaklaşık</b> konumun (üç ondalık basamak, ~110 metre) hava durumu ve
+     hava kalitesi bilgisini almak için <b>open-meteo.com</b> adresine
+     gönderilir. Tam konumun gönderilmez; hesap açılmaz, kimlik bilgisi
+     gitmez. Şehir adını elle aradığında da aynı adrese yalnızca yazdığın
+     şehir adı gider. Bu özelliği kapalı tutarsan hiçbir istek yapılmaz.
+     open-meteo politikası:
+     <a href="https://open-meteo.com/en/terms" rel="noopener" target="_blank">open-meteo.com/en/terms</a>.</p>
 
   <h2>Çerezler ve reklamlar</h2>
   <p>Uygulamanın kendisi çerez kullanmaz.</p>

@@ -840,6 +840,20 @@ kbd {
 }
 .durum-notu-kapat:hover { color: var(--yazi); }
 
+.uyari-dugmeler {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+/* Balon artık iki düğme taşıyor; hap biçimi dar telefonda
+   sığmıyordu. Yuvarlaklık korunuyor ama sarabiliyor. */
+.uyari-balon {
+  flex-wrap: wrap;
+  border-radius: 20px;
+  max-width: min(92vw, 30rem);
+}
+
 /* ---------------- YENİ SÜRÜM ŞERİDİ ---------------- */
 .guncelleme-serit {
   position: fixed;

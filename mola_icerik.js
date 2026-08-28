@@ -79,10 +79,22 @@ const MolaIcerik = (() => {
       if (!navigator.geolocation) { coz({ hata: 'Cihazın konum desteklemiyor.' }); return; }
       navigator.geolocation.getCurrentPosition(
         async (p) => {
+          /* YUVARLAMA ONCE YAPILIR, SONRA KULLANILIR.
+             Once yalniz SAKLANAN deger yuvarlaniyordu; `yerAdiBul`a ham
+             konum gidiyordu. Yuvarlama ayni nesne icinde durdugu icin
+             kodu okuyan "korunuyor" saniyordu -- koruma gibi gorunen,
+             korumayan bir satir.
+             Olculdu (28 Agustos 2026, test-konum-gizlilik.html): giden
+             adres 7 ondalik basamak tasiyordu --
+               .../search?latitude=39.9207431&longitude=32.8540719
+             Bu ~1 santimetre cozunurluk; ev adresi demektir. Hava durumu
+             icin 3 basamak (~110 m) fazlasiyla yeter. */
+          const enlem = +p.coords.latitude.toFixed(3);
+          const boylam = +p.coords.longitude.toFixed(3);
           const k = {
-            enlem: +p.coords.latitude.toFixed(3),
-            boylam: +p.coords.longitude.toFixed(3),
-            ad: await yerAdiBul(p.coords.latitude, p.coords.longitude),
+            enlem: enlem,
+            boylam: boylam,
+            ad: await yerAdiBul(enlem, boylam),
           };
           konumYaz(k);
           coz({ konum: k });
