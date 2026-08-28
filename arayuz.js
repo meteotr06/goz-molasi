@@ -78,6 +78,7 @@
     nedenMetin: $('nedenMetin'),
     nedenKaynak: $('nedenKaynak'),
     atla: $('atlaDugme'),
+    ayMolaKilit: $('ayMolaKilit'),
     okuyucu: $('ekranOkuyucu'),
 
     pencere: $('ayarPencere'),
@@ -87,6 +88,7 @@
     ayAtla: $('ayAtla'),
     aySes: $('aySes'),
     ayBosta: $('ayBosta'),
+    ayUzakSifirla: $('ayUzakSifirla'),
     ayOtomatik: $('ayOtomatik'),
     ayTitresim: $('ayTitresim'),
     ayArkaPlan: $('ayArkaPlan'),
@@ -136,12 +138,23 @@
   try { kayit = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}'); } catch { kayit = {}; }
 
   const motor = new MolaMotoru();
-  motor.iceAktar(kayit);
+
+  /* SIRA ÖNEMLİ: `iceAktar` geri yükleme kararını BURADA veriyor.
+     Ayarı ondan sonra vermek, kararın eski ayarla alınması demek.
+     Ölçüldü: ayar kapalıyken ekran 20:00'a döndü AMA not "sayaç
+     sıfırlanmadı" dedi — motor iki kez çağrılınca iki bayrak birden
+     kalmıştı ve kullanıcı ekranla çelişen bir cümle okuyordu. */
   let bostaAcik = kayit.bostaAcik !== false;
+  // Varsayilan acik: kayitta yoksa bugunku davranis surer.
+  let uzakSifirla = kayit.uzakSifirla !== false;
+  // Varsayilan ACIK: kullanici bunu acikca istedi.
+  let molaKilit = kayit.molaKilit !== false;
+  motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
+  if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
+  motor.iceAktar(kayit);
   let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
   let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
-  if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
   // İlk açılışta beyaz. Ana ekranın aydınlık olması mola ekranıyla
   // çelişmiyor: mola ekranı her temada koyu kalıyor.
   let tema = kayit.tema || 'beyaz';
@@ -240,7 +253,10 @@
           og.sifreAlan.focus();
         }, 30000);
       } else {
-        og.sifreHata.textContent = `Şifre yanlış. Kalan deneme: ${3 - yanlisSayisi}`;
+    const kalanDeneme = 3 - yanlisSayisi;
+    og.sifreHata.textContent = CS(
+      `Şifre yanlış. Kalan deneme: ${kalanDeneme}`,
+      `Wrong password. Attempts left: ${kalanDeneme}`);
       }
     }
   });
@@ -1129,8 +1145,13 @@
     if (toplam === 0) {
       const bos = document.createElement('p');
       bos.className = 'hafta-bos';
-      bos.textContent = 'Henüz mola yok. İlk molanı tamamladığında ' +
-                        'buraya günlük çubuğun düşecek.';
+      // Çalışma anında ekleniyor; `sayfayiCevir`in ona uğrayacağına
+      // güvenmek yerine doğrudan aktif dilde kuruluyor.
+      bos.textContent = CS(
+        'Henüz mola yok. İlk molanı tamamladığında buraya günlük '
+        + 'çubuğun düşecek.',
+        'No breaks yet. Once you finish your first break, your daily '
+        + 'bar will appear here.');
       og.haftaGrafik.appendChild(bos);
       og.haftaOzet.textContent = '';
       return;
@@ -1305,8 +1326,79 @@
     egzersiz = null;
   }
 
+  /* MOLADAN KAZAYLA ÇIKMAYI ÖNLEME.
+
+     Kullanıcı "bi deyince çıkıyor" dedi; sebebi mola ekranının tam
+     ekran olmaması: altta telefonun gezinti çubuğu duruyor ve geri
+     tuşu bir dokunuş uzakta.
+
+     KİLİTLEME DEĞİL. Esc her zaman tam ekrandan çıkarır — tarayıcı
+     garantisi, engelleyemeyiz ve engellemeye çalışmıyoruz. Ana ekran
+     tuşuna dokunmuyoruz. Ayar kapatılabiliyor. Amaç kazayı
+     zorlaştırmak, çıkışı imkânsızlaştırmak değil. */
+  let molaGecmisi = false;      // geçmişe giriş ekledik mi
+  let molaKapaniyor = false;    // normal kapanış sırasında popstate'i yut
+  let tamEkranBizden = false;   // tam ekranı biz mi açtık
+
+  function molaCikisKorumasiKur() {
+    if (!molaKilit) return;
+    try {
+      history.pushState({ gozMolasi: 1 }, '');
+      molaGecmisi = true;
+    } catch { molaGecmisi = false; }
+
+    // Tam ekran: sistem çubukları gizlenince geri tuşu da kaybolur.
+    // Kullanıcı hareketi olmadan reddedilebilir; REDDEDİLİRSE MOLA
+    // YİNE ÇALIŞIR, kullanıcıya hata göstermiyoruz.
+    try {
+      const k = document.documentElement;
+      if (k.requestFullscreen && !document.fullscreenElement) {
+        k.requestFullscreen({ navigationUI: 'hide' })
+          .then(() => { tamEkranBizden = true; })
+          .catch(() => { tamEkranBizden = false; });
+      }
+    } catch { tamEkranBizden = false; }
+  }
+
+  function molaCikisKorumasiniKaldir() {
+    if (tamEkranBizden && document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    }
+    tamEkranBizden = false;
+    if (molaGecmisi) {
+      // Eklediğimiz girişi geri al ki geri tuşu sonradan normal çalışsın.
+      molaKapaniyor = true;
+      molaGecmisi = false;
+      try { history.back(); } catch { molaKapaniyor = false; }
+      setTimeout(() => { molaKapaniyor = false; }, 400);
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    if (molaKapaniyor) { molaKapaniyor = false; return; }
+    if (!molaAcik || !molaGecmisi) return;
+    // Geri tuşuna basıldı ama mola sürüyor: girişi yeniden ekle.
+    try { history.pushState({ gozMolasi: 1 }, ''); } catch {}
+    molaIpucuGoster();
+  });
+
+  let ipucuZaman = 0;
+  function molaIpucuGoster() {
+    const e = $('molaIpucu');
+    if (!e) return;
+    e.textContent = motor.ayarlar.molaAtlanabilir
+      ? CS('Mola sürüyor. Bitirmek için "Molayı atla"yı basılı tut.',
+           'Break in progress. Hold “Skip break” to end it.')
+      : CS('Mola sürüyor — birkaç saniye kaldı.',
+           'Break in progress — a few seconds left.');
+    e.hidden = false;
+    clearTimeout(ipucuZaman);
+    ipucuZaman = setTimeout(() => { e.hidden = true; }, 2500);
+  }
+
   function molaEkraniAc() {
     molaAcik = true;
+    molaCikisKorumasiKur();
     og.molaEkran.classList.add('acik');
     // Doğrudan çağırıyoruz, requestAnimationFrame ile değil:
     // sekme arka plandayken rAF hiç çalışmıyor ve egzersiz hiç
@@ -1361,6 +1453,7 @@
   }
 
   function molaEkraniKapat() {
+    molaCikisKorumasiniKaldir();
     molaAcik = false;
     egzersiziDurdur();
     og.molaEkran.classList.remove('acik', 'bitmek-uzere');
@@ -1465,7 +1558,13 @@
 
   let balonZaman = null;
   function balonGoster(saniye) {
-    og.balonMetin.textContent = `${Math.ceil(saniye)} sn sonra göz molası`;
+    /* SÖZLÜKTEN DEĞİL `CS`TEN. Sözlük TAM eşleşme arıyor; içinde
+       değişen bir sayı olan metin oraya konamaz. Nitekim konmuş:
+       `'15 sn sonra göz molası'` diye tek bir değer vardı, yani
+       yalnız 15'te çevriliyordu; 14'te Türkçeye dönüyordu. */
+    const kalanSn = Math.ceil(saniye);
+    og.balonMetin.textContent = CS(`${kalanSn} sn sonra göz molası`,
+                                   `Eye break in ${kalanSn} s`);
     og.balon.classList.add('acik');
     calSes(1100, 0.18);
     bildirimGonder('Mola geliyor', `${Math.ceil(saniye)} saniye sonra göz molası.`);
@@ -1945,7 +2044,8 @@
       d.setAttribute('aria-checked', d.dataset.tema === tema ? 'true' : 'false');
     });
     const s = TEMALAR.find((t) => t.id === tema);
-    og.temaAdi.textContent = s ? s.ad : 'Seçince hemen uygulanır';
+    og.temaAdi.textContent = s ? s.ad
+      : CS('Seçince hemen uygulanır', 'Applies immediately');
   }
 
   function temaUygula(t) {
@@ -1972,6 +2072,8 @@
     og.ayAtla.checked = motor.ayarlar.molaAtlanabilir;
     og.aySes.checked = motor.ayarlar.sesAcik;
     og.ayBosta.checked = bostaAcik;
+    og.ayUzakSifirla.checked = uzakSifirla;
+    og.ayMolaKilit.checked = molaKilit;
     og.ayOtomatik.checked = otomatikBasla;
     og.ayTitresim.checked = titresimAcik;
     og.ayArkaPlan.checked = arkaPlanAcik;
@@ -2014,6 +2116,9 @@
     motor.ayarlar.molaAtlanabilir = og.ayAtla.checked;
     motor.ayarlar.sesAcik = og.aySes.checked;
     bostaAcik = og.ayBosta.checked;
+    uzakSifirla = og.ayUzakSifirla.checked;
+    molaKilit = og.ayMolaKilit.checked;
+    motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
     otomatikBasla = og.ayOtomatik.checked;
     titresimAcik = og.ayTitresim.checked;
     arkaPlanAcik = og.ayArkaPlan.checked;
@@ -2084,6 +2189,8 @@
       localStorage.setItem(KAYIT_ANAHTARI, JSON.stringify({
         ...motor.disaAktar(),
         bostaAcik,
+        uzakSifirla,
+        molaKilit,
         otomatikBasla,
         titresimAcik,
         arkaPlanAcik,

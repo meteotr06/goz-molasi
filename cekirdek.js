@@ -28,6 +28,16 @@ const VARSAYILAN_AYARLAR = {
   // görüyor ve mola hiç gelmiyordu. 20 dakika, normal bir
   // çalışma ritminde sekme kapatıp açmayı tolere ediyor.
   kapaliDevamEsigi: 1200,   // saniye — 20 dk
+  /* UZUN UZAK KALMA SAYACI SIFIRLASIN MI?
+     Varsayılan açık: 5 dakikadan uzun uzaklaşmada gözler gerçekten
+     dinlenmiştir, sayacı baştan başlatmak doğrudur.
+
+     Ama bu bizim kararımız ve kullanıcı katılmayabilir — haklı
+     olabileceği bir yer var: telefonda başka uygulamaya geçmek
+     "ekrandan uzaklaşmak" değildir, hâlâ ekrana bakılıyor.
+     Kapatan kullanıcıda sayaç hiç sıfırlanmaz; geçen süre gerçek
+     saatten hesaplanır ve mola hak edildiyse verilir. */
+  uzakKalincaSifirla: true,
   molaAtlanabilir: false,   // VARSAYILAN: mola atlanamaz. 20 sn kesin.
   sesAcik: true,
 
@@ -464,6 +474,11 @@ class MolaMotoru {
         • Hedef kapalıyken geçtiyse: kısa kapanmaysa molayı kısa bir
           payla verir, uzun kapanmaysa temiz başlar. */
   sayaciGeriYukle(veri) {
+    /* Her cagride bayraklar sifirlanir. Bu islev birden fazla kez
+       cagrilabiliyor; onceki cagridan kalan bir bayrak, ekranla
+       CELISEN bir cumle yazdiriyordu. */
+    this.sifirlanmaSebebi = null;
+    this.gecikmisMola = null;
     const hedef = +veri.hedefZaman;
     const kayitAni = +veri.kayitAni;
     if (!Number.isFinite(hedef) || !Number.isFinite(kayitAni)) return false;
@@ -484,7 +499,14 @@ class MolaMotoru {
     const kapaliKalan = (simdi - kayitAni) / 1000;
     // Sekme kapalıyken geçen süre için dinlenmeEsigi DEĞİL
     // kapaliDevamEsigi kullanılır — sebebi ayarın yanında yazılı.
-    const esik = this.ayarlar.kapaliDevamEsigi || this.ayarlar.dinlenmeEsigi;
+    /* Kullanıcı "uzak kalınca sıfırlama" ayarını kapattıysa süre
+       sınırı yok: ne kadar uzak kalırsa kalsın sayaç devam eder.
+       Saatin geriye alınması (kapaliKalan < 0) yine ayrı tutuluyor —
+       o bir tercih değil, bozuk veri. */
+    const sifirlansin = this.ayarlar.uzakKalincaSifirla !== false;
+    const esik = sifirlansin
+      ? (this.ayarlar.kapaliDevamEsigi || this.ayarlar.dinlenmeEsigi)
+      : Infinity;
     if (kapaliKalan < 0 || kapaliKalan > esik) {
       // Kullanıcıya NEDEN sıfırlandığını söyleyebilmek için sebebi
       // tutuyoruz. Sessizce sıfırlanan sayaç "bozuk" gibi duruyor.
@@ -535,7 +557,12 @@ class MolaMotoru {
        Yeni pencere `dinlenmeEsigi`. O ayarın tanımı zaten bu: bundan
        kısa bir uzaklaşmada gözler dinlenmiş sayılmaz. Mola hâlâ borç,
        o yüzden veriliyor. */
-    const molaPenceresi = this.ayarlar.dinlenmeEsigi || 300;
+    /* Ayar kapalıyken pencere sınırsız: mola ne zaman düşmüş olursa
+       olsun, dönüşte veriliyor. Kullanıcının istediği tam buydu —
+       "kapansa bile molalar çalışsın". */
+    const molaPenceresi = (this.ayarlar.uzakKalincaSifirla === false)
+      ? Infinity
+      : (this.ayarlar.dinlenmeEsigi || 300);
     if (kalan <= 0 && kapaliKalan <= molaPenceresi) {
       this._kalpAtisiBaslat();
       this.hedefZaman = simdi + 25000;

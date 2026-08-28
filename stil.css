@@ -584,6 +584,16 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
    beyanı, görünüm tercihi değil. */
 [hidden] { display: none !important; }
 
+/* Bildirimin sınırını anlatan not — vaadi küçülten metin,
+   düğmenin hemen altında durmalı ki okunmadan izin verilmesin. */
+.bildirim-siniri {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--yazi-soluk);
+  max-width: 52ch;
+}
+
 /* Şeritteki bağlantı: görünüm aynı, dokunma alanı büyük.
    Ortak `.baglanti-dugme` `padding:0` taşıyor ve 21px kalıyor —
    telefonda dar. Sınıfı değiştirmiyoruz, orada da kullanılıyor;
@@ -592,6 +602,17 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 #yenilikAyrinti {
   padding: 12px 8px;
   margin: -8px -8px -4px;
+}
+
+.mola-ipucu {
+  margin: 10px 0 0;
+  padding: 8px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  max-width: 34ch;
 }
 
 /* NELER DEĞİŞTİ listesi (K-44) */

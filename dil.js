@@ -105,6 +105,10 @@ const SOZLUK = {
   '↺ Sıfırla': '↺ Reset',
   'Sıfırla': 'Reset',
   '🔔 Bildirimlere izin ver': '🔔 Allow notifications',
+  'Bildirimler uygulama açıkken çalışır. Telefon kilitliyken ya da tarayıcı arka plandayken uyarı gelmeyebilir; bunun için verilerin bir sunucuya gitmesi gerekirdi, göndermiyoruz.':
+    'Notifications work while the app is open. If your phone is locked or the browser is in the background, the alert may not arrive — delivering it would mean sending your data to a server, and we do not.',
+  'Bilgisayarda başka pencereye geçsen de sayaç döner. Telefonda tarayıcı arka plandaki sayfayı uyutabilir; o sırada mola uyarısı gelmeyebilir. Geri döndüğünde geçen süre gerçek saatten hesaplanır. Pili biraz daha çok kullanır.':
+    'On a computer the timer keeps running even if you switch windows. On a phone the browser may suspend a backgrounded page, so the break alert may not arrive while you are away. When you come back, the elapsed time is worked out from the clock. Uses a little more battery.',
   '⬇ Uygulama olarak kur': '⬇ Install as app',
   'Uygulama olarak kur': 'Install as app',
   'tamamlanan mola': 'breaks taken',
@@ -186,7 +190,6 @@ const SOZLUK = {
   'Bırakma…': 'Keep holding…',
   'Mola tamam': 'Break done',
   'Mola atlandı': 'Break skipped',
-  '15 sn sonra göz molası': 'Eye break in 15 s',
   '5 dk ertele': 'Snooze 5 min',
   'Dışarısı': 'Outside',
   'Senin durumun': 'Your progress',
@@ -238,6 +241,12 @@ const SOZLUK = {
   'Arka planda çalışmaya devam et': 'Keep running in the background',
   'Başka uygulamaya geçsen de sayaç dönmeye devam eder. Pili biraz daha çok kullanır.':
     'The timer keeps running when you switch apps. Uses a little more battery.',
+  'Uzun süre uzak kalınca sayacı sıfırla': 'Reset the timer after a long absence',
+  'Açıkken: 5 dakikadan uzun uzaklaşırsan gözlerin dinlendi sayılır, sayaç baştan başlar. Kapatırsan sayaç hiç sıfırlanmaz — uygulamayı kapatıp saatler sonra açsan bile kaldığın yerden devam eder ve hak ettiğin mola verilir.':
+    'When on: if you are away for more than 5 minutes, your eyes are considered rested and the timer starts over. When off, the timer is never reset — even if you close the app and open it hours later, it carries on and gives you the break you are owed.',
+  'Molada kazayla çıkmayı önle': 'Prevent leaving the break by accident',
+  'Mola boyunca tam ekrana geçer ve geri tuşu molayı bitirmez. Kilitlemez: Esc her zaman çıkarır, istersen molayı yine atlayabilirsin.':
+    'Goes full screen during the break and the back button no longer ends it. It does not lock you in: Esc always exits, and you can still skip the break.',
   'Boşta durdurma': 'Pause when idle',
   "Dokunulmazsa sayaç durur; 5 dk'dan uzun uzak kalırsan baştan sayar":
     'The timer pauses if untouched; away longer than 5 min and it restarts',

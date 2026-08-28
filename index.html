@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v100">
+<link rel="stylesheet" href="stil.css?s=v105">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -145,6 +145,14 @@
         <button class="dugme sade kucuk" id="bildirimDugme">🔔 Bildirimlere izin ver</button>
         <button class="dugme ana kucuk gizli" id="kurDugme">⬇ Uygulama olarak kur</button>
       </div>
+      <!-- BİLDİRİMİN SINIRI AÇIKÇA YAZIYOR.
+           Ölçüldü: `showTrigger` / `TimestampTrigger` yok, yani
+           gerçekten zamanlanmış bir bildirim kurulamıyor. Bildirimi
+           SAYFA tetikliyor, servis işçisi yalnızca gösteriyor — sayfa
+           uykudaysa tetikleyen kimse yok. Sunucudan itme (push) bunu
+           çözerdi ama bu uygulamanın sunucusu yok ve olmasını da
+           istemiyoruz: hiçbir veri dışarı çıkmıyor. -->
+      <p class="bildirim-siniri" id="bildirimSiniri">Bildirimler uygulama açıkken çalışır. Telefon kilitliyken ya da tarayıcı arka plandayken uyarı gelmeyebilir; bunun için verilerin bir sunucuya gitmesi gerekirdi, göndermiyoruz.</p>
     </div>
   </main>
 
@@ -458,6 +466,9 @@
     <div class="mola-alt-sira">
       <button class="dugme gizli" id="atlaDugme"
               aria-label="Molayı atla — basılı tut">Atlamak için basılı tut</button>
+      <!-- Geri tuşuna basıldığında çıkan ipucu. Sessizce yutmak,
+           kullanıcıya "tuş bozuk" hissi verirdi. -->
+      <p class="mola-ipucu" id="molaIpucu" hidden role="status"></p>
     </div>
 
     <p class="gizli-metin" id="ekranOkuyucu" aria-live="polite"></p>
@@ -545,6 +556,15 @@
         </span>
       </div>
 
+      <!-- KULLANICI İSTEĞİ: "moladan çıkışını engelle, bi deyince
+           çıkıyor". Kilitleme değil — Esc her zaman çalışır. -->
+      <div class="satir">
+        <label for="ayMolaKilit">Molada kazayla çıkmayı önle
+          <small>Mola boyunca tam ekrana geçer ve geri tuşu molayı bitirmez. Kilitlemez: Esc her zaman çıkarır, istersen molayı yine atlayabilirsin.</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayMolaKilit"><i></i></span>
+      </div>
+
       <div class="satir">
         <label for="ayAtla">Mola atlanabilsin
           <small>Kapatırsan molayı geçemezsin</small>
@@ -574,11 +594,25 @@
       </div>
 
       <div class="satir">
+        <!-- SÖZ, ÖLÇÜLEN GERÇEĞE İNDİRİLDİ.
+             Eskiden "Başka uygulamaya geçsen de sayaç dönmeye devam
+             eder." diyordu. Bilgisayarda doğru, TELEFONDA DEĞİL:
+             tarayıcı arka plandaki sayfayı uyutuyor ve mola vakti
+             gelince uyarı çıkmıyor. Gelmeyen bir uyarıyı vaat etmek,
+             sınırı baştan söylemekten kötüdür. -->
         <label for="ayArkaPlan">Arka planda çalışmaya devam et
-          <small id="arkaPlanNot">Başka uygulamaya geçsen de sayaç dönmeye devam eder.
-            Pili biraz daha çok kullanır.</small>
+          <small id="arkaPlanNot">Bilgisayarda başka pencereye geçsen de sayaç döner. Telefonda tarayıcı arka plandaki sayfayı uyutabilir; o sırada mola uyarısı gelmeyebilir. Geri döndüğünde geçen süre gerçek saatten hesaplanır. Pili biraz daha çok kullanır.</small>
         </label>
         <span class="anahtar"><input type="checkbox" id="ayArkaPlan"><i></i></span>
+      </div>
+
+      <!-- KULLANICI İSTEĞİ: "kapansa bile sayaç arkada saysın".
+           Varsayılan bugünkü davranış (açık); isteyen kapatır. -->
+      <div class="satir">
+        <label for="ayUzakSifirla">Uzun süre uzak kalınca sayacı sıfırla
+          <small>Açıkken: 5 dakikadan uzun uzaklaşırsan gözlerin dinlendi sayılır, sayaç baştan başlar. Kapatırsan sayaç hiç sıfırlanmaz — uygulamayı kapatıp saatler sonra açsan bile kaldığın yerden devam eder ve hak ettiğin mola verilir.</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayUzakSifirla"><i></i></span>
       </div>
 
       <div class="satir">
@@ -704,16 +738,16 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v100"></script>
-  <script src="dil.js?s=v100"></script>
-  <script src="bilgiler.js?s=v100"></script>
-  <script src="bilgiler_en.js?s=v100"></script>
-  <script src="dunya.js?s=v100"></script>
-  <script src="egzersiz.js?s=v100"></script>
-  <script src="reklam.js?s=v100"></script>
-  <script src="kopru.js?s=v100"></script>
-  <script src="cekirdek.js?s=v100"></script>
-  <script src="mola_icerik.js?s=v100"></script>
-  <script src="arayuz.js?s=v100"></script>
+  <script src="degisiklikler.js?s=v105"></script>
+  <script src="dil.js?s=v105"></script>
+  <script src="bilgiler.js?s=v105"></script>
+  <script src="bilgiler_en.js?s=v105"></script>
+  <script src="dunya.js?s=v105"></script>
+  <script src="egzersiz.js?s=v105"></script>
+  <script src="reklam.js?s=v105"></script>
+  <script src="kopru.js?s=v105"></script>
+  <script src="cekirdek.js?s=v105"></script>
+  <script src="mola_icerik.js?s=v105"></script>
+  <script src="arayuz.js?s=v105"></script>
 </body>
 </html>
