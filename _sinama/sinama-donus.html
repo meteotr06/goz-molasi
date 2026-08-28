@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- YAYINA GITMEZ. Adi `sinama*` desenine uyuyor; kopyalama listesi
+     bunu disliyor (K-48: kurali hatirlamaya degil ADA bagla). -->
+<title>Göz Molası — çık ve geri dön sınaması</title>
+<style>
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 24px; max-width: 960px; }
+  h1 { font-size: 18px; }
+  .g { color: #0a7a3d; } .k { color: #b42318; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  td, th { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left;
+           vertical-align: top; font-size: 13px; }
+  #ozet { margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+          background: #f3f4f6; font-weight: 600; }
+  .not { background: #fff8e6; border-left: 4px solid #b54708; padding: 10px 12px;
+         margin: 12px 0; font-size: 13px; }
+  iframe { position: absolute; left: -9999px; width: 400px; height: 860px; }
+</style>
+</head>
+<body>
+
+<h1>Çık ve geri dön — <code>index.html</code></h1>
+
+<div class="not">
+  <b><code>sinama-web.html</code>'den farkı.</b> O, <code>MolaMotoru</code>
+  sınıfını <i>doğrudan</i> çağırıyor. Bu ise <code>index.html</code>'i bir
+  <code>iframe</code> içinde <b>gerçekten yüklüyor</b>. Yani ölçülen şey bir
+  işlevin dönüş değeri değil, <b>kullanıcının geri döndüğünde ekranda
+  gördüğü sayı ve yazı</b>.
+  <br /><br />
+  <b>Niye gerekliydi.</b> Kullanıcı "telefonda sayaç hep yeniden başlıyor"
+  dedi. O sırada masaüstü tarafında 10, web çekirdeğinde 8 sınama vardı ve
+  <b>hiçbiri uygulamayı kapatıp açmıyordu</b>. Hata tam o boşlukta yaşıyordu.
+</div>
+
+<div class="not">
+  <b>BU SAYFANIN ÖLÇEMEDİĞİ ŞEY — göç dalı.</b>
+  “Telefonda sayacı sıfırlama” göçü yalnızca <code>pointer: coarse</code>
+  olan cihazlarda çalışır. Bu sayfa masaüstü tarayıcıda koştuğunda o dal
+  <b>hiç çalışmaz</b>; aşağıdaki iki göç sınaması “korundu” der ama aslında
+  <b>göçün olmadığı</b> bir dünyayı ölçer. Geçmeleri, göçün doğru olduğunu
+  göstermez.
+  <br /><br />
+  Gerçek dal 28.08.2026'da <b>telefon taklidi açılarak</b> ayrıca ölçüldü:
+  hiç seçim yapmamış eski kullanıcıda göç oluyor; kullanıcı ayarı kendisi
+  açtıysa korunuyor; göç ikinci kez tekrarlamıyor. Bu ölçüm elle yapıldı,
+  bu sayfa onu otomatik tekrarlamıyor.
+</div>
+
+<table id="sonuc"><thead>
+  <tr><th style="width:30%">Durum</th><th style="width:24%">Beklenen</th>
+      <th style="width:26%">Çıkan</th><th>Sonuç</th></tr>
+</thead><tbody></tbody></table>
+
+<div id="ozet">koşuyor…</div>
+
+<script>
+(function () {
+  var govde = document.querySelector('#sonuc tbody');
+  var gecti = 0, kaldi = 0, sayac = 0;
+
+  function yaz(ad, beklenen, cikan, tamam) {
+    var s = document.createElement('tr');
+    s.innerHTML = '<td>' + ad + '</td><td>' + beklenen + '</td><td>' + cikan +
+      '</td><td class="' + (tamam ? 'g">TAMAM' : 'k">KALDI') + '</td>';
+    govde.appendChild(s);
+    tamam ? gecti++ : kaldi++;
+  }
+
+  var ANAHTAR = 'goz-molasi-v1';
+  var GORULEN = 'goz-molasi-gorulen';
+  var DK = 60000;
+
+  /* Uygulamayı GERÇEKTEN aç.
+     Adrese sayaç ekliyoruz: aynı adresi tekrar yüklemek bfcache'ten
+     dönebilir, o zaman açılış kodu HİÇ koşmaz ve sınama sessizce
+     "sorun yok" der. Canlıda tam bu tuzağa düşüldü. */
+  function uygulamayiAc() {
+    return new Promise(function (coz) {
+      var f = document.createElement('iframe');
+      f.src = '../index.html?sinama=' + (++sayac);
+      f.onload = function () { setTimeout(function () { coz(f); }, 200); };
+      document.body.appendChild(f);
+    });
+  }
+
+  /* Sınamanın kurduğu durumu, ÖNCEKİ iframe'in `kaydet()`i ezmesin.
+     15 saniyede bir ve her kapanışta yazıyor. Bu yüzden her kurgudan
+     önce eski çerçeveler kapatılıyor. */
+  function cerceveleriKapat() {
+    var f = document.querySelectorAll('iframe');
+    for (var i = 0; i < f.length; i++) f[i].remove();
+  }
+
+  function durumYaz(durumAdi, kapaliDk, hedefFarkSn, ek) {
+    var s = Date.now();
+    var kayit = {
+      durum: durumAdi,
+      kayitAni: s - kapaliDk * DK,
+      hedefZaman: s - kapaliDk * DK + hedefFarkSn * 1000
+    };
+    if (ek) { for (var a in ek) if (ek.hasOwnProperty(a)) kayit[a] = ek[a]; }
+    localStorage.setItem(ANAHTAR, JSON.stringify(kayit));
+    localStorage.removeItem('goz-molasi-lider');
+  }
+
+  /* KURGU KUR VE UYGULAMAYI AÇ — sıra önemli, sırayı bozmak sınamayı
+     sessizce yalancı yapıyor.
+
+     Çerçeveyi kaldırmak `pagehide`i tetikliyor, o da `kaydet()`i
+     çalıştırıyor. Bu HEMEN olmuyor: kaldırdıktan sonra durumu yazsam
+     bile eski çerçevenin kaydı üstüne biniyor ve sınama BİR ÖNCEKİ
+     senaryonun durumunu ölçüyor. Ölçüldü: "3 dk uzakta" sınaması,
+     bir önceki sınamanın 13 dakikasını gösterdi ve yanlışlıkla geçti.
+
+     Bu yüzden: kaldır → BEKLE → yaz → aç. */
+  function kur(durumAdi, kapaliDk, hedefFarkSn, ek) {
+    cerceveleriKapat();
+    return new Promise(function (r) { setTimeout(r, 150); }).then(function () {
+      if (durumAdi) durumYaz(durumAdi, kapaliDk, hedefFarkSn, ek);
+      return uygulamayiAc();
+    });
+  }
+
+  /* AYAR KUTUSUNU DOGRU OKUMA.
+
+     Iki sinama kutuyu DOGRUDAN okuyordu ve HER ZAMAN `false`
+     goruyordu - cunku `ayarlariPencereyeYaz()` yalnizca ayar
+     penceresi ACILINCA kosuyor, kutunun HTML'inde de `checked`
+     yok. Yani o iki sinama gocu hic olcmedi; hangi ayar yazilirsa
+     yazilsin ayni sonucu veriyordu.
+
+     Bos sinama, sinamasizliktan kotudur: gecerken guven verir,
+     kalirken yanlis yere baktirir. Once pencereyi aciyoruz. */
+  function ayarKutusu(f, kimlik) {
+    var d = f.contentDocument;
+    var dugme = d.getElementById('ayarDugme');
+    if (dugme) { try { dugme.click(); } catch (e) {} }
+    return d.getElementById(kimlik);
+  }
+
+  function ekran(f) {
+    var d = f.contentDocument;
+    var s = d.getElementById('sureYazi');
+    var n = d.getElementById('durumNotu');
+    return {
+      sure: s ? s.textContent.trim() : null,
+      notGorunur: !!n && !n.hidden,
+      notMetni: n && !n.hidden
+        ? (d.getElementById('durumNotuMetin') || {}).textContent || '' : '',
+      acildi: !!d.getElementById('sureYazi')
+    };
+  }
+
+  /* SERVİS İŞÇİSİ VE ÖNBELLEK KAPATILIYOR — bu satırlar olmadan
+     sınamanın hiçbir değeri yok.
+
+     Ölçüldü: kodda bilerek bir hata bırakıp koştuğumda sınama
+     "HEPSİ GEÇTİ" dedi. Çünkü iframe `cekirdek.js`i DİSKTEN değil
+     servis işçisinin önbelleğinden alıyordu — yani sınanan şey
+     yazdığım kod değil, daha önce önbelleğe girmiş bir kopyaydı.
+
+     Geçen ama eski kodu ölçen bir sınama, hiç sınama olmamasından
+     KÖTÜDÜR: yanlış bir güvence verir. */
+  function onbellegiKapat() {
+    var isler = [];
+    if (navigator.serviceWorker) {
+      isler.push(navigator.serviceWorker.getRegistrations()
+        .then(function (r) { return Promise.all(r.map(function (x) {
+          return x.unregister(); })); }).catch(function () {}));
+    }
+    if (window.caches) {
+      isler.push(caches.keys().then(function (a) {
+        return Promise.all(a.map(function (x) { return caches.delete(x); }));
+      }).catch(function () {}));
+    }
+    return Promise.all(isler);
+  }
+
+  /* KANIT SINAMASI — bu geçmezse aşağıdaki hiçbir sonuç bağlayıcı değil.
+
+     Adres karşılaştırmak yetmiyor: hangi damganın kullanıldığını
+     bilmiyoruz ve yanlış adresi sorarsak sahte bir "aynı" çıkar.
+     Kesin ölçüm şu: iframe'in GERÇEKTEN ÇALIŞTIRDIĞI işlevin gövdesini
+     al, diskten taze çekilen dosyada ara. Varsa çalışan kod diskteki
+     koddur; yoksa önbellekten gelen eski bir kopyadır. */
+  /* Sebebi yutmuyoruz. "Ölçülemedi" tek başına işe yaramaz: neyin
+     ölçülemediğini bilmeden düzeltilemez. */
+  /* Çerçevedeki bir global'e BAKMIYORUZ — iki kez yanlış ölçtürdü:
+       `contentWindow.MolaMotoru` → "yok" (üst düzey `class` bildirimi
+       `window`'a yazılmaz, yalnızca sözcüksel kapsamda durur)
+       Arsa'da `yenilik_goster` → "yok" (dosya bir IIFE içinde)
+     İkisinde de işlev gerçekten yoktu değil, yanlış yere bakıyordum.
+
+     Bunun yerine ADRESİ karşılaştırıyoruz: çerçevenin yüklediği
+     `cekirdek.js?s=vNN` ile diskten taze çekilen aynı dosya. Bu ölçüm
+     hiçbir global'e bağlı değil ve her projede aynı çalışır. */
+  function kaynakTazeMi() {
+    return uygulamayiAc().then(function (f) {
+      var b = f.contentDocument.querySelector('script[src*="cekirdek.js"]');
+      if (!b) throw new Error('cekirdek.js betiği çerçevede bulunamadı');
+      var adres = b.getAttribute('src');
+      return Promise.all([
+        // Çerçevenin kullandığı ADRESİN TA KENDİSİ — önbellekteyse
+        // önbellekten gelir; ölçmek istediğimiz de tam bu.
+        fetch(adres).then(function (y) { return y.text(); }),
+        // Diskteki gerçek dosya. `cache: 'reload'` şart: sorgu eklemek
+        // sunucuyu atlatır ama araya giren servis işçisini atlatmaz.
+        fetch('cekirdek.js?taze=' + Date.now(), { cache: 'reload' })
+          .then(function (y) { return y.text(); })
+      ]).then(function (i) { return i[0] === i[1]; });
+    }).catch(function (e) { return 'HATA: ' + e.message; });
+  }
+
+  var sinamalar = [];
+  function ekle(ad, islev) { sinamalar.push({ ad: ad, islev: islev }); }
+
+  var tazeMi = null;   // 0. bölümün sonucu; özet buna bakıyor
+
+  ekle('0) Ölçülen kod diskteki kod mu', function (D) {
+    return kaynakTazeMi().then(function (ayni) {
+      tazeMi = ayni;
+      D('önbellek devrede olmasın',
+        ayni === true ? 'aynı dosya'
+          : (ayni === false ? 'ÖNBELLEKTEN GELİYOR' : String(ayni)),
+        ayni === true);
+    });
+  });
+
+  // ---- 1) Kısa kapanma: kaldığı yerden devam ----
+  ekle('2 dk kapalı, 13 dk kalmıştı', function (D) {
+    return kur('calisiyor', 2, 15 * 60).then(function (f) {
+      var e = ekran(f);
+      var dk = parseInt((e.sure || '0:00').split(':')[0], 10);
+      D('≈13:00 göstersin', e.sure, dk >= 12 && dk <= 13);
+    });
+  });
+
+  // ---- 2) KULLANICININ ŞİKÂYETİ: mola uzaktayken geldi ----
+  // Eskiden pencere 60 saniyeydi; telefonda hiç tutmuyordu ve ekran
+  // 20:00'a dönüyordu. "Sayaç hep yeniden başlıyor" tam buydu.
+  ekle('3 dk uzakta, mola 2 dk önce düştü', function (D) {
+    return kur('calisiyor', 3, 60).then(function (f) {
+      var e = ekran(f);
+      D('20:00 OLMASIN (mola gelsin)', e.sure,
+        e.sure !== '20:00' && e.acildi);
+    });
+  });
+
+  // ---- 3) Uzun kapanma: sıfırlansın AMA SÖYLESİN ----
+  ekle('25 dk kapalı kalındı', function (D) {
+    return kur('calisiyor', 25, 60).then(function (f) {
+      var e = ekran(f);
+      D('20:00 + sebep yazsın',
+        e.sure + (e.notGorunur ? ' + not var' : ' + NOT YOK'),
+        e.sure === '20:00' && e.notGorunur && /25/.test(e.notMetni));
+    });
+  });
+
+  // ---- 4) EN SESSİZ YOLDU: mola ekranında ayrılma ----
+  // Bu dal sebebi kurmadan dönüyordu; kullanıcı sayacın neden başa
+  // döndüğünü hiç öğrenemiyordu.
+  ekle('Mola ekranında 8 dk ayrılma', function (D) {
+    return kur('mola', 8, 0).then(function (f) {
+      var e = ekran(f);
+      D('sıfırlansın + sebep yazsın',
+        e.sure + (e.notGorunur ? ' + not var' : ' + SESSİZ'),
+        e.sure === '20:00' && e.notGorunur);
+    });
+  });
+
+  // ---- 5) Hiçbir sıfırlama sessiz olmasın (sınıf sınaması) ----
+  ekle('Dört sıfırlama yolu — sessiz kalan var mı', function (D) {
+    var durumlar = [['calisiyor', 25, 60], ['calisiyor', 60, 60],
+                    ['mola', 8, 0], ['hazir', 3, 0]];
+    var sessiz = [];
+    var z = Promise.resolve();
+    durumlar.forEach(function (d) {
+      z = z.then(function () {
+        cerceveleriKapat();
+        durumYaz(d[0], d[1], d[2]);
+        return uygulamayiAc().then(function (f) {
+          var e = ekran(f);
+          if (e.sure === '20:00' && !e.notGorunur) sessiz.push(d[0] + '/' + d[1] + 'dk');
+        });
+      });
+    });
+    return z.then(function () {
+      D('hiçbiri sessiz olmasın',
+        sessiz.length ? 'SESSİZ: ' + sessiz.join(', ') : 'hepsi söyledi',
+        sessiz.length === 0);
+    });
+  });
+
+  /* ---- KULLANICI İSTEĞİ: "kapansa bile sayaç arkada saysın" ----
+     Ayar kapatıldığında uzak kalma süresi sayacı SIFIRLAMAMALI.
+     5 saat, çünkü asıl şikâyet "uygulamayı kapatıp açınca baştan
+     başlıyor"du. */
+  ekle('Ayar KAPALI, 5 saat uzakta', function (D) {
+    return kur('calisiyor', 300, 60, { uzakSifirla: false }).then(function (f) {
+      var e = ekran(f);
+      D('sıfırlanmasın, mola verilsin', e.sure,
+        e.sure !== '20:00' && e.acildi);
+    });
+  });
+
+  ekle('Ayar AÇIK (varsayılan), 5 saat', function (D) {
+    return kur('calisiyor', 300, 60, { uzakSifirla: true }).then(function (f) {
+      var e = ekran(f);
+      D('sıfırlansın + sebep yazsın',
+        e.sure + (e.notGorunur ? ' + not var' : ' + NOT YOK'),
+        e.sure === '20:00' && e.notGorunur);
+    });
+  });
+
+  /* EKRANLA ÇELİŞEN CÜMLE OLMASIN.
+     Ölçüldü: ayar kapalıyken ekran 20:00 gösterirken not "sayaç
+     sıfırlanmadı" diyordu. Sebebi sıra hatasıydı — ayar, geri yükleme
+     kararından SONRA motora veriliyordu ve iki bayrak birden kalmıştı.
+     Kullanıcıya yanlış cümle söylemek, sessiz kalmaktan da kötü. */
+  ekle('Not ekranla çelişiyor mu', function (D) {
+    var celisenler = [];
+    var durumlar = [{ uzakSifirla: false }, { uzakSifirla: true }];
+    var z = Promise.resolve();
+    durumlar.forEach(function (ek) {
+      z = z.then(function () {
+        return kur('calisiyor', 300, 60, ek).then(function (f) {
+          var e = ekran(f);
+          if (e.sure === '20:00' && /sıfırlanmadı/.test(e.notMetni)) {
+            celisenler.push('uzakSifirla=' + ek.uzakSifirla);
+          }
+        });
+      });
+    });
+    return z.then(function () {
+      D('hiçbir dalda çelişki olmasın',
+        celisenler.length ? 'ÇELİŞKİ: ' + celisenler.join(', ') : 'çelişki yok',
+        celisenler.length === 0);
+    });
+  });
+
+  /* ---- KULLANICI İSTEĞİ: "moladan bi deyince çıkıyor" ----
+     Telefonun geri tuşu molayı bitiriyordu. Koruma açıkken geri tuşu
+     yutulmalı, kapalıyken eski davranış sürmeli.
+
+     `kur()` kullanmıyoruz: molayı çerçevenin İÇİNDE tetikleyip
+     çerçevenin KENDİ geçmişinde geri gitmemiz gerekiyor. */
+  function molaTetikle(f) {
+    var p = f.contentWindow;
+    p.molaMotoru.durum = 'calisiyor';
+    p.molaMotoru.hedefZaman = p.Date.now() + 200;
+    return new Promise(function (r) { setTimeout(r, 1400); });
+  }
+
+  ekle('Koruma AÇIK — geri tuşu molayı bitirmesin', function (D) {
+    return kur('calisiyor', 1, 600, { molaKilit: true }).then(function (f) {
+      return molaTetikle(f).then(function () {
+        var d = f.contentDocument;
+        var acikti = d.getElementById('molaEkran').classList.contains('acik');
+        f.contentWindow.history.back();
+        return new Promise(function (r) { setTimeout(r, 700); }).then(function () {
+          var halaAcik = d.getElementById('molaEkran').classList.contains('acik');
+          var ip = d.getElementById('molaIpucu');
+          D('mola sürsün + ipucu çıksın',
+            (acikti ? 'açıldı' : 'AÇILMADI') + ', geri sonrası ' +
+            (halaAcik ? 'sürüyor' : 'BİTTİ') +
+            (ip && !ip.hidden ? ' + ipucu' : ' + ipucu YOK'),
+            acikti && halaAcik && !!ip && !ip.hidden);
+        });
+      });
+    });
+  });
+
+  ekle('Koruma KAPALI — eski davranış sürsün', function (D) {
+    return kur('calisiyor', 1, 600, { molaKilit: false }).then(function (f) {
+      return molaTetikle(f).then(function () {
+        var d = f.contentDocument;
+        var acikti = d.getElementById('molaEkran').classList.contains('acik');
+        var kutu = d.getElementById('ayMolaKilit');
+        var ip = d.getElementById('molaIpucu');
+        D('mola açılsın, ipucu olmasın',
+          (acikti ? 'açıldı' : 'AÇILMADI') +
+          ', kutu=' + (kutu ? kutu.checked : '?') +
+          (ip && !ip.hidden ? ', ipucu VAR' : ', ipucu yok'),
+          acikti && kutu && kutu.checked === false && !!ip && ip.hidden);
+      });
+    });
+  });
+
+  /* ---- GÖÇ: telefon varsayılanı ESKİ kullanıcıya ulaşıyor mu ----
+     Kullanıcı aynı hatayı DÖRT kez bildirdi. Sebebi: ayar v104'te
+     herkes için açık varsayılanıyla eklendi ve cihaza kaydedildi;
+     sonraki cihaz-bağımlı varsayılan kayıtlı değeri EZEMİYOR.
+     Yani düzeltmeler yalnızca temiz kurulumu kapsıyordu.
+
+     NOT: bu düzenek dokunmatik cihazı taklit EDEMİYOR (`pointer:
+     coarse` iframe'de de masaüstü). O yüzden burada göçün kendisi
+     değil, KULLANICININ SEÇİMİNİN KORUNDUĞU ölçülüyor — göçün
+     çalıştığı tarayıcıda ayrıca ölçüldü. */
+  ekle('Kullanıcı seçimi göçle ezilmiyor', function (D) {
+    return kur('calisiyor', 10, 60,
+               { uzakSifirla: true, uzakSifirlaSecildi: true }).then(function (f) {
+      var kutu = ayarKutusu(f, 'ayUzakSifirla');
+      D('seçim korunsun (açık kalsın)',
+        kutu ? String(kutu.checked) : 'kutu yok',
+        !!kutu && kutu.checked === true);
+    });
+  });
+
+  ekle('Göç bir kez çalışır, tekrarlamaz', function (D) {
+    return kur('calisiyor', 10, 60,
+               { uzakSifirla: true, uzakSifirlaGocu: true }).then(function (f) {
+      var kutu = ayarKutusu(f, 'ayUzakSifirla');
+      D('ikinci kez ezmesin',
+        kutu ? String(kutu.checked) : 'kutu yok',
+        !!kutu && kutu.checked === true);
+    });
+  });
+
+  ekle('Sürüm numarası görünüyor mu', function (D) {
+    return kur('calisiyor', 1, 600).then(function (f) {
+      var e = f.contentDocument.getElementById('surumSatiri');
+      var m = e ? e.textContent.match(/(\d+)/) : null;
+      D('damgadan üretilsin', e ? e.textContent : 'yok',
+        !!m && parseInt(m[1], 10) > 0);
+    });
+  });
+
+  // ---- 6) Bozuk kayıt uygulamayı öldürmesin ----
+  // Acilmayan uygulama en agir basarisizlik: kullanici bir daha giremez.
+  ekle('Bozuk kayıt', function (D) {
+    cerceveleriKapat();
+    localStorage.setItem(ANAHTAR, '{bozuk');
+    return uygulamayiAc().then(function (f) {
+      var e = ekran(f);
+      D('yine açılsın', e.acildi ? 'açıldı (' + e.sure + ')' : 'AÇILMADI',
+        e.acildi);
+    });
+  });
+
+  // ---- 7) Saat geriye alınırsa sayaç donmasın ----
+  ekle('Saat 30 dk geriye alınmış', function (D) {
+    return kur('calisiyor', -30, 15 * 60).then(function (f) {
+      var e = ekran(f);
+      D('temiz başlasın', e.sure, e.sure === '20:00' && e.acildi);
+    });
+  });
+
+  // ---- 8) K-44: ilk ziyarette yenilik şeridi çıkmaz ----
+  ekle('İlk ziyaret — yenilik şeridi', function (D) {
+    cerceveleriKapat();
+    localStorage.removeItem(GORULEN);
+    localStorage.removeItem(ANAHTAR);
+    return uygulamayiAc().then(function (f) {
+      var n = f.contentDocument.getElementById('yenilikNotu');
+      var gorunur = !!n && !n.hidden;
+      D('çıkmasın', gorunur ? 'ÇIKTI' : 'çıkmadı', !gorunur);
+    });
+  });
+
+  // ---- 9) K-44: eski sürümden dönen görür ----
+  ekle('Eski sürümden dönen kullanıcı', function (D) {
+    cerceveleriKapat();
+    localStorage.setItem(GORULEN, '1');
+    return uygulamayiAc().then(function (f) {
+      var n = f.contentDocument.getElementById('yenilikNotu');
+      var gorunur = !!n && !n.hidden;
+      D('şerit çıksın', gorunur ? 'çıktı' : 'ÇIKMADI', gorunur);
+    });
+  });
+
+  // ---- 10) İşaret `kaydet()` tarafından silinmesin ----
+  // Ayri anahtarda tutulmasinin sebebi bu. Ayarlarin icine konsaydi
+  // 15 saniyede bir silinir, serit her acilista geri gelirdi.
+  ekle('İşaret kaydet() sonrası duruyor mu', function (D) {
+    cerceveleriKapat();
+    localStorage.setItem(GORULEN, '1');
+    return uygulamayiAc().then(function (f) {
+      var ilk = localStorage.getItem(GORULEN);
+      // Uygulamayı kapat: kapanışta kaydet() koşar
+      f.remove();
+      return new Promise(function (r) { setTimeout(r, 400); }).then(function () {
+        var son = localStorage.getItem(GORULEN);
+        D('işaret kalsın',
+          'gösterimde=' + ilk + ', kapanıştan sonra=' + son,
+          !!son && son === ilk && son !== '1');
+      });
+    });
+  });
+
+  // Sırayla koş: iframe'ler aynı localStorage'ı paylaşıyor.
+  var zincir = onbellegiKapat();
+  sinamalar.forEach(function (s) {
+    zincir = zincir.then(function () {
+      return s.islev(function (b, c, t) { yaz(s.ad, b, c, t); });
+    }).catch(function (e) {
+      yaz(s.ad, '—', 'HATA: ' + e.message, false);
+    });
+  });
+
+  zincir.then(function () {
+    cerceveleriKapat();
+    localStorage.removeItem(ANAHTAR);
+    localStorage.removeItem(GORULEN);
+    var toplam = gecti + kaldi;
+    var o = document.getElementById('ozet');
+    /* 0. bölüm geçmediyse "geçti" DEMEK YASAK. Ölçülen kodun sınanan
+       kod olduğunu bilmiyorsak aşağıdaki hiçbir satır bir şey
+       kanıtlamaz — ve yanlış bir güvence, hiç güvence olmamasından
+       kötüdür. 83'ün takımı bozuk kodla 13/13 "geçti" demişti. */
+    if (tazeMi !== true) {
+      o.textContent = 'SONUÇLAR GEÇERSİZ — ölçülen kod diskteki kod değil ' +
+        '(önbellek). Aşağıdaki ' + toplam + ' satır bir şey kanıtlamıyor.';
+      o.style.background = '#fdeceb';
+    } else {
+      o.textContent = kaldi === 0
+        ? 'HEPSİ GEÇTİ — ' + toplam + ' sınama.'
+        : kaldi + ' / ' + toplam + ' KALDI.';
+      o.style.background = kaldi === 0 ? '#e7f6ec' : '#fdeceb';
+    }
+    window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi, toplam: toplam };
+  });
+}());
+</script>
+</body>
+</html>

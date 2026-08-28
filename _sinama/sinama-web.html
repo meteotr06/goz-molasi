@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- YAYINA GITMEMELI. Bu ic bir sinama sayfasi; kullanici
+     yuzu degil. 28.08.2026'da yanlislikla canliya cikti
+     (200 dondu) ve boyle yakalandi. Kopyalama listesinden
+     cikarilmali; noindex yalnizca ikinci savunma hatti. -->
+<title>Göz Molası — web çekirdeği sınaması (iç sınama)</title>
+<style>
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 24px; max-width: 900px; }
+  h1 { font-size: 18px; }
+  .g { color: #0a7a3d; } .k { color: #b42318; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  td, th { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left;
+           vertical-align: top; font-size: 13px; }
+  #ozet { margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+          background: #f3f4f6; font-weight: 600; }
+  .not { background: #fff8e6; border-left: 4px solid #b54708; padding: 10px 12px;
+         margin: 12px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Web çekirdeği sınaması — <code>cekirdek.js</code></h1>
+
+<div class="not">
+  <b>Niye var.</b> Masaüstü <code>.py</code> dosyalarının 10 sınaması vardı;
+  <b>web çekirdeğinin hiç yoktu.</b> Kullanıcıya molayı verip vermeyeceğine
+  karar veren kod buydu ve ölçülmüyordu.
+  <br /><br />
+  <b>Ne ölçüyor.</b> Ağırlıkla <b>çıkıp geri dönme</b> yolunu — uygulama
+  uyutulup yeniden yüklendiğinde ne olduğunu. Telefonda normal hâl budur,
+  masaüstünde neredeyse hiç yaşanmaz, ve hatanın yaşadığı yer tam burasıydı:
+  sekme açıkken yapılan hiçbir ölçüm onu göremezdi.
+</div>
+
+<table id="sonuc"><thead>
+  <tr><th style="width:34%">Durum</th><th style="width:22%">Beklenen</th>
+      <th style="width:22%">Çıkan</th><th>Sonuç</th></tr>
+</thead><tbody></tbody></table>
+
+<div id="ozet">koşuyor…</div>
+
+<!-- DAMGASIZ YÜKLEME ÖNBELLEKTEN GELİR.
+     Sunucuda `cache-control` ve `etag` yok, yalnız `last-modified`
+     var; bu durumda tarayıcı sezgisel önbellekleme yapar ve düzenek
+     ESKİ çekirdeği ölçüp "geçti" diyebilir. Zaman damgası ekleyerek
+     her koşumda taze dosya isteniyor. -->
+<!-- ÖNBELLEĞİ ÖNCE TEMİZLE — bayatlığı yakalamak yerine oluşmasını
+     engelle. Betik zaten `?t=` ile taze isteniyor ama servis işçisi
+     araya girerse o da yetmez. -->
+<script>
+window.__onbellekHazir = (async function () {
+    try {
+        const kayitlar = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(kayitlar.map(function (r) { return r.unregister(); }));
+    } catch (e) { }
+    try {
+        const adlar = await caches.keys();
+        await Promise.all(adlar.map(function (a) { return caches.delete(a); }));
+    } catch (e) { }
+    return true;
+}());
+</script>
+<script>
+/* ÇEKİRDEK, TEMİZLİK BİTTİKTEN SONRA YÜKLENİR.
+
+   `document.write` ile yüklemek sırayı bozuyordu: temizlik async,
+   yazma anında oluyor — yani çekirdek, önbellek temizlenmeden
+   gelebiliyordu. Adres zaten `?t=` ile taze isteniyor ama araya giren
+   bir servis işçisi onu da karşılayabilir. Sıra kurulmazsa "temizledim"
+   demek, temizlenmiş ölçmek anlamına gelmiyor. */
+window.__cekirdekHazir = window.__onbellekHazir.then(function () {
+    return new Promise(function (coz, red) {
+        var s = document.createElement('script');
+        s.src = '../cekirdek.js?t=' + Date.now();
+        s.onload = coz;
+        s.onerror = function () { red(new Error('cekirdek.js yuklenemedi')); };
+        document.head.appendChild(s);
+    });
+});
+</script>
+<script>
+(async function () {
+  /* Yükleme başarısızsa SESSİZ KALMA. Bu `await` reddedilirse
+     aşağıdaki hiçbir satır koşmaz ve `#ozet` "koşuyor…" yazılı
+     kalırdı — yani sınama hiç çalışmamışken çalışıyor gibi durur.
+     Bugün savunduğumuz kuralın kendisi: başarısızlık görünmeli. */
+  try {
+    await window.__cekirdekHazir;
+  } catch (e) {
+    var o = document.getElementById('ozet');
+    if (o) {
+      o.textContent = 'SINAMA KOŞMADI — çekirdek yüklenemedi: ' + e.message;
+      o.style.background = '#fdeceb';
+    }
+    window.__sinamaSonuc = { gecti: 0, kaldi: 0, toplam: 0, hata: e.message };
+    return;
+  }
+  var govde = document.querySelector('#sonuc tbody');
+  var gecti = 0, kaldi = 0;
+
+  function yaz(ad, beklenen, cikan, tamam) {
+    var s = document.createElement('tr');
+    s.innerHTML = '<td>' + ad + '</td><td>' + beklenen + '</td><td>' + cikan +
+      '</td><td class="' + (tamam ? 'g">TAMAM' : 'k">KALDI') + '</td>';
+    govde.appendChild(s);
+    tamam ? gecti++ : kaldi++;
+  }
+
+  var DK = 60000;
+
+  /* Her sınama TEMİZ bir motorla başlıyor. Ortak motor kullanmak,
+     bir sınamanın bıraktığı durumun ötekini geçirmesi demek olurdu. */
+  function motorKur() {
+    var m = new MolaMotoru();
+    // Zamanlayıcı başlatmıyoruz: sınama gerçek zaman beklemesin.
+    if (m._zamanlayici) { clearInterval(m._zamanlayici); m._zamanlayici = null; }
+    return m;
+  }
+
+  function kayit(durumAdi, kapaliDk, hedefFarkSn) {
+    var s = Date.now();
+    return {
+      durum: durumAdi,
+      kayitAni: s - kapaliDk * DK,
+      hedefZaman: s - kapaliDk * DK + hedefFarkSn * 1000
+    };
+  }
+
+  // ---- 1) Hedef geçmemiş, kısa kapalı: kaldığı yerden devam ----
+  (function () {
+    var m = motorKur();
+    var sonuc = m.sayaciGeriYukle(kayit('calisiyor', 2, 15 * 60));
+    var kalan = Math.round((m.hedefZaman - Date.now()) / 60000);
+    yaz('2 dk kapalı, 13 dk kalmış', 'devam (≈13 dk)',
+        sonuc ? 'devam (' + kalan + ' dk)' : 'sıfırlandı',
+        sonuc === true && kalan >= 12 && kalan <= 14);
+  }());
+
+  // ---- 2) Mola uzaktayken geldi, PENCERE İÇİNDE ----
+  // Hatanın ta kendisi: bu pencere 60 SANİYEYDİ, telefonda hiç tutmuyordu.
+  (function () {
+    var m = motorKur();
+    var sonuc = m.sayaciGeriYukle(kayit('calisiyor', 3, 60));
+    var kalanSn = Math.round((m.hedefZaman - Date.now()) / 1000);
+    yaz('3 dk uzakta, mola 2 dk önce düştü',
+        'mola verilsin, sıfırlanmasın',
+        sonuc ? 'mola ' + kalanSn + ' sn sonra' : 'SIFIRLANDI',
+        sonuc === true && kalanSn > 0 && kalanSn <= 30 && !!m.gecikmisMola);
+  }());
+
+  // ---- 3) Aynı durum, ESKİ 60 sn penceresiyle sıfırlanırdı ----
+  (function () {
+    var m = motorKur();
+    var sonuc = m.sayaciGeriYukle(kayit('calisiyor', 4, 30));
+    yaz('4 dk uzakta, mola 3,5 dk önce düştü',
+        'mola verilsin', sonuc ? 'mola verildi' : 'SIFIRLANDI',
+        sonuc === true);
+  }());
+
+  // ---- 4) Gerçekten uzun kalınmış: sıfırlansın AMA SÖYLESİN ----
+  (function () {
+    var m = motorKur();
+    var sonuc = m.sayaciGeriYukle(kayit('calisiyor', 25, 60));
+    var s = m.sifirlanmaSebebi;
+    yaz('25 dk uzakta', 'sıfırlansın + sebep yazılsın',
+        (sonuc ? 'devam etti' : 'sıfırlandı') +
+        (s ? ' + sebep "' + s.tur + '"' : ' + SEBEP YOK'),
+        sonuc === false && !!s && s.tur === 'uzun-kapali');
+  }());
+
+  // ---- 5) Mola ekranı açıkken ayrılma — EN SESSİZ YOLDU ----
+  // Eskiden bu dal sebebi kurmadan dönüyordu: kullanıcı sayacın neden
+  // başa döndüğünü hiç öğrenemiyordu.
+  (function () {
+    var m = motorKur();
+    var sonuc = m.sayaciGeriYukle(kayit('mola', 8, 0));
+    var s = m.sifirlanmaSebebi;
+    yaz('Mola ekranında 8 dk ayrılma', 'sıfırlansın + sebep yazılsın',
+        (sonuc ? 'devam etti' : 'sıfırlandı') +
+        (s ? ' + sebep "' + s.tur + '"' : ' + SEBEP YOK'),
+        sonuc === false && !!s && s.tur === 'mola-sirasinda');
+  }());
+
+  // ---- 6) Hiçbir sıfırlama SESSİZ olmasın ----
+  // Sınıf hâline getirilmiş kural: geri yükleme başarısızsa sebep zorunlu.
+  (function () {
+    var durumlar = [
+      ['calisiyor', 25, 60], ['calisiyor', 60, 60],
+      ['mola', 8, 0], ['hazir', 3, 0], ['calisiyor', 21, -60]
+    ];
+    var sessiz = [];
+    durumlar.forEach(function (d) {
+      var m = motorKur();
+      if (!m.sayaciGeriYukle(kayit(d[0], d[1], d[2])) && !m.sifirlanmaSebebi) {
+        sessiz.push(d[0] + '/' + d[1] + 'dk');
+      }
+    });
+    yaz('5 sıfırlama yolu — sebep yazılıyor mu', 'hiçbiri sessiz olmasın',
+        sessiz.length ? 'SESSİZ: ' + sessiz.join(', ') : 'hepsi sebep yazdı',
+        sessiz.length === 0);
+  }());
+
+  /* ---- Depodan gelen bozuk AYAR ----
+     Arayüzden 0 girilemiyor ama ayarlar depodan da geliyor ve orada
+     doğrulama yoktu. Ölçüldü: `calismaSuresi` 0/negatif/null/NaN →
+     uygulama doğrudan MOLA durumunda başlıyor ve mola hiç bitmiyor;
+     `"yirmi"` → ekranda `NaN:NaN`.
+     "Kullanıcı giremiyor" korumanın kendisi değildir. */
+  (function () {
+    var uclar = [
+      ['0', 0], ['negatif', -600], ['null', null], ['NaN', NaN],
+      ['metin', 'yirmi'], ['cok buyuk', 99999999]
+    ];
+    var kotu = [];
+    uclar.forEach(function (u) {
+      var m = motorKur();
+      m.iceAktar({ ayarlar: { calismaSuresi: u[1] } });
+      var d = m.ayarlar.calismaSuresi;
+      if (!isFinite(d) || d < 60) kotu.push(u[0] + '→' + d);
+    });
+    yaz('Depodan bozuk `calismaSuresi`', 'varsayılana dönsün',
+        kotu.length ? 'KABUL EDİLDİ: ' + kotu.join(', ') : 'hepsi süzüldü',
+        kotu.length === 0);
+  }());
+
+  (function () {
+    // Geçerli bir değer SÜZÜLMEMELİ — kelepçe fazla sıkı olmamalı
+    var m = motorKur();
+    m.iceAktar({ ayarlar: { calismaSuresi: 1500, molaSuresi: 30 } });
+    yaz('Geçerli ayar korunuyor mu', '1500 / 30',
+        m.ayarlar.calismaSuresi + ' / ' + m.ayarlar.molaSuresi,
+        m.ayarlar.calismaSuresi === 1500 && m.ayarlar.molaSuresi === 30);
+  }());
+
+  /* ---- Artan sayaç geriye gitmesin ----
+     Ölçüldü (iki sekme): B'de 9 mola birikti, hâlâ 3'te olan eski A
+     sekmesi kapanınca KALICI günlük geçmiş 3'e döndü. 7 gün grafiği ve
+     seri buradan besleniyor; kullanıcı kendini olduğundan az dinlenmiş
+     sanıyordu. Çökme yok, uyarı yok — sadece yanlış sayı. */
+  (function () {
+    var gun = Gecmis.gunAdi();
+    var yedek = localStorage.getItem('goz-molasi-gecmis');
+    try {
+      localStorage.removeItem('goz-molasi-gecmis');
+      Gecmis.gunuIsle(gun, { tamamlananMola: 9, atlananMola: 2, ekranSuresi: 5400 });
+      Gecmis.gunuIsle(gun, { tamamlananMola: 3, atlananMola: 0, ekranSuresi: 1200 });
+      var eskiSonrasi = Gecmis.oku()[gun];
+      Gecmis.gunuIsle(gun, { tamamlananMola: 10, atlananMola: 2, ekranSuresi: 6000 });
+      var artisSonrasi = Gecmis.oku()[gun];
+      yaz('Eski sekme sayıyı geri alıyor mu', '9 kalsın, sonra 10 olsun',
+          eskiSonrasi.mola + ' → ' + artisSonrasi.mola,
+          eskiSonrasi.mola === 9 && artisSonrasi.mola === 10);
+    } finally {
+      if (yedek === null) localStorage.removeItem('goz-molasi-gecmis');
+      else localStorage.setItem('goz-molasi-gecmis', yedek);
+    }
+  }());
+
+  /* ---- Sekme gece yarısını AÇIK geçerse ----
+     Gün karşılaştırması yalnızca `iceAktar` içindeydi, yani AÇILIŞTA.
+     Bu uygulama açık bırakılmak için yapılmış bir sayaç; gece yarısını
+     açık geçmek normal kullanımdır.
+     Ölçüldü: `istatistik.gun` dünde kalıyor ve BUGÜNÜN molaları DÜNE
+     yazılıyordu. Bugün 0 görünüyor, dün şişiyor. */
+  (function () {
+    var m = motorKur();
+    var bugun = Gecmis.gunAdi();
+    var dun = Gecmis.gunAdi(new Date(Date.now() - 86400000));
+    m.istatistik.gun = dun;
+    m.istatistik.tamamlananMola = 4;
+    m.istatistik.kesintisizSure = 3600;
+    m.durum = 'calisiyor';
+    m.hedefZaman = Date.now() + 600000;
+    m.tik();
+    yaz('Gece yarısını açık geçme', 'gün dönsün, sayaçlar sıfırlansın',
+        m.istatistik.gun + ' / mola ' + m.istatistik.tamamlananMola,
+        m.istatistik.gun === bugun && m.istatistik.tamamlananMola === 0);
+  }());
+
+  (function () {
+    // `kesintisizSure` SIFIRLANMAMALI: gece yarısı geçti diye kişinin
+    // kesintisiz çalışması bitmiş olmuyor. Fazla geniş bir sıfırlama,
+    // uzun mola önerisini bozardı.
+    var m = motorKur();
+    m.istatistik.gun = Gecmis.gunAdi(new Date(Date.now() - 86400000));
+    m.istatistik.kesintisizSure = 3600;
+    m.durum = 'calisiyor';
+    m.hedefZaman = Date.now() + 600000;
+    m.tik();
+    yaz('Gün dönünce kesintisiz süre', 'sıfırlanmasın',
+        Math.round(m.istatistik.kesintisizSure) + ' sn',
+        m.istatistik.kesintisizSure >= 3600);
+  }());
+
+  (function () {
+    // Aynı gün içinde tik() hiçbir şeyi sıfırlamamalı.
+    var m = motorKur();
+    m.istatistik.gun = Gecmis.gunAdi();
+    m.istatistik.tamamlananMola = 7;
+    m.durum = 'calisiyor';
+    m.hedefZaman = Date.now() + 600000;
+    m.tik();
+    yaz('Aynı gün — yanlış sıfırlama var mı', '7 kalsın',
+        String(m.istatistik.tamamlananMola),
+        m.istatistik.tamamlananMola === 7);
+  }());
+
+  // ---- 7) Bozuk kayıt çökertmesin ----
+  (function () {
+    var bozuk = [{}, {durum: 'calisiyor'}, {hedefZaman: 'abc', kayitAni: 'x'},
+                 {hedefZaman: NaN, kayitAni: Date.now()}, null];
+    var patlayan = null;
+    bozuk.forEach(function (b, i) {
+      try { motorKur().sayaciGeriYukle(b || {}); }
+      catch (e) { patlayan = i + ': ' + e.message; }
+    });
+    yaz('Bozuk / eksik kayıt', 'çökmesin',
+        patlayan ? 'ÇÖKTÜ ' + patlayan : 'çökmedi', !patlayan);
+  }());
+
+  // ---- 8) Saat geriye alınırsa ----
+  // kapaliKalan negatif olur; sessizce "devam" demek sayacı sonsuza kadar
+  // dondurmak demekti.
+  (function () {
+    var m = motorKur();
+    var s = Date.now();
+    var sonuc = m.sayaciGeriYukle({
+      durum: 'calisiyor', kayitAni: s + 30 * DK, hedefZaman: s + 45 * DK });
+    yaz('Saat 30 dk geriye alınmış', 'geri yüklemesin',
+        sonuc ? 'geri yükledi' : 'yüklemedi', sonuc === false);
+  }());
+
+  var toplam = gecti + kaldi;
+  var o = document.getElementById('ozet');
+  o.textContent = kaldi === 0
+    ? 'HEPSİ GEÇTİ — ' + toplam + ' sınama.'
+    : kaldi + ' / ' + toplam + ' KALDI.';
+  o.style.background = kaldi === 0 ? '#e7f6ec' : '#fdeceb';
+  window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi, toplam: toplam };
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- YAYINA GITMEMELI. Ic sinama sayfasi. `.gitignore` deseni
+     (`sinama-*.html`) bunu kapsiyor; `sinama_yayin.py` denetliyor. -->
+<title>Göz Molası — ayar sınaması (ekranda yazan = depoda duran)</title>
+<style>
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 24px; max-width: 1000px; }
+  h1 { font-size: 18px; }
+  .g { color: #0a7a3d; } .k { color: #b42318; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  td, th { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left;
+           vertical-align: top; font-size: 13px; }
+  #ozet { margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+          background: #f3f4f6; font-weight: 600; }
+  .not { background: #fff8e6; border-left: 4px solid #b54708; padding: 10px 12px;
+         margin: 12px 0; font-size: 13px; }
+  iframe { width: 420px; height: 300px; border: 1px solid #ccc; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<h1>Ayar sınaması — ekranda yazan değer, depoda duran değer</h1>
+
+<div class="not">
+  <b>Niye var.</b> 28.08.2026'da <b>üç ayrı hata</b> aynı aileden çıktı:
+  <i>mola sayısı ile süre</i>, <i>“o molayı verilmiş saydık”</i>, ve
+  <i>“60 saniye önceden uyar”</i>. Üçünde de <b>ekrandaki söz</b> ile
+  <b>kodun yaptığı iş</b> ayrı yerlerde yazılıyordu ve <b>kimse ikisini
+  karşılaştırmıyordu.</b>
+  <br /><br />
+  <b>Ne ölçüyor.</b> Her ayar için: ayar penceresinde <b>ne yazdığını</b>,
+  kaydettikten sonra depoda <b>ne durduğunu</b>. İkisi farklıysa — ve fark
+  aşağıda <b>bildirilmiş</b> bir dönüşüm değilse — sınama kalır.
+  <br /><br />
+  <b>Depo = davranış.</b> `kaydet()` doğrudan `motor.disaAktar()` çıktısını
+  yazıyor, yani depodaki değer motorun kullandığı değerdir. Bu yüzden
+  “ekranda yazan = depoda duran” denetimi, üçüncü ayağı da kapsıyor.
+  <br /><br />
+  <b>Bildirilen dönüşümler</b> (fark olması NORMAL olanlar): dakika → saniye
+  (<code>×60</code>), uzun mola en az 60 sn, ve uyarı çalışma aralığına
+  eşit/uzunsa <b>hemen altına çekilir</b> (v132; eskiden sessizce sıfırlanıyordu).
+</div>
+
+<table id="sonuc"><thead>
+  <tr><th style="width:30%">Ayar</th><th style="width:16%">Ekranda</th>
+      <th style="width:16%">Depoda</th><th style="width:16%">Beklenen</th>
+      <th>Sonuç</th></tr>
+</thead><tbody></tbody></table>
+<div id="ozet">koşuyor…</div>
+<div id="yuva"></div>
+
+<script>
+(async function () {
+  var govde = document.querySelector('#sonuc tbody');
+  var gecti = 0, kaldi = 0;
+
+  function yaz(ad, ekranda, depoda, beklenen, tamam) {
+    var s = document.createElement('tr');
+    s.innerHTML = '<td>' + ad + '</td><td>' + ekranda + '</td><td>' + depoda +
+      '</td><td>' + beklenen + '</td><td class="' +
+      (tamam ? 'g">TAMAM' : 'k">KALDI') + '</td>';
+    govde.appendChild(s);
+    if (tamam) { gecti++; } else { kaldi++; }
+  }
+
+  function bekle(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  /* SERVIS ISCISI KAPATILIYOR - yoksa eski dosya olculur. */
+  try {
+    var kayitlar = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(kayitlar.map(function (r) { return r.unregister(); }));
+    var adlar = await caches.keys();
+    await Promise.all(adlar.map(function (a) { return caches.delete(a); }));
+  } catch (e) { }
+
+  var cerceve = null;
+  async function uygulamayiAc() {
+    if (cerceve) { cerceve.remove(); cerceve = null; }
+    cerceve = document.createElement('iframe');
+    cerceve.src = '../index.html?ayarSinama=' + Date.now();
+    document.getElementById('yuva').appendChild(cerceve);
+    await new Promise(function (r) { cerceve.onload = r; });
+    await bekle(900);
+    return cerceve;
+  }
+
+  function depo(f) {
+    try { return JSON.parse(f.contentWindow.localStorage.getItem('goz-molasi-v1') || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  /* Bir ayar kumesi kur, KAYDET, sonra depoyu oku. */
+  async function dene(kur) {
+    var f = await uygulamayiAc();
+    var d = f.contentDocument;
+    d.getElementById('ayarDugme').click();
+    await bekle(350);
+    var ekranda = kur(d);
+    d.getElementById('ayarKaydet').click();
+    await bekle(700);
+    return { ekranda: ekranda, kayit: depo(f) };
+  }
+
+  function say(e, deger) {
+    e.value = deger;
+    e.dispatchEvent(new Event('input', { bubbles: true }));
+    e.dispatchEvent(new Event('change', { bubbles: true }));
+    return deger;
+  }
+  function isaret(e, deger) {
+    e.checked = deger;
+    e.dispatchEvent(new Event('change', { bubbles: true }));
+    return deger;
+  }
+
+  /* ---------- 1) Olagan degerler ---------- */
+  var s1 = await dene(function (d) {
+    return {
+      calisma: say(d.getElementById('ayCalisma'), 20),
+      mola: say(d.getElementById('ayMola'), 20),
+      uyari: say(d.getElementById('ayUyari'), 15),
+    };
+  });
+  var a1 = s1.kayit.ayarlar || {};
+  yaz('Çalışma aralığı (dakika → saniye)', s1.ekranda.calisma + ' dk',
+      a1.calismaSuresi + ' sn', '1200 sn', a1.calismaSuresi === 1200);
+  yaz('Mola süresi (saniye)', s1.ekranda.mola, a1.molaSuresi, '20',
+      a1.molaSuresi === 20);
+  yaz('Erken uyarı (saniye)', s1.ekranda.uyari, a1.uyariSuresi, '15',
+      a1.uyariSuresi === 15);
+
+  /* ---------- 2) UC DEGER: uyari, calismaya esit ----------
+     Eskiden burada uyari SESSIZCE 0 oluyordu. Ekran 60 diyordu,
+     kullanici hic uyari almiyordu. */
+  var s2 = await dene(function (d) {
+    return {
+      calisma: say(d.getElementById('ayCalisma'), 1),
+      uyari: say(d.getElementById('ayUyari'), 60),
+    };
+  });
+  var a2 = s2.kayit.ayarlar || {};
+  yaz('UÇ DEĞER: çalışma 1 dk + uyarı 60 sn', s2.ekranda.uyari + ' sn',
+      a2.uyariSuresi + ' sn', '55 sn (sınırın altı — 0 DEĞİL)',
+      a2.uyariSuresi === 55);
+  yaz('…ve çalışma aralığı bozulmadı', s2.ekranda.calisma + ' dk',
+      a2.calismaSuresi + ' sn', '60 sn', a2.calismaSuresi === 60);
+
+  /* ---------- 3) UC DEGER: en buyukler ---------- */
+  var s3 = await dene(function (d) {
+    var c = d.getElementById('ayCalisma'), m = d.getElementById('ayMola');
+    return { calisma: say(c, c.max), mola: say(m, m.max) };
+  });
+  var a3 = s3.kayit.ayarlar || {};
+  yaz('UÇ DEĞER: en uzun çalışma', s3.ekranda.calisma + ' dk',
+      a3.calismaSuresi + ' sn', (s3.ekranda.calisma * 60) + ' sn',
+      a3.calismaSuresi === s3.ekranda.calisma * 60);
+  yaz('UÇ DEĞER: en uzun mola', s3.ekranda.mola + ' sn',
+      a3.molaSuresi + ' sn', s3.ekranda.mola + ' sn',
+      a3.molaSuresi === +s3.ekranda.mola);
+
+  /* ---------- 4) Onay kutulari ACIK ---------- */
+  var s4 = await dene(function (d) {
+    return {
+      atla: isaret(d.getElementById('ayAtla'), true),
+      ses: isaret(d.getElementById('aySes'), true),
+      uzun: isaret(d.getElementById('ayUzunMola'), true),
+      saatler: isaret(d.getElementById('aySaatler'), true),
+      kilit: isaret(d.getElementById('ayMolaKilit'), true),
+      bosta: isaret(d.getElementById('ayBosta'), true),
+    };
+  });
+  var a4 = s4.kayit.ayarlar || {};
+  yaz('Molayı atlamaya izin (açık)', 'açık', String(a4.molaAtlanabilir),
+      'true', a4.molaAtlanabilir === true);
+  yaz('Ses (açık)', 'açık', String(a4.sesAcik), 'true', a4.sesAcik === true);
+  yaz('Uzun mola (açık)', 'açık', String(a4.uzunMolaAcik), 'true',
+      a4.uzunMolaAcik === true);
+  yaz('Çalışma saatleri (açık)', 'açık', String(a4.saatlerAcik), 'true',
+      a4.saatlerAcik === true);
+  yaz('Mola kilidi (açık)', 'açık', String(s4.kayit.molaKilit), 'true',
+      s4.kayit.molaKilit === true);
+  yaz('Boşta durdurma (açık)', 'açık', String(s4.kayit.bostaAcik), 'true',
+      s4.kayit.bostaAcik === true);
+
+  /* ---------- 5) Onay kutulari KAPALI ----------
+     Tek yon yetmez: "hep true yaziyor" olsaydi 4. adim gecerdi. */
+  var s5 = await dene(function (d) {
+    return {
+      atla: isaret(d.getElementById('ayAtla'), false),
+      ses: isaret(d.getElementById('aySes'), false),
+      uzun: isaret(d.getElementById('ayUzunMola'), false),
+      saatler: isaret(d.getElementById('aySaatler'), false),
+      kilit: isaret(d.getElementById('ayMolaKilit'), false),
+      bosta: isaret(d.getElementById('ayBosta'), false),
+    };
+  });
+  var a5 = s5.kayit.ayarlar || {};
+  yaz('Molayı atlamaya izin (kapalı)', 'kapalı', String(a5.molaAtlanabilir),
+      'false', a5.molaAtlanabilir === false);
+  yaz('Ses (kapalı)', 'kapalı', String(a5.sesAcik), 'false',
+      a5.sesAcik === false);
+  yaz('Uzun mola (kapalı)', 'kapalı', String(a5.uzunMolaAcik), 'false',
+      a5.uzunMolaAcik === false);
+  yaz('Mola kilidi (kapalı)', 'kapalı', String(s5.kayit.molaKilit), 'false',
+      s5.kayit.molaKilit === false);
+  yaz('Boşta durdurma (kapalı)', 'kapalı', String(s5.kayit.bostaAcik),
+      'false', s5.kayit.bostaAcik === false);
+
+  /* ---------- 6) Calisma saatleri metin olarak ---------- */
+  var s6 = await dene(function (d) {
+    isaret(d.getElementById('aySaatler'), true);
+    return {
+      bas: say(d.getElementById('ayBasSaat'), '08:30'),
+      bit: say(d.getElementById('ayBitSaat'), '17:45'),
+    };
+  });
+  var a6 = s6.kayit.ayarlar || {};
+  yaz('Çalışma saati — başlangıç', s6.ekranda.bas, a6.basSaat, '08:30',
+      a6.basSaat === '08:30');
+  yaz('Çalışma saati — bitiş', s6.ekranda.bit, a6.bitSaat, '17:45',
+      a6.bitSaat === '17:45');
+
+  /* ---------- 7) Uzun mola suresi: dakika -> saniye, en az 60 ---------- */
+  var s7 = await dene(function (d) {
+    isaret(d.getElementById('ayUzunMola'), true);
+    var u = d.getElementById('ayUzunSure');
+    return { sure: say(u, u.min) };
+  });
+  var a7 = s7.kayit.ayarlar || {};
+  var beklenen7 = Math.max(60, +s7.ekranda.sure * 60);
+  yaz('Uzun mola süresi (en küçük değer)', s7.ekranda.sure + ' dk',
+      a7.uzunMolaSuresi + ' sn', beklenen7 + ' sn',
+      a7.uzunMolaSuresi === beklenen7);
+
+  if (cerceve) cerceve.remove();
+
+  var o = document.getElementById('ozet');
+  o.textContent = kaldi
+    ? (kaldi + ' / ' + (gecti + kaldi) + ' KALDI — ekranda yazan ile depoda '
+       + 'duran değer ayrışıyor.')
+    : ('HEPSİ GEÇTİ — ' + gecti + ' ayar denetlendi; ekranda yazan değer '
+       + 'depoda duran değerle uyuşuyor.');
+  o.style.background = kaldi ? '#fdeceb' : '#e8f6ee';
+  window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi, toplam: gecti + kaldi };
+})();
+</script>
+</body>
+</html>

@@ -17,9 +17,21 @@ desktop.ini
 # depoya alindi ve CANLI SITEDE yayinlandi (olculdu: 200 dondu,
 # `sinama-web.html` ise 404). Ad listesi yeni dosyayi gormez;
 # desen gorur. Kural artik sinifi kapsiyor.
-sinama-*.html
-test-*.html
+# Yalnizca KOKTEKI sinama sayfalari yok sayilir (bas taki `/`).
+# `_sinama/` altindakiler DEPODA DURUR: GitHub Pages Jekyll kullaniyor
+# ve alt tire ile baslayan klasorleri yayinlamiyor. Olculdu (28.08.2026):
+#     _sinama/deneme.html -> 404      ana sayfa -> 200
+# Boylece sinama takimi surum denetiminde kalir ama siteye cikmaz.
+# DIKKAT: depoya `.nojekyll` eklenirse bu kural COKER; `sinama_yayin.py`
+# onu da denetliyor.
+/sinama-*.html
+/test-*.html
 
-sinama*
-test*
-!sinama_*.py
+# Uzanti bagimsiz desen (merkezin eklemesi): `sinama.js` gibi
+# uzantisi farkli ic dosyalar da yayina gitmesin. Bu da KOKE
+# sabitlendi, yoksa `_sinama/` klasorunun kendisini de yutuyordu.
+/sinama*
+/test*
+!/sinama_*.py
+# Sinama takimi burada durur ve depoda izlenir (yayinlanmaz).
+!/_sinama/

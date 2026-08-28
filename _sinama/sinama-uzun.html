@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- YAYINA GITMEMELI. Ic sinama sayfasi, kullanici yuzu degil.
+     Kopyalama listesine EKLENMEMELI; noindex ikinci savunma hatti. -->
+<title>Göz Molası — uzun kullanım benzetimi (iç sınama)</title>
+<style>
+  body { font: 14px/1.6 system-ui, sans-serif; margin: 24px; max-width: 940px; }
+  h1 { font-size: 18px; }
+  .g { color: #0a7a3d; } .k { color: #b42318; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  td, th { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left;
+           vertical-align: top; font-size: 13px; }
+  #ozet { margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+          background: #f3f4f6; font-weight: 600; }
+  .not { background: #fff8e6; border-left: 4px solid #b54708; padding: 10px 12px;
+         margin: 12px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Uzun kullanım benzetimi — değişmez denetimi</h1>
+
+<div class="not">
+  <b>Niye var.</b> Kullanıcının bildirdiği hataların hiçbiri <b>tek tıkta</b>
+  çıkmıyordu; hepsi <b>zaman içinde kullanınca</b> doğuyordu. Var olan
+  sınamalar tek anı ölçüyor — bir saatlik kullanımı kimse ölçmüyordu.
+  <br /><br />
+  <b>Ne ölçüyor.</b> Bir saatlik kullanımı kurup (ön planda çalışma, sekmeyi
+  arka plana atma, geri dönme, boş kalma) <b>sonunda ekrandaki bütün sayıları</b>
+  değişmezlere karşı denetliyor.
+  <br /><br />
+  <b>Önerilen değişmez düzeltildi.</b> Öneri
+  <code>tamamlanan × mola aralığı ≤ geçen süre</code> idi; burada
+  <code>geçen süre</code> olarak <b>ekran süresi</b> alınamaz — ekran süresi
+  sekme arka plandayken meşru olarak saymaz, yani <b>doğru davranışta bile</b>
+  ihlal olurdu. Değişmez <b>duvar saatine</b> göre yazıldı; ekran süresine göre
+  ihlalin var olduğu ayrıca kayda geçiriliyor.
+</div>
+
+<table id="sonuc"><thead>
+  <tr><th style="width:38%">Değişmez</th><th style="width:20%">Beklenen</th>
+      <th style="width:20%">Çıkan</th><th>Sonuç</th></tr>
+</thead><tbody></tbody></table>
+<div id="ozet">koşuyor…</div>
+
+<script>
+/* Onbellek temizligi: eski bir cekirdek.js olculmesin. */
+window.__onbellekHazir = (async function () {
+    try {
+        const adlar = await caches.keys();
+        await Promise.all(adlar.map(function (a) { return caches.delete(a); }));
+    } catch (e) { }
+    return true;
+}());
+</script>
+<script>
+window.__cekirdekHazir = window.__onbellekHazir.then(function () {
+    return new Promise(function (coz, red) {
+        var s = document.createElement('script');
+        s.src = '../cekirdek.js?t=' + Date.now();
+        s.onload = coz;
+        s.onerror = function () { red(new Error('cekirdek.js yuklenemedi')); };
+        document.head.appendChild(s);
+    });
+});
+</script>
+<script>
+(async function () {
+  try {
+    await window.__cekirdekHazir;
+  } catch (e) {
+    var o0 = document.getElementById('ozet');
+    o0.textContent = 'SINAMA KOŞMADI — çekirdek yüklenemedi: ' + e.message;
+    o0.style.background = '#fdeceb';
+    window.__sinamaSonuc = { gecti: 0, kaldi: 0, toplam: 0, hata: e.message };
+    return;
+  }
+
+  var govde = document.querySelector('#sonuc tbody');
+  var gecti = 0, kaldi = 0;
+  function yaz(ad, beklenen, cikan, tamam) {
+    var s = document.createElement('tr');
+    s.innerHTML = '<td>' + ad + '</td><td>' + beklenen + '</td><td>' + cikan +
+      '</td><td class="' + (tamam ? 'g">TAMAM' : 'k">KALDI') + '</td>';
+    govde.appendChild(s);
+    if (tamam) { gecti++; } else { kaldi++; }
+  }
+
+  /* ---------- SANAL SAAT ----------
+     Motor her yerde `Date.now()` kullaniyor. Saati biz suruyoruz ki
+     bir saatlik kullanim bir saniyede olculebilsin. */
+  var gercekNow = Date.now;
+  var S = gercekNow.call(Date);
+  Date.now = function () { return S; };
+
+  function motorKur() {
+    var mm = new MolaMotoru();
+    if (mm._zamanlayici) { clearInterval(mm._zamanlayici); mm._zamanlayici = null; }
+    if (mm._kalpAtisiDurdur) { mm._kalpAtisiDurdur(); }
+    return mm;
+  }
+
+  var m = motorKur();
+  m.basla();
+  if (m._zamanlayici) { clearInterval(m._zamanlayici); m._zamanlayici = null; }
+  if (m._kalpAtisiDurdur) { m._kalpAtisiDurdur(); }
+
+  var BASLANGIC = S;
+  var molaBittiSayisi = 0;
+  m.uzerine('molaBitti', function () { molaBittiSayisi++; });
+
+  /* Sayaclar asla azalmaz; olculen ekran suresi gecen sureyi asamaz. */
+  var oncekiler = { tamamlananMola: 0, atlananMola: 0, ekranSuresi: 0 };
+  var azalmaHatasi = null;
+  var ekranAsimi = null;
+  function denetle(nerede) {
+    var ist = m.istatistik;
+    ['tamamlananMola', 'atlananMola', 'ekranSuresi'].forEach(function (a) {
+      if ((ist[a] || 0) < oncekiler[a] - 1e-9) {
+        azalmaHatasi = azalmaHatasi || (a + ' azaldi (' + nerede + ')');
+      }
+      oncekiler[a] = ist[a] || 0;
+    });
+    var gecen = (S - BASLANGIC) / 1000;
+    if ((ist.ekranSuresi || 0) > gecen + 1) {
+      ekranAsimi = ekranAsimi ||
+        ('ekranSuresi ' + Math.round(ist.ekranSuresi) + ' sn > gecen ' +
+         Math.round(gecen) + ' sn (' + nerede + ')');
+    }
+  }
+
+  /* ON PLANDA gecen sure: 250 ms'lik gercek tiklar. */
+  function onPlanda(saniye, nerede) {
+    var adim = 0;
+    for (var g = 0; g < saniye * 4; g++) {
+      S += 250;
+      adim += 250;
+      if (adim >= 30000) { m.hareketVar(); adim = 0; }
+      m.tik();
+    }
+    denetle(nerede);
+  }
+
+  /* ARKA PLANDA gecen sure: saat isler, tik KOSMAZ.
+     Telefonda normal hal budur; hatanin yasadigi yer tam burasi. */
+  function arkaPlanda(saniye, nerede) {
+    S += saniye * 1000;
+    m.hareketVar();
+    m.tik();
+    denetle(nerede);
+  }
+
+  /* ---------- KULLANICININ GERÇEK ÖRÜNTÜSÜ ----------
+
+     Ilk kurdugum benzetim (10 dk on planda, 25 dk arka planda, 10 dk
+     on planda) 62 dakikada YALNIZCA 1 mola uretti - cunku mola
+     ekraninin 20 saniyesi EKRANDA gecmek zorunda ve tek tik onu
+     tamamlamiyor. Yani kurgum kullanicinin yasadigi seyi uretmiyordu.
+
+     Kullanicinin ekran goruntusundeki hal: 3 mola, 9 dakika sure.
+     Bunu ureten oruntu KISA ZIYARETLER: telefonu birakip donmek.
+     Her donuste mola coktan hak edilmis oluyor, 20 saniye ekranda
+     gecip SAYILIYOR - ama arada gecen sure ekran suresine yazilmiyor.
+     Sayilar boyle ayrisiyor. */
+  onPlanda(2 * 60, 'ilk kisa calisma');
+  for (var z = 0; z < 3; z++) {
+    arkaPlanda(21 * 60, 'telefon cebe girdi ' + (z + 1));
+    onPlanda(45, 'kisa ziyaret ' + (z + 1));      // mola ekranda tamamlanir
+  }
+  S += 5 * 60 * 1000; m.tik(); denetle('bosta');
+
+  var ist = m.istatistik;
+  var gecenSn = (S - BASLANGIC) / 1000;
+  var molaSay = (ist.tamamlananMola || 0) + (ist.atlananMola || 0);
+  var gerekli = molaSay * m.ayarlar.calismaSuresi;
+
+  yaz('Sayaçlar asla azalmaz (artan sayaç değişmezi)',
+      'azalma yok', azalmaHatasi || 'azalma yok', !azalmaHatasi);
+
+  yaz('Ekran süresi geçen gerçek süreyi aşamaz',
+      '≤ ' + Math.round(gecenSn) + ' sn',
+      ekranAsimi || (Math.round(ist.ekranSuresi) + ' sn'), !ekranAsimi);
+
+  yaz('tamamlanan × mola aralığı ≤ geçen <b>duvar saati</b>',
+      Math.round(gerekli / 60) + ' dk ≤ ' + Math.round(gecenSn / 60) + ' dk',
+      (gerekli <= gecenSn + 5 ? 'sağlandı' : 'İHLAL'),
+      gerekli <= gecenSn + 5);
+
+  yaz('Sayılan mola = duyurulan mola olayı',
+      molaBittiSayisi + ' olay',
+      (ist.tamamlananMola || 0) + ' + ' + (ist.atlananMola || 0) + ' = ' + molaSay,
+      molaSay === molaBittiSayisi);
+
+  /* AYNI DEGISMEZ, EKRAN SURESINE GORE: BILEREK IHLAL BEKLIYORUZ.
+     Bu "hata" degil; kullanicinin gordugu celiskinin ta kendisi.
+     Kayda geciriyoruz ki arayuzun onu aciklamasi bir tercih degil
+     ZORUNLULUK olarak dursun. */
+  var celiskiVar = molaSay >= 2 && (ist.ekranSuresi || 0) < gerekli * 0.5;
+  yaz('Aynı değişmez <b>ekran süresine</b> göre ihlal olur — '
+      + 'bu yüzden ikisi açıklamasız yan yana konamaz',
+      'ihlal bekleniyor',
+      Math.round(ist.ekranSuresi / 60) + ' dk ölçüldü, '
+      + Math.round(gerekli / 60) + ' dk gerekirdi',
+      celiskiVar);
+
+  /* ---------- MOLA EKRANINDA AYRILMA ----------
+     Metin "o molayi verilmis saydik" diyordu; motor SAYMIYOR. */
+  var m2 = motorKur();
+  var oncekiMola = m2.istatistik.tamamlananMola;
+  m2.sayaciGeriYukle({ durum: 'mola', kayitAni: S - 60000, hedefZaman: S - 40000 });
+  var sebep = m2.sifirlanmaSebebi;
+
+  yaz('Mola ekranında ayrılınca mola SAYILMAZ',
+      'sayı değişmez',
+      oncekiMola + ' → ' + m2.istatistik.tamamlananMola,
+      m2.istatistik.tamamlananMola === oncekiMola);
+
+  yaz('…ve sebebi kullanıcıya söylenir (sessiz sıfırlama yok)',
+      'mola-sirasinda', sebep ? sebep.tur : 'sebep YOK',
+      !!sebep && sebep.tur === 'mola-sirasinda');
+
+  Date.now = gercekNow;
+
+  var o = document.getElementById('ozet');
+  o.textContent = 'GEÇTİ: ' + gecti + ' · KALDI: ' + kaldi +
+                  ' · TOPLAM: ' + (gecti + kaldi) +
+                  ' — benzetilen kullanım: ' + Math.round(gecenSn / 60) + ' dakika' +
+                  ' · mola: ' + molaSay +
+                  ' · ekran süresi: ' + Math.round(ist.ekranSuresi / 60) + ' dk';
+  o.style.background = kaldi ? '#fdeceb' : '#e8f6ee';
+  window.__sinamaSonuc = {
+    gecti: gecti, kaldi: kaldi, toplam: gecti + kaldi,
+    molaSay: molaSay, ekranDk: Math.round(ist.ekranSuresi / 60),
+    gecenDk: Math.round(gecenSn / 60)
+  };
+})();
+</script>
+</body>
+</html>

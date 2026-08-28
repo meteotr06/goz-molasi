@@ -103,16 +103,28 @@ kullanıcının kendi ekranında bakılmalı.
   v132 düzeltmesi geçici geri alınınca **yakaladı** (ekranda 60, depoda 0),
   geri konunca geçti.
 
-### Açık risk — sınama takımı sürüm denetiminde DEĞİL
+### Kapanan risk — sınama takımı artık sürüm denetiminde
 
-İç sınama sayfaları (`sinama-*.html`) yayına sızmasın diye `.gitignore`'da.
-Bu doğru ama bir yan etkisi var: **dört sınama sayfası yalnızca bu diskte
-duruyor.** Kaybolurlarsa bugünkü ölçümlerin hiçbiri tekrarlanamaz.
+Önce şu açık risk yazılmıştı: iç sınama sayfaları yayına sızmasın diye
+`.gitignore`'daydı, yani **yalnızca bu diskte** duruyorlardı; kaybolsalar
+bugünkü ölçümlerin hiçbiri tekrarlanamazdı.
 
-Olası çözüm (ölçülmedi): GitHub Pages'te `.nojekyll` yok, yani Jekyll etkin
-ve alt tire ile başlayan klasörler yayınlanmaz — `_sinama/` altında tutulursa
-depoda dururlar ama siteye çıkmazlar. **Bu bir varsayım**; yanlışsa yeni
-kapatılan sızıntıyı geri açar, o yüzden önce canlıda doğrulanmalı.
+Varsayım **ölçüldü** (28.08.2026, canlı adres):
+
+```
+_sinama/deneme.html  ->  404          ana sayfa  ->  200
+```
+
+GitHub Pages Jekyll kullanıyor ve alt tire ile başlayan klasörleri
+yayınlamıyor. Dört sınama sayfası `_sinama/` altına taşındı: **depoda
+duruyorlar, siteye çıkmıyorlar.** Taşındıktan sonra dördü de koşturuldu
+(14/14 · 7/7 · 21/21 · 19/19).
+
+**Bu korumanın tek bir dosyalık bir zayıflığı var** ve o da denetleniyor:
+depoya `.nojekyll` eklenirse Jekyll kapanır ve `_sinama/` **bir anda yayına
+çıkar**. Kimse bunu sınama sayfalarıyla ilişkilendirmez. `sinama_yayin.py`
+artık bunu da ölçüyor; `.nojekyll` oluşturulup denendi — **yakaladı**,
+silinince geçti.
 
 ---
 

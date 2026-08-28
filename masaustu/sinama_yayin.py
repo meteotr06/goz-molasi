@@ -22,8 +22,22 @@ NİYE VAR
   değil SONUCU ölçüyor: depoda izlenen bir iç sınama sayfası var mı.
 
 NE ÖLÇÜYOR
-  `git ls-files` çıktısında iç sınama sayfası olup olmadığını.
-  İzlenmeyen dosya yayına gidemez; izlenen dosya gider.
+  İki şey:
+
+  1) Kökte izlenen bir iç sınama sayfası var mı. İzlenmeyen dosya
+     yayına gidemez; kökte izlenen dosya gider.
+
+  2) `.nojekyll` dosyası var mı. Sınama takımı artık `_sinama/`
+     altında duruyor ve depoda izleniyor — GitHub Pages Jekyll
+     kullandığı ve alt tire ile başlayan klasörleri yayınlamadığı
+     için siteye çıkmıyor. Ölçüldü (28.08.2026, canlı adres):
+
+         _sinama/deneme.html -> 404      ana sayfa -> 200
+
+     AMA bu koruma tek bir dosyaya bağlı: depoya `.nojekyll`
+     eklenirse Jekyll kapanır ve `_sinama/` bir anda YAYINA ÇIKAR.
+     Kimse bunu sınama sayfalarıyla ilişkilendirmez; bu yüzden
+     burada denetleniyor.
 
 NE ÖLÇMÜYOR
   Canlı sitede şu an ne durduğunu. Depodan düşürmek, canlıdan
@@ -41,6 +55,10 @@ KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Yayina gitmemesi gereken ic sayfa desenleri.
 DESENLER = ("sinama-", "test-")
+
+# Bu klasordekiler depoda DURABILIR: Jekyll alt tire ile baslayan
+# klasorleri yayinlamiyor (olculdu; bkz. yukaridaki aciklama).
+GUVENLI_KLASOR = "_sinama/"
 
 
 def izlenenler():
@@ -65,13 +83,27 @@ def main():
 
     sizanlar = []
     for y in dosyalar:
+        # `_sinama/` altindakiler yayinlanmiyor; sorun degil.
+        if y.startswith(GUVENLI_KLASOR):
+            continue
         ad = y.rsplit("/", 1)[-1].lower()
         if not ad.endswith(".html"):
             continue
         if any(ad.startswith(d) for d in DESENLER):
             sizanlar.append(y)
 
+    korunan = len([y for y in dosyalar if y.startswith(GUVENLI_KLASOR)])
     print("izlenen dosya: %d" % len(dosyalar))
+    print("guvenli klasorde: %d (Jekyll yayinlamaz)" % korunan)
+
+    if os.path.exists(os.path.join(KOK, ".nojekyll")):
+        print()
+        print("BASARISIZ - depoda `.nojekyll` var.")
+        print("  Jekyll kapali demektir; `_sinama/` klasoru YAYINA CIKAR")
+        print("  ve butun ic sinama sayfalari herkese acilir.")
+        print("  Yapilacak: `.nojekyll` dosyasini sil, ya da sinama")
+        print("  takimini depo disina tasi.")
+        return 1
     if sizanlar:
         print("BASARISIZ - ic sinama sayfasi DEPODA izleniyor:")
         for y in sizanlar:
