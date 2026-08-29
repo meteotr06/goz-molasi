@@ -94,6 +94,25 @@
         var bt = cerceve.contentDocument
           .querySelector('script[src*="arayuz"]');
         if (bt) olculenSurum = bt.getAttribute('src');
+        /* ETIKET ILE ICERIK AYRI SEYLERDIR.
+
+           `src` bir ETIKETTIR: "hangi dosyayi istedim" der, "hangi kod
+           calisti" demez. Servis iscisi araya girip ayni etiket altinda
+           BASKA icerik verebilir (`ignoreSearch` ile her damga ayni
+           onbellek girdisine esliyor). Merkez bugun tam bunu yasadi:
+           etiket v72 diyordu, yuklu kural v73'undu.
+
+           Burada etiketin guvenilir OLDUGUNU da yaziyoruz: sayfayi bir
+           servis iscisi yonetmiyorsa araya giren yok, etiket = icerik.
+           Yonetiyorsa satir bunu SOYLUYOR ki okuyan kisi etikete
+           koruksuz guvenmesin. */
+        var w = cerceve.contentWindow;
+        var sw = (w.navigator.serviceWorker
+                  && w.navigator.serviceWorker.controller);
+        olculenSurum += sw
+          ? '  ·  DIKKAT: sayfayi servis iscisi yonetiyor, etiket '
+            + 'icerigi garanti etmez'
+          : '  ·  servis iscisi yok, etiket = icerik';
       } catch (e) { }
     }
     return cerceve;
