@@ -472,6 +472,32 @@ Geçerliliği `HAVA_ISTEGI` sayacıyla kanıtlandı: istek gerçekten gitti
 **Sayaç olmasaydı "dayanıklı" diye yazacaktım ve hiçbir şey ölçmemiş
 olacaktım.**
 
+### Birleşik en kötü hâl: uzun dış ad + %200 yazı + dar ekran (temiz)
+
+Bugüne kadar iki riski **ayrı ayrı** ölçmüştüm: uzun dış adı normal
+boyutta, büyük yazıyı kendi metnimizle. **İkisi birlikte** hiç
+denenmemişti.
+
+| Ölçü | Kırpılan | Taşan | Sayfa kayıyor |
+|---|---|---|---|
+| 360 px · %200 · **85 harflik ad** | **0** | 0 | hayır |
+| 375 px · %200 · **85 harflik ad** | **0** | 0 | hayır |
+| 360 px · %200 · "Ankara" | **0** | 0 | hayır |
+
+**İlk ölçütüm yanlış alarm verdi ve düzelttim.** Önce "içeriği
+kutusundan geniş olan her öge" saydım: **19 öge** çıktı. Ama sayı
+**uzun adda da kısa adda da aynıydı** — yani sebep ad değil, yazı
+boyutuydu. Ölçütü daraltınca gerçek tablo çıktı:
+
+- `overflow: hidden/clip` olan, yani **gerçekten kırpılan: 0**
+- `overflow: visible` olan 7 öge kutusunun birkaç piksel dışına
+  taşıyor (313/323, 238/242) ama **görünüyor** ve hiçbiri ekran
+  dışına çıkmıyor.
+
+**Ders:** "içerik kutusundan geniş" bir kayıp ölçüsü değil. Kaybın
+şartı *kırpılmak ya da erişilemez olmak*. Ölçütü daraltmadan 19 hata
+bildirecektim.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
