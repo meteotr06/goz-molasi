@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v142';
+const SURUM = 'goz-molasi-v143';
 
 const DOSYALAR = [
   './',
@@ -25,6 +25,7 @@ const DOSYALAR = [
   './ikon-512.png',
   './ikon-maskeli.png',
   './onizleme.png',
+  './onizleme-en.png',
 ];
 
 self.addEventListener('install', (e) => {
