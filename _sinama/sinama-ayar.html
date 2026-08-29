@@ -57,6 +57,7 @@
   var govde = document.querySelector('#sonuc tbody');
   var gecti = 0, kaldi = 0;
   var olculenSurum = '';        // hangi kodu olctugumuz (madde 358)
+  var tazelikHatasi = '';       // calisan kod sunucudakiyle ayni mi
 
   function yaz(ad, ekranda, depoda, beklenen, tamam) {
     var s = document.createElement('tr');
@@ -109,6 +110,38 @@
         var w = cerceve.contentWindow;
         var sw = (w.navigator.serviceWorker
                   && w.navigator.serviceWorker.controller);
+
+        /* TAZELIK: CALISAN kod, SUNUCUDAKI kod mu?
+
+           Etiket yetmiyor. Tarayici `dosya.js?s=vNN` adresini
+           dondurabilir ve sayfa ESKI kodu calistirirken biz taze
+           metni `fetch` ile gorebiliriz - sorgulu ve sorgusuz istek
+           AYRI onbellek anahtarlaridir. Merkez 29.08.2026'da tam bunu
+           yasadi: sinamasi "temiz" dedi, cunku tarayici diskteki kodu
+           hic calistirmiyordu.
+
+           Olcut: sayfanin YUKLEDIGI baytlar (`decodedBodySize`) ile
+           sunucunun SU ANDA verdigi baytlar ayni mi. Ayrisiyorsa kosu
+           UYARI degil, GECERSIZ. */
+        try {
+          var giris = w.performance.getEntriesByType('resource')
+            .filter(function (e) { return e.name.indexOf('arayuz.js') >= 0; })[0];
+          if (giris) {
+            /* BAYT ile KARAKTER ayri seylerdir.
+               Ilk yazimda `.text().length` kullandim: JS orada UTF-16
+               kod birimi sayiyor, `decodedBodySize` ise BAYT. Turkce
+               harfler cok baytli oldugu icin ikisi HIC tutmadi ve
+               denetim "GECERSIZ KOSU" diye YANLIS ALARM verdi.
+               Zaten olcmustum: 139646 = disktekiyle ayni. */
+            var tazeBoy = (await (await fetch(
+              '../arayuz.js?tazelik=' + Date.now(),
+              { cache: 'no-store' })).arrayBuffer()).byteLength;
+            if (giris.decodedBodySize !== tazeBoy) {
+              tazelikHatasi = 'arayuz.js — çalışan ' + giris.decodedBodySize
+                + ' bayt, sunucuda ' + tazeBoy + ' bayt';
+            }
+          }
+        } catch (e) { }
         olculenSurum += sw
           ? '  ·  DIKKAT: sayfayi servis iscisi yonetiyor, etiket '
             + 'icerigi garanti etmez'
@@ -347,6 +380,19 @@
   } catch (e) { }
 
   var o = document.getElementById('ozet');
+
+  /* TAZELIK GECERSIZSE SONUC OKUNMAZ. Uyari degil, iptal:
+     eski kodu olcen bir "HEPSI GECTI" en tehlikeli ciktidir. */
+  if (tazelikHatasi) {
+    o.textContent = 'GEÇERSİZ KOŞU — çalışan kod sunucudakiyle aynı '
+      + 'değil (' + tazelikHatasi + '). Tarayıcı eski kodu '
+      + 'çalıştırıyor; sonuçlar okunmaz.';
+    o.style.background = '#fdeceb';
+    window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi,
+                             toplam: gecti + kaldi, gecersiz: true };
+    return;
+  }
+
   var EN_AZ = 23;   /* alt sınır — bkz. `sinama-web.html` */
   if (!kaldi && (gecti + kaldi) < EN_AZ) {
     o.textContent = 'ÖLÇÜLEMEDİ — yalnızca ' + (gecti + kaldi)
