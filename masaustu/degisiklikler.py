@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 150,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Çok uzun bir şehir adı arama sonucunda kesiliyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Şehir ararken çok uzun bir yer adı gelirse (dünyada 85 harflik yer adları var) ad <b>kesiliyor</b> ve okunamıyordu. Artık alt satıra geçiyor.',
+            'Kısa adlarda hiçbir şey değişmedi — kırılma yalnızca <b>sığmadığı anda</b> devreye giriyor.',
+        ],
+    },
+    {
         'surum': 148,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

@@ -30,6 +30,29 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 150,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Çok uzun bir şehir adı arama sonucunda kesiliyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Şehir ararken çok uzun bir yer adı gelirse (dünyada 85 harflik '
+        + 'yer adları var) ad <b>kesiliyor</b> ve okunamıyordu. Artık '
+        + 'alt satıra geçiyor.',
+      'Kısa adlarda hiçbir şey değişmedi — kırılma yalnızca <b>sığmadığı '
+        + 'anda</b> devreye giriyor.',
+    ],
+    ozetEn: 'A very long city name was cut off in the search results.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'If a very long place name came back from the city search (there '
+        + 'are 85-letter place names in the world) it was <b>cut off</b> '
+        + 'and unreadable. It now wraps onto the next line.',
+      'Nothing changed for short names — the break only happens '
+        + '<b>when the name does not fit</b>.',
+    ],
+  },
+  {
     surum: 148,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

@@ -749,6 +749,27 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 }
 .bilgi-oge b { display: block; font-size: 0.90625rem; margin-bottom: 5px; }
 .bilgi-oge p { margin: 0; font-size: 0.84375rem; line-height: 1.55; color: var(--yazi); }
+/* DISARIDAN GELEN AD SIGMALI.
+
+   Sehir arama sonuclari bir cografi servisten geliyor; ad ne kadar
+   uzun olacagini biz belirlemiyoruz. Olculdu (29.08.2026, 360 px):
+   85 harflik gercek bir yer adi (Yeni Zelanda) gelince dugme 246 px
+   kaliyor, icerik 599 px oluyor - ad KESILIYOR, kullanici okuyamiyor.
+
+   `anywhere` SART, `break-word` YETMIYOR - olcerek ogrendim. Dugme
+   `display: flex` ve `break-word` EN KUCUK ICERIK GENISLIGINI
+   dusurmuyor; esnek oge kelimenin tam genisligini korumaya devam
+   ediyor. Ayni dugme, ayni metin: `break-word` 599 px, `anywhere`
+   244 px.
+
+   NIYE GENEL DEGIL (`body`'ye yazilmadi): once oyle denedim, ama
+   normal boyutta gorunumu bozmadigini OLCEMEDIM - olcum aracimin
+   gurultu tabani (ayni CSS ile iki kez: 145 fark) aradigim farktan
+   buyuk. Zarari olculemeyen degisiklik tasinmaz; kural dis metnin
+   dustugu yere sinirli tutuldu. */
+#sehirSonuc .dugme,
+#sehirSonuc button { overflow-wrap: anywhere; }
+
 /* UZUN KELIME BOLUNEBILSIN.
    Yeni Zelanda'daki 85 harflik yer adi tek parca ve 375 px ekrana
    sigmiyordu; kabi zorla genisletip butun sayfayi yatay kaydiriyordu.
