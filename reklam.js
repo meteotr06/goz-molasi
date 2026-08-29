@@ -132,7 +132,11 @@ function onizlemeCiz(kap) {
 
   const etiket = document.createElement('span');
   etiket.className = 'reklam-etiket';
-  etiket.textContent = 'Reklam · ÖNİZLEME';
+  // Onizleme kipi canlida da acilabiliyor (?reklam=onizleme),
+  // o yuzden bu etiket de dilden geciyor. `CS` yoksa Turkcesi.
+  etiket.textContent = (typeof CS === 'function')
+    ? CS('Reklam · ÖNİZLEME', 'Ad · PREVIEW')
+    : 'Reklam · ÖNİZLEME';
 
   const kutu = document.createElement('div');
   kutu.className = 'reklam-sahte';

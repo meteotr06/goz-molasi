@@ -42,6 +42,7 @@ SIFIR ÖLÇÜM = ÖLÇÜLEMEDİ
 import io
 import os
 import re
+import subprocess
 import sys
 
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,13 +77,47 @@ def soyle(s=""):
         print(s.encode(kod, "replace").decode(kod, "replace"))
 
 
-def main():
-    yol = os.path.join(KOK, "arayuz.js")
+def taranacaklar():
+    """Taranacak dosyalar KURALDAN türüyor, elle listeden değil.
+
+    Önce bu bekçi yalnızca `arayuz.js`e bakıyordu ve "TAMAM" diyordu —
+    o cümle yalnızca TEK DOSYA için doğruydu. Yayına giden her betik
+    ekrana yazı yazabilir; listeye girmeyen dosya sınanmamış olmakla
+    kalmaz, SINANMIŞ GÖRÜNÜR.
+
+    (09'un 29.08.2026 bulgusu: sınamalar "48/48 geçti" diyordu ve
+    doğruydu; ama 53 aracın 11'i hiçbir taramadan geçmemişti.)
+    """
     try:
-        k = io.open(yol, encoding="utf-8").read()
-    except Exception as e:
-        soyle("OLCULEMEDI - arayuz.js okunamadi: %s" % e)
+        c = subprocess.run(["git", "ls-files", "*.js"], cwd=KOK,
+                           capture_output=True, text=True, encoding="utf-8")
+        adlar = [y.strip() for y in c.stdout.splitlines() if y.strip()]
+    except Exception:
+        adlar = []
+    return [a for a in adlar
+            if "/" not in a.replace("\\", "/")      # yalnızca kök dosyaları
+            and not a.rsplit("/", 1)[-1].startswith("sinama")]
+
+
+def main():
+    dosyalar = taranacaklar()
+    if not dosyalar:
+        soyle("OLCULEMEDI - taranacak dosya listesi bos "
+              "(`git ls-files` calismadi mi?).")
         return 1
+
+    k = ""
+    kaynak = {}
+    for ad in dosyalar:
+        try:
+            metin = io.open(os.path.join(KOK, ad), encoding="utf-8").read()
+        except Exception:
+            continue
+        kaynak[ad] = metin
+        k += "\n" + metin
+
+    soyle("taranan dosya      : %d (%s)"
+          % (len(kaynak), ", ".join(sorted(kaynak))))
 
     tumu = TUM_KALIP.findall(k)
     if len(tumu) < EN_AZ_ATAMA:
@@ -98,8 +133,20 @@ def main():
         metin = m.group(3)
         if not TR_HARF.search(metin):
             continue
-        satir = k[:m.start()].count("\n") + 1
-        ciplak.append((satir, m.group(1), metin))
+        # HANGİ DOSYADA olduğunu söyle.
+        #
+        # Metinler birleştirilerek taranıyor; birleşik metinden satır
+        # saymak YANLIŞ dosya adı üretiyordu (ilk koşuda "arayuz.js:6935"
+        # yazdı, oysa dizge `reklam.js` içindeydi). Yanlış dosya adı,
+        # düzeltecek kişiyi boş yere dolaştırır.
+        nerede, satir = "?", 0
+        for ad, govde in kaynak.items():
+            i = govde.find(metin)
+            if i >= 0:
+                nerede = ad
+                satir = govde[:i].count("\n") + 1
+                break
+        ciplak.append((nerede, satir, m.group(1), metin))
 
     soyle("ekrana yazan atama : %d" % len(tumu))
     soyle("ciplak dizge       : %d" % len(atamalar))
@@ -109,8 +156,8 @@ def main():
         soyle()
         soyle("BASARISIZ - %d metin ceviriden GECMEDEN ekrana yaziliyor "
               "(Ingilizce arayuzde Turkce cikar):" % len(ciplak))
-        for satir, alan, metin in ciplak[:20]:
-            soyle("  - arayuz.js:%d  .%s = %s" % (satir, alan, metin[:70]))
+        for nerede, satir, alan, metin in ciplak[:20]:
+            soyle("  - %s:%d  .%s = %s" % (nerede, satir, alan, metin[:70]))
         soyle()
         soyle("Yapilacak: metni `CS('tr', 'en')` ile sar (calisma aninda")
         soyle("           yazilan metinler icin) ya da `C()` + sozluk.")
