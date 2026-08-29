@@ -68,6 +68,37 @@
       '</td><td class="' + (tamam ? 'g">TAMAM' : 'k">KALDI') + '</td>';
     govde.appendChild(s);
     tamam ? gecti++ : kaldi++;
+    /* ILERLEME ANINDA GORUNSUN.
+
+       Bu sinama ~25 saniye suruyor ve o sure boyunca ozet satiri BOS
+       kaliyordu. 29.08.2026'da iki kez "sinama takildi" diye YANLIS
+       TESHIS koydum - akis ilerliyordu. Merkez de ayni gun iki kez
+       ayni hatayi yapti. Sessiz bir arac "calismiyor" gibi gorunuyor;
+       yanlis teshis de aracin urettigi bir ciktidir. */
+    try {
+      var oz = document.getElementById('ozet');
+      if (oz) {
+        oz.textContent = (gecti + kaldi) + '. durum bitti — koşuyor…'
+          + (kaldi ? '  (' + kaldi + ' KALDI)' : '');
+      }
+    } catch (e) { }
+    /* ILERLEME ANINDA GORUNSUN.
+
+       Bu sinama ~25 saniye suruyor ve o sure boyunca ozet satiri BOS
+       kaliyordu. 29.08.2026'da iki kez "sinama takildi" diye YANLIS
+       TESHIS koydum - akis ilerliyordu. Merkez de ayni gun iki kez
+       ayni hatayi yapti. Sessiz bir arac, "calismiyor" gibi gorunuyor;
+       yanlis teshis de aracin urettigi bir ciktidir.
+
+       Ozet artik her durumdan sonra guncelleniyor. Bekleyen taraf
+       (insan ya da otomatik okuyucu) ilerlemeyi goruyor. */
+    try {
+      var oz = document.getElementById('ozet');
+      if (oz) {
+        oz.textContent = (gecti + kaldi) + '. durum bitti — koşuyor…'
+          + (kaldi ? '  (' + kaldi + ' KALDI)' : '');
+      }
+    } catch (e) { }
   }
 
   var ANAHTAR = 'goz-molasi-v1';
