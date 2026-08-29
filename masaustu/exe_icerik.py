@@ -82,6 +82,8 @@ ISARETLER = [
      "aktarılıyordu: 'risk 2 saati aşınca başlıyor' deniyordu)"),
     ("sayı var ama sınır yok",
      "Oturmak üzerine kaynaklı bilgi kartı (NHS + WHO)"),
+    ("sayi_yaz",
+     "Sayilar Turkce yazimla ('2.240 dakika', '2240' degil)"),
     ("istatistik_suz",
      "Bozuk kayıt dosyası ekrana çıkmıyor ve çökme üretmiyor "
      "('cok mola', '-99 sn', ValueError)"),

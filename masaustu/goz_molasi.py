@@ -398,6 +398,26 @@ def saat_oku(metin):
     return "%02d:%02d" % (saat, dakika)
 
 
+def sayi_yaz(deger):
+    """Sayiyi TURKCE yazimla: binlik ayirici NOKTA.
+
+    Olculdu (29.08.2026): "toplam goz dinlenmesi" dakikasi
+    varsayilan ayarda 110 (sorun yok) ama uygulamanin KENDI izin
+    verdigi ayarlarla (20 dk calisma / 10 dk mola) 2240'a cikiyor ve
+    ekranda "2240 dakika" diye yaziliyordu. Turkcede "2.240".
+
+    Web tarafinda ayni sinif v147'de duzeltildi (`SAYI()`); masaustu
+    ayri bir govde oldugu icin burada acik kalmisti.
+
+    Sayi degilse "0" doner - bozuk deger ekranda "None" yazmasin.
+    """
+    try:
+        n = int(round(float(deger)))
+    except (TypeError, ValueError):
+        return "0"
+    return "{:,}".format(n).replace(",", ".")
+
+
 def sure_okunakli(saniye):
     """Saniyeyi okunakli yaziya cevirir.
 
@@ -1977,14 +1997,17 @@ class Uygulama:
         if bugun == 0 and hafta == 0:
             return None
 
-        parca = ["Bugün %d mola tamamladın." % bugun]
+        # Sayilar TURKCE yazimla (binlik ayirici nokta) - bkz. sayi_yaz.
+        parca = ["Bugün %s mola tamamladın." % sayi_yaz(bugun)]
         if hafta > bugun:
-            parca.append("Son yedi günde toplam %d mola." % hafta)
+            parca.append("Son yedi günde toplam %s mola." % sayi_yaz(hafta))
         if seri >= 2:
-            parca.append("%d gündür üst üste günlük hedefi tutturuyorsun." % seri)
+            parca.append("%s gündür üst üste günlük hedefi tutturuyorsun."
+                         % sayi_yaz(seri))
         dk = round(hafta * self.ayar["mola_sn"] / 60.0)
         if dk >= 1:
-            parca.append("Bu, yaklaşık %d dakikalık toplam göz dinlenmesi demek." % dk)
+            parca.append("Bu, yaklaşık %s dakikalık toplam göz dinlenmesi demek."
+                         % sayi_yaz(dk))
         return ("Senin durumun", " ".join(parca),
                 "Kendi geçmişin · yalnızca bu cihazda saklanır")
 
