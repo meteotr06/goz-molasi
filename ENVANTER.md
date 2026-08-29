@@ -353,6 +353,41 @@ karşılar. Ama mola ekranının işi **gözü dinlendirmek**; oraya ikinci bir
 amaç koymak, asıl işi zayıflatabilir. **Bu bir ürün kararı, ölçümle
 çözülmez.**
 
+### Merkezin üç maddesi 05'te ölçüldü (29.08.2026)
+
+Merkez Arsa'da üç şey buldu ve "ikisi sende de olabilir" dedi. Üçünü de
+ölçtüm; **ikisi bende yok, biri kısmen var.**
+
+**1. Sürümsüz çekilen dosya — bende risk düşük, sebebi ölçüldü.**
+Sayfanın istediği 12 betik ve `stil.css` damgalı (`?s=v142`). Damgasız
+olan yalnızca `manifest.json` ve `ikon-192.png`. Ama servis işçisinin
+önbellek **adı sürümden türüyor** (`caches.open(SURUM)`, sw.js:32) ve
+eski önbellekler siliniyor (sw.js:42) — her yayında hepsi yeniden
+çekiliyor. Yani damgasızlık burada sessiz eskimeye yol açmıyor.
+
+**2. `sw.js` ön önbelleği ile sayfanın istediği ayrışabilir — DENETİM
+EKLENDİ.** Liste elle tutuluyordu (22 satır). Artık `sinama_kume.py`
+karşılaştırıyor; şu an uyuşuyor. Kasten bozularak kanıtlandı:
+`egzersiz.js` listeden çıkarılınca BAŞARISIZ + çıkış 1, geri konunca 0.
+
+**3. Üretilemeyen dosya — bir tane var.** `masaustu/ikon_uret.py` üç
+ikonu ve `ikon.ico`'yu üretiyor, yani onlar yeniden yapılabilir. Ama
+**`onizleme.png` (paylaşım görseli) elle yapılmış**: ne üretici betiği
+var, ne kaynak dosyası (`.svg` yok). Uygulamanın görünüşü değişirse
+elle yeniden çizilmesi gerekir ve bunu bilen tek yer burası.
+
+  *Görselin kendisi denetlendi ve **doğru**: "20 DAKİKA · 20 SANİYE ·
+  6 METRE" uygulamanın varsayılanlarıyla uyuşuyor, üç iddia (ücretsiz,
+  kurulum yok, çevrimdışı çalışır) da gerçek. `og:image` **mutlak
+  adresle** verilmiş, en/boy ve alt metin yazılı, canlıda 200.*
+
+  **Açık madde:** İngilizce rehber (`guide.html`) de bu **Türkçe**
+  görseli kullanıyor. İngilizce paylaşan kişinin kişilerine Türkçe bir
+  kart gidiyor. Düzeltmesi yeni bir görsel çizmeyi gerektiriyor;
+  elimdeki araçla aynı kalitede üretemeyeceğim için **yapmadım, açık
+  bırakıyorum** — daha kötü bir görsel koymak, Türkçesini bırakmaktan
+  kötü olurdu.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
