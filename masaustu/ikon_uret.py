@@ -22,6 +22,7 @@ Eski simgenin ölçülen kusurları:
 
 import math
 import os
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -319,6 +320,24 @@ def yuvarlat(im, yaricap_orani=0.22):
 
 
 def main():
+    """ESKI tasarimi uretir. ARTIK KAYNAK DEGIL.
+
+    29.08.2026: kullanici yeni logoyu onayladi (zaman halkasi + kapali
+    goz) ve onaylanan dosyalar dogrudan diskte duruyor. Bu betik ESKI
+    tasarimi ciziyor; calistirilirsa ikon-192/512/maskeli.png ve
+    masaustu/ikon.ico dosyalarinin USTUNE YAZAR - uygulama sessizce
+    eski logoya doner ve kimse fark etmez.
+
+    Silmiyoruz (cizim yardimcilari onizleme_uret.py'de hala kullaniliyor)
+    ama artik acik bir bayrak istiyor.
+    """
+    if "--eski-tasarimi-uret" not in sys.argv:
+        print("DURDURULDU - bu betik ESKI logoyu uretir ve kullanicinin")
+        print("onayladigi ikonlarin ustune yazar (29.08.2026).")
+        print("Gercekten istiyorsan:")
+        print("    python ikon_uret.py --eski-tasarimi-uret")
+        return 1
+
     kok = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Web: köşeleri yuvarlak
@@ -338,7 +357,8 @@ def main():
                      format="ICO",
                      sizes=[(b, b) for b, _ in boylar])
     print("masaustu/ikon.ico")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -61,9 +61,16 @@ def uret():
     im = _zemin(G, Y)
     ciz = ImageDraw.Draw(im)
 
-    # ---- Simge: ikon_uret'ten, aynı çizim ----
+    # ---- Simge: ONAYLANAN ikondan, cizim DEGIL ----
+    # 29.08.2026: kullanicinin onayladigi logo diskte duruyor. Burada
+    # yeniden cizmek, paylasim gorselinin uygulamanin ikonundan FARKLI
+    # olmasi demekti - olculdu, tam da oyleydi. Tek kaynak: ikon-512.png
     simge_boy = int(Y * 0.62)
-    simge = ik.yuvarlat(ik.simge_ciz(simge_boy, pay_orani=0.10), 0.22)
+    _ikon_yolu = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "ikon-512.png")
+    simge = Image.open(_ikon_yolu).convert("RGBA").resize(
+        (simge_boy, simge_boy), Image.LANCZOS)
     sx, sy = int(G * 0.075), (Y - simge_boy) // 2
     im.alpha_composite(simge, (sx, sy))
 

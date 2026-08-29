@@ -60,8 +60,25 @@ def gecis(w, h, ust, alt):
     return g
 
 
-def ikon(d, x0, y0, boy):
-    """Yuvarlak koseli kutu + goz + acik halka."""
+def ikon(im, x0, y0, boy):
+    """ONAYLANAN ikonu yapistirir (ikon-512.png).
+
+    29.08.2026'da olculdu: bu dosyanin KENDI cizimi vardi, yani
+    logo ucuncu bir yerde daha uretiliyordu (ikon_uret.py ve
+    onizleme_uret.py'nin yanina). Kullanicinin onayladigi logo
+    diskte durdugu icin cizmenin anlami kalmadi; cizmek, paylasim
+    gorselinin uygulamanin ikonundan sapmasi demek.
+    """
+    yol = os.path.join(os.path.dirname(KOK), "ikon-512.png")
+    simge = Image.open(yol).convert("RGBA").resize((boy, boy),
+                                                   Image.LANCZOS)
+    # `paste` + maske: taban gorsel RGBA olmak zorunda degil.
+    # Olculdu: alpha_composite burada "image has wrong mode" veriyordu.
+    im.paste(simge, (x0, y0), simge)
+
+
+def _eski_ikon_cizimi(d, x0, y0, boy):
+    """ARTIK KULLANILMIYOR - eski logonun cizimi, kayit olsun diye durur."""
     r = int(boy * 0.235)
     d.rounded_rectangle([x0, y0, x0 + boy, y0 + boy], radius=r,
                         fill=IKON_ZEMIN, outline=(48, 84, 90), width=max(1, boy // 260))
@@ -104,7 +121,7 @@ def ciz(yol, baslik, altbaslik, satirlar, cipler, adres):
     im = gecis(W * C, H * C, ZEMIN_UST, ZEMIN_ALT)
     d = ImageDraw.Draw(im)
 
-    ikon(d, int(95 * C), int(118 * C), int(395 * C))
+    ikon(im, int(95 * C), int(118 * C), int(395 * C))
 
     x = int(545 * C)
     fB = yt("segoeuib.ttf", int(66 * C))
@@ -137,13 +154,21 @@ def main():
     # "uretilebilir olsun" diye daha sadesiyle degistirmek gerileme
     # olurdu. Betik Turkce'yi AYRI ada yazar; karsilastirip karar
     # vermek projeyi yuruten oturumun isi.
+    # Sayfalar bu gorselleri DEPO KOKUNDEN okuyor (index.html og:image).
+    # Olculdu 29.08.2026: burasi masaustu\ altina yaziyordu - uretilen
+    # gorsel hicbir sayfaya ulasmiyordu.
+    _KOK = os.path.dirname(KOK)
+    # TR kartI KARSILASTIRMA icin uretiliyor; sayfalarin kullandigi TR
+    # gorseli `onizleme_uret.py` uretiyor (onizleme.png). Bu yuzden
+    # masaustu\ altinda kaliyor - koke yazilsa yayina cikar ve hicbir
+    # sayfanin kullanmadigi ikinci bir TR kart olurdu.
     tr = ciz(os.path.join(KOK, "onizleme-tr-uretilmis.png"),
              "Göz Molası", "20 DAKİKA · 20 SANİYE · 6 METRE",
              ["Her 20 dakikada bir ekranı kapatır,",
               "gözünü ne yapman gerektiğini gösterir."],
              ["Ücretsiz", "Kurulum yok", "Çevrimdışı çalışır"],
              "meteotr06.github.io/goz-molasi")
-    en = ciz(os.path.join(KOK, "onizleme-en.png"),
+    en = ciz(os.path.join(_KOK, "onizleme-en.png"),
              "Eye Break", "20 MINUTES · 20 SECONDS · 6 METRES",
              ["Every 20 minutes it dims the screen and",
               "shows your eyes exactly what to do."],

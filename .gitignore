@@ -35,3 +35,7 @@ desktop.ini
 !/sinama_*.py
 # Sinama takimi burada durur ve depoda izlenir (yayinlanmaz).
 !/_sinama/
+
+# EN onizleme betiginin urettigi KARSILASTIRMA karti - hicbir sayfa
+# kullanmiyor, yayina cikmasi gerekmiyor (29.08.2026).
+masaustu/onizleme-tr-uretilmis.png

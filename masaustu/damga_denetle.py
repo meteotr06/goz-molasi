@@ -37,11 +37,46 @@ import sys
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KAYIT = os.path.join(KOK, ".damga_kayit.json")
 
-# surum_ekle.py'nin damgaladığı dosyalar
-DAMGALANAN = [
+# surum_ekle.py'nin damgaladığı dosyalar — EN AZ bunlar izlenir.
+# Asıl kapsam `damgalanan_dosyalar()` ile sw.js'ten türetiliyor.
+DAMGALANAN_ASGARI = [
     "stil.css", "cekirdek.js", "dil.js", "bilgiler.js", "bilgiler_en.js",
     "mola_icerik.js", "arayuz.js", "egzersiz.js", "reklam.js", "dunya.js",
 ]
+
+
+def damgalanan_dosyalar():
+    """İzlenen dosyalar: SERVİS İŞÇİSİ NEYİ ÖNBELLEĞE ALIYORSA O.
+
+    Kapsam ELLE YAZILMIYOR. Kural şu: servis işçisi bir dosyayı
+    önbelleğe alıyorsa, o dosya değişip SURUM artmadığında kurulu
+    kullanıcı ESKİSİNİ görmeye devam eder. Yani izlenmesi gereken küme,
+    önbellek listesinin ta kendisidir.
+
+    NİYE: 29.08.2026'da bu liste elle yazılıydı ve yalnızca 10 CSS/JS
+    dosyası vardı. sw.js ise 23 dosya önbelleğe alıyordu — ikonlar,
+    dört sayfa, manifest.json ve paylaşım görselleri listede YOKTU.
+    Aynı gün ikonlar değiştirilirken ölçüldü: ikonu değiştirip damgayı
+    unutmak sessizce geçiyordu.
+
+    Döner: (dosya_listesi, hata_metni). Liste okunamazsa SESSİZCE eski
+    listeye dönmez — bu projede sessiz düşüş hata sayılıyor.
+    """
+    try:
+        sw = io.open(os.path.join(KOK, "sw.js"), encoding="utf-8").read()
+    except Exception as e:
+        return [], "sw.js okunamadı: %s" % e
+    m = re.search(r"const\s+DOSYALAR\s*=\s*\[(.*?)\]", sw, re.S)
+    if not m:
+        return [], ("sw.js içinde DOSYALAR listesi bulunamadı — damga "
+                    "bekçisi kapsamını türetemiyor")
+    adlar = [a for a in re.findall(r"'\./([^']*)'", m.group(1)) if a]
+    if not adlar:
+        return [], "sw.js DOSYALAR listesi boş okundu"
+    for a in DAMGALANAN_ASGARI:
+        if a not in adlar:
+            adlar.append(a)
+    return adlar, None
 
 
 def surum_oku():
@@ -52,7 +87,7 @@ def surum_oku():
 
 def ozetler():
     d = {}
-    for ad in DAMGALANAN:
+    for ad in damgalanan_dosyalar()[0]:
         y = os.path.join(KOK, ad)
         if not os.path.exists(y):
             continue
@@ -146,6 +181,11 @@ def main():
 
     # Bu iki denetim KAYITTAN BAĞIMSIZ: dosya değişmemiş olsa da
     # tutarsızlık durabilir. Erken dönüşlerin ÖNÜNDE olmalılar.
+    _, kapsam_hatasi = damgalanan_dosyalar()
+    if kapsam_hatasi:
+        print("BAŞARISIZ — %s" % kapsam_hatasi)
+        return 1
+
     sorunlar = damga_tutarli_mi(surum) + onbellekte_eksik()
     if sorunlar:
         print("BAŞARISIZ — damga/önbellek tutarsız:")
@@ -163,7 +203,8 @@ def main():
                if eski.get("ozetler", {}).get(a) != simdi[a]]
 
     if not degisen:
-        print("TAMAM — damgalanan dosyaların hiçbiri değişmemiş (%s)." % surum)
+        print("TAMAM — önbelleğe alınan %d dosyanın hiçbiri değişmemiş (%s)."
+              % (len(simdi), surum))
         return 0
 
     if eski.get("surum") == surum:
@@ -178,8 +219,8 @@ def main():
         return 1
 
     kaydet()
-    print("TAMAM — %d dosya değişti, SURUM %s -> %s."
-          % (len(degisen), eski.get("surum"), surum))
+    print("TAMAM — %d/%d dosya değişti, SURUM %s -> %s."
+          % (len(degisen), len(simdi), eski.get("surum"), surum))
     return 0
 
 
