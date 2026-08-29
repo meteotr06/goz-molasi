@@ -153,6 +153,12 @@ Hepsi kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
 4. **Mola ekranının alt kenarı okunuyor mu?** (tarayıcı çubuğu
    örtüyordu — düzeltildi, doğrulanmadı)
 5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
+7. **Yazıları büyütünce sayfa yana kayıyor mu?** Telefonun kendi
+   "yazı boyutu" ayarını en büyüğe al ve uygulamayı aç. Sayfa sağa
+   sola kaymamalı, hiçbir yazı kesilmemeli.
+   *(Bilgisayarda ölçüldü ve temiz çıktı; ama telefonun yazı ölçeği
+   görünüm alanını da değiştirebiliyor — o hâli ancak sen görebilirsin.)*
+
 6. **Uçak kipinde açılıyor mu?** Uygulamayı bir kez aç, sonra uçak
    kipine al ve yeniden aç. Açılmalı ve mola vermeye devam etmeli.
    *(Çevrimdışı çalışmanın bütün ön koşulları canlıda ölçüldü —
@@ -497,6 +503,32 @@ boyutuydu. Ölçütü daraltınca gerçek tablo çıktı:
 **Ders:** "içerik kutusundan geniş" bir kayıp ölçüsü değil. Kaybın
 şartı *kırpılmak ya da erişilemez olmak*. Ölçütü daraltmadan 19 hata
 bildirecektim.
+
+### Ölçüm yönteminin geçerliliği — çerçeve genişliyor mu? (hayır)
+
+Merkez 29.08.2026'da kendi ölçümlerini geçersiz kılan bir şey buldu:
+tarayıcı bölmesi **yazı büyütülünce görünüm alanını da büyütüyor**
+(375 px → %200'de 574 px). Yani "dar ekranda büyük yazıda temiz"
+hükümleri aslında **geniş ekranda** ölçülmüş oluyor.
+
+**Bende ölçüldü: çerçeve büyümüyor.**
+
+| | çerçeve (`innerWidth`) | gövde | kök punto |
+|---|---|---|---|
+| önce | 360 | 345 | 16px |
+| sonra | **360** | **345** | **32px** |
+
+Sebep yöntem farkı: ben bölmenin görünüm alanını değil, **sabit piksel
+genişlikli bir `iframe`** kullanıyorum ve kök puntoyu **belgenin
+içinde** değiştiriyorum. Kapsayıcı blok px cinsinden sabit olduğu için
+yazı büyüdüğünde genişlemiyor.
+
+**Yani bugünkü "360/375 px · %200 · temiz" hükümleri geçerli.**
+
+**Ama sınırı da yazıyorum:** kök puntoyu değiştirmek, tarayıcının
+"en küçük yazı boyutu" ayarının iyi bir taklidi; **Android'in kendi
+yazı ölçeği** ayrıca görünüm alanını da etkileyebilir. Son söz gerçek
+telefonda — kullanıcı sorusu 7 olarak eklendi.
 
 ### Ayrıca ölçülemeyenler
 
