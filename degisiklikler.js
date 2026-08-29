@@ -30,7 +30,7 @@
  */
 const DEGISIKLIKLER = [
   {
-    surum: 150,
+    surum: 151,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',
     ozet: 'Çok uzun bir şehir adı arama sonucunda kesiliyordu.',
@@ -41,6 +41,8 @@ const DEGISIKLIKLER = [
         + 'alt satıra geçiyor.',
       'Kısa adlarda hiçbir şey değişmedi — kırılma yalnızca <b>sığmadığı '
         + 'anda</b> devreye giriyor.',
+      'Aynı ad <b>ayarlarda ve mola ekranında</b> da gösteriliyordu; '
+        + 'orada da kesiliyordu. Üç yer birden düzeltildi.',
     ],
     ozetEn: 'A very long city name was cut off in the search results.',
     tarihEn: '29 August 2026',
@@ -50,6 +52,8 @@ const DEGISIKLIKLER = [
         + 'and unreadable. It now wraps onto the next line.',
       'Nothing changed for short names — the break only happens '
         + '<b>when the name does not fit</b>.',
+      'The same name is also shown <b>in settings and on the break '
+        + 'screen</b>, where it was cut off too. All three are fixed.',
     ],
   },
   {

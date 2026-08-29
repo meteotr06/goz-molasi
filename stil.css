@@ -766,9 +766,24 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
    normal boyutta gorunumu bozmadigini OLCEMEDIM - olcum aracimin
    gurultu tabani (ayni CSS ile iki kez: 145 fark) aradigim farktan
    buyuk. Zarari olculemeyen degisiklik tasinmaz; kural dis metnin
-   dustugu yere sinirli tutuldu. */
+   dustugu yere sinirli tutuldu.
+
+   DIS METNIN DUSTUGU UC NOKTA (sayilarak bulundu):
+     1. `#sehirSonuc`  - arama sonuclari (cografi servis)
+     2. `#havaDurum`   - ayarlardaki durum satiri (secilen adin ADI)
+     3. `#nedenBaslik` - moladaki hava karti basligi (ayni ad)
+
+   Once yalnizca 1'i duzeltmistim: adin SECILDIGI yeri. Ama ad
+   KAYDEDILIYOR ve baska iki yerde daha gosteriliyor. Olculdu:
+   85 harflik ad kayitliyken ayar penceresinde `.ayar-govde` 305 px
+   kutuda 608 px icerik, `.satir` 246'da 586 - ikisi de kesiliyor.
+
+   Ders: bir metnin GIRDIGI yeri duzeltmek, GOSTERILDIGI yerleri
+   duzeltmez. Metnin gittigi her yeri say. */
 #sehirSonuc .dugme,
-#sehirSonuc button { overflow-wrap: anywhere; }
+#sehirSonuc button,
+#havaDurum,
+#nedenBaslik { overflow-wrap: anywhere; }
 
 /* UZUN KELIME BOLUNEBILSIN.
    Yeni Zelanda'daki 85 harflik yer adi tek parca ve 375 px ekrana
