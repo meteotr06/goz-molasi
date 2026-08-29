@@ -70,6 +70,18 @@ ISARETLER = [
     ("saat_oku",
      "Saat alanları doğrulanır — '25:00' kabul edilmez, hatalı "
      "yazım sessizce varsayılana dönmez"),
+
+    # 29.08.2026 - masaüstüne giren değişiklikler.
+    #
+    # Liste 28.08'de yazılmıştı ve o günden sonraki düzeltmeleri
+    # KAPSAMIYORDU: derleme sonrası araç "yedi işaret de içeride"
+    # deyip geçecekti, oysa 29.08 düzeltmesi girmemiş olabilirdi.
+    # Bugünün dersi: yeşil sonuç kapsamın doğru olduğunu söylemez.
+    ("en yüksek riskin",
+     "Sağlık bilgisi kaynağıyla aynı şeyi söylüyor (AOA yanlış "
+     "aktarılıyordu: 'risk 2 saati aşınca başlıyor' deniyordu)"),
+    ("sayı var ama sınır yok",
+     "Oturmak üzerine kaynaklı bilgi kartı (NHS + WHO)"),
 ]
 
 

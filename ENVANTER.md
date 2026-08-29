@@ -137,33 +137,57 @@ Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir 
 
 ## Buradan ölçülemeyenler — kullanıcıya sorular
 
-Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
-Hepsi kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
+Bunlar **"çalışıyor" sayılmıyor; denenmedi sayılıyor.** Hepsi
+kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
 
-1. **Mola ekranından çıkılabiliyor mu?** “Yanlışlıkla çıkmayı
-   önle” açıkken, mola sürerken geri tuşu / kenardan kaydırma ile
-   ekrandan çıkabiliyor musun?
-2. **Titreşim geliyor mu?** Mola başlarken ve uyarı anında telefon
-   titriyor mu?
-3. **“Uygulama olarak kur” çalışıyor mu?** Ana ekrana ekleniyor mu,
-   eklendikten sonra açılıyor mu?
+**CEVAPLAR BURAYA YAZILIR.** Her sorunun altında bir `Cevap:` satırı
+var. Kullanıcı söyleyince oraya yazılır — tarihiyle birlikte. Cevabı
+yazılmayan soru, bir sonraki turda **sekizinci kez sorulur**; bugün
+`OTURUMLAR.md`'de bayat bir notun aylarca iş ürettiğini gördük.
 
-Önceki turlardan **hâlâ cevapsız** olanlar:
+Cevap "hayır, çalışmıyor" ise **soru kapanmaz** — bulguya dönüşür ve
+bu dosyanın bulgu bölümüne geçer.
 
-4. **Mola ekranının alt kenarı okunuyor mu?** (tarayıcı çubuğu
-   örtüyordu — düzeltildi, doğrulanmadı)
-5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
-7. **Yazıları büyütünce sayfa yana kayıyor mu?** Telefonun kendi
-   "yazı boyutu" ayarını en büyüğe al ve uygulamayı aç. Sayfa sağa
-   sola kaymamalı, hiçbir yazı kesilmemeli.
-   *(Bilgisayarda ölçüldü ve temiz çıktı; ama telefonun yazı ölçeği
-   görünüm alanını da değiştirebiliyor — o hâli ancak sen görebilirsin.)*
+---
 
-6. **Uçak kipinde açılıyor mu?** Uygulamayı bir kez aç, sonra uçak
-   kipine al ve yeniden aç. Açılmalı ve mola vermeye devam etmeli.
-   *(Çevrimdışı çalışmanın bütün ön koşulları canlıda ölçüldü —
-   düzenek etkin, 23 dosya cihazda. Ölçülemeyen tek şey ağın gerçekten
-   kesildiği an; onu ancak sen deneyebilirsin.)*
+**1. Mola ekranından çıkılabiliyor mu?**
+"Yanlışlıkla çıkmayı önle" açıkken, mola sürerken geri tuşu ya da
+kenardan kaydırma ile ekrandan çıkabiliyor musun?
+*(Yenileme yoluna karşı ölçüldü, tutuyor. Telefonun kendi hareketleri
+ölçülemedi.)*
+> **Cevap:** _(bekliyor)_
+
+**2. Titreşim geliyor mu?**
+Mola başlarken ve uyarı anında telefon titriyor mu?
+> **Cevap:** _(bekliyor)_
+
+**3. "Uygulama olarak kur" çalışıyor mu?**
+Ana ekrana ekleniyor mu, eklendikten sonra açılıyor mu?
+> **Cevap:** _(bekliyor)_
+
+**4. Mola ekranının alt kenarı okunuyor mu?**
+Tarayıcı çubuğu örtüyordu; düzeltildi ama telefonda doğrulanmadı.
+> **Cevap:** _(bekliyor)_
+
+**5. 10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
+> **Cevap:** _(bekliyor)_
+
+**6. Uçak kipinde açılıyor mu?**
+Uygulamayı bir kez aç, sonra uçak kipine al ve yeniden aç. Açılmalı ve
+mola vermeye devam etmeli.
+*(Çevrimdışı çalışmanın bütün ön koşulları canlıda ölçüldü — düzenek
+etkin, 23 dosya cihazda. Ölçülemeyen tek şey ağın gerçekten kesildiği
+an.)*
+> **Cevap:** _(bekliyor)_
+
+**7. Yazıları büyütünce sayfa yana kayıyor mu?**
+Telefonun kendi "yazı boyutu" ayarını en büyüğe al ve uygulamayı aç.
+Sayfa sağa sola kaymamalı, hiçbir yazı kesilmemeli.
+*(Bilgisayarda ölçüldü, temiz. Ama telefonun yazı ölçeği görünüm
+alanını da değiştirebiliyor — o hâli ancak telefon gösterir.)*
+> **Cevap:** _(bekliyor)_
+
+---
 
 > **Not — kendi hatam:** bu maddeyi 29.08.2026'da *"listeye eklendi"*
 > diye yazmıştım ama **listeye eklememiştim**; yalnızca cümlede öyle
