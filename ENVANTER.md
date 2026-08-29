@@ -138,7 +138,7 @@ Denenmemiş her satır, bugüne kadar bulunan hataların doğduğu yer olabilir 
 ## Buradan ölçülemeyenler — kullanıcıya sorular
 
 Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
-Üçü de kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
+Hepsi kullanıcının kendi telefonunda, kendi oturumunda denenmeli (K-24).
 
 1. **Mola ekranından çıkılabiliyor mu?** “Yanlışlıkla çıkmayı
    önle” açıkken, mola sürerken geri tuşu / kenardan kaydırma ile
@@ -153,6 +153,16 @@ Bunlar “çalışıyor” sayılmıyor; **denenmedi** sayılıyor.
 4. **Mola ekranının alt kenarı okunuyor mu?** (tarayıcı çubuğu
    örtüyordu — düzeltildi, doğrulanmadı)
 5. **10 dakika başka uygulamada kalıp dönünce sayacın korunuyor mu?**
+6. **Uçak kipinde açılıyor mu?** Uygulamayı bir kez aç, sonra uçak
+   kipine al ve yeniden aç. Açılmalı ve mola vermeye devam etmeli.
+   *(Çevrimdışı çalışmanın bütün ön koşulları canlıda ölçüldü —
+   düzenek etkin, 23 dosya cihazda. Ölçülemeyen tek şey ağın gerçekten
+   kesildiği an; onu ancak sen deneyebilirsin.)*
+
+> **Not — kendi hatam:** bu maddeyi 29.08.2026'da *"listeye eklendi"*
+> diye yazmıştım ama **listeye eklememiştim**; yalnızca cümlede öyle
+> diyordum. Bugün onlarca kez düzelttiğim sınıfın aynısı — *söylenen
+> ile yapılan ayrı yerlerde duruyor.* Fark edilince eklendi.
 
 ### Kapanan bulgu — dar ekran + %200 yazı (sebep bulundu, düzeltildi)
 
