@@ -232,6 +232,18 @@ window.__cekirdekHazir = window.__onbellekHazir.then(function () {
     o.style.background = '#fdeceb';
     return;
   }
+  /* ÖLÇÜLEN SÜRÜM (madde 358) — bkz. `sinama-web.html`. */
+  try {
+    var ds = document.createElement('div');
+    ds.style.cssText = 'margin-top:10px;font-size:12px;color:#555';
+    var sb = [].slice.call(document.querySelectorAll('script'))
+      .map(function (x) { return x.src; })
+      .filter(function (x) { return x && x.indexOf('cekirdek') >= 0; })[0];
+    ds.textContent = 'ölçülen dosya: '
+      + (sb ? sb.replace(location.origin, '') : 'cekirdek.js (adres okunamadı)');
+    document.body.appendChild(ds);
+  } catch (e) { }
+
   o.textContent = 'GEÇTİ: ' + gecti + ' · KALDI: ' + kaldi +
                   ' · TOPLAM: ' + (gecti + kaldi) +
                   ' — benzetilen kullanım: ' + Math.round(gecenSn / 60) + ' dakika' +

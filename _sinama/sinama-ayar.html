@@ -56,6 +56,7 @@
 (async function () {
   var govde = document.querySelector('#sonuc tbody');
   var gecti = 0, kaldi = 0;
+  var olculenSurum = '';        // hangi kodu olctugumuz (madde 358)
 
   function yaz(ad, ekranda, depoda, beklenen, tamam) {
     var s = document.createElement('tr');
@@ -84,6 +85,17 @@
     document.getElementById('yuva').appendChild(cerceve);
     await new Promise(function (r) { cerceve.onload = r; });
     await bekle(900);
+    /* DAMGAYI BURADA YAKALIYORUZ - cerceve CANLIYKEN.
+       Once ozet yazilirken okunuyordu, ama o an cerceve
+       kapatilmis oluyordu ve satir "okunamadi" diyordu:
+       durust ama ise yaramaz. */
+    if (!olculenSurum) {
+      try {
+        var bt = cerceve.contentDocument
+          .querySelector('script[src*="arayuz"]');
+        if (bt) olculenSurum = bt.getAttribute('src');
+      } catch (e) { }
+    }
     return cerceve;
   }
 
@@ -300,6 +312,20 @@
       String(havaKaldi), 'null', havaKaldi === null);
 
   if (cerceve) cerceve.remove();
+
+  /* ÖLÇÜLEN SÜRÜM YAZILSIN (madde 358).
+     Damga yazılmayan bir yeşil, hangi koda ait olduğu bilinmeyen bir
+     yeşildir. Çerçeveye yüklenen sayfanın betik damgasını okuyoruz —
+     "hangi kodu ölçtüm" sorusu sonuçla birlikte cevaplansın. */
+  try {
+    var damgaSatiri = document.createElement('div');
+    damgaSatiri.style.cssText = 'margin-top:10px;font-size:12px;color:#555';
+    var b = cerceve && cerceve.contentDocument
+      && cerceve.contentDocument.querySelector('script[src*="arayuz"]');
+    damgaSatiri.textContent = 'ölçülen sürüm: '
+      + (olculenSurum || 'okunamadı');
+    document.body.appendChild(damgaSatiri);
+  } catch (e) { }
 
   var o = document.getElementById('ozet');
   var EN_AZ = 23;   /* alt sınır — bkz. `sinama-web.html` */
