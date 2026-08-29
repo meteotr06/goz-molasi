@@ -318,6 +318,41 @@ aktardığımızı bulduk (v141). Oturmanın zararına dair bir cümle yazacaksa
 **önce kaynağı okumalı** — kaynağın adını yazmadan da yazmamalı.
 Yani bu madde, **yazılmadan önce bir dış referans ölçümü** istiyor.
 
+### "Ayakta mola" — dış referans ölçümü (yazmadan ÖNCE)
+
+Merkez haklıydı: bu bir **sağlık iddiası**, ve dün AOA'yı yanlış
+aktardığımızı bulduk. Kaynaklara bakıldı.
+
+**NHS** — *Why sitting too much is bad for us*:
+> Öneri: **"set a reminder to get up every 30 minutes"**
+> Ama aynı sayfada: **"there is currently not enough evidence to set a
+> time limit on how much time people should sit each day."**
+
+**WHO** — *Physical activity* bilgi sayfası:
+> **"all age groups should limit the amount of time being sedentary"**
+> — **hiçbir süre eşiği vermiyor.**
+
+**Üç sonuç:**
+
+1. **Sayı var ama EŞİK DEĞİL.** 30 dakika, NHS'in *pratik önerisi*; aynı
+   kurum "sınır koyacak kadar kanıt yok" diyor. *"30 dakikada bir kalkman
+   gerekir"* diye yazarsak, dün AOA'da yaptığımız hatanın aynısını
+   yaparız: **öneriyi eşiğe çevirmek.**
+2. **İki farklı şeyden söz ediyoruz.** Bizim uzun molamız **2 saat** ve
+   **göz** için (AOA). Oturmak **ayrı** bir konu ve **30 dakika**
+   ölçeğinde. Uzun molaya "ayağa kalk" demek, iki ayrı gerekçeyi tek
+   düğmede birleştirmek olur — ve ikisinin süresi tutmuyor.
+3. **Kaynaklar çelişmiyor, ikisi de "sınır bilinmiyor" diyor** (K-45).
+   Yani dürüst cümle şu: *"Ne kadar oturmanın zararlı olduğuna dair kesin
+   bir sınır yok; NHS 30 dakikada bir kalkmayı öneriyor."*
+
+**Karar merkeze/kullanıcıya bırakılan tek nokta:** uygulama zaten **20
+dakikada bir** araya giriyor. Bu araları ara sıra *"kalk, biraz hareket
+et"* diye kullanmak, yeni özellik yazmadan NHS önerisini fazlasıyla
+karşılar. Ama mola ekranının işi **gözü dinlendirmek**; oraya ikinci bir
+amaç koymak, asıl işi zayıflatabilir. **Bu bir ürün kararı, ölçümle
+çözülmez.**
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
