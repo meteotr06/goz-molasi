@@ -57,7 +57,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/4] Acilis sinamasi - exe gercekten aciliyor mu...
+echo [4/5] Acilis sinamasi - exe gercekten aciliyor mu...
 echo ----------------------------------------------------------------------
 python "%~dp0masaustu\sinama_acilis.py"
 if errorlevel 1 (
@@ -65,6 +65,26 @@ if errorlevel 1 (
   echo ======================================================================
   echo  EXE DERLENDI AMA ACILIS SINAMASINI GECEMEDI.
   echo  Uygulama ACILMIYOR. Bu surumu kimseye verme.
+  echo ======================================================================
+  pause
+  exit /b 1
+)
+
+echo.
+echo [5/5] Icerik denetimi - bugunku duzeltmeler exe'nin ICINDE mi...
+echo ----------------------------------------------------------------------
+REM  "Aciliyor" ile "icinde dogru kod var" AYRI seylerdir. Acilis
+REM  sinamasi birincisini olcuyor; bu adim ikincisini. Eski bir exe de
+REM  sorunsuz acilir - ve kullanici duzeltilmis sandigi hatayi
+REM  yasamaya devam eder. Olculdu 29.08.2026: bu adim yoktu.
+python "%~dp0masaustu\exe_icerik.py"
+if errorlevel 1 (
+  echo.
+  echo ======================================================================
+  echo  EXE ACILIYOR AMA ICERIGI ESKI.
+  echo  Kaynaktaki duzeltmeler bu exe'ye girmemis. Derleme eski dosyadan
+  echo  yapilmis ya da PyInstaller onbellegi kullanmis olabilir.
+  echo  Cozum: build\ ve dist\ klasorlerini silip yeniden derle.
   echo ======================================================================
   pause
   exit /b 1
