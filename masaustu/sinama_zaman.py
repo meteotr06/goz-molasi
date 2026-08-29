@@ -122,10 +122,20 @@ class SahteUygulama(gm.Uygulama):
         pass
 
 
+# Bu sinamanin yapmasi gereken en az kontrol sayisi.
+#
+# NEDEN VAR: "belirti yok" ile "dal hic calismadi" ayni yesili
+# gosteriyor. Kontrollerin yarisi silinse bu sinama yine "TAMAM"
+# derdi - ve dogruladigi sey, ekranda gordugun SAYININ dogrulugu.
+EN_AZ_KONTROL = 25
+
+
 def main():
     hatalar = []
+    sayac = {"n": 0}
 
     def kontrol(ad, sart, ayrinti=""):
+        sayac["n"] += 1
         if not sart:
             hatalar.append("%s%s" % (ad, (" - " + ayrinti) if ayrinti else ""))
         print("  %-54s %s" % (ad, "TAMAM" if sart else "KALDI"))
@@ -322,11 +332,22 @@ def main():
     kontrol("bozuk durum dosyası çökertmiyor", saglam)
 
     if hatalar:
-        print("\nBASARISIZ - %d sorun:" % len(hatalar))
+        print("\nyapilan kontrol : %d" % sayac["n"])
+        print("BASARISIZ - %d sorun:" % len(hatalar))
         for h in hatalar:
             print("  -", h)
         return 1
-    print("\nTAMAM - sayac dogru, saat oyunuyla atlatilamiyor.")
+
+    print("\nyapilan kontrol : %d" % sayac["n"])
+    if sayac["n"] < EN_AZ_KONTROL:
+        print("OLCULEMEDI - yalnizca %d kontrol yapildi, en az %d "
+              "bekleniyordu." % (sayac["n"], EN_AZ_KONTROL))
+        print("  Kontroller silinmis ya da bir dal hic kosmamis olabilir.")
+        print("  SESSIZ GECMIYORUZ: bu sinama sayacin dogrulugunu")
+        print("  ve saat oyunuyla atlatilamadigini dogruluyor.")
+        return 1
+    print("TAMAM - %d kontrol yapildi; sayac dogru, saat oyunuyla "
+          "atlatilamiyor." % sayac["n"])
     return 0
 
 
