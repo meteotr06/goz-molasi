@@ -399,7 +399,23 @@ def saat_oku(metin):
 
 
 def sure_okunakli(saniye):
-    saniye = int(saniye)
+    """Saniyeyi okunakli yaziya cevirir.
+
+    BOZUK DEGERDE COKMEZ. Olculdu (29.08.2026): kayit dosyasi
+    bozulursa buraya 'cok', None ya da '12abc' gelebiliyordu ve
+    `int()` ValueError/TypeError atiyordu - panel guncellemesi
+    coker, kullanici sebebini goremez.
+
+    Negatif de gosterilmez: "-99 sn" ekranda duran bir yalandir.
+    Sinir disi deger KIRPILMAZ, SIFIRLANIR (web tarafiyla ayni
+    gerekce: kirpilmis deger makul gorunen bir yalan olur).
+    """
+    try:
+        saniye = int(float(saniye))
+    except (TypeError, ValueError):
+        saniye = 0
+    if saniye < 0 or saniye > 86400:
+        saniye = 0
     if saniye < 60:
         return "%d sn" % saniye
     if saniye < 3600:
@@ -1388,12 +1404,52 @@ class Uygulama:
         except Exception:
             pass
 
+    # Bir gunde olabilecek en buyuk degerler. Bunun disi BOZUK sayilir.
+    IST_SINIRLARI = {
+        "mola": 1000, "atlanan": 1000, "uzun_mola": 1000,
+        "ekran_sn": 86400, "kesintisiz_sn": 86400,
+    }
+
+    @staticmethod
+    def istatistik_suz(ham):
+        """Dosyadan gelen istatistigi suzer.
+
+        Olculdu (29.08.2026): dosya HAM `update` ediliyordu ve bozuk
+        deger dogrudan EKRANA cikiyordu - `str(...)` yolunda "cok",
+        "-3", "None"; `sure_okunakli` yolunda ise COKME.
+
+        Web tarafinda ayni kapi v146'da kapatildi; masaustu ayri bir
+        govde oldugu icin burada acik kalmisti.
+
+        Sinir disi deger KIRPILMAZ, SIFIRLANIR: kirpilmis bir sayi
+        ("1000 mola") bozuk veriden uretilmis ama INANDIRICI olur.
+        """
+        # SAYAC TAM SAYI KALIR. `sayi_oku` float donduruyor; sayaclar
+        # ekranda `str(...)` ile basildigi icin suzgecten gecen 7,
+        # "7.0" olarak GORUNUYORDU. Kendi duzeltmemin urettigi yeni
+        # bir yanlis goruntu - yayina gitmeden olculdu ve kapatildi.
+        # Saniye alanlari float kalabilir: `ekran_sn` 0.25'er artiyor
+        # ve zaten `sure_okunakli` icinde tam sayiya cevriliyor.
+        TAM_SAYI = ("mola", "atlanan", "uzun_mola")
+        temiz = {}
+        for ad, en_cok in Uygulama.IST_SINIRLARI.items():
+            if ad not in ham:
+                continue
+            d = sayi_oku(ham.get(ad), None)
+            d = d if (d is not None and 0 <= d <= en_cok) else 0
+            temiz[ad] = int(d) if ad in TAM_SAYI else d
+        # Sayi olmayan alanlar (gun gibi) oldugu gibi tasinir.
+        for ad, d in ham.items():
+            if ad not in Uygulama.IST_SINIRLARI:
+                temiz[ad] = d
+        return temiz
+
     def _istatistik_oku(self):
         try:
             with open(IST_DOSYA, "r", encoding="utf-8-sig") as f:
                 veri = json.load(f)
-            if veri.get("gun") == time.strftime("%Y-%m-%d"):
-                self.ist.update(veri)
+            if isinstance(veri, dict) and veri.get("gun") == time.strftime("%Y-%m-%d"):
+                self.ist.update(self.istatistik_suz(veri))
         except Exception:
             pass
         # Dosya okundu; simdi GUVENILIR MI diye sor.
