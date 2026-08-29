@@ -7,6 +7,18 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 147,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Sayılar artık Türkçe yazımıyla: “6,7” ve “1.433 dk”.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Haftalık özette “günde ortalama <b>6.7</b>” yazıyordu — Türkçede ondalık ayırıcı virgüldür. Artık <b>6,7</b>.',
+            'Uzun süreler ayırıcısız yazılıyordu (“1433 dk”). Artık <b>1.433 dk</b>. İngilizce arayüzde de kendi yazımıyla: “1,433 min”.',
+            'Sayı doğruydu, <b>yazımı yanlıştı</b> — ve yanlış okunan doğru sayı, yanlış sayıdır.',
+        ],
+    },
+    {
         'surum': 146,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

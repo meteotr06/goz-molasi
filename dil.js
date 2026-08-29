@@ -538,6 +538,30 @@ function saatYaz(tarih) {
   }
 }
 
+/** Sayıyı DİLİN yazımıyla yazar.
+
+    Ölçüldü (29.08.2026): Türkçe arayüzde "günde ortalama 6.7" ve
+    "1433 dk" yazıyordu. Türkçede ondalık ayırıcı VİRGÜL, binlik
+    ayırıcı NOKTA — yani "6.7" yanlış yazım, "1433" ise ayırıcısız.
+
+    `saatYaz()` ile aynı mantık: Türkçe seçilmişse tr-TR sabit,
+    değilse tarayıcının bölgesi. Varsayım değil, bilgi.
+
+    Sayı değilse '0' döner — bozuk veri ekrana "NaN" yazmasın. */
+function SAYI(deger, basamak = 0) {
+  const s = Number(deger);
+  if (!Number.isFinite(s)) return '0';
+  const yerel = AKTIF_DIL === 'tr' ? 'tr-TR' : (navigator.language || 'en');
+  try {
+    return s.toLocaleString(yerel, {
+      minimumFractionDigits: basamak,
+      maximumFractionDigits: basamak,
+    });
+  } catch {
+    return String(s);
+  }
+}
+
 /** Tek bir metni çevir. Sözlükte yoksa olduğu gibi döner —
     çevrilmemiş metin, boş metinden iyidir. */
 function C(metin) {
@@ -602,11 +626,13 @@ function diliDegistir(d) {
 if (typeof window !== 'undefined') {
   window.C = C;
   window.CS = CS;
+  window.SAYI = SAYI;
   window.sayfayiCevir = sayfayiCevir;
   window.diliDegistir = diliDegistir;
   window.aktifDil = () => AKTIF_DIL;
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { SOZLUK, C, CS, sayfayiCevir, dilOku, diliDegistir };
+  module.exports = { SOZLUK, C, CS, SAYI, sayfayiCevir, dilOku,
+                     diliDegistir };
 }

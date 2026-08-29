@@ -1274,9 +1274,10 @@
         'bitmek-uzere', d.durum === 'mola' && d.kalan <= 3);
     }
 
-    og.istMola.textContent = d.istatistik.tamamlananMola;
-    og.istAtlanan.textContent = d.istatistik.atlananMola;
-    og.istSure.textContent = `${Math.floor(d.istatistik.ekranSuresi / 60)}`
+    // Sayılar dilin yazımıyla: Türkçede 1000 -> "1.000".
+    og.istMola.textContent = SAYI(d.istatistik.tamamlananMola);
+    og.istAtlanan.textContent = SAYI(d.istatistik.atlananMola);
+    og.istSure.textContent = SAYI(Math.floor(d.istatistik.ekranSuresi / 60))
                            + CS(' dk', ' min');
     // Etiket dürüst olsun: izin yoksa bu sayı cihazın değil, sekmenin süresi
     if (og.istSureEtiket) {
@@ -1382,9 +1383,10 @@
         `${toplam} breaks today · history is building up`);
     } else {
       const ortalama = Math.round((toplam / 7) * 10) / 10;
+      // Ondalık ayırıcı dile göre: Türkçe "6,7" · İngilizce "6.7"
       og.haftaOzet.textContent = CS(
-        `${toplam} mola · günde ortalama ${ortalama}`,
-        `${toplam} breaks · ${ortalama} per day on average`);
+        `${SAYI(toplam)} mola · günde ortalama ${SAYI(ortalama, 1)}`,
+        `${SAYI(toplam)} breaks · ${SAYI(ortalama, 1)} per day on average`);
     }
 
     const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));

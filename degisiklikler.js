@@ -30,6 +30,33 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 147,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Sayılar artık Türkçe yazımıyla: “6,7” ve “1.433 dk”.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Haftalık özette “günde ortalama <b>6.7</b>” yazıyordu — '
+        + 'Türkçede ondalık ayırıcı virgüldür. Artık <b>6,7</b>.',
+      'Uzun süreler ayırıcısız yazılıyordu (“1433 dk”). Artık '
+        + '<b>1.433 dk</b>. İngilizce arayüzde de kendi yazımıyla: '
+        + '“1,433 min”.',
+      'Sayı doğruydu, <b>yazımı yanlıştı</b> — ve yanlış okunan doğru '
+        + 'sayı, yanlış sayıdır.',
+    ],
+    ozetEn: 'Numbers now follow each language’s own convention.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'The weekly summary wrote “<b>6.7</b> per day” in Turkish too, '
+        + 'where the decimal separator is a comma. It now reads '
+        + '<b>6,7</b> there.',
+      'Long durations had no thousands separator (“1433 min”). It is '
+        + 'now <b>1,433 min</b> in English and <b>1.433 dk</b> in Turkish.',
+      'The number was right, the <b>writing was wrong</b> — and a '
+        + 'correct number that is misread is a wrong number.',
+    ],
+  },
+  {
     surum: 146,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',
