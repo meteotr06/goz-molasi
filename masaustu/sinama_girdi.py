@@ -83,6 +83,62 @@ SAATLER = [
 ]
 
 
+def suzgec_kapsami(hatalar):
+    """Istatistik suzgeci UYGULAMANIN KENDI sayac alanlarini koruyor mu?
+
+    Kapsam ELLE YAZILMIYOR: `ist_baslangic()` neyi sayi olarak
+    baslatiyorsa suzgec de onu korumak ZORUNDA. Boylece yarin yeni bir
+    sayac eklendiginde bu sinama kendiliginden onu da ister.
+
+    NIYE VAR: 29.08.2026'da suzgec elle yazilmis, adlar web surumunden
+    cevrilirken kaymisti ("mola"/"atlanan" - uygulamada boyle alan
+    yok). Suzgec CALISIYOR gorunuyordu ama iki ana sayaci hic
+    gormuyordu; bozuk deger dogrudan panele cikiyordu ("cok", "-5",
+    "None"). Sinamanin kendisi elle yazilsaydi ayni kaymayi tekrar
+    ederdi - o yuzden kaynak uygulamanin kendi alanlari.
+
+    Doner: yapilan denetim sayisi.
+    """
+    varsayilan = gm.Uygulama.ist_baslangic()
+    sayisal = [a for a, d in varsayilan.items()
+               if isinstance(d, (int, float)) and not isinstance(d, bool)]
+    if not sayisal:
+        hatalar.append("suzgec kapsami: sayisal alan bulunamadi - sinama "
+                       "kendi paydasini olcemiyor")
+        return 0
+
+    BOZUK = ("cok", None, -5, [1], {}, 10 ** 9)
+    n = 0
+    for ad in sayisal:
+        for deger in BOZUK:
+            n += 1
+            cikan = gm.Uygulama.istatistik_suz({"gun": varsayilan["gun"],
+                                                ad: deger}).get(ad)
+            if cikan != 0:
+                hatalar.append(
+                    "suzgec: '%s' alani bozuk deger %r'yi HAM geciriyor "
+                    "(cikan %r, 0 bekleniyordu)" % (ad, deger, cikan))
+
+    # TERS DAL - olcut ayirt edici mi? Gecerli deger BOZULMAMALI.
+    n += 1
+    saglam = gm.Uygulama.istatistik_suz({"gun": varsayilan["gun"],
+                                         sayisal[0]: 7})
+    if saglam.get(sayisal[0]) != 7:
+        hatalar.append("suzgec: gecerli deger 7 bozuldu (%r) - suzgec "
+                       "fazla kirpiyor, olcut ayirt edici degil"
+                       % saglam.get(sayisal[0]))
+
+    # Sayac ekranda `str(...)` ile basiliyor: "7" gorunmeli, "7.0" degil.
+    n += 1
+    if str(saglam.get(sayisal[0])) != "7":
+        hatalar.append("suzgec: sayac ekranda '%s' gorunur, '7' "
+                       "bekleniyordu" % saglam.get(sayisal[0]))
+
+    print("  %-2d alan x %d bozuk deger + 2 ters dal  %s"
+          % (len(sayisal), len(BOZUK), "TAMAM" if not hatalar else "KALDI"))
+    return n
+
+
 def main():
     hatalar = []
 
@@ -123,6 +179,9 @@ def main():
             hatalar.append("sınır %r -> %r" % (girdi, sonuc))
         print("  %-12r %-11s %s" % (girdi, sonuc, "TAMAM" if ok else "KALDI"))
 
+    print("--- ISTATISTIK SUZGECI ---")
+    suz_n = suzgec_kapsami(hatalar)
+
     for s in sinama_yalitim.dogrula():
         hatalar.append(s)
 
@@ -131,8 +190,9 @@ def main():
         for h in hatalar:
             print("  -", h)
         return 1
-    print("\nTAMAM — %d sayı, %d saat, 5 sınır değeri doğru okunuyor."
-          % (len(SAYILAR), len(SAATLER)))
+    print("\nTAMAM — %d sayı, %d saat, 5 sınır değeri, "
+          "%d süzgeç denetimi."
+          % (len(SAYILAR), len(SAATLER), suz_n))
     return 0
 
 

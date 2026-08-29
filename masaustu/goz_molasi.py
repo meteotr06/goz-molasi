@@ -1205,11 +1205,8 @@ class Uygulama:
         self.duraklama_bitis = 0
         self.tepsi = None
 
-        self.ist = {
-            "gun": time.strftime("%Y-%m-%d"),
-            "tamamlanan": 0, "ertelenen": 0, "uzun_mola": 0,
-            "ekran_sn": 0.0, "kesintisiz_sn": 0.0, "programlar": {},
-        }
+        # Alan adlari IST_ALANLARI'ndan geliyor - suzgecle AYNI kaynak.
+        self.ist = Uygulama.ist_baslangic()
         self._istatistik_oku()
 
         self.kok = tk.Tk()
@@ -1430,11 +1427,35 @@ class Uygulama:
         except Exception:
             pass
 
-    # Bir gunde olabilecek en buyuk degerler. Bunun disi BOZUK sayilir.
-    IST_SINIRLARI = {
-        "mola": 1000, "atlanan": 1000, "uzun_mola": 1000,
-        "ekran_sn": 86400, "kesintisiz_sn": 86400,
+    # ---- SAYAC ALANLARI: TEK KAYNAK ----
+    # ad -> (bir gunde olabilecek en buyuk deger, tam sayi mi)
+    #
+    # Hem BASLANGIC degerleri hem SUZGEC sinirlari buradan uretiliyor.
+    #
+    # NIYE TEK SOZLUK: 29.08.2026'da suzgec elle yazilmisti ve adlar
+    # web surumunden cevrilirken kaymisti - "mola"/"atlanan" diye
+    # alanlar yazilmis, oysa uygulamanin sayaclari "tamamlanan" ve
+    # "ertelenen". Suzgec CALISIYOR gorunuyordu (uzun_mola, ekran_sn
+    # gercekten suzuluyordu) ama iki ANA sayaci hic gormuyordu.
+    # Olculdu: 8 bozuk degerin 6'si ham gecti, panelde "cok" / "-5" /
+    # "None" yaziyordu. Iki taraf ayni sozlukten uretilince bu
+    # uyusmazlik bir daha olusamaz. sinama_girdi.py bunu ayrica
+    # ALANLARIN KENDISINDEN turetip denetliyor.
+    IST_ALANLARI = {
+        "tamamlanan": (1000, True),
+        "ertelenen": (1000, True),
+        "uzun_mola": (1000, True),
+        "ekran_sn": (86400, False),
+        "kesintisiz_sn": (86400, False),
     }
+
+    @staticmethod
+    def ist_baslangic():
+        """Bos bir gunun istatistigi. Sayac alanlari TEK kaynaktan."""
+        yeni = {"gun": time.strftime("%Y-%m-%d"), "programlar": {}}
+        for ad, (_, tam) in Uygulama.IST_ALANLARI.items():
+            yeni[ad] = 0 if tam else 0.0
+        return yeni
 
     @staticmethod
     def istatistik_suz(ham):
@@ -1456,17 +1477,19 @@ class Uygulama:
         # bir yanlis goruntu - yayina gitmeden olculdu ve kapatildi.
         # Saniye alanlari float kalabilir: `ekran_sn` 0.25'er artiyor
         # ve zaten `sure_okunakli` icinde tam sayiya cevriliyor.
-        TAM_SAYI = ("mola", "atlanan", "uzun_mola")
+        # Ust duzey tur de bozuk olabilir (dosya elle duzenlenmis).
+        if not isinstance(ham, dict):
+            return Uygulama.ist_baslangic()
         temiz = {}
-        for ad, en_cok in Uygulama.IST_SINIRLARI.items():
+        for ad, (en_cok, tam) in Uygulama.IST_ALANLARI.items():
             if ad not in ham:
                 continue
             d = sayi_oku(ham.get(ad), None)
             d = d if (d is not None and 0 <= d <= en_cok) else 0
-            temiz[ad] = int(d) if ad in TAM_SAYI else d
+            temiz[ad] = int(d) if tam else d
         # Sayi olmayan alanlar (gun gibi) oldugu gibi tasinir.
         for ad, d in ham.items():
-            if ad not in Uygulama.IST_SINIRLARI:
+            if ad not in Uygulama.IST_ALANLARI:
                 temiz[ad] = d
         return temiz
 
