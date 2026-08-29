@@ -516,6 +516,16 @@
         '(önbellek). Aşağıdaki ' + toplam + ' satır bir şey kanıtlamıyor.';
       o.style.background = '#fdeceb';
     } else {
+      /* ALT SINIR — bkz. `sinama-web.html`'deki aynı not. */
+      var EN_AZ = 19;
+      if (kaldi === 0 && toplam < EN_AZ) {
+        o.textContent = 'ÖLÇÜLEMEDİ — yalnızca ' + toplam + ' sınama '
+          + 'koştu, en az ' + EN_AZ + ' bekleniyordu.';
+        o.style.background = '#fdeceb';
+        window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi,
+                                 toplam: toplam, olculemedi: true };
+        return;
+      }
       o.textContent = kaldi === 0
         ? 'HEPSİ GEÇTİ — ' + toplam + ' sınama.'
         : kaldi + ' / ' + toplam + ' KALDI.';

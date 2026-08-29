@@ -302,6 +302,15 @@
   if (cerceve) cerceve.remove();
 
   var o = document.getElementById('ozet');
+  var EN_AZ = 23;   /* alt sınır — bkz. `sinama-web.html` */
+  if (!kaldi && (gecti + kaldi) < EN_AZ) {
+    o.textContent = 'ÖLÇÜLEMEDİ — yalnızca ' + (gecti + kaldi)
+      + ' ayar denetlendi, en az ' + EN_AZ + ' bekleniyordu.';
+    o.style.background = '#fdeceb';
+    window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi,
+                             toplam: gecti + kaldi, olculemedi: true };
+    return;
+  }
   o.textContent = kaldi
     ? (kaldi + ' / ' + (gecti + kaldi) + ' KALDI — ekranda yazan ile depoda '
        + 'duran değer ayrışıyor.')

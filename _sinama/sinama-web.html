@@ -336,6 +336,19 @@ window.__cekirdekHazir = window.__onbellekHazir.then(function () {
 
   var toplam = gecti + kaldi;
   var o = document.getElementById('ozet');
+  /* ALT SINIR: sayı bunun altına düşerse "geçti" denmez.
+     Sınamaların yarısı silinse sayfa yine "HEPSİ GEÇTİ" derdi;
+     yalnızca sayı küçülürdü ve kimse fark etmezdi. */
+  var EN_AZ = 14;
+  if (kaldi === 0 && toplam < EN_AZ) {
+    o.textContent = 'ÖLÇÜLEMEDİ — yalnızca ' + toplam + ' sınama koştu, '
+      + 'en az ' + EN_AZ + ' bekleniyordu. Sınamalar silinmiş ya da bir '
+      + 'bölüm hiç çalışmamış olabilir.';
+    o.style.background = '#fdeceb';
+    window.__sinamaSonuc = { gecti: gecti, kaldi: kaldi, toplam: toplam,
+                             olculemedi: true };
+    return;
+  }
   o.textContent = kaldi === 0
     ? 'HEPSİ GEÇTİ — ' + toplam + ' sınama.'
     : kaldi + ' / ' + toplam + ' KALDI.';
