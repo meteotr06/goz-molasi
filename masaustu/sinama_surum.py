@@ -92,6 +92,77 @@ def _sayilar(s):
     return tuple(int(x) for x in re.findall(r"\d+", s or "")) or (0,)
 
 
+def guncelleme_dallari():
+    """Yeni surum kartI hangi durumda cikiyor? AG KULLANILMIYOR.
+
+    `son_surumu_sor` sahte cevap veriyor; boylece her dal KESIN
+    olculuyor ve sinama internete ya da GitHub'in o anki durumuna
+    bagli kalmiyor.
+
+    NIYE VAR: bu dosya "mekanizma calisiyor, gosterecek sey yok"
+    diyebiliyordu ama mekanizmanin calistigini VARSAYIYORDU.
+    "Mekanizma var" ile "mekanizma otuyor" ayri seyler; ikincisi
+    olculmezse yayin gununde ogrenilir.
+
+    Doner: hata listesi.
+    """
+    import time
+
+    try:
+        import guncelleme as gnc
+    except Exception as e:
+        return ["guncelleme.py okunamadi: %s" % e]
+
+    hatalar = []
+
+    def dal(baslik, uzak, yerel, ayar, bekle_kart):
+        asil = gnc.son_surumu_sor
+        gnc.son_surumu_sor = (lambda: (uzak, "https://ornek/%s" % uzak)) \
+            if uzak else (lambda: (None, None))
+        try:
+            etiket, _ = gnc.denetle(ayar, yerel)
+        except Exception as e:
+            hatalar.append("%s: denetle COKTU (%s)" % (baslik, e))
+            return
+        finally:
+            gnc.son_surumu_sor = asil
+        cikti = bool(etiket)
+        if cikti != bekle_kart:
+            hatalar.append("%s: kart %s, %s bekleniyordu"
+                           % (baslik, "CIKTI" if cikti else "cikmadi",
+                              "cikmali" if bekle_kart else "cikmamali"))
+
+    # Surum karsilastirmasi. v1.10 > v1.9 ozellikle onemli: metin
+    # karsilastirmasi olsaydi "1.10" < "1.9" cikardi ve 10. yama
+    # surumunden sonra kimse guncelleme bildirimi ALMAZDI.
+    for uzak, yerel, bekle in (("v1.3", "1.3", False), ("v1.4", "1.3", True),
+                               ("v1.10", "1.9", True), ("v1.3", "1.4", False),
+                               ("v2.0", "1.9.9", True), ("v1.3.1", "1.3", True),
+                               ("v1.3", "1.3.0", False)):
+        if gnc.yeni_mi(uzak, yerel) != bekle:
+            hatalar.append("yeni_mi(%r, %r) = %s, %s bekleniyordu"
+                           % (uzak, yerel, not bekle, bekle))
+
+    dal("yeni surum var", "v1.4", "1.3", {}, True)
+    dal("guncel", "v1.3", "1.3", {}, False)
+    dal("internet yok", None, "1.3", {}, False)
+    dal("gormezden gelinen surum", "v1.4", "1.3",
+        {"gormezden_gelinen_surum": "v1.4"}, False)
+
+    # Gunde bir kurali VE ters dali: 24 saat sonra yine sormali.
+    # Ters dal olmadan "hic sormuyor" hatasi fark edilmez.
+    ayar = {}
+    dal("gunde bir: ilk cagri", "v1.4", "1.3", ayar, True)
+    dal("gunde bir: ayni gun ikinci", "v1.4", "1.3", ayar, False)
+    if not ayar.get("surum_denetim_ani"):
+        hatalar.append("denetle, ayar['surum_denetim_ani'] yazmiyor - "
+                       "gunde bir kurali kalici degil, her acilista sorar")
+    ayar["surum_denetim_ani"] = time.time() - (25 * 3600)
+    dal("gunde bir: 24 saat sonra (ters dal)", "v1.4", "1.3", ayar, True)
+
+    return hatalar
+
+
 def main():
     kod = koddaki_surum()
     kayit = kayittaki_surum()
@@ -111,6 +182,20 @@ def main():
         soyle("yayinlanan (GitHub)   : %s" % tarih)
 
     dusuk = 0
+
+    # ---------- 0) Bildirim mekanizmasi GERCEKTEN otuyor mu? ----------
+    gnc_hatalar = guncelleme_dallari()
+    soyle("guncelleme dallari    : %s"
+          % ("9 dal + 7 karsilastirma TAMAM" if not gnc_hatalar
+             else "%d SORUN" % len(gnc_hatalar)))
+    if gnc_hatalar:
+        soyle()
+        soyle("BASARISIZ - guncelleme bildirimi beklendigi gibi calismiyor:")
+        for h in gnc_hatalar:
+            soyle("  - %s" % h)
+        soyle("  Bu sessiz bir hata: kullanici yeni surumden HABERSIZ kalir")
+        soyle("  ve duzelttigimiz hatayi yasamaya devam eder.")
+        dusuk = 1
 
     # ---------- 1) Kod ile kayit ayrisiyor mu? (HATA) ----------
     if kod != kayit:
