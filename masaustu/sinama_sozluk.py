@@ -30,6 +30,7 @@ NE ÖLÇÜLMÜYOR
 import io
 import os
 import re
+import subprocess
 import sys
 
 # KONSOL BULGUYU YUTMASIN. Windows konsolu cp1254; bulunan metinde
@@ -51,9 +52,39 @@ def oku(*yol):
         return d.read()
 
 
-def main():
+def cevirenler():
+    """`C()` çağırabilecek dosyalar KURALDAN türüyor.
+
+    Bu bekçi önce yalnızca `arayuz.js`e bakıyordu ve bugün için
+    DOĞRUYDU — ölçüldü (29.08.2026): `C()` çağrısı yalnızca orada var.
+    Ama bu doğruluk KURALDAN değil ŞANSTAN geliyordu: yarın
+    `mola_icerik.js`e bir `C('…')` eklenirse bekçi onu hiç görmez ve
+    yine "TAMAM" der.
+
+    Kapsam artık yayına giden bütün kök `.js` dosyaları; hangilerinin
+    tarandığı çıktıya yazılıyor — payda görünmeden sonuç okunmaz.
+    """
     try:
-        arayuz = oku("arayuz.js")
+        c = subprocess.run(["git", "ls-files", "*.js"], cwd=KOK,
+                           capture_output=True, text=True, encoding="utf-8")
+        adlar = [y.strip() for y in c.stdout.splitlines() if y.strip()]
+    except Exception as e:
+        soyle("OLCULEMEDI - `git ls-files` calismadi: %s" % e)
+        return []
+    return [a for a in adlar
+            if "/" not in a.replace("\\", "/")
+            and not a.rsplit("/", 1)[-1].startswith("sinama")]
+
+
+def main():
+    dosyalar = cevirenler()
+    if not dosyalar:
+        soyle("OLCULEMEDI - taranacak dosya listesi bos.")
+        return 1
+    soyle("taranan dosya : %d (%s)"
+          % (len(dosyalar), ", ".join(sorted(dosyalar))))
+    try:
+        arayuz = "\n".join(oku(a) for a in dosyalar if a != "dil.js")
         dil = oku("dil.js")
     except Exception as e:
         soyle("OLCULEMEDI - dosya okunamadi: %s" % e)
