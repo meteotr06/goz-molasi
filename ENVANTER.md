@@ -432,6 +432,36 @@ eklendi.
 **Kalıcı ders:** bu sınıf **yerelde ölçülemez**; servis işçisi
 gerektiren her ölçüm canlı adreste yapılmalı.
 
+### Dış servis çökerse mola çalışıyor mu? (evet — ölçüldü)
+
+Molalarda ara sıra hava durumu gösteriliyor ve bu **dış bir servise**
+bağlı (`api.open-meteo.com`). Uygulamanın ana işi mola vermek; dış bir
+servisin çökmesi onu durdurmamalı. Ölçülmemişti.
+
+| Durum | Hava isteği | Mola ekranı |
+|---|---|---|
+| Servis **reddediyor** | gitti (1) | açık, normal içerik, sayaç işliyor |
+| Servis **hiç cevap vermiyor** | gitti (1) | açık, normal içerik, sayaç 17 |
+
+Yani hava durumu gelemezse kart sessizce atlanıyor ve mola olağan
+içerikle sürüyor. **Bekleyen bir istek molayı kilitlemiyor.**
+
+**Ölçüm üç kez GEÇERSİZDİ, dördüncüde geçerli oldu** — ve üçünde de
+sonuç "çalışıyor" görünüyordu:
+
+1. Ayarı `ayarlar.havaAcik` sandım; gerçek anahtar ayrı bir kayıt
+   (`goz-molasi-hava-acik`). Hava hiç açılmamıştı.
+2. Doğru anahtarla da istek gitmedi: `fetch`i `onload`'da değiştiriyordum,
+   oysa hava **sayfa açılışında** kuruluyor — geç kalıyordum.
+3. Sıra `bilgi → hava → bilgi → …` biçiminde ilerliyor ve sayaç **her
+   sayfa açılışında sıfırlanıyor**; tek mola alınca hava sırası hiç
+   gelmiyordu. **İki mola** gerekiyormuş.
+
+Geçerliliği `HAVA_ISTEGI` sayacıyla kanıtlandı: istek gerçekten gitti
+(`https://api.open-meteo.com/v1/forecast?...`), sonra reddedildi.
+**Sayaç olmasaydı "dayanıklı" diye yazacaktım ve hiçbir şey ölçmemiş
+olacaktım.**
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
