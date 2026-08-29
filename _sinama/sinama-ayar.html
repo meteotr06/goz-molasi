@@ -111,37 +111,37 @@
         var sw = (w.navigator.serviceWorker
                   && w.navigator.serviceWorker.controller);
 
-        /* TAZELIK: CALISAN kod, SUNUCUDAKI kod mu?
+        /* TAZELIK: ONBELLEKTEKI kopya, SUNUCUDAKI kopya mi?
 
-           Etiket yetmiyor. Tarayici `dosya.js?s=vNN` adresini
-           dondurabilir ve sayfa ESKI kodu calistirirken biz taze
-           metni `fetch` ile gorebiliriz - sorgulu ve sorgusuz istek
-           AYRI onbellek anahtarlaridir. Merkez 29.08.2026'da tam bunu
-           yasadi: sinamasi "temiz" dedi, cunku tarayici diskteki kodu
-           hic calistirmiyordu.
+           Ilk yazimda `performance.decodedBodySize` kullandim. O
+           olcut KIRILGAN: yanit 304 Not Modified ile gelirse tarayici
+           govde boyutu vermiyor ve deger 0 oluyor - yani EN SON
+           DEGISEN dosya, tam da olculemeyen dosya olabiliyor.
+           (Merkez 29.08.2026'da tam bunu yasadi.)
 
-           Olcut: sayfanin YUKLEDIGI baytlar (`decodedBodySize`) ile
-           sunucunun SU ANDA verdigi baytlar ayni mi. Ayrisiyorsa kosu
-           UYARI degil, GECERSIZ. */
+           Yerine iki kipli olcum: AYNI adresi iki kez cekiyoruz.
+             fetch(adres)                 -> onbellegin verdigi kopya
+             fetch(adres, no-store)       -> sunucunun su an verdigi
+           Ayni onbellek anahtarini kullandigi icin hem 304 hem
+           servis iscisi deligini kapatiyor ve `performance`a hic
+           bagli degil.
+
+           Cerceve icinden cagriliyor: onbellek baglami olculen
+           sayfanin baglami olsun. */
         try {
-          var giris = w.performance.getEntriesByType('resource')
-            .filter(function (e) { return e.name.indexOf('arayuz.js') >= 0; })[0];
-          if (giris) {
-            /* BAYT ile KARAKTER ayri seylerdir.
-               Ilk yazimda `.text().length` kullandim: JS orada UTF-16
-               kod birimi sayiyor, `decodedBodySize` ise BAYT. Turkce
-               harfler cok baytli oldugu icin ikisi HIC tutmadi ve
-               denetim "GECERSIZ KOSU" diye YANLIS ALARM verdi.
-               Zaten olcmustum: 139646 = disktekiyle ayni. */
-            var tazeBoy = (await (await fetch(
-              '../arayuz.js?tazelik=' + Date.now(),
-              { cache: 'no-store' })).arrayBuffer()).byteLength;
-            if (giris.decodedBodySize !== tazeBoy) {
-              tazelikHatasi = 'arayuz.js — çalışan ' + giris.decodedBodySize
-                + ' bayt, sunucuda ' + tazeBoy + ' bayt';
-            }
+          var adres = (olculenSurum || 'arayuz.js?s=').split('  ·')[0];
+          var yol = '../' + adres;
+          var a = await w.fetch(yol);
+          var b = await w.fetch(yol, { cache: 'no-store' });
+          var ab = (await a.arrayBuffer()).byteLength;
+          var bb = (await b.arrayBuffer()).byteLength;
+          if (ab !== bb) {
+            tazelikHatasi = adres + ' — önbellekteki ' + ab
+              + ' bayt, sunucuda ' + bb + ' bayt';
           }
-        } catch (e) { }
+        } catch (e) {
+          tazelikHatasi = 'tazelik ÖLÇÜLEMEDİ: ' + e.message;
+        }
         olculenSurum += sw
           ? '  ·  DIKKAT: sayfayi servis iscisi yonetiyor, etiket '
             + 'icerigi garanti etmez'
