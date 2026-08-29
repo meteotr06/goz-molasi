@@ -43,11 +43,22 @@ class SahteUygulama(gm.Uygulama):
         self.kok = None
 
 
+# Bu sınamanın denemesi gereken en az durum sayısı.
+#
+# NEDEN VAR: "belirti yok" ile "dal hiç çalışmadı" aynı yeşili
+# gösteriyor. `dene(...)` çağrılarının yarısı silinse bu sınama yine
+# "TAMAM" derdi — ve doğruladığı şey, ebeveynin çocuğuna güvenerek
+# açtığı koruma. Sayı buranın altına düşerse sonuç okunmaz.
+EN_AZ_DURUM = 26
+
+
 def main():
     hatalar = []
+    sayac = {"n": 0}
     sifre = kl.ozet_uret("2468", tur=1000)     # sınama için hızlı tur
 
     def dene(ad, ayar, ekran_sn, beklenen):
+        sayac["n"] += 1
         u = SahteUygulama(ayar, ekran_sn)
         try:
             sonuc = u.engel_sebebi()
@@ -306,11 +317,20 @@ def main():
         hatalar.append(s)
 
     if hatalar:
+        print("denenen durum : %d" % sayac["n"])
         print("BAŞARISIZ — %d sorun:" % len(hatalar))
         for h in hatalar:
             print("  -", h)
         return 1
-    print("TAMAM — kip, süre sınırı, ek süre, saat yasağı ve şifre doğru.")
+    print("denenen durum : %d" % sayac["n"])
+    if sayac["n"] < EN_AZ_DURUM:
+        print("ÖLÇÜLEMEDİ — yalnızca %d durum denendi, en az %d bekleniyordu."
+              % (sayac["n"], EN_AZ_DURUM))
+        print("  Durumlar silinmiş ya da bir dal hiç çalışmamış olabilir.")
+        print("  SESSİZ GEÇMİYORUZ: bu sınama aile korumasını doğruluyor.")
+        return 1
+    print("TAMAM — %d durum denendi; kip, süre sınırı, ek süre, saat yasağı "
+          "ve şifre doğru." % sayac["n"])
     return 0
 
 
