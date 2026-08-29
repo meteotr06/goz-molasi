@@ -47,6 +47,7 @@
     molaEkran: $('molaEkran'),
     molaBaslik: $('molaBaslik'),
     molaAlt: $('molaAlt'),
+    uzunMolaNotu: $('uzunMolaNotu'),
     molaHalka: $('molaHalka'),
     molaSayi: $('molaSayi'),
     egzersizTuval: $('egzersizTuval'),
@@ -1506,6 +1507,28 @@
     // göremez. C()'siz hâlinde İngilizce sayfada Türkçe kalıyordu.
     og.molaBaslik.textContent = C(Sinif.ad);
     og.molaAlt.textContent = C(Sinif.yonerge);
+
+    /* UZUN MOLADA: ayağa kalkmaya DAVET.
+
+       Bilerek iddiasız: eşik yok, kaynak adı yok, "gerekir" yok.
+       Ölçüldü (29.08.2026) — NHS 30 dakikada bir kalkmayı öneriyor
+       AMA aynı sayfada "sınır koyacak kadar kanıt yok" diyor; WHO
+       hiç süre vermiyor. Sayıyı eşiğe çevirmek, AOA'da yaptığımız
+       hatanın aynısı olurdu (v141). Kaynaklı cümle bilgi kartında.
+
+       20 dakikalık molaya EKLENMEDİ: onun işi gözü dinlendirmek,
+       ikinci amaç asıl işi zayıflatır. */
+    try {
+      const not = og.uzunMolaNotu;
+      if (not) {
+        const uzunMu = !!motor.uzunMoladaMi;
+        not.textContent = uzunMu
+          ? CS('Uzun moladasın — istersen ayağa kalk, biraz hareket et.',
+               'This is a long break — if you like, stand up and move a little.')
+          : '';
+        not.hidden = !uzunMu;
+      }
+    } catch {}
 
     // İlk kareyi hemen çiz — rAF beklemeden ekranda bir şey olsun
     try { egzersiz.ciz(0, motor.ayarlar.molaSuresi); } catch {}

@@ -30,6 +30,39 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 142,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Uzun molada ayağa kalkmaya davet, ve oturmak üzerine kaynaklı '
+        + 'bir bilgi kartı.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      '<b>Uzun molada</b> (iki saat aralıksız çalıştıktan sonra) tek satır '
+        + 'ekledik: “istersen ayağa kalk, biraz hareket et.” Bir davet — '
+        + '<b>zorunluluk değil</b>, süre şartı yok.',
+      '<b>20 dakikalık molalar değişmedi.</b> Onların işi gözünü '
+        + 'dinlendirmek; oraya ikinci bir amaç koymak asıl işi zayıflatırdı.',
+      'Yeni bilgi kartı: <b>oturmakla ilgili sayılar</b>. NHS 30 dakikada '
+        + 'bir kalkmayı öneriyor ama aynı sayfada “sınır koyacak kadar '
+        + 'kanıt yok” diyor; Dünya Sağlık Örgütü hiç süre vermiyor. '
+        + 'Kartta ikisi de yazıyor — <b>öneriyi kural gibi göstermiyoruz</b>.',
+    ],
+    ozetEn: 'An invitation to stand during long breaks, and a sourced fact '
+        + 'card about sitting.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'During a <b>long break</b> (after two uninterrupted hours) we added '
+        + 'one line: “if you like, stand up and move a little.” An '
+        + 'invitation — <b>not a requirement</b>, and no time rule.',
+      '<b>The 20-minute breaks are unchanged.</b> Their job is resting your '
+        + 'eyes; a second purpose there would weaken the first.',
+      'New fact card about <b>sitting</b>. The NHS suggests getting up every '
+        + '30 minutes, yet on the same page says there is “not enough '
+        + 'evidence to set a time limit”; the WHO gives no figure at all. '
+        + 'The card says both — <b>we do not present a suggestion as a rule</b>.',
+    ],
+  },
+  {
     surum: 141,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

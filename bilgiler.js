@@ -7,6 +7,15 @@
 
 const BILGILER = [
   {
+    baslik: 'Oturmak: sayı var ama sınır yok',
+    metin: 'Ne kadar oturmanın zararlı olduğuna dair kesin bir sınır yok — NHS bunu ' +
+           'açıkça söylüyor: "sınır koyacak kadar kanıt yok." Yine de aynı sayfada ' +
+           '30 dakikada bir kalkmayı öneriyor. Dünya Sağlık Örgütü ise yalnızca ' +
+           '"hareketsiz geçen süreyi azaltın" diyor, hiç süre vermiyor. Yani 30 dakika ' +
+           'bir kural değil, bir öneri.',
+    kaynak: 'NHS — "Why sitting too much is bad for us" · WHO — Physical activity (29.08.2026)',
+  },
+  {
     baslik: 'Gözün kırpmayı unutuyor',
     metin: 'Normalde dakikada yaklaşık 15 kez göz kırparsın. Ekrana bakarken bu sayı 5–7’ye düşer. ' +
            'Az kırpmak gözyaşı tabakasını kurutur; yanma, batma ve kuruluk hissi buradan gelir.',

@@ -7,6 +7,18 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 142,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Uzun molada ayağa kalkmaya davet, ve oturmak üzerine kaynaklı bir bilgi kartı.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            '<b>Uzun molada</b> (iki saat aralıksız çalıştıktan sonra) tek satır ekledik: “istersen ayağa kalk, biraz hareket et.” Bir davet — <b>zorunluluk değil</b>, süre şartı yok.',
+            '<b>20 dakikalık molalar değişmedi.</b> Onların işi gözünü dinlendirmek; oraya ikinci bir amaç koymak asıl işi zayıflatırdı.',
+            'Yeni bilgi kartı: <b>oturmakla ilgili sayılar</b>. NHS 30 dakikada bir kalkmayı öneriyor ama aynı sayfada “sınır koyacak kadar kanıt yok” diyor; Dünya Sağlık Örgütü hiç süre vermiyor. Kartta ikisi de yazıyor — <b>öneriyi kural gibi göstermiyoruz</b>.',
+        ],
+    },
+    {
         'surum': 141,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

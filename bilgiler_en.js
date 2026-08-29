@@ -10,6 +10,15 @@
 
 const BILGILER_EN = [
   {
+    baslik: 'Sitting: a number, but not a limit',
+    metin: 'There is no firm limit on how long it is safe to sit — the NHS says so ' +
+           'plainly: there is "not enough evidence to set a time limit." On the same ' +
+           'page it still suggests getting up every 30 minutes. The World Health ' +
+           'Organization only says to limit sedentary time, without giving any figure. ' +
+           'So 30 minutes is a suggestion, not a rule.',
+    kaynak: 'NHS — "Why sitting too much is bad for us" · WHO — Physical activity (29.08.2026)',
+  },
+  {
     baslik: 'Your eyes forget to blink',
     metin: 'You normally blink about 15 times a minute. Staring at a screen drops that to 5–7. ' +
            'Blinking less dries out the tear film — that is where the burning, stinging and dryness come from.',
