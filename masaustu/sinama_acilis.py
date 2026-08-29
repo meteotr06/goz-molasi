@@ -115,9 +115,111 @@ def calisan_kopyalari_kapat():
     time.sleep(1.5)
 
 
+def kayit_kanatlari(hatalar):
+    """Açılışta başlatma: her kanat KENDİ onay baytıyla mı okunuyor?
+
+    NİYE VAR (29.08.2026 ölçümü)
+      acilista_baslar_mi() şöyle yazıyordu:
+          (kayit_var_mi() or kısayol_var) and kayit_etkin_mi()
+      kayit_etkin_mi() yalnız "StartupApproved > Run" altını okuyor.
+      Windows ise Başlangıç KLASÖRÜ kısayolunu ayrı bir anahtarda
+      ("StartupApproved > StartupFolder", değer adı "Goz Molasi.lnk")
+      işaretliyor. OKU.md'nin tarif ettiği İLK kurulum yolu
+      ("Windows Acilisinda Baslat.bat") yalnız kısayol koyuyor — yani
+      belgelenmiş kurulumun çıktısı tam da kodun göremediği kanattı.
+      Sonuç: kullanıcı Görev Yöneticisi'nden kapatınca ayarlardaki
+      kutu İŞARETLİ kalıyor, program hiç açılmıyor, molalar duruyor.
+      Ayrıca "kullanıcı kapattı" ile "kayıt kayboldu" ayrılmadığı için
+      uygulama kullanıcının kararını geri koyuyordu.
+
+    KAYIT DEFTERİNE DOKUNMUYOR: kilit.py'nin OKUMA işlevleri geçici
+    olarak değiştiriliyor, sonunda geri konuyor. Gerçek anahtarlara
+    tek bayt yazılmıyor.
+    """
+    import tempfile
+
+    print("--- 0) AÇILIŞTA BAŞLATMA KANATLARI ---")
+
+    def kontrol(ad, sart, ayrinti=""):
+        if not sart:
+            hatalar.append("%s%s" % (ad, (" - " + ayrinti) if ayrinti else ""))
+        print("  %-54s %s" % (ad, "TAMAM" if sart else "KALDI"))
+
+    if not hasattr(kl, "_onay_bayti") or not hasattr(kl, "kisayol_etkin_mi"):
+        kontrol("kilit.py kısayolun onay baytını okuyor", False,
+                "_onay_bayti / kisayol_etkin_mi yok — kısayol kanadı kör")
+        return
+
+    gecici = tempfile.mkdtemp(prefix="gm_acilis_")
+    lnk_var_yol = os.path.join(gecici, "Goz Molasi.lnk")
+    lnk_yok_yol = os.path.join(gecici, "yok", "Goz Molasi.lnk")
+    with open(lnk_var_yol, "w", encoding="utf-8") as d:
+        d.write("sahte kisayol")
+
+    e_onay = kl._onay_bayti
+    e_kayit = kl.kayit_var_mi
+    e_yol = kl.baslangic_kisayolu
+    try:
+        def kur(run_bayt, klasor_bayt, run_var, lnk_var):
+            baytlar = {(kl.ONAY_ANAHTARI, kl.KAYIT_ADI): run_bayt,
+                       (kl.ONAY_KISAYOL_ANAHTARI, "Goz Molasi.lnk"): klasor_bayt}
+            kl._onay_bayti = lambda a, ad: baytlar.get((a, ad))
+            kl.kayit_var_mi = lambda: run_var
+            kl.baslangic_kisayolu = lambda: (lnk_var_yol if lnk_var
+                                             else lnk_yok_yol)
+
+        # (ad, run_bayt, klasor_bayt, run_var, lnk_var, beklenen)
+        DURUMLAR = [
+            ("kurulu degil",                        None, None, 0, 0, False),
+            ("yalniz kisayol, acik",                None, 2,    0, 1, True),
+            ("yalniz kisayol, GorevYon KAPATTI",    None, 3,    0, 1, False),
+            ("yalniz kayit, acik",                  None, None, 1, 0, True),
+            ("yalniz kayit, GorevYon KAPATTI",      3,    None, 1, 0, False),
+            ("ikisi var, yalniz kisayol kapali",    2,    3,    1, 1, True),
+            ("ikisi var, yalniz kayit kapali",      3,    2,    1, 1, True),
+            ("ikisi var, ikisi de kapali",          3,    3,    1, 1, False),
+        ]
+        for ad, rb, kb, rv, lv, beklenen in DURUMLAR:
+            kur(rb, kb, bool(rv), bool(lv))
+            sonuc = kl.acilista_baslar_mi()
+            kontrol("acilista baslar mi · %-34s -> %s" % (ad, beklenen),
+                    sonuc is beklenen, "kod %r dedi" % sonuc)
+
+        # KULLANICI KAPATTI MI: "kayit kayboldu" ile ayni belirtiyi
+        # veriyor ama ayni sey degil. Ayrilmazsa kullanicinin karari
+        # geri aliniyor ve suc temizlik programina atiliyor.
+        for ad, rb, kb, beklenen in [
+                ("hicbir isaret yok (gercekten silinmis)", None, None, False),
+                ("kayit kanadi kapatilmis",                3,    None, True),
+                ("kisayol kanadi kapatilmis",              None, 3,    True),
+                ("ikisi de etkin",                         2,    2,    False)]:
+            kur(rb, kb, True, True)
+            sonuc = kl.kullanici_windowstan_kapatti_mi()
+            kontrol("kullanici kapatti mi · %-33s -> %s" % (ad, beklenen),
+                    sonuc is beklenen, "kod %r dedi" % sonuc)
+    finally:
+        kl._onay_bayti = e_onay
+        kl.kayit_var_mi = e_kayit
+        kl.baslangic_kisayolu = e_yol
+        try:
+            os.remove(lnk_var_yol)
+            os.rmdir(gecici)
+        except Exception:
+            pass
+
+
 def main():
     hatalar = []
     iz.dpi_farkindaligi_ac()
+
+    # 0) Açılışta başlatma kanatları — kayıt defterine dokunmaz,
+    #    exe olmasa da koşar; o yüzden exe denetiminden ÖNCE.
+    kayit_kanatlari(hatalar)
+    if hatalar:
+        print("BAŞARISIZ — açılışta başlatma kanatları:")
+        for h in hatalar:
+            print("  -", h)
+        return 1
 
     # 1) exe var mı
     if not os.path.exists(EXE):

@@ -122,12 +122,176 @@ class SahteUygulama(gm.Uygulama):
         pass
 
 
+class SahteSoru(object):
+    """Soru penceresinin yerine gecer: sorulan metni saklar, "hayir" der."""
+
+    son = {}
+
+    def __init__(self, kok, baslik, metin, **k):
+        SahteSoru.son = {"baslik": baslik, "metin": metin}
+
+    def bekle(self):
+        return False
+
+
+class TuvalDurdu(Exception):
+    """Cizime girmeden once durmak icin."""
+
+
+class DurTuval(object):
+    """delete() cagrisinda duran sahte tuval.
+
+    `_oneri_ciz` metni URETTIKTEN sonra tuvale ciziyor. Metni okumak
+    icin Tk penceresi acmak gerekmesin diye cizimin ilk adiminda
+    duruyoruz; uretilen metin `oneri_imza` alaninda kaliyor.
+    """
+
+    def delete(self, *a, **k):
+        raise TuvalDurdu()
+
+
+def oneri_metni(u):
+    """`_oneri_ciz`in ekrana yazacagi metni dondurur (cizim yapmadan)."""
+    u.oneri_imza = None
+    try:
+        u._oneri_ciz()
+    except TuvalDurdu:
+        pass
+    return u.oneri_imza
+
+
 # Bu sinamanin yapmasi gereken en az kontrol sayisi.
 #
 # NEDEN VAR: "belirti yok" ile "dal hic calismadi" ayni yesili
 # gosteriyor. Kontrollerin yarisi silinse bu sinama yine "TAMAM"
 # derdi - ve dogruladigi sey, ekranda gordugun SAYININ dogrulugu.
-EN_AZ_KONTROL = 25
+# 25 -> 48: asagidaki "EKRANDAKI RAKAM" bolumu 23 kontrol ekliyor.
+# Taban yukseltilmezse bu bolumun tamami silinse bile sinama 25'i
+# gecip "TAMAM" derdi - dosyanin bu tabani koymasinin sebebi tam da
+# buydu ("belirti yok" ile "dal hic kosmadi" ayni yesili gosteriyor).
+# 48 -> 74: asagidaki "EKRANDAKI SURE YAZISI" bolumu 26 kontrol
+# daha ekliyor (ayardan turemeyen sabit sure/esik metinleri).
+EN_AZ_KONTROL = 74
+
+
+def sayim_dogrulugu(kontrol):
+    """EKRANDAKI RAKAM dogru mu? (bulgu 5, 6, 17 - 29.08.2026)
+
+    Bu ucu de "uygulama calisir, sayi yanlistir" sinifindan; hicbiri
+    cokme uretmiyor, hepsini kullanici HER GUN goruyor.
+
+      * `sure_okunakli` 24 saati gecen her sureye "0 sn" diyordu.
+      * Sayac her tikte sabit 0,25 sn ekliyordu, oysa dongu 250 ms
+        istiyor ve 258-260 ms'de donuyor: %3,2-3,8 eksik, 8 saatte
+        ~16 dakika, hep ayni yonde.
+      * "Senin durumun" karti uzun molalari hic saymiyor, dinlenme
+        dakikasini 5,6 kat dusuk yaziyordu.
+
+    TERS DAL da olculuyor: duzeltme fazla kirpiyor olabilir.
+    """
+    def sure(deger):
+        """Cokmeyi de bir SONUC sayar, sinamayi durduran kaza degil.
+
+        Olculdu (29.08.2026): `sure_okunakli(float('inf'))`
+        OverflowError atiyordu; sinama tam orada duruyor ve geri kalan
+        kontroller hic kosmuyordu."""
+        try:
+            return gm.sure_okunakli(deger)
+        except Exception as e:
+            return "COKTU(%s)" % type(e).__name__
+
+    # ---- 5) SURE YAZIMI ----
+    for saniye, beklenen, ad in (
+            (0, "0 sn", "sifir"),
+            (45, "45 sn", "saniye"),
+            (60, "1 dk", "tam dakika"),
+            (3599, "59 dk", "bir saatin bir eksigi"),
+            (3600, "1 sa 0 dk", "tam saat"),
+            (86399, "23 sa 59 dk", "bir gunun bir eksigi"),
+            (86400, "1 gün 0 sa", "tam gun"),
+            (90000, "1 gün 1 sa", "25 saat - eskiden '0 sn'"),
+            (3 * 86400 + 4 * 3600, "3 gün 4 sa", "uc gunluk calisma suresi"),
+            (-5, "0 sn", "negatif - sifirlanir"),
+            ("cok", "0 sn", "metin - sifirlanir"),
+            (None, "0 sn", "None - sifirlanir"),
+            (float("inf"), "0 sn", "sonsuz - sifirlanir"),
+            (400 * 86400, "0 sn", "400 gun - bozuk kayit, sifirlanir")):
+        cikan = sure(saniye)
+        kontrol("sure_okunakli(%s) = %s [%s]" % (saniye, beklenen, ad),
+                cikan == beklenen, cikan)
+
+    # ---- 6) SAYAC GERCEK SUREYI SAYIYOR MU ----
+    saat = SahteSaat(an(2026, 8, 26, 14, 0))
+    gm.time = saat
+    if not hasattr(gm.Uygulama, "_sayim_araligi"):
+        # Islev silinmisse geri kalan kontroller cokerdi; "olculemedi"
+        # demek, sessizce yesil gostermekten iyidir.
+        kontrol("Uygulama._sayim_araligi tanimli", False,
+                "islev yok - sayac yine sabit deger ekliyor olabilir")
+        return
+    u = SahteUygulama(saat)
+    u._sayim_yapildi = False
+    toplam = 0.0
+    # Ilk sayim anma degeri (0,25) doner; sonrakiler gercek arayi olcer.
+    toplam += u._sayim_araligi(False)
+    for _ in range(3600):                 # 15 dakikalik dongu
+        saat.ilerle(0.26)                 # Tkinter'in gercek araligi
+        toplam += u._sayim_araligi(True)
+    beklenen = 3600 * 0.26 + 0.25
+    kontrol("sayac gercek gecen sureyi sayiyor (0,26 sn'lik tik)",
+            abs(toplam - beklenen) < 0.5,
+            "%.1f sn sayildi, %.1f olmaliydi" % (toplam, beklenen))
+    kontrol("sabit 0,25 sn'lik eski sayim geri gelmemis",
+            toplam > 3600 * 0.25 + 1,
+            "%.1f sn - eski hesap %.1f verirdi" % (toplam, 3600 * 0.25))
+
+    # Uyku / askiya alma: dev aralik ekran suresine YAZILMAZ,
+    # "olculemeyen" hanesine gider.
+    u2 = SahteUygulama(saat)
+    u2._sayim_araligi(False)
+    saat.ilerle(2 * 3600)
+    uyku = u2._sayim_araligi(True)
+    kontrol("2 saatlik uyku ekran suresine eklenmiyor", uyku == 0.0,
+            "%.1f sn eklendi" % uyku)
+    kontrol("uyku suresi 'olculemeyen' hanesine yaziliyor",
+            abs(getattr(u2, "olculemeyen_sn", 0.0) - 2 * 3600) < 2,
+            "%.0f sn" % getattr(u2, "olculemeyen_sn", 0.0))
+
+    # TERS DAL: arada mola/bosta vardiysa o bosluk ekran suresi degil.
+    u3 = SahteUygulama(saat)
+    u3._sayim_araligi(False)
+    saat.ilerle(20)                       # 20 saniyelik mola
+    ara = u3._sayim_araligi(False)
+    kontrol("mola arasi ekran suresi sayilmiyor (bayrak False)",
+            ara == 0.25, "%.2f sn" % ara)
+
+    # ---- 17) "SENIN DURUMUN" KARTI ----
+    kart_u = SahteUygulama(saat, {"mola_sn": 20, "uzun_mola_dk": 5})
+    kart_u.ist["tamamlanan"] = 4
+    kart_u.ist["uzun_mola"] = 2
+    kart = gm.Uygulama._durum_karti(kart_u)
+    metin = kart[1] if kart else ""
+    # DIKKAT: yalnizca "6 mola" aramak yetmez - bozuk surum de
+    # "Son yedi gunde toplam 6 mola" yaziyordu. Olculen cumle BUGUNKU
+    # sayiyi soyleyen cumle.
+    kontrol("kart uzun molalari da sayiyor (4 kisa + 2 uzun = 6)",
+            "Bugün 6 mola" in metin, metin)
+    # 4*20 + 2*300 = 680 sn = 11,3 dakika. Eskiden 6*20/60 = 2 dakika.
+    kontrol("dinlenme dakikasi mola TURUNE gore hesaplaniyor",
+            "11 dakikalık" in metin, metin)
+
+    # TERS DAL: yalniz kisa molalik gun bozulmamali (8 x 20 sn = 3 dk)
+    kisa_u = SahteUygulama(saat, {"mola_sn": 20, "uzun_mola_dk": 5})
+    kisa_u.ist["tamamlanan"] = 8
+    kisa_metin = (gm.Uygulama._durum_karti(kisa_u) or ("", "", ""))[1]
+    kontrol("yalniz kisa molalik gun hala dogru (8 mola, 3 dakika)",
+            "Bugün 8 mola" in kisa_metin and "3 dakikalık" in kisa_metin,
+            kisa_metin)
+
+    # TERS DAL: hic mola yoksa kart gosterilmez ("bugun 0 mola" demiyoruz)
+    bos_u = SahteUygulama(saat)
+    kontrol("hic mola yokken kart gosterilmiyor",
+            gm.Uygulama._durum_karti(bos_u) is None)
 
 
 def main():
@@ -330,6 +494,153 @@ def main():
         saglam = False
         hatalar.append("bozuk durum dosyasında çöktü: %r" % e)
     kontrol("bozuk durum dosyası çökertmiyor", saglam)
+
+    # =================================================================
+    print("--- 8) EKRANDAKİ RAKAM ---")
+    # =================================================================
+    sayim_dogrulugu(kontrol)
+
+    # =================================================================
+    print("--- 9) EKRANDAKİ SÜRE YAZISI AYARDAN TÜRÜYOR MU? ---")
+    # =================================================================
+    # NEDEN VAR (29.08.2026): bu sinifin bes ornegi ayni gun olculdu.
+    # Hicbiri cokme uretmiyor; hepsi ekrana YANLIS SAYI yaziyordu.
+    #   • yasak_saatinde_mi kendi saat cozumleyicisini tasiyordu ve
+    #     okuyamadigi degere 0 donuyordu -> yasak sessizce 00:00'a
+    #     kayiyor, ebeveyn 21:00 yazdigini saniyordu.
+    #   • engel ekrani "saat oyunu" sebebinde "gece yarisi sifirlanir"
+    #     diyordu; engel gerceklikte saat duzeltilince kalkiyor.
+    #   • "2 saate yaklasiyorsun" sabitti, esik 10-600 dk arasi.
+    #   • "20 saniyelik molalar" sabitti, mola_sn 5-600 sn arasi.
+    #   • panel ipucu atlanan moladan sonra hâlâ mola_sn yaziyordu.
+    #
+    # KAYNAK TARAMASI DEGIL OLCUM: "kaynakta 20 saniye ara" demek,
+    # mesru yerleri (hazir ayar etiketleri, Amerikan Optometri Birligi
+    # alintisi) ELLE listelemeyi gerektirirdi; elle liste bu projede
+    # bir kez zaten yanildi. Bunun yerine metni gercekten uretip
+    # icindeki HER SAYIYI "ayardan turetilebilir mi" diye soruyoruz.
+    import re
+
+    saat = SahteSaat(an(2026, 8, 26, 14, 0))
+    gm.time = saat
+
+    # --- a) uzun mola sorusu kisa molanin suresini dogru soyluyor mu?
+    gercek_soru = gm.Soru
+    gm.Soru = SahteSoru
+    try:
+        for mola_sn in (20, 60):
+            u = SahteUygulama(saat, {"mola_sn": mola_sn, "uzun_mola_dk": 7})
+            u.ist["kesintisiz_sn"] = 3 * 3600
+            u._uzun_mola_sor()
+            metin = SahteSoru.son.get("metin", "")
+            kontrol("uzun mola sorusu %d sn'lik molayı söylüyor" % mola_sn,
+                    "%d saniyelik" % mola_sn in metin,
+                    metin.replace("\n", " ")[-58:])
+    finally:
+        gm.Soru = gercek_soru
+
+    # --- b) kesintisiz calisma uyarisi esigi ayardan aliyor mu?
+    # KURAL: uretilen metindeki her sayi, ayardan turetilen iki
+    # sayidan (gecen sure, kalan sure) birine ait olmali. Sabit
+    # yazilmis bir sayi bu kurala takilir; elle liste gerekmez.
+    for esik_dk, gecen_dk in ((120, 108), (600, 540)):
+        u = SahteUygulama(saat, {"uzun_mola_esigi_dk": esik_dk})
+        u.ist["kesintisiz_sn"] = gecen_dk * 60
+        u.t = DurTuval()
+        metin = oneri_metni(u)
+        izinli = set(re.findall(r"\d+", gm.sure_okunakli(gecen_dk * 60)))
+        izinli |= set(re.findall(
+            r"\d+", gm.sure_okunakli((esik_dk - gecen_dk) * 60)))
+        gorulen = set(re.findall(r"\d+", metin or ""))
+        kontrol("kesintisiz uyarısında ayardan türemeyen sayı yok (%d dk)"
+                % esik_dk,
+                bool(metin) and gorulen <= izinli,
+                "%r -> fazla sayı %s" % (metin, sorted(gorulen - izinli)))
+
+    # --- c) engel ekraninin alt satiri: saat oyunu kolu
+    saat = SahteSaat(an(2026, 8, 26, 22, 0))
+    gm.time = saat
+    y = SahteUygulama(saat, dict(AILE, yasak_acik=True,
+                                 yasak_bas="21:00", yasak_bit="07:00"))
+    y.tik()
+    dogru = y.engel_kalan_metni()
+    kontrol("TERS DAL: normal yasakta geri sayım hâlâ doğru",
+            "07:00" in dogru and "9 sa 0 dk" in dogru, dogru)
+    saat.saati_kaydir(-9 * 3600)               # saat 13:00 yapildi
+    y.tik()
+    sebep = (y.engel_sebebi() or ("", ))[0]
+    metin = y.engel_kalan_metni()
+    kontrol("saat oyununda sebep 'saat'", sebep == "saat", sebep)
+    kontrol("saat oyununda 'gece yarısı' yalanı yazılmıyor",
+            "gece yarısı" not in metin, metin)
+    kontrol("saat oyununda ekran ne yapılacağını söylüyor",
+            "düzelt" in metin, metin)
+
+    # --- d) bozuk yasak saati: sessizce 00:00'a kaymiyor, ekranda cikiyor
+    gece_2 = gercek_zaman.struct_time((2026, 8, 26, 2, 0, 0, 2, 238, -1))
+    for ham in ("9 pm", "25:00", "", "abc"):
+        bozuk = {"yasak_acik": True, "yasak_bas": ham, "yasak_bit": "07:00"}
+        kontrol("bozuk yasak başlangıcı %r 00:00'a kaymıyor" % (ham,),
+                not gm.yasak_saatinde_mi(bozuk, gece_2))
+        u = SahteUygulama(saat, dict(AILE, **bozuk))
+        kontrol("bozuk yasak saati ekranda söyleniyor %r" % (ham,),
+                bool(u.ayar_uyarisi()), repr(u.ayar_uyarisi()))
+
+    # --- e) TERS DAL: gecerli saatler hâlâ dogru calisiyor
+    saglam_yasak = {"yasak_acik": True,
+                    "yasak_bas": "21:00", "yasak_bit": "07:00"}
+    for s, beklenen in ((20, False), (21, True), (2, True), (7, False)):
+        st = gercek_zaman.struct_time((2026, 8, 26, s, 0, 0, 2, 238, -1))
+        kontrol("TERS DAL: geçerli yasak %02d:00 -> %s" % (s, beklenen),
+                gm.yasak_saatinde_mi(saglam_yasak, st) == beklenen)
+    kontrol("nokta ile yazılmış saat (21.00) artık okunuyor",
+            gm.yasak_saatinde_mi(
+                dict(saglam_yasak, yasak_bas="21.00"),
+                gercek_zaman.struct_time((2026, 8, 26, 22, 0, 0, 2, 238, -1))))
+    kontrol("TERS DAL: sağlam yasak ayarı uyarı üretmiyor",
+            not SahteUygulama(saat, dict(AILE, **saglam_yasak)).ayar_uyarisi())
+
+    # --- f) vaat edilen mola suresi = baslatilan mola suresi
+    saat = SahteSaat(an(2026, 8, 26, 14, 0))
+    gm.time = saat
+    u = SahteUygulama(saat, {"mola_sn": 20, "tam_ekranda_sor": False})
+
+    def vaat(uyg):
+        """Vaat edilen sure. Yontem YOKSA cokme degil KALDI uretir.
+
+        NIYE (29.08.2026, denetim): burada dogrudan
+        `u.sonraki_mola_sn()` cagriliyordu. Duzeltme geri alinirsa bu
+        satir AttributeError ile COKUYOR; asagidaki kontroller hic
+        kosmuyor ve dosyanin sonundaki EN_AZ_KONTROL denetimi de
+        atlaniyor. Yani bekci "neyi kaybettim" diyemiyor. Olculdu:
+        yamasiz kaynakta 14 kontrol KALDI diyor ama cikti bir yigin
+        izi ile bitiyordu.
+        """
+        islev = getattr(uyg, "sonraki_mola_sn", None)
+        return islev() if islev else None
+
+    kontrol("TERS DAL: mola atlanmadan vaat edilen süre = ayar",
+            vaat(u) == 20, repr(vaat(u)))
+    u._molayi_atladi()
+    kontrol("mola atlandıktan sonra vaat = telafi süresi",
+            vaat(u) == u.telafi_suresi == 10,
+            "vaat %r / gerçek %r" % (vaat(u), u.telafi_suresi))
+    baslatilan = []
+    u._molayi_baslat = lambda sn: baslatilan.append(sn)
+    u._mola_zamani()
+    # BAGIMSIZ beklenen deger: `sonraki_mola_sn()` ile karsilastirmak
+    # dairesel olurdu - ikisi ayni sekilde bozulursa sinama yine yesil
+    # yanar. Telafi suresi (10 sn) ayri bir yoldan uretiliyor.
+    kontrol("başlatılan mola, vaat edilen süreyle aynı",
+            baslatilan == [u.telafi_suresi], str(baslatilan))
+
+    # --- g) panel ipucu Tk olmadan cagrilamiyor; capasi kaynakta olculur
+    kaynak_gm = io.open(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "goz_molasi.py"), encoding="utf-8").read()
+    kontrol("panel ipucu süreyi sonraki_mola_sn'den alıyor",
+            re.search(r'saniye sürecek"\s*%\s*self\.sonraki_mola_sn\(\)',
+                      kaynak_gm) is not None)
 
     if hatalar:
         print("\nyapilan kontrol : %d" % sayac["n"])

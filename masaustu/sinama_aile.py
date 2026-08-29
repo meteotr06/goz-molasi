@@ -50,7 +50,7 @@ class SahteUygulama(gm.Uygulama):
 # gösteriyor. `dene(...)` çağrılarının yarısı silinse bu sınama yine
 # "TAMAM" derdi — ve doğruladığı şey, ebeveynin çocuğuna güvenerek
 # açtığı koruma. Sayı buranın altına düşerse sonuç okunmaz.
-EN_AZ_DURUM = 27
+EN_AZ_DURUM = 49
 
 
 def main():
@@ -313,6 +313,201 @@ def main():
         hatalar.append("şifresiz aile kipi geçerli sayıldı")
     if not gm.aile_kipinde_mi({"kip": "aile", "kilit": sifre}):
         hatalar.append("şifreli aile kipi geçersiz sayıldı")
+
+    # =================================================================
+    # 8) SAAT OYUNUYLA GUN ATLATMA
+    # =================================================================
+    # OLCULDU (29.08.2026): sistem saatini bir gun ILERI alip geri
+    # getirmek gunluk ekran suresi sinirini sifirliyordu. Yonetici hakki
+    # gerekmiyor, sinirsiz tekrarlanabiliyor, ekranda hicbir iz yok.
+    # `_gunu_tazele` yalnizca "gun etiketi degisti mi" diye bakiyordu;
+    # degisimin YONUNU ve o gunun daha once kapanip kapanmadigini hic
+    # sormuyordu.
+    def gun_kontrol(ad, sart, ayrinti=""):
+        sayac["n"] += 1
+        if not sart:
+            hatalar.append("%s%s" % (ad, (" - " + ayrinti) if ayrinti else ""))
+        print("  %-54s %s" % (ad, "TAMAM" if sart else "KALDI"))
+
+    _bugun = time.strftime("%Y-%m-%d")
+    _dun = time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+    _yarin = time.strftime("%Y-%m-%d", time.localtime(time.time() + 86400))
+
+    def gunu_cevir(ist_gun, gecmis_veri=None):
+        """Verilen gun etiketiyle `_gunu_tazele` calistirir."""
+        gm.gcm.yaz(gm.KAYIT_KLASOR, gecmis_veri or {})
+        u = SahteUygulama(dict(t, gunluk_sinir_dk=60), 0)
+        u.ist = dict(gm.Uygulama.ist_baslangic(),
+                     gun=ist_gun, ekran_sn=7200.0, tamamlanan=9)
+        u._istatistik_yaz = lambda: None
+        u._gunu_tazele()
+        return u
+
+    # Saat yarina alinip geri getirildi: donuste gun GERI gidiyor.
+    ileri_geri = gunu_cevir(_yarin)
+    gun_kontrol("saat ileri-geri alinca ekran suresi sifirlanmiyor",
+                gm.sayi_oku(ileri_geri.ist.get("ekran_sn"), 0) >= 7200,
+                repr(ileri_geri.ist.get("ekran_sn")))
+    gun_kontrol("gun atlatilinca ekranda uyari cikiyor",
+                bool(ileri_geri.ayar_uyarisi()),
+                repr(ileri_geri.ayar_uyarisi()))
+
+    # TERS DAL: normal gece yarisi gecisi HALA sifirliyor. Duzeltme
+    # fazla kirparsa cocuk ertesi gun de bos yere kilitli kalirdi.
+    normal = gunu_cevir(_dun)
+    gun_kontrol("normal gun donusunde sayac sifirlaniyor",
+                gm.sayi_oku(normal.ist.get("ekran_sn"), -1) == 0,
+                repr(normal.ist.get("ekran_sn")))
+    gun_kontrol("normal gun donusunde uyari CIKMIYOR",
+                not normal.ayar_uyarisi(), repr(normal.ayar_uyarisi()))
+
+    # Bugun bir kez kapanmissa (arsivde kaydi varsa) sayac ARSIVDEN
+    # geri gelir - uydurma bir sayi degil, kendi yazdigimiz kayit.
+    arsivli = gunu_cevir(_dun, {_bugun: {"mola": 3, "uzun": 1,
+                                         "ekran_sn": 5400}})
+    gun_kontrol("arsivi olan gune donunce sayac arsivden geliyor",
+                gm.sayi_oku(arsivli.ist.get("ekran_sn"), 0) == 5400,
+                repr(arsivli.ist.get("ekran_sn")))
+
+    # OKUNAMAYAN ARSIV ALANI SAYACI SIFIRLAMAZ.
+    # OLCULDU (30.08.2026, denetim): `_gunu_tazele` once dogrudan
+    # `yeni.update(arsiv)` diyordu. Arsiv kaydinin ekran_sn'i bozuk,
+    # eksik ya da sinir ustu oldugunda `_gun_sayaclari` o alani hic
+    # tasimiyor, alan `ist_baslangic`ten gelen 0'da kaliyordu. Olculen
+    # sonuc: sayac 7200 -> 0 ve GUNLUK SINIR ENGELI KALKIYORDU; ustelik
+    # ekranda hala "sayaç sıfırlanmadı" yaziyordu. Yani yarim bozuk bir
+    # arsiv, hic arsiv olmamasindan KOTUYDU.
+    for _ad, _kayit in (
+            ("ekran_sn bozuk",   {"mola": 3, "uzun": 1, "ekran_sn": "cok"}),
+            ("ekran_sn sinir ustu", {"mola": 3, "uzun": 1, "ekran_sn": 999999}),
+            ("ekran_sn eksik",   {"mola": 3, "uzun": 1})):
+        _u = gunu_cevir(_yarin, {_bugun: _kayit})
+        gun_kontrol("arsivde %s olsa da sayac dusmuyor" % _ad,
+                    gm.sayi_oku(_u.ist.get("ekran_sn"), 0) >= 7200,
+                    repr(_u.ist.get("ekran_sn")))
+        gun_kontrol("arsivde %s olsa da sinir engeli ayakta" % _ad,
+                    (_u.engel_sebebi() or ("YOK",))[0] == "sinir",
+                    repr(_u.engel_sebebi()))
+
+    # TERS DAL: arsiv OKUNABILIYORSA belirleyici odur - daha DUSUK bir
+    # kayit bile gecerlidir. Duzeltme "her zaman buyugunu al" olsaydi
+    # baska bir gun etiketi altinda birikmis sayac bugune eklenir,
+    # ekrana sisirilmis bir sayi yazilirdi.
+    _dusuk = gunu_cevir(_yarin, {_bugun: {"mola": 3, "uzun": 1,
+                                          "ekran_sn": 100}})
+    gun_kontrol("okunabilen arsiv DUSUK olsa da belirleyici",
+                gm.sayi_oku(_dusuk.ist.get("ekran_sn"), -1) == 100,
+                repr(_dusuk.ist.get("ekran_sn")))
+    gm.gcm.yaz(gm.KAYIT_KLASOR, {})
+
+    # =================================================================
+    # 9) BEKCI
+    # =================================================================
+    # OLCULDU (29.08.2026):
+    #   • Gizli soz bekcinin KOMUT SATIRINDA duz metin duruyordu; Gorev
+    #     Yoneticisi > Ayrintilar > "Komut satiri" sutunuyla tek adimda
+    #     okunuyor, sahte "temiz cikis" bayragi yazilabiliyordu.
+    #   • Acilistan ~22 sn icinde oldurulen program yeniden ACILMIYORDU;
+    #     art arda iki oldurme bekciyi kalici olarak kaldiriyordu.
+    #   • Uygulama bekcinin oldugunu hic fark etmiyordu.
+    _yakalanan = []
+
+    class _SahtePopen(object):
+        """Gercek surec acmadan komut satirini ve ortami yakalar."""
+
+        def __init__(self, komut, **k):
+            _yakalanan.append((list(komut), k.get("env") or {}))
+            self.pid = 4242
+
+    class _SahteSub(object):
+        Popen = _SahtePopen
+
+    _eski_sub = kl.subprocess
+    kl.subprocess = _SahteSub
+    try:
+        _pid = kl.bekci_baslat(gm.KAYIT_KLASOR)
+    finally:
+        kl.subprocess = _eski_sub
+    _komut, _ortam = (_yakalanan[0] if _yakalanan else ([], {}))
+    _komut_metni = " ".join(str(x) for x in _komut)
+    _soz = kl._GIZLI_SOZ
+
+    gun_kontrol("bekci PID donduruyor (yasiyor mu olculebilsin)",
+                isinstance(_pid, int) and _pid > 0, repr(_pid))
+    gun_kontrol("gizli soz KOMUT SATIRINDA gecmiyor",
+                bool(_soz) and _soz not in _komut_metni, _komut_metni)
+    gun_kontrol("gizli soz bekciye ortamla ulasiyor",
+                _ortam.get(kl.SOZ_ORTAM_ADI) == _soz)
+
+    _once = dict(os.environ)
+    os.environ[kl.SOZ_ORTAM_ADI] = "deneme-soz"
+    _alinan = kl.bekci_sozu_al()
+    gun_kontrol("bekci sozu ortamdan okunup SILINIYOR",
+                _alinan == "deneme-soz" and kl.SOZ_ORTAM_ADI not in os.environ,
+                repr(_alinan))
+    os.environ.clear()
+    os.environ.update(_once)
+
+    # TERS DAL: taklit bayrak hala reddedilmeli - duzeltme korumayi
+    # gevsetmesin.
+    _bayrak_yolu = os.path.join(gm.KAYIT_KLASOR, kl.TEMIZ_CIKIS_DOSYA)
+    io.open(_bayrak_yolu, "w", encoding="utf-8").write("uydurma")
+    gun_kontrol("taklit temiz cikis bayragi hala reddediliyor",
+                not kl.temiz_cikis_gecerli_mi(gm.KAYIT_KLASOR, _soz))
+    try:
+        os.remove(_bayrak_yolu)
+    except OSError:
+        pass
+
+    # Ayaga kalkmis program erken oldurulurse HER SEFERINDE geri acilir.
+    kl._erken_olum_sifirla(gm.KAYIT_KLASOR)
+    gun_kontrol("ayaga kalkmis program erken oldurulunce geri aciliyor",
+                all(kl.erken_olum_karari(gm.KAYIT_KLASOR, 3.0, True)[0]
+                    for _ in range(6)))
+
+    # TERS DAL: hic ayaga kalkamayan program sonsuz donguye sokmamali.
+    kl._erken_olum_sifirla(gm.KAYIT_KLASOR)
+    _kararlar = [kl.erken_olum_karari(gm.KAYIT_KLASOR, 3.0, False)[0]
+                 for _ in range(kl.AZAMI_ERKEN_DENEME + 2)]
+    gun_kontrol("acilista coken program once denenip sonra birakiliyor",
+                _kararlar[0] and not _kararlar[-1], repr(_kararlar))
+    gun_kontrol("bekci pes edince ekranda iz birakiyor",
+                kl.bekci_notu_var_mi(gm.KAYIT_KLASOR))
+    try:
+        os.remove(os.path.join(gm.KAYIT_KLASOR, kl.BEKCI_NOTU))
+    except OSError:
+        pass
+    kl._erken_olum_sifirla(gm.KAYIT_KLASOR)
+
+    # Olen bekci fark ediliyor mu? Gercek surec acmadan olculuyor.
+    _pidler = [111, 222]
+    _eski_baslat, _eski_yasiyor = kl.bekci_baslat, kl.surec_yasiyor_mu
+    kl.bekci_baslat = lambda klasor: _pidler.pop(0)
+    kl.surec_yasiyor_mu = lambda p: False
+    try:
+        b = SahteUygulama(dict(t, bekci=True), 0)
+        b._bekciyi_kur()
+        _ilk = getattr(b, "_bekci_pid", None)
+        b._bekci_denemesi = -1e9          # deneme araligini atla
+        b._bekciyi_kur()
+        _ikinci = getattr(b, "_bekci_pid", None)
+    finally:
+        kl.bekci_baslat, kl.surec_yasiyor_mu = _eski_baslat, _eski_yasiyor
+    gun_kontrol("olen bekcinin yerine yenisi kuruluyor",
+                _ilk == 111 and _ikinci == 222,
+                "%r -> %r" % (_ilk, _ikinci))
+
+    # TERS DAL: yasayan bekcinin yerine YENISI kurulmamali.
+    _eski_yasiyor2 = kl.surec_yasiyor_mu
+    kl.surec_yasiyor_mu = lambda p: True
+    try:
+        b._bekci_denemesi = -1e9
+        b._bekciyi_kur()
+        _ucuncu = getattr(b, "_bekci_pid", None)
+    finally:
+        kl.surec_yasiyor_mu = _eski_yasiyor2
+    gun_kontrol("yasayan bekci bosuna yeniden kurulmuyor",
+                _ucuncu == _ikinci, repr(_ucuncu))
 
     for s in sinama_yalitim.dogrula():
         hatalar.append(s)

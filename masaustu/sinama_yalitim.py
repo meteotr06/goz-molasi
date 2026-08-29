@@ -76,7 +76,13 @@ def yalit(gm):
         if hasattr(gm, ad):
             setattr(gm, ad, os.path.join(_gecici, dosya))
 
-    # Kemer ve askı: yazan fonksiyonları da sustur
+    # Kemer ve askı: yazan fonksiyonları da sustur.
+    #
+    # ASIL_AYARLARI_YAZ: atomik yazmayı ölçen sınama gerçek işlevi
+    # çağırmak zorunda — susturulmuş bir işlevin atomik olup olmadığı
+    # ölçülemez. Yollar zaten geçici klasöre çevrildi, yani gerçek ayar
+    # dosyasına yine dokunulmuyor ve `dogrula()` bunu kanıtlıyor.
+    gm.ASIL_AYARLARI_YAZ = gm.ayarlari_yaz
     gm.ayarlari_yaz = lambda *a, **k: None
     if hasattr(gm, "gcm"):
         gm.gcm.gunu_isle = lambda *a, **k: None

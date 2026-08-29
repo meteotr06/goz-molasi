@@ -2888,7 +2888,21 @@
 
          `sayiyor` alanı pakette VARDI ama okunmuyordu. Veri
          gönderilmiş, karar verilmemişti. */
-      if (veri.sayiyor === false) return;
+      if (veri.sayiyor !== true) return;
+
+      /* İKİNCİ KAPI (29.08.2026 ölçümü).
+         Aile kipi engel ekranı açıkken Windows sürümü
+         `sayiyor:true, kalan_sn:0` yolluyordu; üstteki denetim
+         yalnız `=== false` baktığı için geçiyor ve hayalet mola
+         geri geliyordu (ölçüldü: IdleDetector izni açıkken
+         30 dakikada 71 sahte mola). Windows tarafı düzeltildi —
+         burada iki kapı daha:
+           • `!== true`: alan eksik ya da bozuk gelirse DEVRALMA.
+             Eski bir Windows sürümünde alan hiç yoktu ve
+             `undefined === false` YANLIŞ, yani geçiyordu.
+           • `donmus`: sayaç donmuşsa gelen sayı ekranda yazan
+             sayı değildir; ona bakarak mola kararı verilmez. */
+      if (veri.donmus === true) return;
 
       const kalan = Math.max(0, Math.round(+veri.kalan_sn));
 

@@ -132,6 +132,86 @@ def uygulama_tarafi(kontrol):
     biten.hedef = time.time() - 10
     kontrol("calisirken hedef gectiyse kalan 0",
             biten._kopru_verisi()["kalan_sn"] == 0)
+
+    # AILE KIPI ENGEL EKRANI - hayalet molanin IKINCI KAPISI.
+    # 29.08.2026 olcumu: engel acikken `durum` "calisiyor" kaliyor ve
+    # `hedef` ilerlemiyordu; kopru sayiyor=true + kalan_sn=0 yolluyor,
+    # tarayici surumu bunu devralip aninda mola veriyordu. Olculdu:
+    # IdleDetector izni acikken 30 dakikada 71, 2 saatte 287 sahte
+    # mola - hepsi cocugun istatistigine kalici yaziliyor.
+    engelli = Durumlu("calisiyor", dondurulmus=612)
+    engelli.engel_ekrani = object()         # ekran kapli, sayac donuk
+    engelli.hedef = time.time() - 5000      # hedef coktan gecti
+    pe = engelli._kopru_verisi()
+    kontrol("engel ekrani acikken sayiyor=False", pe["sayiyor"] is False,
+            "sayiyor=%r -> tarayici SAHTE MOLA verir" % pe.get("sayiyor"))
+    kontrol("engel ekrani acikken donmus=True", pe["donmus"] is True,
+            "donmus=%r" % pe.get("donmus"))
+    kontrol("engel ekrani acikken kalan DUSMUYOR",
+            abs(pe["kalan_sn"] - 612) <= 1,
+            "kalan_sn=%r (beklenen 612)" % pe.get("kalan_sn"))
+
+    # TERS DAL: engel YOKKEN ayni nesne hala dogru sayiyor. Duzeltme
+    # fazla kirpiyor olabilir; onu da olcuyoruz.
+    engelsiz = Durumlu("calisiyor", dondurulmus=612)
+    engelsiz.engel_ekrani = None
+    ps = engelsiz._kopru_verisi()
+    kontrol("engel yokken sayiyor=True (fazla kirpmiyoruz)",
+            ps["sayiyor"] is True, "sayiyor=%r" % ps.get("sayiyor"))
+    kontrol("engel yokken kalan gercek sayac", abs(ps["kalan_sn"] - 493) <= 1,
+            "kalan_sn=%r (beklenen 493)" % ps.get("kalan_sn"))
+
+    # ASIMETRI SIZINTISI - 29.08.2026 bagimsiz denetiminde bulundu.
+    # Yukaridaki duzeltmenin ILK hali `_tik`in engel dalinda
+    # `dondurulmus`u KOSULSUZ set ediyor, `engeli_kaldir` ise yalnizca
+    # donmus OLMAYAN durumlarda geri veriyordu. Asimetri yuzunden
+    # `dondurulmus`, daha once None oldugu `duraklatildi`/`saat_disi`
+    # durumlarina siziyordu: kopru engelden once 0, sonra 400 diyor,
+    # ekranda ise calisma_dk*60 (1200) yaziyordu. Bu, tam da koprunun
+    # onlemek icin yazildigi sinif - EKRANDA YAZMAYAN sayi.
+    # Sayilar cakismadigi icin tarayici molaya girmezdi; hata sessizdi.
+    # Sessiz oldugu icin bekcisi var.
+    class SahteEngel(object):
+        def kapat(self):
+            pass
+
+    class SahteKok(object):
+        def after(self, ms, fn):
+            pass
+
+    class TikDurumlu(Durumlu):
+        """GERCEK `_tik` cagrilabilsin diye cevresi susturulmus nesne."""
+
+        def __init__(self, durum, kalan=400):
+            Durumlu.__init__(self, durum, None, kalan)
+            self.engel_ekrani = SahteEngel()
+            self.mola_ekrani = None
+            self.balon = None
+            self.kok = SahteKok()
+
+        def _saat_sicramasini_yakala(self, simdi):
+            return 0.0
+
+        def _gunu_tazele(self):
+            return False
+
+        def engeli_uygula(self):
+            pass
+
+    for durum in ("duraklatildi", "saat_disi"):
+        t = TikDurumlu(durum)
+        once = t._kopru_verisi()["kalan_sn"]
+        gm.Uygulama._tik(t)                  # GERCEK _tik - engel dali
+        gm.Uygulama.engeli_kaldir(t)         # GERCEK engeli_kaldir
+        sonra = t._kopru_verisi()["kalan_sn"]
+        kontrol("engel gelip gecince %s sayisi degismiyor" % durum,
+                once == sonra,
+                "engelden once %r, sonra %r -> kopru EKRANDA YAZMAYAN "
+                "bir sayi soyluyor" % (once, sonra))
+        kontrol("engel %s durumunda dondurulmus UYDURMUYOR" % durum,
+                t.dondurulmus is None,
+                "dondurulmus=%r -> o dalin kendi degeri olmaliydi"
+                % (t.dondurulmus,))
     kontrol("paket: kalan süre doğru", 490 <= d.get("kalan_sn", 0) <= 494,
             repr(d.get("kalan_sn")))
 

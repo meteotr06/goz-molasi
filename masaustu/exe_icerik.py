@@ -40,6 +40,7 @@ BU DENETİMİN SINIRI — yazıyoruz, gizlemiyoruz
   Çıkış kodu 0 = bütün işaretler içeride, 1 = eksik var,
   2 = ölçülemedi (arşiv okunamadı).
 """
+import io
 import os
 import sys
 
@@ -87,6 +88,48 @@ ISARETLER = [
     ("istatistik_suz",
      "Bozuk kayıt dosyası ekrana çıkmıyor ve çökme üretmiyor "
      "('cok mola', '-99 sn', ValueError)"),
+    # 30.08.2026 - masaustu govdesinde 7 boyutlu tarama (34 alt calisan,
+    # 25 kusur onaylandi). Asagidakilerin hepsi SESSIZ hatalardi:
+    # uygulama calisiyor gorunuyor, sayi ya da koruma yanlis.
+    ("ayarlari_suz",
+     "Bozuk ayar dosyası uygulamayı AÇILMAZ yapamaz (tek yanlış tür "
+     "bütün korumaları sessizce kaldırıyordu)"),
+    ("AYAR_DURUMU",
+     "Ayar dosyası bozulduysa/kaybolduysa/yazılamadıysa ekranda yazar "
+     "— aile kipi sessizce kapanmaz"),
+    ("atomik_yaz",
+     "Yazma yarıda kesilse de ayarlar, şifre ve geçmiş silinmez"),
+    ("SURE_UST_SINIR_SN",
+     "24 saatten uzun süre doğru yazılır ('3 gün', '0 sn' değil)"),
+    ("SAYIM_TAVANI",
+     "Ekran süresi gerçek geçen süreyi sayar (8 saatte ~16 dakika "
+     "eksik sayıyordu)"),
+    ("gunun_molasi",
+     "'Senin durumun' kartı uzun molaları da sayar (aynı ekranda iki "
+     "farklı sayı çıkıyordu)"),
+    ("dakika_oku",
+     "Yasak saati tek çözümleyiciyle okunur — bozuk değerde yasak "
+     "sessizce 00:00'a kaymaz"),
+    ("sonraki_mola_sn",
+     "Ekranda yazan mola süresi AYARDAN türer (ayar 60 sn iken '20 "
+     "saniye' yazıyordu)"),
+    ("gunun_arsivi",
+     "Bozuk geçmiş kaydı sayacı dondurmaz ve 120 günü silmez"),
+    ("_saat_sicramasini_yakala",
+     "Aile kipi: saati bir gün İLERİ alıp geri getirmek günlük sınırı "
+     "sıfırlayamaz"),
+    ("bekci_sozu_al",
+     "Aile kipi: bekçinin gizli sözü komut satırında durmuyor (Görev "
+     "Yöneticisi'nden okunup sahte çıkış bayrağı yazılabiliyordu)"),
+    ("erken_olum_karari",
+     "Aile kipi: art arda iki kez öldürmek bekçiyi kalıcı kaldıramaz"),
+    ("bekci_notu_var_mi",
+     "Aile kipi: bekçi öldürülürse uygulama fark eder"),
+    ("ONAY_KISAYOL_ANAHTARI",
+     "Açılışta başlatmayı Windows'tan kapatırsan geri konulmaz ve "
+     "ayardaki kutu doğruyu gösterir"),
+    ("_engel_acik_mi",
+     "Aile kipi engeli açıkken köprü 'sayıyorum' demez (hayalet mola)"),
 ]
 
 
@@ -113,7 +156,40 @@ def modulu_cikar():
     return veri, None
 
 
+def isaretler_kaynakta_mi():
+    """Her isaret KAYNAK dosyalarda geciyor mu?
+
+    NIYE AYRI SORU: yanlis yazilmis bir isaret exe'de asla bulunamaz
+    ve arac "duzeltme programda YOK" der - oysa duzeltme oradadir.
+    Yanlis alarm veren bir bekci once guvenilirligini, sonra
+    kullanimini kaybeder. Bu yuzden "liste yanlis" ile "derleme eski"
+    ayri ayri soyleniyor.
+
+    Doner: kaynakta bulunamayan isaretler.
+    """
+    kaynak = ""
+    for ad in sorted(os.listdir(BURASI)):
+        if ad.endswith(".py"):
+            try:
+                kaynak += io.open(os.path.join(BURASI, ad),
+                                  encoding="utf-8").read()
+            except Exception:
+                pass
+    return [i for i, _ in ISARETLER if i not in kaynak]
+
+
 def main():
+    yanlis = isaretler_kaynakta_mi()
+    if yanlis:
+        print("LISTE YANLIS — %d isaret KAYNAKTA da yok:" % len(yanlis))
+        for i in yanlis:
+            print("  - %s" % i)
+        print()
+        print("Bu bir 'derleme eski' bulgusu DEGIL. Bu isaretler")
+        print("exe'de zaten hicbir zaman bulunamaz; arac yanlis alarm")
+        print("verir. exe_icerik.py'deki ISARETLER listesini duzelt.")
+        return 2
+
     veri, hata = modulu_cikar()
     if veri is None:
         # ÖLÇÜLEMEDİ, "temiz" DEĞİL. Ölçemediğini geçmiş saymak,

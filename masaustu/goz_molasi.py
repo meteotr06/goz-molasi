@@ -193,16 +193,156 @@ P = gor.PANEL
 # ----------------------------------------------------------------------
 # Yardımcılar
 # ----------------------------------------------------------------------
+# AYAR DOSYASININ SON DURUMU — `ayar_uyarisi()` bunu ekrana taşıyor.
+#
+# NİYE MODÜL DÜZEYİNDE: ayar dosyası okunurken uygulama nesnesi HENÜZ
+# YOK — okuma `__init__`in ilk işi. Bozukluğu nesneye yazacak yer yok.
+# OLCULDU (29.08.2026): ayar dosyasi bozulunca .bozuk'a tasiniyor,
+# varsayilana donuluyor ve AILE KIPI ile EBEVEYN SIFRESI birlikte
+# gidiyordu; ekranda hicbir iz yoktu. Ebeveyn korumanin surdugunu
+# saniyor. Kipin kaybolmasi SESSIZ olmamali.
+AYAR_DURUMU = {
+    "dosya_bozuk": False,     # okunamadı, .bozuk'a taşındı
+    "dosya_kayip": False,     # dosya yok ama klasörde başka kayıt var
+    "bozuk_alanlar": [],      # okunamayan alan adları (varsayılana döndü)
+    "yazilamadi": False,      # son yazma başarısız — ekranda yazan ayar
+}                             # diskte yok
+
+
+def _ayar_sayisi_oku(deger):
+    """Ayar dosyasından gelen bir sayıyı doğrular. Okunamazsa None.
+
+    `sayi_oku` ile aynı kural — bu dosyaya İKİNCİ bir çözümleyici
+    EKLEMİYORUZ. Buradaki tek ek iş, JSON'un doğrudan sayı olarak
+    verebildiği hâlleri (int/float, nan/inf, float'a sığmayan devasa
+    tam sayı) `sayi_oku`ya götürmeden önce elemek.
+    """
+    if isinstance(deger, bool):
+        return None                  # True/False bir süre değildir
+    if isinstance(deger, (int, float)):
+        try:
+            return deger if _math.isfinite(deger) else None
+        except (OverflowError, TypeError, ValueError):
+            return None              # 10**400 gibi float'a sığmayan sayı
+    return sayi_oku(deger, None)     # "60" gibi metinler okunur
+
+
+def ayarlari_suz(ham, bozuklar=None):
+    """Dosyadan gelen ayarların TÜR denetimi. Kapsam VARSAYILAN'dan türer.
+
+    OLCULDU (29.08.2026): `ayarlari_oku`nun korumasi YALNIZ ayristirma
+    hatasina bakiyordu. Gecerli JSON icindeki yanlis TUR hic
+    denetlenmiyor ve uygulamayi ACILMADAN olduruyordu:
+        calisma_dk = "20"  -> float + str        -> TypeError
+        calisma_dk = null  -> None * 60          -> TypeError
+        canlilik   = "cok" -> float("cok")       -> ValueError
+        tema       = [1]   -> TEMALAR.get([1])   -> TypeError
+    Dordu de `__init__`in ilk uc satirinda patliyor. Acilmayan
+    uygulamada aile kipi dahil HICBIR koruma yok; cokme, en sessiz
+    atlatmadir.
+
+    KAPSAM NİYE ELLE YAZILMIYOR: aynı gün istatistik süzgeci elle
+    yazılmış ve adları kaymıştı — süzgeç çalışıyor görünüp iki ana
+    sayacı hiç görmüyordu. Burada kural VARSAYILAN sözlüğünün kendisi:
+    bir alanın varsayılanı sayıysa dosyadaki de sayı olmalı. Yarın yeni
+    bir ayar eklendiğinde bu süzgeç kendiliğinden onu da korur.
+
+    KURALLAR
+      • sayı alanı  -> sayı olmalı. Metin yazılmış GEÇERLİ bir sayı
+        ("60") okunur: reddetmek günlük sınırı KALDIRIRDI, yani
+        korumayı kaldıran tarafa düşerdi. Okunamıyorsa alan DÜŞER,
+        varsayılan kalır ve `bozuklar` listesine yazılır — ekranda
+        uyarı çıkar. Bozuk sayı KIRPILMAZ; kırpılmış sayı bozuk
+        veriden üretilmiş ama inandırıcı olur.
+      • metin alanı -> metin olmalı (tema, kip, saat alanları).
+      • doğruluk alanı -> DOKUNULMAZ. Bugün hepsi yalnızca doğruluk
+        değeri olarak okunuyor (`if not ayar.get("yasak_acik")`);
+        1/0 yazılmış bir dosyada yasağı düşürmek KORUMAYI KALDIRIRDI.
+      • varsayılanı None olan ve tanımadığımız alanlar -> olduğu gibi
+        (kilit, ekran_isareti...). Onları okuyan yerler zaten
+        `isinstance` ile bakıyor.
+    """
+    temiz = {}
+    if not isinstance(ham, dict):
+        return temiz
+    for ad, deger in ham.items():
+        ol = VARSAYILAN.get(ad)
+        if ad not in VARSAYILAN or ol is None or isinstance(ol, bool):
+            temiz[ad] = deger
+            continue
+        if isinstance(ol, (int, float)):
+            d = _ayar_sayisi_oku(deger)
+            if d is None:
+                if bozuklar is not None:
+                    bozuklar.append(ad)
+                continue                      # VARSAYILAN'daki değer kalır
+            # Zaten sayı olan değere DOKUNMUYORUZ: 60,5 dakikalık sınırı
+            # 60'a yuvarlamak sessiz bir değer değişikliği olurdu.
+            temiz[ad] = int(d) if (isinstance(ol, int) and not isinstance(d, int)
+                                   and float(d).is_integer()) else d
+        elif isinstance(ol, str):
+            if isinstance(deger, str):
+                temiz[ad] = deger
+            elif bozuklar is not None:
+                bozuklar.append(ad)
+        else:
+            temiz[ad] = deger
+    return temiz
+
+
+def ayar_sayisi(ayar, ad):
+    """Ayardaki sayıyı güvenle okur; okunamazsa VARSAYILAN'daki değer.
+
+    Karşılık elle yazılmıyor, VARSAYILAN'dan geliyor. `ayarlari_oku`
+    zaten süzüyor; bu, dosyadan geçmeyen (sınama, eski, elle kurulmuş)
+    ayar sözlükleri için ikinci kat. Açılışı tek bir bozuk değere
+    bağlamıyoruz.
+    """
+    d = sayi_oku(ayar.get(ad), None)
+    if d is None:
+        d = sayi_oku(VARSAYILAN.get(ad), 0)
+    return d
+
+
 def ayarlari_oku():
     """encoding='utf-8-sig': dosyanın başındaki görünmez BOM işareti
     yüzünden ayarların sessizce yok sayılmasını engeller."""
     ayar = dict(VARSAYILAN)
+    AYAR_DURUMU["dosya_bozuk"] = False
+    AYAR_DURUMU["dosya_kayip"] = False
+    AYAR_DURUMU["bozuk_alanlar"] = []
     try:
         with open(AYAR_DOSYA, "r", encoding="utf-8-sig") as f:
-            ayar.update(json.load(f))
+            ham = json.load(f)
+        # Ust duzey tur de bozuk olabilir: dosya "[1,2]" ya da "5" ise
+        # `update` COKUYORDU (olculdu 29.08.2026) ve cokme __init__'in
+        # ilk isinde oldugu icin UYGULAMA HIC ACILMIYORDU.
+        if not isinstance(ham, dict):
+            raise ValueError("ayar dosyası sözlük değil: %s"
+                             % type(ham).__name__)
+        bozuklar = []
+        ayar.update(ayarlari_suz(ham, bozuklar))
+        if bozuklar:
+            AYAR_DURUMU["bozuk_alanlar"] = bozuklar
+            print("Ayar dosyasında okunamayan alan, varsayılana dönüldü:",
+                  ", ".join(bozuklar))
     except FileNotFoundError:
-        pass
+        # Dosya SILININCE de aile kipi sessizce kapaniyordu. Ilk acilisi
+        # silinmeden ayirmak icin klasordeki OTEKI kayit dosyalarina
+        # bakiyoruz: onlar varsa bu ilk acilis degil, ayar dosyasi
+        # KAYBOLMUS demektir. Liste elle yazilmiyor - klasorun kendi
+        # icerigi kural.
+        try:
+            baska = sorted(a for a in os.listdir(KAYIT_KLASOR)
+                           if a.lower().endswith(".json"))
+        except Exception:
+            baska = []
+        if baska:
+            AYAR_DURUMU["dosya_kayip"] = True
+            print("Ayar dosyası yok ama kayıt klasöründe başka dosya var:",
+                  ", ".join(baska))
     except Exception as hata:
+        AYAR_DURUMU["dosya_bozuk"] = True
         try:
             os.replace(AYAR_DOSYA, AYAR_DOSYA + ".bozuk")
         except Exception:
@@ -212,12 +352,41 @@ def ayarlari_oku():
 
 
 def ayarlari_yaz(ayar):
+    """Ayarları ATOMİK yazar. Döner: yazıldı mı (True/False).
+
+    NİYE ATOMİK (olculdu 29.08.2026): dosyanın doğrudan üstüne
+    yazılıyordu. Yazma yarıda kesilirse (dolu disk, kapanan makine,
+    kilitlenen dosya) ayar dosyası yarım kalır; yarım dosya okunamaz,
+    `ayarlari_oku` onu .bozuk'a taşır ve AİLE KİPİ ile EBEVEYN ŞİFRESİ
+    birlikte gider. `os.replace` tek adımdır: dosya ya eskidir ya yeni,
+    arası yoktur. Geçici dosyaya fsync'liyoruz, yoksa yeniden adlandırma
+    diske ulaşıp içerik ulaşmayabilir.
+
+    NİYE DÖNÜŞ DEĞERİ: eski hâlde hata `except Exception: pass` ile
+    YUTULUYORDU. Ekranda "Aile kipi açık" yazarken diskte hiçbir şey
+    değişmemiş oluyordu (salt-okunur dosya, dolu disk, kilitli dosya).
+    Artık başarısızlık `AYAR_DURUMU`na yazılıyor ve `ayar_uyarisi()`
+    bunu ekranda söylüyor. Çağıranların dönüşe bakması ŞART DEĞİL —
+    bakmayan da sessiz kalmıyor.
+    """
+    gecici = AYAR_DOSYA + ".yeni"
     try:
         os.makedirs(KAYIT_KLASOR, exist_ok=True)
-        with open(AYAR_DOSYA, "w", encoding="utf-8") as f:
+        with open(gecici, "w", encoding="utf-8") as f:
             json.dump(ayar, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(gecici, AYAR_DOSYA)
+        AYAR_DURUMU["yazilamadi"] = False
+        return True
+    except Exception as hata:
+        AYAR_DURUMU["yazilamadi"] = True
+        print("Ayarlar yazılamadı, diskte eski hâli duruyor:", hata)
+        try:
+            os.remove(gecici)
+        except Exception:
+            pass
+        return False
 
 
 def simdi_saniye():
@@ -234,16 +403,16 @@ def saat_uygun_mu(ayar, simdi=None):
         return True
     simdi = simdi or time.localtime()
 
-    def dakika(metin):
-        try:
-            saat, dk = str(metin).split(":")
-            return int(saat) * 60 + int(dk)
-        except Exception:
-            return 0
-
+    # TEK COZUMLEYICI (29.08.2026): burada yerel bir `dakika()` vardi ve
+    # okuyamadigi degere 0 donuyordu — "22.30" yazan kisinin calisma
+    # saati sessizce gece yarisindan basliyordu. Artik saat_oku.
+    bas = dakika_oku(ayar.get("bas_saat", "09:00"))
+    bit = dakika_oku(ayar.get("bit_saat", "18:00"))
+    if bas is None or bit is None:
+        # Saat okunamiyorsa "hep calisma saati" sayiyoruz: mola vermek
+        # bu dalda GUVENLI taraf, molayi susturmak degil.
+        return True
     su = simdi.tm_hour * 60 + simdi.tm_min
-    bas = dakika(ayar.get("bas_saat", "09:00"))
-    bit = dakika(ayar.get("bit_saat", "18:00"))
     if bas == bit:
         return True                      # 24 saat
     return (bas <= su < bit) if bas < bit else (su >= bas or su < bit)
@@ -261,16 +430,29 @@ def yasak_saatinde_mi(ayar, simdi=None):
         return False
     simdi = simdi or time.localtime()
 
-    def dakika(metin):
-        try:
-            saat, dk = str(metin).split(":")
-            return int(saat) * 60 + int(dk)
-        except Exception:
-            return 0
-
+    # OLCULDU (29.08.2026): burada yerel bir `dakika()` cozumleyicisi
+    # vardi ve okuyamadigi her degere 0 donuyordu. "9 pm", "25:00",
+    # bos metin ya da None yazan bir ayarlar.json'da yasak SESSIZCE
+    # 00:00'a kayiyordu: ebeveyn 21:00 yazdigini sanirken cocuk her
+    # gece 21:00-24:00 arasi serbest kaliyordu (03:00 hâlâ yasakli
+    # oldugu icin kimse fark etmiyordu). Ustelik ayni metni `saat_oku`
+    # FARKLI okuyordu ("22.30" -> 22:30). Artik tek cozumleyici var.
+    bas = dakika_oku(ayar.get("yasak_bas", "21:00"))
+    bit = dakika_oku(ayar.get("yasak_bit", "07:00"))
+    if bas is None or bit is None:
+        # Okunamayan sinir SESSIZCE 00:00 olmaz — uydurulmus bir yasak
+        # penceresi, ebeveynin koydugunu sandigi pencere degildir.
+        #
+        # NIYE ENGELLEMIYORUZ: kullanici karari (27.08.2026, ayni
+        # gerekce `engel_sebebi` icinde de yazili) "bozuk ayarda
+        # ENGELLEME, ama UYAR". Bu uygulama bir kez gercek ekrani
+        # kilitledi; bozuk bir dosya yuzunden 24 saat kilitlenmesi
+        # kabul edilmedi. Uyariyi `ayar_uyarisi()` ekrana yaziyor —
+        # sessiz kalinan yer kalmiyor. Ayarlar penceresi bu iki alani
+        # zaten saat_oku ile suzuyor, yani bozuk deger ancak dosya
+        # ELLE degistirilince olusur.
+        return False
     su = simdi.tm_hour * 60 + simdi.tm_min
-    bas = dakika(ayar.get("yasak_bas", "21:00"))
-    bit = dakika(ayar.get("yasak_bit", "07:00"))
     if bas == bit:
         return False                     # aralık yok
     return (bas <= su < bit) if bas < bit else (su >= bas or su < bit)
@@ -398,6 +580,27 @@ def saat_oku(metin):
     return "%02d:%02d" % (saat, dakika)
 
 
+def dakika_oku(metin):
+    """Saati gece yarisindan itibaren DAKIKAYA cevirir. Okunamazsa None.
+
+    NIYE VAR: bu dosyada saat metnini okuyan DORT ayri yer vardi —
+    `saat_oku` (dogrulama), `saat_uygun_mu` icindeki yerel `dakika()`,
+    `yasak_saatinde_mi` icindeki bir baskasi ve `engel_kalan_metni`
+    icindeki dorduncusu. Ayni metni ayni okumuyorlardi: OLCULDU
+    (29.08.2026), "22.30" degerini saat_oku 22:30 okuyor, yerel
+    dakika() 0 (yani gece yarisi) okuyordu. Tek ayar, iki gerceklik.
+
+    Okunamayan degere 0 DONMUYOR: 0 gecerli bir saattir (00:00) ve
+    hatayi gecerli bir degere cevirmek, hatayi gizlemektir. Bu
+    projedeki kural: sessizce varsayilana donme, soyle.
+    """
+    normal = saat_oku(metin)
+    if normal is None:
+        return None
+    saat, dakika = normal.split(":")
+    return int(saat) * 60 + int(dakika)
+
+
 def sayi_yaz(deger):
     """Sayiyi TURKCE yazimla: binlik ayirici NOKTA.
 
@@ -424,6 +627,14 @@ def sayi_yaz(deger):
     return "{:,}".format(n).replace(",", ".")
 
 
+# Bir sureyi "olculmus" saymanin ust siniri: 365 gun.
+# Bunun ustu olcum degil BOZUK KAYITTIR (elle duzenlenmis durum
+# dosyasi, geriye alinmis sistem saati, tasmis float). Bir Windows
+# makinesinin kesintisiz calisma suresi de, bir gunluk sayac da bu
+# siniri gecemez.
+SURE_UST_SINIR_SN = 365 * 86400
+
+
 def sure_okunakli(saniye):
     """Saniyeyi okunakli yaziya cevirir.
 
@@ -435,18 +646,30 @@ def sure_okunakli(saniye):
     Negatif de gosterilmez: "-99 sn" ekranda duran bir yalandir.
     Sinir disi deger KIRPILMAZ, SIFIRLANIR (web tarafiyla ayni
     gerekce: kirpilmis deger makul gorunen bir yalan olur).
+
+    BOZUK GIRDI ILE BUYUK SURE AYRI SEYDIR. Olculdu (29.08.2026):
+    ust sinir 86400'du ve 24 saati gecen HER sure "0 sn" yaziliyordu.
+    Dizustunu uyutup hic kapatmayan biri icin bu her gunku manzara:
+    "Bilgisayarin 0 sn acik; bu surenin tamami sayilmadi." Cokmeyi
+    kapatan duzeltme, goruntuyu bozmustu. Artik:
+      * cozulemeyen / negatif / sinir disi deger  -> "0 sn" (sifirlanir)
+      * cozulen ama BUYUK sure                    -> "3 gun 4 sa"
     """
     try:
         saniye = int(float(saniye))
-    except (TypeError, ValueError):
-        saniye = 0
-    if saniye < 0 or saniye > 86400:
-        saniye = 0
+    except (TypeError, ValueError, OverflowError):
+        # float('nan') -> ValueError, float('inf') -> OverflowError.
+        # Ikisi de sessizce sayiya donerse ekranda uydurma bir sure durur.
+        return "0 sn"
+    if saniye < 0 or saniye > SURE_UST_SINIR_SN:
+        return "0 sn"
     if saniye < 60:
         return "%d sn" % saniye
     if saniye < 3600:
         return "%d dk" % (saniye // 60)
-    return "%d sa %d dk" % (saniye // 3600, (saniye % 3600) // 60)
+    if saniye < 86400:
+        return "%d sa %d dk" % (saniye // 3600, (saniye % 3600) // 60)
+    return "%d gün %d sa" % (saniye // 86400, (saniye % 86400) // 3600)
 
 
 def dugme(ana, yazi, komut, ana_mi=False, kucuk=False):
@@ -1377,14 +1600,29 @@ class Uygulama:
           • Hedef kapalıyken geçtiyse: kısa süre kapalıydıysa kaçırılan
             molayı kısa bir payla verir, uzun kapalıydıysa temiz başlar.
         """
-        tam = time.time() + self.ayar["calisma_dk"] * 60
+        calisma_sn = ayar_sayisi(self.ayar, "calisma_dk") * 60
+        tam = time.time() + calisma_sn
         try:
             with open(DURUM_DOSYA, "r", encoding="utf-8-sig") as f:
                 d = json.load(f)
         except Exception:
             return tam
+        # UST DUZEY TUR: dosya "[1,2]" / "5" / '"metin"' ise `.get`
+        # AttributeError veriyordu (olculdu 29.08.2026). Bu islev
+        # __init__'in ilk isi; buradaki cokme UYGULAMAYI HIC ACMIYOR.
+        # Komsu dosyayi okuyan `_istatistik_oku` bu deseni zaten
+        # kullaniyordu, bir dosya otesinde yoktu.
+        if not isinstance(d, dict):
+            return tam
 
-        kapali_kalan = time.time() - float(d.get("kayit_ani", 0))
+        # `float()` burada da cokuyordu: kayit_ani metin/null/liste
+        # olunca ValueError/TypeError. Okunamayan bir kayit ani
+        # "ne zaman kapandigini bilmiyorum" demektir; o durumda temiz
+        # baslangic - anahtar hic yokken zaten olan davranis.
+        kayit_ani = sayi_oku(d.get("kayit_ani"), None)
+        if kayit_ani is None:
+            return tam
+        kapali_kalan = time.time() - kayit_ani
 
         # ÖLÇÜLEMEYEN SÜRE — kullanıcıya dürüst olmak için.
         # Program kapalıyken hiçbir şey ölçemiyoruz. Ama bilgisayarın
@@ -1397,7 +1635,8 @@ class Uygulama:
         except Exception:
             self.olculemeyen_sn = 0.0
 
-        if kapali_kalan < 0 or kapali_kalan > self.ayar["dinlenme_esigi_sn"]:
+        if kapali_kalan < 0 or kapali_kalan > ayar_sayisi(
+                self.ayar, "dinlenme_esigi_sn"):
             return tam
 
         # `float()` burada cokuyordu: durum.json'a "cok sonra" gibi bir
@@ -1405,7 +1644,7 @@ class Uygulama:
         # Acilmayan uygulamada aile kipi de dahil hicbir koruma yok -
         # cokme, en sessiz atlatmadir.
         kalan = sayi_oku(d.get("hedef"), 0.0) - time.time()
-        if 0 < kalan <= self.ayar["calisma_dk"] * 60:
+        if 0 < kalan <= calisma_sn:
             return time.time() + kalan
 
         # Hedef kapalıyken geçmiş. Ölçtüm: sayaç -45 saniyedeyken program
@@ -1475,8 +1714,10 @@ class Uygulama:
         # ekranda `str(...)` ile basildigi icin suzgecten gecen 7,
         # "7.0" olarak GORUNUYORDU. Kendi duzeltmemin urettigi yeni
         # bir yanlis goruntu - yayina gitmeden olculdu ve kapatildi.
-        # Saniye alanlari float kalabilir: `ekran_sn` 0.25'er artiyor
-        # ve zaten `sure_okunakli` icinde tam sayiya cevriliyor.
+        # Saniye alanlari float kalabilir: `ekran_sn` iki sayim
+        # arasinda GERCEKTEN gecen sureyi ekliyor (29.08.2026'ya kadar
+        # sabit 0,25'ti; bkz. `_sayim_araligi`) ve zaten
+        # `sure_okunakli` icinde tam sayiya cevriliyor.
         # Ust duzey tur de bozuk olabilir (dosya elle duzenlenmis).
         if not isinstance(ham, dict):
             return Uygulama.ist_baslangic()
@@ -1524,6 +1765,19 @@ class Uygulama:
         if simdiki is None:
             return                      # bozuk deger: ayar_uyarisi ilgileniyor
 
+        # BUGUN DAHA ONCE KAPANMIS MI? (olculdu 29.08.2026)
+        # Program KAPALIYKEN saat ileri alinip geri getirilirse bugun
+        # bir kez "bitmis" sayilip arsive yazilmis olur. Acilista
+        # `_istatistik_oku` gunu tutmayan dosyayi hic okumadigi icin
+        # sayac SIFIRDAN baslardi - gun icinde yapilan atlatmanin
+        # (`_gunu_tazele`) program yeniden acilarak isleyen ikizi.
+        # Arsivdeki sayi uydurma degil, kendi yazdigimiz kayit.
+        arsivdeki = (self.gunun_arsivi(bugun) or {}).get("ekran_sn")
+        if arsivdeki is not None and arsivdeki > simdiki + self.ISARET_TOLERANSI_SN:
+            self.ist["ekran_sn"] = arsivdeki
+            simdiki = arsivdeki
+            self.gun_atlatildi = True
+
         isaret = self.ayar.get("ekran_isareti")
         if isinstance(isaret, dict) and isaret.get("gun") == bugun:
             onceki = sayi_oku(isaret.get("sn"), None)
@@ -1552,12 +1806,15 @@ class Uygulama:
 
     def _istatistik_yaz(self):
         self._sayac_isaretini_tazele()
-        try:
-            os.makedirs(KAYIT_KLASOR, exist_ok=True)
-            with open(IST_DOSYA, "w", encoding="utf-8") as f:
-                json.dump(self.ist, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
+        # ATOMİK YAZMA (ölçüldü 29.08.2026): doğrudan `open(..., "w")`
+        # dosyayı yazmadan ÖNCE buduyor. Bu dosya günde ~2880 kez
+        # yazılıyor (30 sn'de bir) ve `cik()` içinde de yazılıyor —
+        # yani Windows kapanışında, sürecin öldürülme riskinin en
+        # yüksek olduğu anda. Yarım kalınca açılışta günün 9 molası 0
+        # okunuyor, 30 saniye sonraki ilk kayıt bu 0'ı KALICI geçmişe
+        # basıyordu. `os.replace` ile ya eski dosya durur ya yeni;
+        # arası yoktur.
+        gcm.atomik_yaz(IST_DOSYA, self.ist, girinti=2)
         self._sayaci_kaydet()
         # Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
         try:
@@ -2013,16 +2270,51 @@ class Uygulama:
                     return k
         return BILGILER[0]
 
+    @staticmethod
+    def _mola_sayisi(kayit):
+        """Bir gunun TOPLAM mola sayisi: kisa + uzun.
+
+        Kapsam elle yazilmiyor; kaynak, `gecmis.py`nin o gun icin
+        tuttugu iki alan. Panelin nokta seridi (`_ciz`) ve haftalik
+        grafik de tam bu toplami sayiyor - kart da ayni yerden sayar
+        ki ekranda iki farkli rakam durmasin.
+        """
+        kisa = sayi_oku(kayit.get("mola", kayit.get("tamamlanan")), 0) or 0
+        uzun = sayi_oku(kayit.get("uzun", kayit.get("uzun_mola")), 0) or 0
+        return max(0, int(kisa)), max(0, int(uzun))
+
     def _durum_karti(self):
         """Kişinin kendi geçmişi. Hiç mola yoksa gösterilmez —
-        "bugün 0 mola" demek moral bozar."""
-        bugun = int(self.ist.get("tamamlanan", 0))
+        "bugün 0 mola" demek moral bozar.
+
+        UZUN MOLALAR DA SAYILIR. Olctum (29.08.2026): kart yalnizca
+        `tamamlanan` alanina bakiyordu; panelin nokta seridi ve
+        haftalik grafik ise `tamamlanan + uzun_mola` sayiyor. AYNI
+        EKRANDA IKI FARKLI SAYI duruyordu - panel 6 mola derken kart
+        4 diyordu.
+
+        Dinlenme dakikasi da her molayi KISA mola suresiyle
+        carpiyordu. 4 kisa (20 sn) + 2 uzun (5 dk) mola = 11,3 dakika;
+        kart 2 dakika yaziyordu, yani 5,6 kat dusuk. Sureler artik
+        turune gore ayri hesaplaniyor.
+        """
+        kisa_bugun, uzun_bugun = Uygulama._mola_sayisi(self.ist)
+        bugun = kisa_bugun + uzun_bugun
+        kisa_hafta, uzun_hafta, seri = kisa_bugun, uzun_bugun, 0
         try:
-            gunler = gcm.son_gunler(KAYIT_KLASOR, 7, self.ist)
-            hafta = sum(sayi for _, sayi, _ in gunler)
+            veri = gcm.oku(KAYIT_KLASOR)
+            # Gun penceresi `gecmis.py`nin kendi takvimiyle kuruluyor
+            # ki haftalik grafikle AYNI yedi gunu saysin.
+            dun = gcm.date.today()
+            for i in range(1, 7):
+                gun = (dun - gcm.timedelta(days=i)).isoformat()
+                k, u = Uygulama._mola_sayisi(veri.get(gun) or {})
+                kisa_hafta += k
+                uzun_hafta += u
             seri = gcm.seri(KAYIT_KLASOR, self.ist)
         except Exception:
-            hafta, seri = bugun, 0
+            kisa_hafta, uzun_hafta, seri = kisa_bugun, uzun_bugun, 0
+        hafta = kisa_hafta + uzun_hafta
         if bugun == 0 and hafta == 0:
             return None
 
@@ -2033,10 +2325,23 @@ class Uygulama:
         if seri >= 2:
             parca.append("%s gündür üst üste günlük hedefi tutturuyorsun."
                          % sayi_yaz(seri))
-        dk = round(hafta * self.ayar["mola_sn"] / 60.0)
-        if dk >= 1:
-            parca.append("Bu, yaklaşık %s dakikalık toplam göz dinlenmesi demek."
-                         % sayi_yaz(dk))
+        # Kisa mola saniye, uzun mola DAKIKA cinsinden ayarli; ikisini
+        # tek carpanla toplamak dinlenme suresini bes kat kucultuyordu.
+        #
+        # VARSAYILANA SESSIZCE DONMUYORUZ. `ayarlari_oku` dosyayi ham
+        # `update` ediyor - `mola_sn` elle "yirmi" yazilmis olabilir.
+        # Boyle bir ayarda varsayilan 20 sn ile hesaplasak ekranda,
+        # kullanicinin ayarindan URETILMEMIS ama tamamen inandirici bir
+        # dakika sayisi dururdu. Okunamiyorsa CUMLEYI HIC KURMUYORUZ:
+        # soylemedigimiz sayi, yanlis sayidan iyidir.
+        kisa_sn = sayi_oku(self.ayar.get("mola_sn"), None)
+        uzun_dk = sayi_oku(self.ayar.get("uzun_mola_dk"), None)
+        if kisa_sn is not None and uzun_dk is not None:
+            dk = int(round((kisa_hafta * max(0.0, kisa_sn)
+                            + uzun_hafta * max(0.0, uzun_dk) * 60) / 60.0))
+            if dk >= 1:
+                parca.append("Bu, yaklaşık %s dakikalık toplam göz dinlenmesi demek."
+                             % sayi_yaz(dk))
         return ("Senin durumun", " ".join(parca),
                 "Kendi geçmişin · yalnızca bu cihazda saklanır")
 
@@ -2095,6 +2400,37 @@ class Uygulama:
             self.kopru_hatasi = str(e)
             self.kopru = None
 
+    # SAYACIN DONDUĞU DURUMLAR — TEK KAYNAK.
+    #
+    # NİYE SABİT: bu üçlü koda elle, ayrı ayrı yazılmıştı
+    # (`_kopru_verisi`, `_kopru_kalan`). 29.08.2026'da bu yamanın ilk
+    # hâli dördüncü ve beşinci kopyayı eklerken `_tik` tarafını
+    # DARALTMAYI UNUTTU: engel dalı `dondurulmus`u koşulsuz set
+    # ediyor, `engeli_kaldir` ise yalnızca donmuş olmayan durumlarda
+    # geri veriyordu. Asimetri yüzünden `dondurulmus`, daha önce None
+    # olduğu `duraklatildi`/`saat_disi` durumlarına sızdı. Ölçüldü:
+    # engel gelip geçtikten sonra köprü 0 yerine 400 diyordu, ekranda
+    # ise 1200 yazıyordu. Elle liste yerine tek ad: kapsam artık
+    # kodun kendi verisinden geliyor, bir yeri daraltmak yetiyor.
+    DONMUS_DURUMLAR = ("bosta", "duraklatildi", "saat_disi")
+
+    def _engel_acik_mi(self):
+        """Aile kipi engel ekranı şu an ekranı kaplıyor mu?
+
+        NİYE VAR (29.08.2026 ölçümü): engel ekranı açıkken `durum`
+        "calisiyor" kalıyor, `hedef` ilerlemiyor, köprü de
+        sayiyor=true + kalan_sn=0 yolluyordu. Tarayıcı sürümü bunu
+        devralıp anında mola veriyordu: IdleDetector izni açıkken
+        30 dakikada 71, 2 saatte 287 sahte mola — hepsi çocuğun
+        istatistiğine kalıcı yazılıyor. Yani 28d181c'de kapatılan
+        hayalet mola hatası ikinci kapıdan geri geliyordu.
+
+        Elle durum listesi tutmuyoruz; kural kodun kendi verisinden
+        çıkıyor: engel ekranı NESNESİ varsa sayaç donuktur. Alan
+        olmayabilir (sınama nesneleri) — o yüzden getattr.
+        """
+        return getattr(self, "engel_ekrani", None) is not None
+
     def _kopru_verisi(self):
         """Köprünün her istekte döndürdüğü anlık durum.
 
@@ -2114,13 +2450,18 @@ class Uygulama:
                 return varsayilan
             return int(s)
 
-        donmus = self.durum in ("bosta", "duraklatildi", "saat_disi")
+        # 29.08.2026: ENGEL EKRANI da donmuş sayılır (bkz.
+        # _engel_acik_mi). Ölçüldü: engel açıkken donmus=False,
+        # sayiyor=True, kalan_sn=0 gidiyordu.
+        donmus = (self.durum in self.DONMUS_DURUMLAR
+                  or self._engel_acik_mi())
         return {
             "kaynak": "windows",
             # Tarayici bu iki alani OKUMAK ZORUNDA. Eskiden pakete
             # konuyor ama hic okunmuyordu; butun hayalet mola hatasi
             # buradan cikti - veri gonderilmis, karar verilmemisti.
-            "sayiyor": self.durum in ("calisiyor", "uyari"),
+            "sayiyor": (self.durum in ("calisiyor", "uyari")
+                        and not self._engel_acik_mi()),
             "donmus": donmus,
             "surum": SURUM,
             "an": time.time(),
@@ -2147,8 +2488,13 @@ class Uygulama:
           sadece_olc        -> hedef her tikte tazeleniyor, tam sure
           normal            -> hedef - simdi
         """
-        if self.durum in ("bosta", "duraklatildi", "saat_disi"):
+        if self.durum in self.DONMUS_DURUMLAR:
             return float(self.dondurulmus or 0)
+        if self._engel_acik_mi():
+            # Engel açıkken sayaç `_tik` içinde donduruluyor. Ham
+            # `hedef - simdi` geride kaldığı için sıfıra iner;
+            # kırpılmış ama inandırıcı bir sayı olurdu.
+            return float(getattr(self, "dondurulmus", None) or 0)
         return self.hedef - time.time()
 
     def cik(self):
@@ -2165,19 +2511,48 @@ class Uygulama:
             self.kopru.durdur()
         self.kok.destroy()
 
+    # Bekci yeniden kurulmadan once en az bu kadar beklenir. Kurma
+    # basarisiz olursa her tikte yeni surec denenmesin.
+    BEKCI_DENEME_ARALIGI = 10
+
     def _bekciyi_kur(self):
         """Kilit açıksa programı izleyen ikinci bir süreç başlatır.
 
         Görev Yöneticisi'nden kapatılırsa bekçi programı geri açar.
         Şifreyle düzgün kapatılırsa bekçi sessizce çekilir.
+
+        BEKCI OLDURULURSE? Olculdu (29.08.2026): `_bekci_var` bir kez
+        True yapiliyor, hicbir yerde sifirlanmiyordu. Bekci Gorev
+        Yoneticisi'nden kapatilinca uygulama bunu HIC fark etmiyor,
+        aile kipi korumasi sessizce kalkiyordu - ekranda tek bir iz
+        bile yok. Artik bekcinin PID'i saklaniyor ve her cagrida
+        yasayip yasamadigi olculuyor; olmusse yenisi kuruluyor.
+
+        Bu islev her tikte cagriliyor (bkz. `_aile_kipini_saglamlastir`).
+        Olcum tek bir OpenProcess cagrisi; yeni surec ancak bekci
+        gercekten olduyse ve BEKCI_DENEME_ARALIGI gectiyse aciliyor.
         """
         if not (self.kilitli_mi() and self.ayar.get("bekci")):
             return
-        # Ortam değişkeni KULLANMIYORUZ: alt süreçlere miras kalıyor ve
-        # bekçinin yeniden açtığı program kendi bekçisini kuramıyordu.
-        if getattr(self, "_bekci_var", False):
+        pid = getattr(self, "_bekci_pid", 0)
+        if pid and kl.surec_yasiyor_mu(pid):
             return
-        self._bekci_var = kl.bekci_baslat(KAYIT_KLASOR)
+        simdi = time.monotonic()
+        if simdi - getattr(self, "_bekci_denemesi", -1e9) < self.BEKCI_DENEME_ARALIGI:
+            return
+        self._bekci_denemesi = simdi
+        # Ortam değişkenini MIRAS bırakmıyoruz: `bekci_sozu_al` sözü
+        # okur okumaz ortamdan siliyor, yoksa bekçinin yeniden açtığı
+        # programa ve onun alt süreçlerine geçerdi.
+        self._bekci_pid = kl.bekci_baslat(KAYIT_KLASOR)
+        # Ana dongu ayaga kalkinca bekciye "acildim" de. Bekci bununla
+        # zorla kapatmayi acilis cokmesinden ayiriyor (bkz. kilit.py
+        # erken_olum_karari).
+        try:
+            self.kok.after(kl.HAZIR_ESIGI * 1000,
+                           lambda: kl.hazir_isaretle(KAYIT_KLASOR))
+        except Exception:
+            pass
 
     # ---------------- Mola ----------------
     def _molayi_baslat(self, saniye):
@@ -2237,6 +2612,45 @@ class Uygulama:
     # duzeltmelerini yanlislikla sicrama saymiyor.
     SICRAMA_ESIGI = 2.0
 
+    # gecmis.json'daki alan adlari -> istatistik alan adlari.
+    # `gecmis.gunu_isle` bu ucunu yaziyor; arsivi geri okurken ayni
+    # esleme kullaniliyor. Iki ayri yerde elle yazilan es adlar
+    # birbirinden sapiyor - 29.08.2026'da IST_SINIRLARI tam boyle
+    # sapmis, iki ana sayac hic suzulmemisti.
+    ARSIV_ALANLARI = {"mola": "tamamlanan", "uzun": "uzun_mola",
+                      "ekran_sn": "ekran_sn"}
+
+    @staticmethod
+    def _gun_sayaclari(kaynak):
+        """Gunluk sayac alanlarini kaynaktan alir.
+
+        Alan adlari IST_ALANLARI'ndan geliyor; elle yazilan ikinci bir
+        liste YOK. Sinirin disindaki ve okunamayan degerler alinmiyor -
+        bozuk sayi kirpilmaz, hic tasinmaz.
+        """
+        alinan = {}
+        for ad, (en_cok, tam) in Uygulama.IST_ALANLARI.items():
+            d = sayi_oku(kaynak.get(ad), None)
+            if d is None or d < 0 or d > en_cok:
+                continue
+            alinan[ad] = int(d) if tam else float(d)
+        return alinan
+
+    def gunun_arsivi(self, gun):
+        """O gun daha once KAPANMIS mi? Kapandiysa sayaclarini verir.
+
+        Doner: istatistik alan adlariyla sozluk, ya da None.
+        """
+        try:
+            kayit = gcm.oku(KAYIT_KLASOR).get(gun)
+        except Exception:
+            return None
+        if not isinstance(kayit, dict):
+            return None
+        cevrilmis = dict((ist_ad, kayit.get(arsiv_ad))
+                         for arsiv_ad, ist_ad in self.ARSIV_ALANLARI.items())
+        return self._gun_sayaclari(cevrilmis) or None
+
     def _gunu_tazele(self):
         """Gece yarısı geçildiyse günlük sayaçları sıfırla.
 
@@ -2247,21 +2661,81 @@ class Uygulama:
           • aile kipi günlük sınırı sıfırlanmıyordu — çocuk ertesi gün
             de kilitli kalıyordu,
           • engel ekranındaki "gece yarısı sıfırlanır" yazısı yalandı.
+
+        SIFIRLAMA HER GUN DEGISIMINDE YAPILMAZ.
+        OLCULDU (29.08.2026): sistem saatini bir gun ILERI alip geri
+        getirmek gunluk ekran suresi sinirini sifirliyordu. Ileri alinca
+        burasi "yeni gun" deyip sayaci sifirliyor, geri alinca IKINCI
+        kez sifirliyordu. Windows'ta yonetici hakki gerekmiyor, sinirsiz
+        tekrarlanabiliyor ve ekranda hicbir iz kalmiyordu. Saat oyunu
+        denetimi (`_saat_sicramasini_yakala`) yalnizca geri almayi
+        (sapma < 0) isaretledigi icin bu yol acikti.
+
+        DENETIM SAATE DEGIL KAYDA BAKIYOR. Sebebi olculdu: Windows'ta
+        uyku/hazirda bekletme de duvar saatinde ileri sicrama gibi
+        gorunuyor (bkz. sinama_zaman.py, 6. bolum "UYKU / UYANMA") -
+        "ileri sicrama = saat oyunu" demek her sabah uyanan bilgisayarda
+        yanlis alarm uretir, cocuk bos yere kilitli kalirdi. Onun yerine
+        iki sey soruluyor:
+          1) Yeni gun, simdiki gunden ONCE mi? (saat geri alinmis)
+          2) Yeni gunun ARSIVDE kaydi var mi? (o gun bir kez kapanmis,
+             simdi geri donuluyor)
+        Ikisinden biri varsa sayaclar SIFIRLANMAZ: arsiv varsa oradan
+        geri gelir (uydurma degil, kendi yazdigimiz sayi), yoksa
+        oldugu gibi devreder. Ebeveyn bunu ekranda gorur
+        (`ayar_uyarisi` -> "Gün sistem saatiyle atlatılmış").
+
+        KAPANMAYAN KAPI, DURUSTCE: saati bir gun ileri alip OYLE
+        BIRAKANI bu denetim yakalamaz. O durumda Windows'un kendi
+        saati de bir gun yanlis gorunur, yani iz ORTADA. Sessiz olan
+        yol ileri-geri gidip saati dogru birakmakti; kapatilan o.
         """
         bugun = time.strftime("%Y-%m-%d")
-        if self.ist.get("gun") == bugun:
+        eski_gun = self.ist.get("gun")
+        if eski_gun == bugun:
             return False
         # Biten günü kalıcı geçmişe yaz, SONRA sıfırla — sırası önemli,
-        # tersi olursa o günün verisi kaybolur.
-        try:
-            gcm.gunu_isle(KAYIT_KLASOR, self.ist.get("gun", bugun), self.ist)
-        except Exception:
-            pass
-        self.ist.update({
-            "gun": bugun,
-            "tamamlanan": 0, "ertelenen": 0, "uzun_mola": 0,
-            "ekran_sn": 0.0, "kesintisiz_sn": 0.0, "programlar": {},
-        })
+        # tersi olursa o günün verisi kaybolur. Gun etiketi yoksa
+        # yazmiyoruz: eski hal `self.ist.get("gun", bugun)` diyordu ve
+        # etiket eksikse BUGUNU arsive yaziyordu; o kayit sonradan
+        # "bugun zaten kapanmis" gibi okunurdu.
+        if isinstance(eski_gun, str) and eski_gun:
+            try:
+                gcm.gunu_isle(KAYIT_KLASOR, eski_gun, self.ist)
+            except Exception:
+                pass
+
+        arsiv = self.gunun_arsivi(bugun)
+        geri_gitti = isinstance(eski_gun, str) and bool(eski_gun) and bugun < eski_gun
+        self.gun_atlatildi = bool(arsiv) or geri_gitti
+
+        yeni = Uygulama.ist_baslangic()      # sayac adlari IST_ALANLARI'ndan
+        if self.gun_atlatildi:
+            # SAYAC ATLATMA HALINDE ASLA GERI GITMEZ.
+            # OLCULDU (30.08.2026, denetim): burasi once
+            # `yeni.update(arsiv if arsiv else ...)` idi. Arsiv kaydinin
+            # ekran_sn'i BOZUK / EKSIK / SINIR USTU ise `_gun_sayaclari`
+            # o alani hic tasimiyor, alan `ist_baslangic`ten gelen 0'da
+            # kaliyordu. Olculen sonuc: sayac 5000 -> 0 ve GUNLUK SINIR
+            # ENGELI KALKIYORDU; ustelik ekranda "sayaç sıfırlanmadı"
+            # yaziyordu, yani mesaj durumun TERSINI soyluyordu. Arsivde
+            # DAHA DUSUK bir kayit (100) da sayaci ayni sekilde
+            # dusuruyordu. Yani yarim bozuk bir arsiv, hic arsiv
+            # olmamasindan KOTUYDU.
+            #
+            # Cozum ALAN ALAN geri cekilme: once elimizdeki sayaclar
+            # tasinir, sonra arsivin OKUNABILEN alanlari uzerine yazar.
+            # Boylece arsiv okunabildiginde yine ARSIV belirleyicidir
+            # (o gunun gercek kaydi odur, uydurma sayi uretmiyoruz);
+            # okunamadigi alanda ise 0'a degil, elimizdeki degere
+            # duseriz. Iki kaynagin buyugunu almak YANLIS olurdu: eldeki
+            # sayac BASKA bir gun etiketi altinda birikmisti, onu bugune
+            # eklemek ekrana sisirilmis bir sayi yazardi.
+            tasinan = self._gun_sayaclari(self.ist)
+            tasinan.update(arsiv or {})
+            yeni.update(tasinan)
+        yeni["gun"] = bugun
+        self.ist.update(yeni)
         # Ebeveynin dünkü ek süresi yeni güne devretmez
         self.ayar["ek_sure_bitis"] = 0
         try:
@@ -2351,6 +2825,14 @@ class Uygulama:
         akşam biraz daha" diyebilmek gerekiyor.
         """
         if not aile_kipinde_mi(self.ayar):
+            # Gecmis uyarisi aile kipine BAGLI DEGIL: 120 gunluk
+            # gecmisin kenara alinmasi her kullaniciyi ilgilendirir.
+            # Metin asagidaki dalla AYNI olmak zorunda - sinama_yerlesim
+            # yalniz duz metin donuslerini olcebiliyor, degiskene
+            # alinirsa genislik olcumunun disinda kalir; sinama_veri
+            # ikisinin ayrismadigini denetliyor.
+            if gcm.son_bozulma:
+                return "⚠ Geçmiş dosyası bozuktu — yedeği .bozuk olarak duruyor"
             return None
         # Ebeveyn ek süre verdiyse hiçbir engel yok.
         # `float(...)` burada da coker: "abc" -> ValueError, [1] -> TypeError.
@@ -2436,6 +2918,24 @@ class Uygulama:
 
         Sinama: sinama_yerlesim.py her uyariyi olcuyor.
         """
+        # DOSYA DUZEYI SORUNLARI EN USTTE.
+        #
+        # Ayar dosyasi bozulur ya da silinirse KIP ve SIFRE birlikte
+        # gider; asagidaki denetimlerin hicbiri calisamaz cunku kip
+        # artik "bireysel" gorunur. OLCULDU (29.08.2026): dosya
+        # .bozuk'a tasiniyordu ve ekranda hicbir iz kalmiyordu -
+        # ebeveyn korumanin surdugunu saniyor. Sessiz kalmak, bu
+        # uygulamada en pahali hata sinifi.
+        #
+        # "Yazilamadi" en uste konuldu: ebeveyn AZ ONCE bir sey
+        # kaydettigini saniyor, oysa diskte hicbir sey degismedi.
+        if AYAR_DURUMU.get("yazilamadi"):
+            return "⚠ Ayarlar kaydedilemedi — değişiklik kalıcı değil"
+        if AYAR_DURUMU.get("dosya_bozuk"):
+            return "⚠ Ayar dosyası bozuktu — ayarlar varsayılana döndü"
+        if AYAR_DURUMU.get("dosya_kayip"):
+            return "⚠ Ayar dosyası kayboldu — ayarlar varsayılana döndü"
+
         # SIRALAMA ONEMLI: "aile secili ama sifre yok" durumunda
         # aile_kipinde_mi() False doner. Bu denetim asagida olsaydi hic
         # calismazdi - oysa tam da uyarilmasi gereken an burasi.
@@ -2445,7 +2945,21 @@ class Uygulama:
         kip = kip.strip().lower() if isinstance(kip, str) else kip
         if kip == "aile" and not kilit_kaydi(self.ayar):
             return "⚠ Aile kipi şifresiz — ayarlardan şifre koyun"
+        if AYAR_DURUMU.get("bozuk_alanlar"):
+            return "⚠ Bozuk ayar değeri — varsayılan kullanılıyor"
+        # GEÇMİŞ DOSYASI BOZUKSA SÖYLE. Bu uyarı aile kipine bağlı
+        # DEĞİL: 120 günlük geçmişin kenara alınması her kullanıcıyı
+        # ilgilendirir ve sessizce silmek bu projede hata sayılıyor.
+        # EN DÜŞÜK öncelikte duruyor — aile uyarıları KORUMANIN
+        # uygulanmadığını söylüyor, bu yalnızca geçmişi — o yüzden
+        # metin iki dalda birden geçiyor.
+        # METİN İKİ YERDE AYNI OLMAK ZORUNDA: `sinama_yerlesim.py`
+        # uyarıları ast ile topluyor ve yalnız DÜZ metin dönüşlerini
+        # ölçebiliyor; değişkene alırsak genişlik ölçümünün dışında
+        # kalır. `sinama_veri.py` ikisinin aynı kaldığını denetliyor.
         if not aile_kipinde_mi(self.ayar):
+            if gcm.son_bozulma:
+                return "⚠ Geçmiş dosyası bozuktu — yedeği .bozuk olarak duruyor"
             return None
 
         ham = self.ayar.get("gunluk_sinir_dk")
@@ -2467,9 +2981,39 @@ class Uygulama:
         if getattr(self, "sayac_oynanmis", False):
             return "⚠ Ekran süresi geri alınmış — son değerden devam"
 
+        # OLCULDU (29.08.2026): yasak saatleri okunamayinca yasak
+        # penceresi sessizce 00:00'a kayiyordu ve HICBIR uyari
+        # cikmiyordu; ayar_uyarisi bu iki alana hic bakmiyordu. Artik
+        # yasak uygulanmiyor (bkz. yasak_saatinde_mi) — bunu sessizce
+        # yapmak, korumanin kalktigini gizlemek olurdu.
+        if self.ayar.get("yasak_acik") and (
+                dakika_oku(self.ayar.get("yasak_bas", "21:00")) is None
+                or dakika_oku(self.ayar.get("yasak_bit", "07:00")) is None):
+            return "⚠ Yasak saati okunamadı — yasak uygulanmıyor"
+
         ham_ek = self.ayar.get("ek_sure_bitis", 0) or 0
         if ham_ek and sayi_oku(ham_ek, None) is None:
             return "⚠ Ek süre ayarı bozuk — sınır uygulanmıyor"
+
+        # SIRALAMA: bu iki uyari EN SONA konuldu (olculdu 30.08.2026,
+        # denetim). `ayar_uyarisi` ILK eslesen metni dondurur, yani
+        # yukaridaki her satir asagidakileri gizler. Yukaridakilerin
+        # ortak ozelligi "sinir SU AN uygulanmiyor" demeleri; asagidaki
+        # ikisi ise korumanin ayakta oldugunu (gun atlatildi ama sayac
+        # duruyor) ya da GECMISTE bir sure kapali kaldigini soyluyor.
+        # Once konsaydi, "Ek süre ayarı bozuk — sınır uygulanmıyor"
+        # gizlenirdi: ebeveyn koruma acikken uyari okur, kapaliyken
+        # okumazdi - tam tersi.
+        #
+        # SESSIZ DUZELTME YOK: sayaci sifirlamayi reddettiysek sebebini
+        # soyluyoruz. Ebeveyn "sinir neden hala dolu?" diye sorunca
+        # cevabi ekranda bulsun (olculdu 29.08.2026).
+        if getattr(self, "gun_atlatildi", False):
+            return "⚠ Gün sistem saatiyle atlatılmış — sayaç sıfırlanmadı"
+        # Bekci art arda erken kapanma gorup pes ettiyse koruma bir sure
+        # kapali kalmistir. Kimsenin haberi olmamasi kabul edilmiyor.
+        if kl.bekci_notu_var_mi(KAYIT_KLASOR):
+            return "⚠ Bekçi durdu — koruma bir süre kapalı kaldı"
         return None
 
     # Klavye kısayolları. Web sürümüyle AYNI harfler — aynı uygulamanın
@@ -2525,8 +3069,11 @@ class Uygulama:
         try:
             TelafiKarti(
                 self.kok, "Klavye kısayolları", satirlar, "",
-                "Mola ekranındayken kısayollar çalışmaz — 20 saniye "
-                "tuşla geçilebilseydi mola olmazdı.")
+                # Buradaki sayi da ayardan gelir (29.08.2026): mola
+                # 60 saniyeye alinmisken "20 saniye" yazmak, ayni
+                # sinifin ucuncu ornegiydi.
+                "Mola ekranındayken kısayollar çalışmaz — %d saniye "
+                "tuşla geçilebilseydi mola olmazdı." % self.sonraki_mola_sn())
         except Exception:
             pass
 
@@ -2542,17 +3089,38 @@ class Uygulama:
         simdi = time.localtime()
         su = simdi.tm_hour * 3600 + simdi.tm_min * 60 + simdi.tm_sec
 
+        if sebep[0] == "saat":
+            # OLCULDU (29.08.2026): bu sebebin ayri kolu YOKTU ve
+            # asagidaki "sinir" metnine dusuyordu. Ekranda
+            # "Sayaç gece yarısı sıfırlanır — 13 sa 0 dk kaldı"
+            # yaziyordu; olculen gercek 2 sa 59 dk idi. Saat 30 gun
+            # geri alininca ise gece yarisi gecmesine ragmen engel 29
+            # gun daha surdu — yani cumlenin sayisi da kendisi de
+            # yalandi. Ustelik ayni ekranin bir ust satiri "saati
+            # duzeltince kalkar" diyordu: iki satir birbiriyle
+            # celisiyordu.
+            #
+            # Bu engelin bitisi takvime degil, saatin duzeltilmesine
+            # bagli (saat_oynanmis_mi yalnizca `_en_ileri_an`a bakiyor).
+            # O yuzden SAYI YAZMIYORUZ, yapilacak isi yaziyoruz: geri
+            # sayim yazmak, kurcalanmis saatten hesaplanmis bir sayiyi
+            # ekranda birakmak olurdu.
+            return "Bilgisayarın saati düzeltilince kalkar — geri sayım yok"
+
         if sebep[0] == "yasak":
-            try:
-                s, d = str(self.ayar.get("yasak_bit", "07:00")).split(":")
-                hedef = int(s) * 3600 + int(d) * 60
-            except Exception:
-                hedef = 7 * 3600
-            kalan = hedef - su
+            # TEK COZUMLEYICI (29.08.2026): burada dorduncu bir saat
+            # cozumleyicisi vardi ve okuyamadigi degerde SESSIZCE
+            # 07:00'a dusuyordu; ekrana ise ham ayar ("9 pm") yaziliyordu
+            # — sayi bir saatten, yazi baska bir saatten geliyordu.
+            bit_dk = dakika_oku(self.ayar.get("yasak_bit", "07:00"))
+            if bit_dk is None:
+                return "Yasak bitiş saati okunamadı — ayarlardan düzeltin"
+            kalan = bit_dk * 60 - su
             if kalan <= 0:
                 kalan += 86400
             return "Saat %s'de kalkacak — %s kaldı" % (
-                self.ayar.get("yasak_bit", "07:00"), sure_okunakli(kalan))
+                saat_oku(self.ayar.get("yasak_bit", "07:00")),
+                sure_okunakli(kalan))
 
         # Sınır: gece yarısı sıfırlanıyor
         kalan = 86400 - su
@@ -2568,7 +3136,11 @@ class Uygulama:
         if aile_kipinde_mi(self.ayar) and not self.ayar.get("bekci"):
             self.ayar["bekci"] = True
             ayarlari_yaz(self.ayar)
-            self._bekciyi_kur()
+        # BEKCI HALA YASIYOR MU? Ayari acmak yetmiyordu: bekci
+        # oldurulunce kimse bakmiyordu (olculdu 29.08.2026). Denetim
+        # her tikte burada yapiliyor; `_bekciyi_kur` yasayan bekciye
+        # dokunmadan doner.
+        self._bekciyi_kur()
 
     def engeli_uygula(self):
         self._aile_kipini_saglamlastir()
@@ -2587,6 +3159,13 @@ class Uygulama:
         if self.engel_ekrani is not None:
             self.engel_ekrani.kapat()
             self.engel_ekrani = None
+            # Engel süresince dondurulan sayacı geri ver (29.08.2026).
+            # DONMUŞ DURUMLARDA dokunmuyoruz: orada `dondurulmus`
+            # o dalın kendi değeri, geri koymak da onun işi.
+            if (self.durum not in self.DONMUS_DURUMLAR
+                    and self.dondurulmus is not None):
+                self.hedef = time.time() + max(1.0, self.dondurulmus)
+                self.dondurulmus = None
 
     def _molayi_atladi(self):
         """Mola atlandı.
@@ -2716,8 +3295,34 @@ class Uygulama:
         # --- 2) Açılışta başlatma kaydı duruyor mu ---
         try:
             if self.ayar.get("acilis_izni") and not kl.acilista_baslar_mi():
-                # Kullanıcı izin vermişti ama kayıt kaybolmuş (Windows
-                # güncellemesi, temizlik programı, başka bir kurulum).
+                if kl.kullanici_windowstan_kapatti_mi():
+                    # KULLANICININ KENDİ KARARI (29.08.2026 ölçümü).
+                    # Eskiden bu iki sebep ayrılmıyordu: Görev
+                    # Yöneticisi > Başlangıç'tan kapatan kullanıcının
+                    # kaydını geri koyuyor, Windows'un "devre dışı"
+                    # işaretini 3'ten 2'ye çeviriyor, üstüne "büyük
+                    # ihtimalle bir temizlik programı sildi" diyorduk.
+                    # Karar geri alınıyor, sebebi de yanlış anlatılıyordu.
+                    #
+                    # Yeni davranış: kayda DOKUNMA, ayarı gerçeğe
+                    # eşitle, nereden geri açılacağını söyle. Sessizce
+                    # düzeltmiyoruz — kart çıkıyor.
+                    self.ayar["acilis_izni"] = False
+                    ayarlari_yaz(self.ayar)
+                    TelafiKarti(
+                        self.kok,
+                        "Açılışta başlatmayı Windows'tan kapatmışsın",
+                        "Görev Yöneticisi > Başlangıç listesinde bu program "
+                        "devre dışı bırakılmış. Kararına dokunmadım: "
+                        "bilgisayar açıldığında artık kendim başlamıyorum, "
+                        "o süre boyunca hiçbir şey ölçemem.",
+                        "",
+                        "Geri açmak istersen: Ayarlar > “Windows açılınca "
+                        "kendim başla”.")
+                    return
+                # Kayıt GERÇEKTEN kaybolmuş (Windows güncellemesi,
+                # temizlik programı, başka bir kurulum) — kullanıcının
+                # kapattığına dair bir işaret yok.
                 # İzin ZATEN VERİLMİŞ; yeniden sormuyoruz, geri koyup
                 # haber veriyoruz.
                 kl.acilista_baslat(True)
@@ -2779,13 +3384,42 @@ class Uygulama:
         # Ağ hiç cevap vermezse kart yine de çıksın
         self.kok.after(9000, self._acilis_denetimi)
 
+    def sonraki_mola_sn(self):
+        """Bir sonraki KISA molanin gercek suresi (saniye).
+
+        NIYE VAR: molayi baslatan kod ile ekrandaki vaat AYNI yerden
+        okusun. OLCULDU (29.08.2026): mola atlandiktan sonra panel
+        "20 saniye sürecek" derken uygulama 10 saniyelik mola
+        veriyordu; ayni dakika icinde telafi karti dogru sayiyi
+        ("10 saniye") soyluyordu — uygulama iki farkli sure vaat
+        ediyordu.
+
+        Elle liste degil KURAL: bu sayiyi yazan her yer buradan alir.
+
+        BURAYA BAGLANMAYACAK TEK YER: `hemen_mola`. Orada kisi molayi
+        BILEREK istiyor ve tam sure aliyor; kisaltmak kayitli bir
+        karara aykiri (bkz. `_mola_zamani` icindeki not). Bunun bedeli
+        olculdu (29.08.2026, denetim): mola atlandiktan sonra panel
+        ipucu "10 saniye" yazarken M tusuna basan 20 saniyelik mola
+        aliyor. Bilincli secim - ipucu, halkanin saydigi OTOMATIK
+        molayi anlatiyor; elle mola o sayacin disinda.
+        """
+        return getattr(self, "telafi_suresi", None) or self.ayar["mola_sn"]
+
     def _uzun_mola_sor(self):
         cevap = Soru(
             self.kok, "%s kesintisiz çalıştın" % sure_okunakli(self.ist["kesintisiz_sn"]),
             "Amerikan Optometri Birliği, riskin günde 2 saati aşan kesintisiz ekran "
             "kullanımında başladığını söylüyor.\n\n"
+            # OLCULDU (29.08.2026): "20 saniyelik molalar" SABIT
+            # yaziliydi; ayar penceresi mola_sn'i 5-600 sn arasi kabul
+            # ediyor. 60 sn ayarlayan kullaniciya "20 saniyelik molalar
+            # devam eder" deniyordu — kendi ayarinin uygulanmadigini
+            # sanmasi icin yeterli. (Yukaridaki "2 saat" kalmali: o
+            # ayar degil, Amerikan Optometri Birligi'nin esigi.)
             "%d dakikalık uzun bir mola vereyim mi? Uygun değilse hayır de, "
-            "20 saniyelik molalar devam eder." % self.ayar["uzun_mola_dk"],
+            "%d saniyelik molalar devam eder."
+            % (self.ayar["uzun_mola_dk"], self.sonraki_mola_sn()),
             evet_yazi="Uzun mola ver", hayir_yazi="Şimdi olmaz",
             geri_sayim=25, varsayilan=False).bekle()
         if cevap:
@@ -2824,12 +3458,72 @@ class Uygulama:
         # Bir önceki mola atlandıysa bu sefer daha kısa mola veriyoruz.
         # Elle istenen mola (hemen_mola) bundan etkilenmez — orada
         # kişi molayı bilerek istiyor, kısaltmak saygısızlık olur.
-        sure = getattr(self, "telafi_suresi", None) or self.ayar["mola_sn"]
-        self._molayi_baslat(sure)
+        self._molayi_baslat(self.sonraki_mola_sn())
+
+    # Iki sayim arasindaki en buyuk MAKUL aralik (saniye).
+    # Olculdu (29.08.2026): dongu `after(250, ...)` ile kuruluyor,
+    # gercekte olculen aralik 0,258-0,260 sn. 5 sn tavan, yuklu bir
+    # makinede bile rahat pay birakir; bunun ustu olcum degil
+    # BOSLUKTUR (uyku, askiya alma, donmus arayuz).
+    SAYIM_TAVANI = 5.0
+
+    def _sayim_araligi(self, onceki_saydi):
+        """Son sayimdan bu yana GERCEKTEN gecen saniye.
+
+        NEDEN: sayac her tikte sabit 0,25 sn ekliyordu, oysa dongu
+        `kok.after(250, self._tik)` ile kuruluyor ve Tkinter'in
+        gecikmesi hep bu surenin USTUNE biniyor. Olctum (29.08.2026):
+        kayip %3,2-3,8; 8 saatlik bir gunde ~16 dakika. Hata hep AYNI
+        YONDE eksik, kendini hicbir zaman duzeltmiyor. Aile kipinde
+        daha agir: gunluk sinir gec doluyor, cocuk fazladan kullaniyor.
+
+        `onceki_saydi` YANLIS ise arada mola/bosta/duraklama/engel
+        vardi; o aralik ekran suresi degildir, dolayisiyla olculmez -
+        anma degeri (0,25) doner.
+
+        Tavani asan aralik ekran suresine YAZILMAZ: kisi uyurken
+        ekrana bakmiyordu. Kaybolmasin diye `olculemeyen_sn` hanesine
+        yaziliyor.
+
+        DIKKAT - BU HANE HENUZ EKRANA CIKMIYOR. Olctum (29.08.2026):
+        `olculemeyen_sn`i okuyan tek yer `_acilis_denetimi` ve o da
+        yalnizca ACILISTA kosuyor (surum denetimi 6 sn'de zaman asimina
+        ugruyor, kart en gec ~9. saniyede cikiyor). Oturum ortasinda
+        buraya eklenen sure bu yuzden kullaniciya SOYLENMIYOR. Burada
+        yanlis bir sayi uretmiyoruz - uyku suresi zaten ekran suresi
+        degil - ama "kullanici gorur" diye de yazmiyoruz.
+
+        Bu haneyi ekrana cikaracak olan, once SEBEBI ayirmali:
+        acilistaki deger "program kapaliydi, bilgisayar acikti"
+        demek, buradaki ise "bilgisayar uyuyordu". Kartin bugunku
+        metni ("bilgisayar acikti ama ben kapaliydim") ikincisi icin
+        YANLIS olur.
+        """
+        mono = time.monotonic()
+        onceki = getattr(self, "_son_sayim_mono", None)
+        self._son_sayim_mono = mono
+        self._sayim_yapildi = True
+        if onceki is None or not onceki_saydi:
+            return 0.25
+        gecen = mono - onceki
+        if gecen <= 0:
+            return 0.0
+        if gecen > self.SAYIM_TAVANI:
+            self.olculemeyen_sn = getattr(self, "olculemeyen_sn", 0.0) + gecen
+            return 0.0
+        return gecen
 
     # ---------------- Kalp atışı ----------------
     def _tik(self):
         simdi = time.time()
+
+        # Bu tik ekran suresi SAYDI MI? Asagida sayim yerinde True olur.
+        # Yalnizca ARDISIK iki sayim arasindaki sure ekran suresidir.
+        # Bayrak burada dusuruluyor ki _tik hangi yoldan cikarsa ciksin
+        # (mola, bosta, duraklama, engel, saat disi) bir sonraki tik
+        # aradaki bosluğu ekran suresi sanmasin.
+        onceki_saydi = getattr(self, "_sayim_yapildi", False)
+        self._sayim_yapildi = False
 
         # Saat oynadıysa sayacı koru; gece yarısı geçildiyse günü çevir.
         # İkisi de _tik'in EN BAŞINDA: aşağıdaki bütün kararlar doğru
@@ -2852,6 +3546,24 @@ class Uygulama:
                 # Engel ekranı açıkken ekran süresi SAYILMIYOR — kişi
                 # zaten kullanamıyor. Saymak, ertesi günün sınırını da
                 # yiyip bitirirdi.
+                #
+                # 29.08.2026: MOLA SAYACI da donduruluyor. Eskiden
+                # `hedef` olduğu yerde kalıyordu; engel kalkınca süre
+                # çoktan geçmiş oluyor ve anında mola veriliyordu.
+                # Aynı geride kalmış `hedef`ten köprü kalan_sn=0
+                # üretip tarayıcı sürümüne sahte mola verdiriyordu.
+                # Boşta dalıyla aynı yol: `dondurulmus`.
+                #
+                # ZATEN DONMUŞ durumlara DOKUNMUYORUZ: oradaki
+                # `dondurulmus` o dalın kendi değeri ve geri vermek de
+                # onun işi — `engeli_kaldir` de aynı sınırı çiziyor.
+                # Koşulsuz set etmek asimetri olurdu; bu yamanın ilk
+                # hâlinde öyleydi ve ölçüldü (29.08.2026): engel gelip
+                # geçince köprü `duraklatildi`/`saat_disi` için 0
+                # yerine 400 demeye başlıyor, ekranda 1200 yazıyordu.
+                if (self.durum not in self.DONMUS_DURUMLAR
+                        and self.dondurulmus is None):
+                    self.dondurulmus = max(0.0, self.hedef - simdi)
                 self.kok.after(500, self._tik)
                 return
 
@@ -2915,13 +3627,19 @@ class Uygulama:
             self.dondurulmus = None
             self.kilit_gorundu = False
 
-        self.ist["ekran_sn"] += 0.25
-        self.ist["kesintisiz_sn"] += 0.25
+        # GERCEK GECEN SURE - sabit 0,25 sn degil. Gerekcesi
+        # `_sayim_araligi` icinde: 250 ms'lik dongu 258-260 ms'de
+        # donuyor ve fark hep sayacin ALEYHINE isliyordu.
+        gecen = self._sayim_araligi(onceki_saydi)
+        self.ist["ekran_sn"] += gecen
+        self.ist["kesintisiz_sn"] += gecen
 
         if self.ayar.get("analiz_izni"):
             _, program = iz.on_pencere()
             if program:
-                self.ist["programlar"][program] = self.ist["programlar"].get(program, 0) + 0.25
+                # Program dagilimi da AYNI olcuyle artmali; yoksa
+                # yuzdelerin toplami ekran suresini tutmaz.
+                self.ist["programlar"][program] = self.ist["programlar"].get(program, 0) + gecen
 
         # SESSİZ ÖLÇÜM: yukarıdaki sayaçlar işledi, aşağıdaki mola/uyarı
         # mantığı hiç çalışmıyor. Program açık kalır, ekrana bir şey
@@ -3041,8 +3759,13 @@ class Uygulama:
                                  fill=renk if self.durum != "calisiyor" else P["soluk"])
             self.t.itemconfigure(
                 self.ipucu_yazi,
+                # OLCULDU (29.08.2026): burada dogrudan `mola_sn`
+                # okunuyordu; mola atlandiysa gercek sure
+                # `telafi_suresi` oluyor ve panel "20 saniye sürecek"
+                # derken mola 10 saniye suruyordu. Tek kaynak:
+                # sonraki_mola_sn().
                 text="Dokununca devam eder" if self.durum == "bosta"
-                else "%d saniye sürecek" % self.ayar["mola_sn"])
+                else "%d saniye sürecek" % self.sonraki_mola_sn())
 
         # Bozuk ayar uyarisi ipucu satirini EZER: sinir uygulanmadigi hâlde
         # ebeveynin "koruma acik" sanmasi, bu uygulamadaki en pahali hata.
@@ -3084,7 +3807,16 @@ class Uygulama:
         # Seri: her 30 saniyede bir hesapla, her çeyrek saniyede değil
         if simdi_saniye() - getattr(self, "_seri_zaman", 0) > 30:
             self._seri_zaman = simdi_saniye()
-            self._seri = gcm.seri(KAYIT_KLASOR, self.ist)
+            # KEMER VE ASKI (29.08.2026): gecmis.py artık bozuk değerde
+            # çökmüyor, ama _ciz içindeki HERHANGİ bir istisna sayacı
+            # KALICI dondurur — `_tik` içinde `kok.after(250, self._tik)`
+            # satırı `_ciz`'den SONRA geliyor, yani döngü yeniden
+            # kurulmadan kesiliyor (ölçüldü: tik 3 kez çağrıldı, sonra
+            # hiç). Aynı koruma `_durum_karti`'nda vardı, burada yoktu.
+            try:
+                self._seri = gcm.seri(KAYIT_KLASOR, self.ist)
+            except Exception:
+                self._seri = 0
         s = getattr(self, "_seri", 0)
         self.t.itemconfigure(
             self.seri_rozet,
@@ -3182,7 +3914,11 @@ class Uygulama:
 
     def _hafta_ciz(self):
         """Son 7 günün mola sayısı — dikey çubuklar."""
-        gunler = gcm.son_gunler(KAYIT_KLASOR, 7, self.ist)
+        # Çizim yolundaki bir istisna sayacı kalıcı dondurur (bkz. _ciz).
+        try:
+            gunler = gcm.son_gunler(KAYIT_KLASOR, 7, self.ist)
+        except Exception:
+            return                     # grafik eski hâlinde kalsın
         imza = ("hafta", tuple(s for _, s, _ in gunler))
         if imza == self.grafik_imza:
             return
@@ -3262,7 +3998,16 @@ class Uygulama:
                      "uzun mola önereceğim." % sure_okunakli(kesintisiz))
             vurgu = P["uyari"]
         elif kesintisiz >= esik * 0.75:
-            metin = "%s kesintisiz. 2 saate yaklaşıyorsun." % sure_okunakli(kesintisiz)
+            # OLCULDU (29.08.2026): burada "2 saate yaklaşıyorsun"
+            # SABIT yaziliydi, oysa esik ayar penceresinden 10-600
+            # dakika arasi degistirilebiliyor. Esik 600 dk iken ekranda
+            # "8 sa 0 dk kesintisiz. 2 saate yaklaşıyorsun." yaziyordu:
+            # cumle kendi ilk yarisini yalanliyordu. Esigi 45 dk yapan
+            # kisi ise 36 dakikada ayni cumleyi goruyordu. Sayi artik
+            # ayardan turer.
+            metin = ("%s kesintisiz. Uzun mola eşiğine %s kaldı."
+                     % (sure_okunakli(kesintisiz),
+                        sure_okunakli(esik - kesintisiz)))
             vurgu = P["sicak"]
         else:
             metin = ""
@@ -3912,9 +4657,14 @@ if __name__ == "__main__":
     # Bekçi kipi: "--bekci <izlenecek_pid> <klasor>" ile çağrılır.
     # Arayüz açmaz, sadece programın hayatta olup olmadığını izler.
     if len(sys.argv) >= 4 and sys.argv[1] == "--bekci":
-        # 5. argüman gizli söz; eski sürümden kalan bekçiler onsuz
-        # çağırabilir, o durumda eski davranış sürüyor.
-        soz = sys.argv[4] if len(sys.argv) >= 5 else ""
+        # SOZ ARTIK ORTAM DEGISKENINDEN GELIYOR (29.08.2026).
+        # Eskiden 5. arguman olarak komut satirinda duruyordu ve Gorev
+        # Yoneticisi > Ayrintilar > "Komut satiri" sutunuyla tek adimda
+        # okunuyordu. `bekci_sozu_al` sozu okur okumaz ortamdan SILER,
+        # boylece bekcinin yeniden actigi programa miras kalmaz.
+        # argv[4] yalnizca ESKI surumden kalan bir bekcinin bizi eski
+        # bicimde cagirma ihtimali icin duruyor.
+        soz = kl.bekci_sozu_al() or (sys.argv[4] if len(sys.argv) >= 5 else "")
         sys.exit(kl.bekci_calis(int(sys.argv[2]), sys.argv[3], soz))
 
     # Zaten açıksa ikinci kopya açma; açık olana "pencereni göster" de.
