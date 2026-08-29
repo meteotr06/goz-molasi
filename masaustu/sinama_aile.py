@@ -20,6 +20,7 @@ NE DENETLER
   python sinama_aile.py
 """
 import io
+import os
 import sys
 import time
 
@@ -49,7 +50,7 @@ class SahteUygulama(gm.Uygulama):
 # gösteriyor. `dene(...)` çağrılarının yarısı silinse bu sınama yine
 # "TAMAM" derdi — ve doğruladığı şey, ebeveynin çocuğuna güvenerek
 # açtığı koruma. Sayı buranın altına düşerse sonuç okunmaz.
-EN_AZ_DURUM = 26
+EN_AZ_DURUM = 27
 
 
 def main():
@@ -315,6 +316,51 @@ def main():
 
     for s in sinama_yalitim.dogrula():
         hatalar.append(s)
+
+    # ---------- Tek ornek korumasi ----------
+    #
+    # Ikinci kopya acilabilseydi iki surec AYNI istatistik dosyasina
+    # yazardi: ekran suresi cift sayilir, gunluk sinir asilir ve aile
+    # kipi korumasi delinirdi. Web tarafinda ayni sinif "iki sekme"
+    # olarak cikmisti (v133/v144); masaustundeki karsiligi bu.
+    #
+    # IKI CAGRI DA AYRI SURECTE YAPILIR - bu sart.
+    # Ilk yazimda ilk cagriyi BU surecte yapmistim; mutex'i sinamanin
+    # kendisi tutuyordu ve cocuk her hâlukârda False goruyordu. Yani
+    # sinama, TUTUCUYU HIC OLCMEDEN geciyordu. Kasten bozunca
+    # (tutucuya baska mutex adi verdim) yine "TAMAM" demesi ele verdi.
+    #
+    # Bu blok `if hatalar:` denetiminden ONCE durmali; sonrasina
+    # konursa icindeki hata sessizce yutulur (o da ilk yazimda oldu).
+    try:
+        import subprocess
+        sayac["n"] += 1
+        burasi = os.path.dirname(os.path.abspath(__file__))
+        cagri = ("import sys;sys.path.insert(0, r'" + burasi + "');"
+                 "import kilit as kl;print(kl.tek_ornek_al());")
+
+        # A: ilk kopya - mutex'i alir ve tutar
+        a = subprocess.Popen([sys.executable, "-c", cagri + "import time;time.sleep(8)"],
+                             stdout=subprocess.PIPE, text=True)
+        time.sleep(1.5)
+        # B: ikinci kopya - False gormeli
+        b = subprocess.run([sys.executable, "-c", cagri],
+                           capture_output=True, text=True)
+        ikinci = (b.stdout or "").strip()
+        a.terminate()
+        ilk = (a.stdout.readline() or "").strip() if a.stdout else ""
+
+        tamam = (ikinci == "False")
+        if not tamam:
+            hatalar.append(
+                "tek ornek: ikinci kopya %r dondu (False bekleniyordu); "
+                "ilk kopya %r" % (ikinci, ilk))
+        print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",
+                              "TAMAM" if tamam else "KALDI"))
+    except Exception as e:
+        hatalar.append("tek ornek SINANAMADI: %s: %s" % (type(e).__name__, e))
+        print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",
+                              "OLCULEMEDI"))
 
     if hatalar:
         print("denenen durum : %d" % sayac["n"])
