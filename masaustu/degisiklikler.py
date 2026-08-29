@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 146,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Kayıtlı verin bozulursa ekranda anlamsız sayılar görünebiliyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Tarayıcının sakladığı veri bozulursa (yarım yazma, eski sürüm, elle kurcalama) mola sayın <b>“cok”</b> ya da <b>“-3”</b> gibi görünebiliyordu. Artık bozuk değerler <b>0</b> olarak gösteriliyor — uygulama açılıyor ve doğru saymaya devam ediyor.',
+            'Ayarlar bu süzgeçten zaten geçiyordu; <b>sayaçlar geçmiyordu</b>. İkisi de aynı korumayı kullanıyor artık.',
+        ],
+    },
+    {
         'surum': 144,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',

@@ -334,12 +334,54 @@ window.__cekirdekHazir = window.__onbellekHazir.then(function () {
         sonuc ? 'geri yükledi' : 'yüklemedi', sonuc === false);
   }());
 
+  /* ---------- BOZUK DEPO EKRANA CIKMASIN ----------
+
+     Olculdu (29.08.2026): depoda `tamamlananMola: 'cok'` varken
+     ekranda mola sayisi olarak "cok" yaziyordu; `-3` varken "-3".
+     Ayarlar suzgecten geciyordu, ISTATISTIK gecmiyordu - kapi
+     ayarlarin suzgecinin tam yaninda acikti.
+
+     Ekranda gorunen SAYI bu; sessiz yanlis sayinin tam merkezi. */
+  (function bozukDepo() {
+    // Motorun kendi "bugun" tanimini kullaniyoruz ki gun sinirinda
+    // sinama kendi kendine kirilmasin.
+    var bugun = function () { return motorKur()._bugun(); };
+    var haller = [
+      ['metin', { gun: bugun(), tamamlananMola: 'cok', atlananMola: 'yok' }],
+      ['negatif', { gun: bugun(), tamamlananMola: -3, atlananMola: -1 }],
+      ['dev sayi', { gun: bugun(), tamamlananMola: 1e12, ekranSuresi: 1e12 }],
+      ['eksik alanlar', { gun: bugun() }],
+      ['gun bozuk', { gun: 'dun', tamamlananMola: 5 }]
+    ];
+    haller.forEach(function (h) {
+      var m = motorKur();
+      m.iceAktar({ istatistik: h[1] });
+      var i = m.istatistik || {};
+      var sayilarTemiz = ['tamamlananMola', 'atlananMola', 'ekranSuresi']
+        .every(function (a) {
+          var d = i[a];
+          return typeof d === 'number' && isFinite(d) && d >= 0;
+        });
+      yaz('bozuk depo: ' + h[0], 'sayilar 0 veya artı',
+          JSON.stringify({ mola: i.tamamlananMola, atlanan: i.atlananMola }),
+          sayilarTemiz);
+    });
+
+    // TERS DAL: gecerli veri BOZULMADAN gecmeli.
+    var m2 = motorKur();
+    m2.iceAktar({ istatistik: { gun: bugun(), tamamlananMola: 7,
+                                atlananMola: 2, ekranSuresi: 900 } });
+    yaz('bozuk depo: gecerli veri korunuyor', '7 mola / 2 atlanan',
+        m2.istatistik.tamamlananMola + ' / ' + m2.istatistik.atlananMola,
+        m2.istatistik.tamamlananMola === 7 && m2.istatistik.atlananMola === 2);
+  })();
+
   var toplam = gecti + kaldi;
   var o = document.getElementById('ozet');
   /* ALT SINIR: sayı bunun altına düşerse "geçti" denmez.
      Sınamaların yarısı silinse sayfa yine "HEPSİ GEÇTİ" derdi;
      yalnızca sayı küçülürdü ve kimse fark etmezdi. */
-  var EN_AZ = 14;
+  var EN_AZ = 20;
   if (kaldi === 0 && toplam < EN_AZ) {
     o.textContent = 'ÖLÇÜLEMEDİ — yalnızca ' + toplam + ' sınama koştu, '
       + 'en az ' + EN_AZ + ' bekleniyordu. Sınamalar silinmiş ya da bir '

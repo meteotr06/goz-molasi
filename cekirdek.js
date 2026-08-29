@@ -98,6 +98,43 @@ function ayarlariSuz(ayarlar) {
   return c;
 }
 
+/* İSTATİSTİK SINIRLARI — bir günde olabilecek en büyük değerler. */
+const ISTATISTIK_SINIRLARI = {
+  tamamlananMola: 1000,
+  atlananMola: 1000,
+  uzunMola: 1000,
+  ekranSuresi: 86400,
+  kesintisizSure: 86400,
+};
+
+const GUN_BICIMI = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Depodan gelen istatistiği süzer.
+
+    Ölçüldü (29.08.2026): bozuk depoyla açılınca ekranda mola sayısı
+    olarak "cok" ve "-3" yazıyordu. Ayarlar `ayarlariSuz()`ten geçiyor
+    ama istatistik HAM atanıyordu — süzgeç, ayarların süzgecinin tam
+    yanında eksikti.
+
+    Ekranda görünen sayı bu; sessiz yanlış sayının tam merkezi. Negatif
+    bir değer ayrıca seri hesabına ve 7 gün grafiğine de giriyordu. */
+function istatistikSuz(ham) {
+  const c = {};
+  for (const [ad, enCok] of Object.entries(ISTATISTIK_SINIRLARI)) {
+    const s = Number(ham && ham[ad]);
+    // KIRPMIYORUZ, SIFIRLIYORUZ. Yanı başındaki `ayarlariSuz()` de
+    // aynı gerekçeyle böyle: sınırın dışındaki bir değeri sınıra
+    // çekmek, kullanıcıya MAKUL GÖRÜNEN bir yalan gösterir.
+    // Ölçüldü: `atlananMola: 1e12` kırpılınca ekranda "1000 atlanan
+    // mola" yazıyordu — bozuk veriden üretilmiş, inandırıcı bir sayı.
+    // 0 hem doğru hem de "burada veri yok" diyor.
+    c[ad] = (Number.isFinite(s) && s >= 0 && s <= enCok) ? s : 0;
+  }
+  const g = ham && ham.gun;
+  c.gun = (typeof g === 'string' && GUN_BICIMI.test(g)) ? g : null;
+  return c;
+}
+
 class MolaMotoru {
   constructor(ayarlar = {}) {
     this.ayarlar = ayarlariSuz({ ...VARSAYILAN_AYARLAR, ...ayarlar });
@@ -568,9 +605,12 @@ class MolaMotoru {
       this.ayarlar = ayarlariSuz({ ...this.ayarlar, ...veri.ayarlar });
     }
     if (veri.istatistik) {
-      // Gün değiştiyse günlük sayaçlar sıfırlanır
-      if (veri.istatistik.gun === this._bugun()) {
-        this.istatistik = veri.istatistik;
+      // Gün değiştiyse günlük sayaçlar sıfırlanır.
+      // SÜZGEÇ ŞART: bozuk depo doğrudan EKRANA çıkıyordu
+      // (ölçüldü — "cok" ve "-3" mola sayısı olarak görünüyordu).
+      const temiz = istatistikSuz(veri.istatistik);
+      if (temiz.gun && temiz.gun === this._bugun()) {
+        this.istatistik = temiz;
       }
     }
     this.geriYuklendi = this.sayaciGeriYukle(veri);
@@ -807,5 +847,6 @@ const Gecmis = {
 };
 
 if (typeof module !== 'undefined') {
-  module.exports = { MolaMotoru, VARSAYILAN_AYARLAR, Gecmis, GUNLUK_HEDEF };
+  module.exports = { MolaMotoru, VARSAYILAN_AYARLAR, Gecmis, GUNLUK_HEDEF,
+                     istatistikSuz };
 }

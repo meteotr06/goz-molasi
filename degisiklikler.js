@@ -30,6 +30,33 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 146,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Kayıtlı verin bozulursa ekranda anlamsız sayılar '
+        + 'görünebiliyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Tarayıcının sakladığı veri bozulursa (yarım yazma, eski sürüm, '
+        + 'elle kurcalama) mola sayın <b>“cok”</b> ya da <b>“-3”</b> '
+        + 'gibi görünebiliyordu. Artık bozuk değerler <b>0</b> olarak '
+        + 'gösteriliyor — uygulama açılıyor ve doğru saymaya devam ediyor.',
+      'Ayarlar bu süzgeçten zaten geçiyordu; <b>sayaçlar geçmiyordu</b>. '
+        + 'İkisi de aynı korumayı kullanıyor artık.',
+    ],
+    ozetEn: 'If your saved data got corrupted, the app could show '
+        + 'meaningless numbers.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'If the data your browser stores got corrupted (an interrupted '
+        + 'write, an old version, manual tampering), your break count '
+        + 'could read <b>“cok”</b> or <b>“-3”</b>. Corrupted values now '
+        + 'show as <b>0</b> — the app opens and keeps counting correctly.',
+      'Settings already went through this filter; <b>the counters did '
+        + 'not</b>. Both use the same protection now.',
+    ],
+  },
+  {
     surum: 144,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',
