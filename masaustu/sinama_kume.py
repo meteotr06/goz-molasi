@@ -54,6 +54,9 @@ YAYIN_DISI_UZANTI = (".md", ".py", ".bat", ".exe", ".spec")
 KALIP_NITELIK = re.compile(r"""(?:src|href)\s*=\s*["']([^"'#?]+)""")
 KALIP_DIZGE = re.compile(r"""["']([A-Za-z0-9_\-./]+\.(?:js|css|png|json|html|svg|ico|txt))["']""")
 
+# `sw.js` ön önbellek listesindeki `'./dosya'` girdileri
+KALIP_ONBELLEK = re.compile(r"""["']\./([^"']*)["']""")
+
 EN_AZ_REFERANS = 12
 
 
@@ -194,6 +197,35 @@ def main():
             continue
         istenmeyen.append(y)
 
+    # ---- 3) `sw.js` ön önbelleği sayfayla aynı şeyi mi söylüyor ----
+    #
+    # Liste ELLE tutuluyor (22 satır). Sayfaya yeni bir dosya eklenip
+    # buraya eklenmezse çevrimdışı kullanıcı onu ALAMAZ — uygulama
+    # açılır ama bir parçası eksik çalışır. Sessiz kayıp.
+    #
+    # Not: `sw.js` adresleri damgasız yazıyor (`./arayuz.js`), sayfa ise
+    # damgalı istiyor (`?s=v142`). Bu bir AYRIŞMA DEĞİL: `sw.js` içinde
+    # `ignoreSearch: true` var — ölçüldü (sw.js:71), damgalı istek
+    # damgasız önbellek girdisine eşliyor.
+    sw = oku("sw.js")
+    onbellek = set()
+    for m in KALIP_ONBELLEK.finditer(sw):
+        onbellek.add(m.group(1))
+    onbellekte_yok = []
+    if onbellek:
+        for r in sorted(referans):
+            if r.startswith("../") or not r:
+                continue
+            if r not in yayindakiler:
+                continue
+            if r == "sw.js":
+                # Servis iscisi KENDINI onbellege almaz; tarayici onu
+                # her acilista dogrudan ister ve guncelligini oyle
+                # anlar. Listede olmamasi DOGRU.
+                continue
+            if r.endswith((".js", ".css", ".html")) and r not in onbellek:
+                onbellekte_yok.append(r)
+
     if eksik or izlenmeyen:
         if eksik:
             soyle("BASARISIZ - sayfanin istedigi %d dosya HIC YOK:" % len(eksik))
@@ -208,7 +240,18 @@ def main():
         soyle("  Canlida 404 olur; ozellik SESSIZCE olur.")
         return 1
 
+    if onbellekte_yok:
+        soyle("BASARISIZ - %d dosya sayfada var ama `sw.js` on onbelleginde "
+              "YOK:" % len(onbellekte_yok))
+        for o in onbellekte_yok:
+            soyle("  - %s" % o)
+        soyle("  Cevrimdisi kullanici bu dosyayi ALAMAZ; uygulama acilir")
+        soyle("  ama bir parcasi eksik calisir. Sessiz kayip.")
+        return 1
+
     soyle("TAMAM - sayfanin istedigi butun dosyalar depoda.")
+    soyle("TAMAM - %d dosyalik `sw.js` on onbellegi sayfayla uyusuyor."
+          % len(onbellek))
     if komsu:
         soyle()
         soyle("Depo disi komsu baglanti (%d) - ayri depolarda, canli"
