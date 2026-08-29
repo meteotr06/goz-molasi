@@ -30,6 +30,34 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 148,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: 'Molayı yenileyince “1 dakika ayrılmışsın” deniyordu — '
+        + 'ayrılmamış oluyordun.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Mola ekranı açıkken sayfayı yenilersen uygulama sana '
+        + '<b>“1 dakika ayrılmışsın”</b> diyordu — oysa saniyeler '
+        + 'geçmişti. Artık kısa kesintide <b>süre söylemiyor</b>: '
+        + '“Mola ekranı kapandı.”',
+      'Bir dakikadan uzun ayrılmalarda süre yine yazıyor; değişen '
+        + 'yalnızca <b>bilmediğimiz bir sayıyı uydurmamak</b>.',
+    ],
+    ozetEn: 'Refreshing during a break claimed you had “left for 1 '
+        + 'minute” when you had not.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'If you reloaded the page while the break screen was open, the '
+        + 'app told you <b>“you left for 1 minute”</b> — when only '
+        + 'seconds had passed. For short interruptions it now states '
+        + 'no duration: “The break screen closed.”',
+      'Absences longer than a minute still show the duration. What '
+        + 'changed is that we <b>no longer invent a number we do not '
+        + 'know</b>.',
+    ],
+  },
+  {
     surum: 147,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

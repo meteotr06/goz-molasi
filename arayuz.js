@@ -2988,7 +2988,17 @@
         `Your break came due while you were away (${g} min). The timer was `
         + `not reset — your break starts shortly.`);
     } else if (sebep && sebep.tur === 'mola-sirasinda') {
-      const d = Math.max(1, sebep.dakika | 0);
+      /* BIR DAKIKANIN ALTINDA SURE SOYLEMIYORUZ.
+
+         Olculdu (29.08.2026): `Math.max(1, ...)` tabani yuzunden
+         4 SANIYELIK bir kesinti "1 dakika ayrilmissin" diye
+         yaziliyordu. Sayfayi yenileyen kullanici hic ayrilmiyor;
+         ona sure soylemek uydurma olur.
+
+         Yanindaki "saat-degisti" dali da ayni gerekceyle sure
+         soylemiyor: ne oldugunu biliyoruz, ne kadar surdugunu
+         bilmiyoruz. */
+      const d = sebep.dakika | 0;
       /* ESKİ METİN YALANDI. "O molayı verilmiş saydık" yazıyordu.
 
          Ölçüldü: `tamamlananMola` yalnızca TEK yerde artıyor
@@ -2999,12 +3009,18 @@
 
          Kullanıcı sayılara zaten güvenmiyordu; sayı hakkında yanlış
          cümle kurmak, yanlış sayı kadar zararlı. */
-      metin = CS(
-        `Mola ekranı açıkken ${d} dakika ayrılmışsın. Sayaç yeniden `
-        + `başladı — o mola sayılmadı, çünkü ekranda geçmedi.`,
-        `You left for ${d} minutes while the break screen was open. The `
-        + `timer restarted — that break was not counted, because it did `
-        + `not run on screen.`);
+      metin = (d >= 1)
+        ? CS(
+          `Mola ekranı açıkken ${d} dakika ayrılmışsın. Sayaç yeniden `
+          + `başladı — o mola sayılmadı, çünkü ekranda geçmedi.`,
+          `You left for ${d} minutes while the break screen was open. The `
+          + `timer restarted — that break was not counted, because it did `
+          + `not run on screen.`)
+        : CS(
+          'Mola ekranı kapandı. Sayaç yeniden başladı — o mola '
+          + 'sayılmadı, çünkü ekranda geçmedi.',
+          'The break screen closed. The timer restarted — that break was '
+          + 'not counted, because it did not run on screen.');
     } else if (sebep && sebep.tur === 'saat-degisti') {
       /* "Kapalıydın" DEMİYORUZ: kullanıcı hiç ayrılmamış olabilir.
          Ölçüldü: saat 1 saat ileri alınınca uygulama "60 dakika

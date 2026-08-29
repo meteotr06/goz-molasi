@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 148,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': 'Molayı yenileyince “1 dakika ayrılmışsın” deniyordu — ayrılmamış oluyordun.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Mola ekranı açıkken sayfayı yenilersen uygulama sana <b>“1 dakika ayrılmışsın”</b> diyordu — oysa saniyeler geçmişti. Artık kısa kesintide <b>süre söylemiyor</b>: “Mola ekranı kapandı.”',
+            'Bir dakikadan uzun ayrılmalarda süre yine yazıyor; değişen yalnızca <b>bilmediğimiz bir sayıyı uydurmamak</b>.',
+        ],
+    },
+    {
         'surum': 147,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',
