@@ -30,6 +30,35 @@
  */
 const DEGISIKLIKLER = [
   {
+    surum: 144,
+    masaustuSurum: '1.3',
+    tarih: '29 Ağustos 2026',
+    ozet: '“Hepsini sil”, uygulama başka bir sekmede de açıkken '
+        + 'tutmuyordu.',
+    ayarGozdenGecir: false,
+    maddeler: [
+      'Uygulamayı <b>iki sekmede birden</b> açtıysan ve birinde '
+        + '“hepsini sil” dediysen, veriler siliniyor ama <b>öteki sekme '
+        + 'kendi belleğindekini geri yazıyordu</b>. Sayaçların ve bütün '
+        + 'ayarların birkaç saniye içinde geri geliyordu.',
+      'Artık silme, açık olan bütün sekmelere bildiriliyor: hepsi '
+        + 'yazmayı durdurup temiz başlıyor. <b>Sildiğin gerçekten '
+        + 'siliniyor.</b>',
+    ],
+    ozetEn: '“Delete everything” did not hold if the app was also open '
+        + 'in another tab.',
+    tarihEn: '29 August 2026',
+    maddelerEn: [
+      'If you had the app open in <b>two tabs</b> and pressed “delete '
+        + 'everything” in one, the data was deleted but <b>the other tab '
+        + 'wrote its own copy back</b>. Your counters and all your '
+        + 'settings returned within seconds.',
+      'The deletion is now announced to every open tab: they all stop '
+        + 'saving and start clean. <b>What you delete is really '
+        + 'deleted.</b>',
+    ],
+  },
+  {
     surum: 142,
     masaustuSurum: '1.3',
     tarih: '29 Ağustos 2026',

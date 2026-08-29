@@ -2663,7 +2663,30 @@
      dışarıdan oynatmak molayı bozar.
      ============================================================ */
   window.addEventListener('storage', (e) => {
-    if (e.key !== KAYIT_ANAHTARI || !e.newValue) return;
+    if (e.key !== KAYIT_ANAHTARI) return;
+
+    /* BASKA SEKME "HEPSINI SIL" DEDIYSE BIZ DE DURALIM.
+
+       Olculdu (29.08.2026): iki sekme acikken birinde "hepsini sil"
+       denince veri gercekten siliniyor, ama OTEKI SEKME bunu hic
+       duymuyordu ve 15 saniyelik kaydinda kendi bellegindeki eski
+       durumu GERI YAZIYORDU. Kullanicinin sayaclari ve butun ayarlari
+       diriliyordu; silme, ikinci sekme yuzunden tutmuyordu.
+
+       Eskiden bu satir `|| !e.newValue` ile silinmeyi YOK SAYIYORDU -
+       yani tam da haber verilmesi gereken olayi eliyordu.
+
+       `KAYIT_ANAHTARI` normal islerde silinmez; yalnizca "hepsini sil"
+       siler. O yuzden silinmeyi "veri supuruldu" isareti saymak
+       guvenli. `silindi` bayragi `kaydet()`i durduruyor, sonra sayfa
+       yenilenip temiz basliyor - silen sekmenin yaptiginin aynisi. */
+    if (!e.newValue) {
+      silindi = true;
+      try { motor._kalpAtisiDurdur(); } catch {}
+      location.reload();
+      return;
+    }
+
     if (motor.durum === 'mola' || molaAcik) return;
     let veri = null;
     try { veri = JSON.parse(e.newValue); } catch { return; }

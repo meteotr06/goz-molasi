@@ -7,6 +7,17 @@ değiştir, sonra `python masaustu/degisiklikler_uret.py` çalıştır.
 
 DEGISIKLIKLER = [
     {
+        'surum': 144,
+        'tarih': '29 Ağustos 2026',
+        'masaustu_surum': '1.3',
+        'ozet': '“Hepsini sil”, uygulama başka bir sekmede de açıkken tutmuyordu.',
+        'ayar_gozden_gecir': False,
+        'maddeler': [
+            'Uygulamayı <b>iki sekmede birden</b> açtıysan ve birinde “hepsini sil” dediysen, veriler siliniyor ama <b>öteki sekme kendi belleğindekini geri yazıyordu</b>. Sayaçların ve bütün ayarların birkaç saniye içinde geri geliyordu.',
+            'Artık silme, açık olan bütün sekmelere bildiriliyor: hepsi yazmayı durdurup temiz başlıyor. <b>Sildiğin gerçekten siliniyor.</b>',
+        ],
+    },
+    {
         'surum': 142,
         'tarih': '29 Ağustos 2026',
         'masaustu_surum': '1.3',
