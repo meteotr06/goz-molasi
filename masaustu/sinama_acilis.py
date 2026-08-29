@@ -164,6 +164,24 @@ def main():
 
     # 4) pencere ekranın içinde mi
     if hwnd:
+        # SIMGE DURUMUNDAKI PENCERE ÖLÇÜLEMEZ.
+        #
+        # Windows, küçültülmüş pencere için (-32000,-32000) döndürür.
+        # Bu sınama onu "ekranın soluna taşıyor" sanıyordu ve
+        # ÜÇ KOŞUDAN BİRİNDE yanlış yere KALDI diyordu (ölçüldü,
+        # 29.08.2026). Yanlış kırmızı burada pahalı: bu sınama
+        # `DERLE.bat`'ı durduruyor — kullanıcı derleyemez ve
+        # uygulamayı bozuk sanır.
+        #
+        # Çözüm: ölçmeden önce pencereyi geri getir. Böylece ölçüm
+        # deterministik olur; "ölçemedim" diye geçmek yerine
+        # ÖLÇÜLEBİLİR hâle getiriyoruz.
+        try:
+            if ctypes.windll.user32.IsIconic(wintypes.HWND(hwnd)):
+                ctypes.windll.user32.ShowWindow(wintypes.HWND(hwnd), 9)  # RESTORE
+                time.sleep(1.2)
+        except Exception:
+            pass
         k = _kutu(hwnd)
         print("panel açıldı: %dx%d konum (%d,%d)"
               % (k.right - k.left, k.bottom - k.top, k.left, k.top))

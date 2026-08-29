@@ -547,7 +547,14 @@ function saatYaz(tarih) {
     `saatYaz()` ile aynı mantık: Türkçe seçilmişse tr-TR sabit,
     değilse tarayıcının bölgesi. Varsayım değil, bilgi.
 
-    Sayı değilse '0' döner — bozuk veri ekrana "NaN" yazmasın. */
+    Sayı değilse '0' döner — bozuk veri ekrana "NaN" yazmasın.
+
+    NEREDE KULLANILMAZ: sayı MİKTAR değil KİMLİK ise. Sürüm numarası,
+    yıl, port, piksel değeri, dosya adındaki sayı… Oralarda binlik
+    ayırıcı YANLIŞ olur: "Sürüm 1.000" ya da "1.024 px" gibi. Bugün
+    kullanıldığı dokuz yerin dokuzu da miktar (mola sayısı, dakika,
+    toplam, ortalama) — kontrol edildi. Yeni bir yer eklerken önce
+    "bu sayı bir miktar mı, bir ad mı?" diye sor. */
 function SAYI(deger, basamak = 0) {
   const s = Number(deger);
   if (!Number.isFinite(s)) return '0';

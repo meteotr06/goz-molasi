@@ -410,6 +410,12 @@ def sayi_yaz(deger):
     ayri bir govde oldugu icin burada acik kalmisti.
 
     Sayi degilse "0" doner - bozuk deger ekranda "None" yazmasin.
+
+    NEREDE KULLANILMAZ: sayi MIKTAR degil KIMLIK ise. Surum numarasi,
+    yil, port, piksel degeri. Oralarda binlik ayirici YANLIS olur
+    ("Surum 1.000", "1.024 px"). Bugun kullanildigi dort yerin dordu de
+    miktar - kontrol edildi. Yeni yer eklerken once "bu sayi bir miktar
+    mi, bir ad mi?" diye sor.
     """
     try:
         n = int(round(float(deger)))
