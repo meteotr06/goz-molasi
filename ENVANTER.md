@@ -388,6 +388,50 @@ elle yeniden çizilmesi gerekir ve bunu bilen tek yer burası.
   bırakıyorum** — daha kötü bir görsel koymak, Türkçesini bırakmaktan
   kötü olurdu.
 
+### Çevrimdışı çalışma — CANLIDA ölçüldü (29.08.2026)
+
+Uygulama kendisi hakkında bir iddiada bulunuyor: paylaşım kartında ve
+tanıtım yazısında **"Çevrimdışı çalışır"**. Bu iddia bugüne kadar
+ölçülmemişti.
+
+**Önce ölçüm engeli çıktı ve sebebi ayrıştırıldı.** Yerel bölmede
+(`http://127.0.0.1:8456`) servis işçisi **hiç kaydolmuyor**:
+
+```
+Failed to register a ServiceWorker … An unknown error occurred
+when fetching the script.
+```
+
+`sw.js` sorunsuz geliyor (200 · `text/javascript` · 3360 bayt · doğru
+sürüm), yani dosya iyi. **Aynı kod canlı adreste kaydoluyor** — yani
+engel uygulamada değil, bölmenin yerel adresinde. Bu ayrım ölçülerek
+yapıldı; yoksa "çevrimdışı çalışmıyor" diye yanlış bulgu yazılırdı.
+
+**Canlıda ölçülen (`https://meteotr06.github.io/goz-molasi/`):**
+
+- Servis işçisi **etkin**, önbellek adı `goz-molasi-v149` (yayındaki
+  sürümle aynı).
+- Önbellekte **23 dosya**; sayfanın ihtiyaç duyduğu **16 dosyanın
+  hepsi var**, eksik yok. Bugün eklenen `onizleme-en.png` de içinde.
+- Düzenek de doğrulandı (kodu okumakla yetinilmedi):
+
+| İstek | Sonuç |
+|---|---|
+| damgasız `arayuz.js` | önbellekte ✓ |
+| damgalı, `ignoreSearch` **yok** | **bulunamıyor** ← kuralın niye şart olduğu |
+| damgalı, `ignoreSearch` var | bulunuyor ✓ |
+| **başka** damga (`v999`) | bulunuyor ✓ |
+| olmayan dosya | bulunmuyor ✓ *(ters dal)* |
+
+**Ne ölçülmedi:** ağ gerçekten kesilip sayfanın açıldığı. Bölmede ağı
+kesecek bir düzenek yok. Ölçülen şey, çevrimdışı çalışmanın **bütün
+önkoşulları**: işçi etkin, dosyalar önbellekte, eşleme kuralı çalışıyor.
+Son adım telefonda uçak kipiyle bakılabilir — kullanıcı soru listesine
+eklendi.
+
+**Kalıcı ders:** bu sınıf **yerelde ölçülemez**; servis işçisi
+gerektiren her ölçüm canlı adreste yapılmalı.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
