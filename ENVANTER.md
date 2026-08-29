@@ -291,6 +291,33 @@ kopyasında **hâlâ açık**. Ebeveyn korumanın çalıştığını sanıyor.
 **Tek çıkış derleme** — ve `DERLE.bat` uygulamayı açtığı için onu
 kullanıcı başlatmalı (K-25).
 
+### Sürüm 1.2 "Sağlık" — K-36 ön ölçümü (ÖNCE ÖLÇ, sonra yap)
+
+Merkez üç özellik önerdi. **Ölçtüm: ikisi zaten var, üçüncüsü de yapılmış
+— eksik olan özellik değil, varsayılan ve cümle.**
+
+| Önerilen | Durum | Kanıt |
+|---|---|---|
+| **Göz kırpma koçluğu** | ✅ **ZATEN VAR** | `GozKirp`, animasyonlu tam egzersiz: *"Kapak kapandığında sen de tam kırp"*. Sırada 6 molada bir çıkıyor (`KISA_SIRA`) |
+| **Hareketsizlikte duraklama** | ✅ **ZATEN VAR** | `bostaEsigi: 90` sn, **varsayılan açık**, ayarı var (`ayBosta`). Canlı görüldü: durum satırı *"Idle — timer paused"* yazdı |
+| **Ayakta mola** | 🟡 **MEKANİZMA VAR, KAPALI** | Uzun mola uçtan uca çalışıyor (kart çıktı, *"122 dakikadır"* sayısı doğru, iki düğme de sınandı). Ama `uzunMolaAcik: false` — **varsayılan kapalı** |
+
+**İkisini yeniden yapmak, yapılmışı ikinci kez yapmak olurdu.**
+
+Duraklama özelliğinde ayrıca **ince bir iş zaten yapılmış**: `hareketVar()`,
+*"klavyeye dokunmadı"* ile *"makineden uzaklaştı"* arasını ayırıyor — çünkü
+ölçülmüş, eskisi uzun metin okuyanın sayacını sıfırlıyormuş (masaüstünde
+132 dakika ekran süresine karşılık **0 mola**).
+
+**Gerçek iş üçüncüde ve küçük:** uzun molayı varsayılan açmak (ya da bir
+kez sormak) ve *"kalk, biraz hareket et"* diye çerçevelemek. Mekanizma
+hazır ve sınanmış.
+
+**AMA:** "ayakta mola" bir **sağlık iddiası**. Bugün AOA'yı yanlış
+aktardığımızı bulduk (v141). Oturmanın zararına dair bir cümle yazacaksak
+**önce kaynağı okumalı** — kaynağın adını yazmadan da yazmamalı.
+Yani bu madde, **yazılmadan önce bir dış referans ölçümü** istiyor.
+
 ### Ayrıca ölçülemeyenler
 
 - **Renk / okunurluk hükmü**: tarayıcı bölmesi sık sık işlemeyi
