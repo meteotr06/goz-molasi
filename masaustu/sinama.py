@@ -34,6 +34,8 @@ SINAMALAR = [
     ("depo", "sinama_depo.py", "Gizli sekmede depo istisnası uygulamayı öldürür mü"),
     ("surum", "sinama_surum.py",
      "Kod, degisiklik kaydi ve yayin ayni surumu mu soyluyor"),
+    ("kume", "sinama_kume.py",
+     "Yayindaki dosya kumesi sayfanin istedigiyle ayni mi"),
     ("dil", "sinama_dil.py",
      "Ekrana yazilan Turkce metin ceviriden geciyor mu"),
     ("sozluk", "sinama_sozluk.py",
