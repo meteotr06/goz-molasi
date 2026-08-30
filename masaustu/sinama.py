@@ -49,10 +49,17 @@ SINAMALAR = [
     ("zaman", "sinama_zaman.py", "Sayaç doğruluğu ve saat oyunları"),
     ("yerlesim", "sinama_yerlesim.py", "Panelde çakışma ve taşma"),
     ("acilis", "sinama_acilis.py", "Derlenen exe açılıyor mu"),
+    ("ekran", "ekran_denetle.py",
+     "Kullanıcının GÖRDÜĞÜ ekran: yasak metin, 44 px, taşma, JS hatası"),
 ]
 
 # Bunlar exe gerektirir; "hizli" kipinde atlanır
 EXE_GEREKENLER = {"acilis"}
+
+# Tarayıcı açar, ~2 dk sürer; "hizli" kipinde atlanır.
+# TAM koşuda zorunlu: 30.08.2026'da telefonda bulunan dört kusurun
+# DÖRDÜ de motor sınamalarını geçmişti, yalnızca ekranda görülüyordu.
+YAVASLAR = {"ekran"}
 
 
 def main():
@@ -64,7 +71,7 @@ def main():
 
     sonuclar = []
     for ad, dosya, aciklama in SINAMALAR:
-        if hizli and ad in EXE_GEREKENLER:
+        if hizli and (ad in EXE_GEREKENLER or ad in YAVASLAR):
             sonuclar.append((ad, "atlandi", 0.0))
             print("\n[%s] ATLANDI — %s" % (ad, aciklama))
             continue
