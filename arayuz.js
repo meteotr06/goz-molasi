@@ -1086,8 +1086,28 @@
   const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const android = /android/i.test(navigator.userAgent);
 
+  /* "Şimdi değil" SONSUZA KADAR DEĞİL — 7 gün.
+
+     Ölçüldü (30.08.2026): eskiden 'evet' yazılıyordu ve bir daha hiç
+     silinmiyordu. Bir kez kapatan kullanıcı uygulamayı bir daha hiç
+     kuramıyordu; Android'de düğme de gizli olduğu için başka yol da
+     yoktu. Kullanıcının kendi sözü: "her ne olursa olsun telefonda
+     indiri önersin".
+
+     Eski 'evet' kaydı da süreye çevriliyor, yoksa bugüne kadar
+     kapatmış olan herkes kalıcı olarak sessizde kalırdı. */
+  const KAPATMA_SURESI = 7 * 24 * 3600 * 1000;
+
   function kurulumKapatildiMi() {
-    try { return localStorage.getItem(KURULUM_KAPATILDI) === 'evet'; } catch { return false; }
+    try {
+      const d = localStorage.getItem(KURULUM_KAPATILDI);
+      if (!d) return false;
+      if (d === 'evet') {                       // eski kayıt: süreye çevir
+        localStorage.setItem(KURULUM_KAPATILDI, String(Date.now()));
+        return true;
+      }
+      return (Date.now() - Number(d)) < KAPATMA_SURESI;
+    } catch { return false; }
   }
 
   function seridiGoster(baslik, aciklama, dugmeYazi) {
@@ -1100,7 +1120,9 @@
 
   function seridiGizle(kalici = false) {
     serit.classList.add('gizli');
-    if (kalici) { try { localStorage.setItem(KURULUM_KAPATILDI, 'evet'); } catch {} }
+    if (kalici) {
+      try { localStorage.setItem(KURULUM_KAPATILDI, String(Date.now())); } catch {}
+    }
   }
 
   $('kurulumHayir').addEventListener('click', () => seridiGizle(true));
@@ -1115,9 +1137,11 @@
       return;
     }
     if (iOS) { iosPencere.showModal(); return; }
-    // Masaüstü: tarayıcının kurulum simgesini göster
-    $('kurulumAciklama').textContent =
-      C('Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas');
+    // Tarayıcı kendi kurulum yolunu vermediyse tarifi biz veriyoruz.
+    // Android'de adres çubuğunda ⊕ yok; oradaki tarif yanlış olurdu.
+    $('kurulumAciklama').textContent = android
+      ? C('Tarayıcı menüsünü aç (⋮), "Uygulamayı yükle" ya da "Ana ekrana ekle" de')
+      : C('Adres çubuğunun sağındaki ⊕ / kurulum simgesine bas');
     $('kurulumAciklama').style.color = 'var(--vurgu)';
   });
 
@@ -1126,8 +1150,8 @@
     e.preventDefault();               // kendi davetimizi gösteriyoruz
     kurulumOlayi = e;
     og.kur.classList.remove('gizli');
-    seridiGoster('Uygulama olarak kur',
-                 'Ana ekranına ekle, internetsiz de çalışsın', 'Kur');
+    seridiGoster(C('Uygulama olarak kur'),
+                 C('Ana ekranına ekle, internetsiz de çalışsın'), C('Kur'));
   });
 
   window.addEventListener('appinstalled', () => {
@@ -1144,8 +1168,30 @@
   if (iOS && !uygulamaKipi) {
     og.kur.textContent = C('⬇ Ana ekrana ekle');
     og.kur.classList.remove('gizli');
-    seridiGoster('Ana ekrana ekle',
-                 'Uygulama gibi açılsın, internetsiz de çalışsın', C('Nasıl?'));
+    seridiGoster(C('Ana ekrana ekle'),
+                 C('Uygulama gibi açılsın, internetsiz de çalışsın'),
+                 C('Nasıl?'));
+  }
+
+  /* ANDROID: `beforeinstallprompt` GELMEYEBİLİR.
+
+     Kullanıcı bildirdi (30.08.2026): telefonda uygulama kurulu değil
+     ama hiçbir kurulum teklifi çıkmıyor. Sebebi buydu — Android'in
+     yedeği yoktu. iOS'un var (olay hiç gelmez, kod bunu biliyor),
+     masaüstünün var (3 sn sonra yine göster), Android'in yoktu.
+     Olay gelmiyorsa (Chrome dışı tarayıcı, uygulama içi tarayıcı,
+     Chrome'un kendi koşulları) kullanıcı kurulabileceğini hiç
+     öğrenemiyordu; `kurDugme` de HTML'de gizli başlayıp yalnız o
+     olayın içinde açıldığı için başka yol da kalmıyordu. */
+  if (android && !uygulamaKipi) {
+    og.kur.classList.remove('gizli');          // düğme HER ZAMAN dursun
+    setTimeout(() => {
+      if (!kurulumOlayi && serit.classList.contains('gizli')) {
+        seridiGoster(C('Uygulama olarak kur'),
+                     C('Ana ekranına ekle, internetsiz de çalışsın'),
+                     C('Nasıl?'));
+      }
+    }, 3000);
   }
 
   /* Masaüstü tarayıcılarda beforeinstallprompt gecikebilir ya da hiç

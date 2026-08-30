@@ -389,6 +389,10 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Uygulama gibi açılsın, internetsiz de çalışsın':
+    'Opens like an app, works offline',
+  'Tarayıcı menüsünü aç (⋮), "Uygulamayı yükle" ya da "Ana ekrana ekle" de':
+    'Open the browser menu (⋮), then choose "Install app" or "Add to home screen"',
   'Ana ekranına ekle, internetsiz de çalışsın':
     'Add it to your home screen and use it offline',
   'Artık normal bir uygulama gibi açılır, internet olmadan da çalışır ve tarayıcı çubuğu görünmez.':
