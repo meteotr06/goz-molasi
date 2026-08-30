@@ -88,7 +88,21 @@ def main():
             kalan_hata += 1
 
     if kalan_hata:
-        print("\n%d SINAMA BASARISIZ — bu derleme yayina cikmamali." % kalan_hata)
+        # ADI DA YAZ. Olculdu (30.08.2026): son satir yalniz sayi
+        # soyluyordu ve ozet listesi yukarida kaldigi icin ciktinin
+        # sonuna bakan hangi sinamanin dustugunu goremiyordu -
+        # DERLE.bat'i izleyen kullanici dahil. Adi bulmak uc kosu aldi,
+        # o arada hata bir daha cikmadi. Son satir tek basina okunabilir
+        # olmali.
+        dusenler = [a for a, d, _ in sonuclar if d == "BASARISIZ"]
+        print("\n%d SINAMA BASARISIZ (%s) — bu derleme yayina cikmamali."
+              % (kalan_hata, ", ".join(dusenler)))
+        # Dosya adini SINAMALAR'dan al, uydurma: "damga" sinamasinin
+        # dosyasi damga_denetle.py, sinama_damga.py degil. Yanlis komut
+        # veren bir mesaj, mesaj olmamasindan daha kotu.
+        dosyalar = {a: d for a, d, _ in SINAMALAR}
+        for a in dusenler:
+            print("  ayrintisi: python masaustu/%s" % dosyalar.get(a, "sinama.py"))
         return 1
     print("\nHEPSI GECTI.")
     return 0
