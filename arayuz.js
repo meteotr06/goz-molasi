@@ -1003,17 +1003,19 @@
       og.bildirim.textContent = C('🔕 Bildirimlere izin verilmedi');
       og.bildirim.disabled = true;
       if (not) {
+        // KISA TUTULUYOR: telefonda bu blok alti satir olup ana ekranin
+        // en buyuk metni haline geliyordu - ustelik bir hata aciklamasi.
+        // Uc bilgi de duruyor (ne kaybettin / sayac calisiyor / nasil
+        // geri acilir), yalnizca tekrarlar atildi.
         not.textContent = CS(
-          'İzin verilmedi. Ne kaybediyorsun: bu sekme önde değilken mola '
-          + 'vakti geldiğinde haber alamazsın. Sayaç yine çalışır ve '
-          + 'sekmeye döndüğünde molan seni bekler. Geri vermek için: '
-          + 'adres çubuğundaki kilit simgesine dokun, bu site için '
-          + 'bildirimlere izin ver.',
-          'Permission was refused. What you lose: you will not be told '
-          + 'when a break falls due while this tab is not in front. The '
-          + 'timer still runs, and your break waits for you when you come '
-          + 'back. To allow it again: tap the padlock icon in the address '
-          + 'bar and turn notifications on for this site.');
+          'İzin verilmedi: sekme önde değilken mola haberi gelmez. '
+          + 'Sayaç çalışmaya devam eder, molan seni bekler. '
+          + 'Geri açmak: adres çubuğundaki kilit simgesi → bu site '
+          + 'için bildirim.',
+          'Not allowed: you will not be told about a break while this '
+          + 'tab is in the background. The timer keeps running and your '
+          + 'break waits for you. To allow: padlock icon in the address '
+          + 'bar → notifications for this site.');
       }
     }
   }
