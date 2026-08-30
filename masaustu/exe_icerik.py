@@ -133,8 +133,41 @@ ISARETLER = [
 ]
 
 
+# BIZIM MODULLERIMIZ — PYZ icinde durur, CArchive'de degil.
+#
+# ELLE LISTE TUTULMUYOR, KLASORDEN TURETILIYOR. Once elle yazilmisti ve
+# ILK DENEMEDE eksik cikti: `kilit.py` unutulmustu ve o modulun icindeki
+# iki duzeltme "programda YOK" diye raporlandi -- oysa exe'nin icindeydi.
+# Elle tutulan bir liste, yeni dosya eklendigi gun sessizce eskir ve
+# arac yine "hepsi var" der. Klasorden turetilince kendini gunceller.
+def _bizim_moduller():
+    ad = []
+    for dosya in sorted(os.listdir(os.path.dirname(os.path.abspath(__file__)))):
+        if not dosya.endswith(".py"):
+            continue
+        kok = dosya[:-3]
+        if kok.startswith("sinama") or kok in ("exe_icerik", "goz_molasi"):
+            continue                      # sinama araclari exe'ye girmez
+        ad.append(kok)
+    return ad
+
+
 def modulu_cikar():
-    """(veri, hata) döndürür. Uygulama ÇALIŞTIRILMAZ."""
+    """(veri, hata) döndürür. Uygulama ÇALIŞTIRILMAZ.
+
+    NEDEN SADECE `goz_molasi` YETMIYOR
+      Olculdu (30.08.2026): iki isaret ("en yuksek riskin", "sayi var ama
+      sinir yok") EKSIK raporlandi ve derleme kapisi bu yuzden kapandi.
+      Oysa ikisi de exe'nin ICINDEYDI -- `bilgiler` modulunde. Bu arac
+      arsivden yalnizca `goz_molasi` girdisini cikariyor, PYZ arsivini
+      hic acmiyordu. Yani YANLIS YERE bakip "yok" diyordu.
+
+      Bagiran nobetci, susan nobetciden kotudur: bir sonraki gercek
+      "eski derleme" bulgusu bu gurultunun icinde kaybolurdu.
+
+      Artik ana modul + PYZ icindeki KENDI modullerimiz birlestirilip
+      aranıyor.
+    """
     exe = None
     for ad in sorted(os.listdir(KOK)):
         if ad.lower().endswith(".exe"):
@@ -147,13 +180,42 @@ def modulu_cikar():
     except Exception as e:
         return None, "PyInstaller okuyucusu yok (%s)" % type(e).__name__
     try:
-        ham = CArchiveReader(exe).extract("goz_molasi")
+        arsiv = CArchiveReader(exe)
+        ham = arsiv.extract("goz_molasi")
     except Exception as e:
         return None, "arşiv okunamadı: %s: %s" % (type(e).__name__, e)
     veri = ham[1] if isinstance(ham, tuple) else ham
     if not veri:
         return None, "goz_molasi modülü arşivde bulunamadı"
-    return veri, None
+
+    # PYZ ICINDEKI KENDI MODULLERIMIZ. Bulunamazsa SESSIZ GECILMEZ:
+    # olculemedigimiz bir modulu "temiz" saymak, bu araci yaniltici
+    # yapar. Hata metnine yazilir ve cagiran karar verir.
+    parcalar = [veri]
+    try:
+        import marshal
+        import tempfile
+        from PyInstaller.archive.readers import ZlibArchiveReader
+        p = arsiv.extract("PYZ.pyz")
+        pyz_ham = p[1] if isinstance(p, tuple) else p
+        yol = os.path.join(tempfile.gettempdir(), "_gm_pyz.pyz")
+        with open(yol, "wb") as f:
+            f.write(pyz_ham)
+        z = ZlibArchiveReader(yol)
+        icindekiler = list(z.toc)
+        for mod in _bizim_moduller():
+            if mod in icindekiler:
+                try:
+                    parcalar.append(marshal.dumps(z.extract(mod)))
+                except Exception:
+                    pass
+        os.remove(yol)
+    except Exception as e:
+        return None, ("PYZ arşivi okunamadı (%s: %s) — exe'nin içeriği "
+                      "hakkında eksik bilgiyle karar verilmez"
+                      % (type(e).__name__, e))
+
+    return b"\n".join(parcalar), None
 
 
 def isaretler_kaynakta_mi():
