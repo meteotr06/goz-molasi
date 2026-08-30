@@ -13,7 +13,36 @@
    'bosta'      : cihaza uzun süre dokunulmadı, sayaç kendini durdurdu
 */
 
+/** '21:30' -> 1290 dakika. Okunamazsa null — ASLA 0 değil.
+
+    Masaüstünde (30.08.2026) tam buradan bir hata çıktı: saat okunamayınca
+    sessizce 0 dönüyordu, yani yasak penceresi 00:00'a kayıyordu. Ebeveyn
+    "21:00" yazdığını sanıyor, çocuk her gece serbest kalıyordu. Okunamayan
+    değer null döner ve çağıran bunu AYRI bir durum olarak ele alır. */
+function dakikaOku(metin) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(metin ?? '').trim());
+  if (!m) return null;
+  const s = +m[1], d = +m[2];
+  if (s > 23 || d > 59) return null;
+  return s * 60 + d;
+}
+
 const VARSAYILAN_AYARLAR = {
+  /* ---- AİLE KİPİ ----
+     Windows sürümünün karşılığı, ama ZAYIF olanı. Orada bekçi süreç
+     var: program öldürülünce geri açılıyor. Tarayıcıda bu YOK — çocuk
+     başka tarayıcı açabilir, gizli sekme kullanabilir, site verilerini
+     silebilir.
+
+     Bu yüzden ekranda "kilit" demiyoruz, "sınır" diyoruz. Olmayan bir
+     korumaya güvendirmek, hiç koruma koymamaktan kötüdür: ebeveyn
+     çocuğun kısıtlı olduğunu sanır ve bakmayı bırakır. */
+  kip: 'bireysel',          // 'bireysel' | 'aile'
+  gunlukSinirDk: 0,         // 0 = sınır yok
+  yasakAcik: false,
+  yasakBas: '21:00',
+  yasakBit: '07:00',
+  ekSureBitis: 0,           // ebeveyn verdiyse: bu ana kadar engel yok
   calismaSuresi: 20 * 60,   // saniye — 20 dakika
   molaSuresi: 20,           // saniye — 20 saniye
   uyariSuresi: 15,          // saniye — molaya kaç saniye kala uyaralım
@@ -556,6 +585,46 @@ class MolaMotoru {
     return 1 - Math.min(1, this.kalanSaniye() / toplam);
   }
 
+  /** Şu anda engel var mı? Yoksa null.
+
+      Döner: { sebep, kalanSn } — `sebep`:
+        'yasak'       yasak saatleri içinde
+        'yasak-bozuk' saat ayarı okunamıyor (SESSİZCE geçmiyoruz)
+        'sinir'       günlük ekran süresi doldu
+
+      `simdi` dışarıdan verilebiliyor: sınama gerçek saati beklemesin. */
+  engelDurumu(simdi = new Date()) {
+    if (this.ayarlar.kip !== 'aile') return null;
+
+    // Ebeveyn ek süre verdiyse hiçbir engel uygulanmaz.
+    if (Number(this.ayarlar.ekSureBitis || 0) > simdi.getTime()) return null;
+
+    if (this.ayarlar.yasakAcik) {
+      const bas = dakikaOku(this.ayarlar.yasakBas);
+      const bit = dakikaOku(this.ayarlar.yasakBit);
+      if (bas === null || bit === null) {
+        // Uydurma bir pencere UYGULAMIYORUZ. Yanlış saatte engellemek
+        // de, hiç engellememek de sessiz bir yalan olurdu.
+        return { sebep: 'yasak-bozuk', kalanSn: 0 };
+      }
+      const dk = simdi.getHours() * 60 + simdi.getMinutes();
+      // Gece yarısını aşan aralık (21:00–07:00) ters okunmalı.
+      const icinde = bas <= bit ? (dk >= bas && dk < bit)
+                                : (dk >= bas || dk < bit);
+      if (icinde) {
+        const kalan = ((bit - dk) + 1440) % 1440;
+        return { sebep: 'yasak', kalanSn: kalan * 60 };
+      }
+    }
+
+    const sinirDk = Number(this.ayarlar.gunlukSinirDk || 0);
+    if (sinirDk > 0) {
+      const gecen = Number(this.istatistik?.ekranSuresi || 0);
+      if (gecen >= sinirDk * 60) return { sebep: 'sinir', kalanSn: 0 };
+    }
+    return null;
+  }
+
   anlikDurum() {
     return {
       durum: this.durum,
@@ -847,6 +916,6 @@ const Gecmis = {
 };
 
 if (typeof module !== 'undefined') {
-  module.exports = { MolaMotoru, VARSAYILAN_AYARLAR, Gecmis, GUNLUK_HEDEF,
+  module.exports = { MolaMotoru, VARSAYILAN_AYARLAR, dakikaOku, Gecmis, GUNLUK_HEDEF,
                      istatistikSuz };
 }

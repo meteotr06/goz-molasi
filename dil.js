@@ -389,6 +389,24 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Aile kipi': 'Family mode',
+  'Günlük süre sınırı ve yasak saatler. Şifre ister. Tarayıcıda bu bir kilit değil sınırdır: başka tarayıcıdan açılabilir.':
+    'A daily time limit and blocked hours. Needs a password. In a browser '
+    + 'this is a limit, not a lock: it can be opened in another browser.',
+  'Günlük ekran süresi': 'Daily screen time',
+  'Yasak saatler': 'Blocked hours',
+  'Bu saatlerde uygulama açılmaz': 'The app will not open during these hours',
+  'Yasak aralığı': 'Blocked range',
+  'Aile kipi için önce bir şifre koy (Kilit bölümünden).':
+    'Set a password first (in the Lock section) to use family mode.',
+  'Aile kipini kapatmak için şifreni gir.':
+    'Enter your password to turn off family mode.',
+  'Şimdi bilgisayar zamanı değil': 'Not screen time right now',
+  'Bugünün ekran süresi doldu': "Today's screen time is up",
+  'Yasak saat ayarı okunamıyor': 'The blocked-hours setting is unreadable',
+  'Ebeveyn girişi': 'Parent access',
+  'Ek süre vermek için şifreni gir.': 'Enter your password to add time.',
+  'sınır yok': 'no limit',
   'Uygulama gibi açılsın, internetsiz de çalışsın':
     'Opens like an app, works offline',
   'Tarayıcı menüsünü aç (⋮), "Uygulamayı yükle" ya da "Ana ekrana ekle" de':

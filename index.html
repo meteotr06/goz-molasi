@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v155">
+<link rel="stylesheet" href="stil.css?s=v157">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -456,6 +456,19 @@
        `.focus()` çağırıyordu; düz bir div odaklanamadığı için
        çağrı SESSİZCE hiçbir şey yapmıyordu. Ölçüldü: mola
        açıkken odak hâlâ BODY üzerindeydi. -->
+  <!-- AİLE KİPİ ENGEL EKRANI.
+       `role="alertdialog"`: ekran okuyucu bunu bir uyarı olarak
+       duyurur, sessizce kaplanmış bir sayfa olarak değil. -->
+  <div class="engel-ekran gizli" id="engelEkran" role="alertdialog"
+       aria-labelledby="engelBaslik" aria-describedby="engelAciklama">
+    <div class="engel-kutu">
+      <div class="engel-simge" aria-hidden="true">◍</div>
+      <h2 id="engelBaslik">Şimdi bilgisayar zamanı değil</h2>
+      <p id="engelAciklama"></p>
+      <button class="dugme sade kucuk" id="engelEbeveyn">Ebeveyn girişi</button>
+    </div>
+  </div>
+
   <div class="mola-ekran" id="molaEkran" role="dialog" aria-modal="true"
        tabindex="-1"
        aria-labelledby="molaBaslik" aria-describedby="molaAlt">
@@ -590,6 +603,40 @@
           <span style="color:var(--yazi-soluk)" aria-hidden="true">—</span>
           <input type="time" id="ayBitSaat" value="18:00"
                  aria-label="Çalışma saatleri — bitiş">
+        </span>
+      </div>
+
+      <!-- AİLE KİPİ.
+           Metinde bilerek "kilit" demiyoruz. Tarayıcıda bekçi süreç
+           yok: başka tarayıcıdan açılabilir, site verileri silinebilir.
+           Olmayan bir korumaya güvendirmek, hiç koruma koymamaktan
+           kötüdür — ebeveyn bakmayı bırakır. -->
+      <div class="satir">
+        <label for="ayAile">Aile kipi
+          <small>Günlük süre sınırı ve yasak saatler. Şifre ister. Tarayıcıda bu bir kilit değil sınırdır: başka tarayıcıdan açılabilir.</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayAile"><i></i></span>
+      </div>
+      <div class="satir gizli" id="aileSinirSatir">
+        <label for="aySinir">Günlük ekran süresi
+          <output for="aySinir" id="aySinirDeger">sınır yok</output>
+        </label>
+        <input type="range" id="aySinir" min="0" max="480" step="15" value="0">
+      </div>
+      <div class="satir gizli" id="aileYasakSatir">
+        <label for="ayYasak">Yasak saatler
+          <small>Bu saatlerde uygulama açılmaz</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayYasak"><i></i></span>
+      </div>
+      <div class="satir gizli" id="aileYasakSaat">
+        <label for="ayYasakBas">Yasak aralığı</label>
+        <span style="display:flex;gap:8px;align-items:center">
+          <input type="time" id="ayYasakBas" value="21:00"
+                 aria-label="Yasak saatler — başlangıç">
+          <span style="color:var(--yazi-soluk)" aria-hidden="true">—</span>
+          <input type="time" id="ayYasakBit" value="07:00"
+                 aria-label="Yasak saatler — bitiş">
         </span>
       </div>
 
@@ -790,17 +837,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v155"></script>
-  <script src="dil.js?s=v155"></script>
-  <script src="bilgiler.js?s=v155"></script>
-  <script src="bilgiler_en.js?s=v155"></script>
-  <script src="dunya.js?s=v155"></script>
-  <script src="egzersiz.js?s=v155"></script>
-  <script src="reklam.js?s=v155"></script>
-  <script src="kopru.js?s=v155"></script>
-  <script src="cekirdek.js?s=v155"></script>
-  <script src="mola_icerik.js?s=v155"></script>
-  <script src="arayuz.js?s=v155"></script>
+  <script src="degisiklikler.js?s=v157"></script>
+  <script src="dil.js?s=v157"></script>
+  <script src="bilgiler.js?s=v157"></script>
+  <script src="bilgiler_en.js?s=v157"></script>
+  <script src="dunya.js?s=v157"></script>
+  <script src="egzersiz.js?s=v157"></script>
+  <script src="reklam.js?s=v157"></script>
+  <script src="kopru.js?s=v157"></script>
+  <script src="cekirdek.js?s=v157"></script>
+  <script src="mola_icerik.js?s=v157"></script>
+  <script src="arayuz.js?s=v157"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

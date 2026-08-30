@@ -995,6 +995,47 @@ kbd {
 .guncelleme-kapat:hover { color: var(--yazi); }
 
 /* ---------------- MOLA EKRANI ---------------- */
+/* ---- AİLE KİPİ ENGEL EKRANI ----
+   Mola ekranından AYRI duruyor: mola geçici ve iyi bir şey, engel
+   ise bir sınırın dolduğunu söylüyor. İkisi aynı görünseydi kullanıcı
+   engeli "molayı atlayıp geçerim" sanırdı. */
+.engel-ekran {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px
+           max(24px, env(safe-area-inset-bottom));
+  background: var(--zemin);
+  color: var(--yazi);
+}
+
+.engel-kutu {
+  max-width: 30rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: center;
+}
+
+.engel-simge { font-size: 3rem; color: var(--vurgu); line-height: 1; }
+
+.engel-kutu h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.engel-kutu p {
+  margin: 0;
+  color: var(--yazi-soluk);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .mola-ekran {
   position: fixed;
   inset: 0;

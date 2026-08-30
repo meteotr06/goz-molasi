@@ -113,6 +113,19 @@
     ayUzunSureDeger: $('ayUzunSureDeger'),
     uzunMolaNe: $('uzunMolaNe'),
     aySaatler: $('aySaatler'),
+    ayAile: $('ayAile'),
+    aySinir: $('aySinir'),
+    aySinirDeger: $('aySinirDeger'),
+    aileSinirSatir: $('aileSinirSatir'),
+    ayYasak: $('ayYasak'),
+    aileYasakSatir: $('aileYasakSatir'),
+    aileYasakSaat: $('aileYasakSaat'),
+    ayYasakBas: $('ayYasakBas'),
+    ayYasakBit: $('ayYasakBit'),
+    engelEkran: $('engelEkran'),
+    engelBaslik: $('engelBaslik'),
+    engelAciklama: $('engelAciklama'),
+    engelEbeveyn: $('engelEbeveyn'),
     saatAyar: $('saatAyar'),
     ayBasSaat: $('ayBasSaat'),
     ayBitSaat: $('ayBitSaat'),
@@ -1275,7 +1288,61 @@
     return `${String(dk).padStart(2, '0')}:${String(sn).padStart(2, '0')}`;
   }
 
+  /** Aile kipi engeli ekranda mı olmalı?
+
+      Her çizimde soruluyor: sınır gün içinde dolabilir, yasak saat
+      girebilir. Sayacı DURDURMUYORUZ — engel kalkınca kullanıcı
+      kaldığı yerden devam etsin.
+
+      Metin AYARDAN türüyor, sabit yazılmıyor: masaüstünde (30.08.2026)
+      tam bu yüzden ekranda "2 saate yaklaşıyorsun" yazarken eşik 8
+      saatti. */
+  function engeliTazele() {
+    const e = motor.engelDurumu();
+    if (!e) { og.engelEkran.classList.add('gizli'); return; }
+    let baslik, aciklama;
+    if (e.sebep === 'sinir') {
+      baslik = C('Bugünün ekran süresi doldu');
+      aciklama = CS(
+        `Bugün için ${motor.ayarlar.gunlukSinirDk} dakika ayarlanmış. `
+        + 'Yarın sıfırlanır.',
+        // "1 minutes" olmasin diye tekil/cogul kacinilmis bicim.
+        `Today's limit is ${motor.ayarlar.gunlukSinirDk} min. `
+        + 'It resets tomorrow.');
+    } else if (e.sebep === 'yasak-bozuk') {
+      // SESSİZ DÜŞME YOK: uydurma bir saat aralığı uygulamıyoruz ve
+      // bunu gizlemiyoruz. Masaüstünde bu hata sessizdi ve yasak
+      // penceresi 00:00'a kayıyordu.
+      baslik = C('Yasak saat ayarı okunamıyor');
+      aciklama = CS('Saat aralığı bozuk göründüğü için yasak uygulanmıyor. '
+                    + 'Ayarlardan saatleri yeniden gir.',
+                    'The time range looks broken, so the block is not '
+                    + 'applied. Set the hours again in Settings.');
+    } else {
+      baslik = C('Şimdi bilgisayar zamanı değil');
+      aciklama = CS(
+        `Yasak saatler: ${motor.ayarlar.yasakBas} — ${motor.ayarlar.yasakBit}. `
+        + `Kalan: ${saatYaz(e.kalanSn)}.`,
+        `Blocked hours: ${motor.ayarlar.yasakBas} — ${motor.ayarlar.yasakBit}. `
+        + `Left: ${saatYaz(e.kalanSn)}.`);
+    }
+    og.engelBaslik.textContent = baslik;
+    og.engelAciklama.textContent = aciklama;
+    og.engelEkran.classList.remove('gizli');
+  }
+
+  /* EBEVEYN ÇIKIŞI — bu OLMAZSA kullanıcı kendini kilitler.
+     Sınırı kendi koyuyor, dolunca ayarlara giremiyor, geri alamıyor.
+     Masaüstü sürümünde de aynı çıkış var. */
+  og.engelEbeveyn.addEventListener('click', async () => {
+    if (!(await sifreSor(C('Ek süre vermek için şifreni gir.')))) return;
+    motor.ayarlar.ekSureBitis = Date.now() + 15 * 60 * 1000;
+    motor.kaydet();
+    engeliTazele();
+  });
+
   function ekraniCiz(d) {
+    engeliTazele();
     og.govde.dataset.durum = d.durum;
     /* DURAKLATMA TURUNU SOYLE.
        Olculdu: suresiz ve 5 dakikalik duraklatma ekranda BIREBIR
@@ -2388,6 +2455,52 @@
   og.ayUzunMola.addEventListener('change', uzunMolayiTazele);
   og.aySaatler.addEventListener('change', saatleriTazele);
 
+  /* ---- AİLE KİPİ ---- */
+  function aileyiTazele() {
+    const acik = og.ayAile.checked;
+    og.aileSinirSatir.classList.toggle('gizli', !acik);
+    og.aileYasakSatir.classList.toggle('gizli', !acik);
+    og.aileYasakSaat.classList.toggle('gizli', !acik || !og.ayYasak.checked);
+    const dk = +og.aySinir.value || 0;
+    og.aySinirDeger.textContent = dk ? saatYaz(dk * 60) : C('sınır yok');
+  }
+  og.aySinir.addEventListener('input', aileyiTazele);
+  og.ayYasak.addEventListener('change', aileyiTazele);
+
+  /* Şifre kapısı — iki yönlü.
+
+     AÇARKEN şifre şart: şifresiz bir "aile kipi" çocuğun tek dokunuşla
+     kapatabileceği bir şeydir, yani koruma değil süstür. Masaüstü sürümü
+     de aynı kuralı uyguluyor.
+
+     KAPATIRKEN de şifre şart: yoksa sınır dolduğunda çocuk ayarlara girip
+     kipi kapatır ve sınır kalkar. */
+  og.ayAile.addEventListener('change', async () => {
+    if (og.ayAile.checked) {
+      if (!kilitOzeti) {
+        og.ayAile.checked = false;
+        // Sessizce geri almiyoruz: kullanici anahtari acti, kapandigini
+        // gormeli ve NEDEN kapandigini bilmeli.
+        try {
+          const not = $('durumNotu');
+          if (not) {
+            $('durumNotuBaslik').textContent = C('Aile kipi');
+            $('durumNotuMetin').textContent =
+              C('Aile kipi için önce bir şifre koy (Kilit bölümünden).');
+            not.hidden = false;
+            $('durumNotuKapat')?.addEventListener(
+              'click', () => { not.hidden = true; });
+          }
+        } catch { }
+      }
+    } else if (motor.ayarlar.kip === 'aile') {
+      if (!(await sifreSor(C('Aile kipini kapatmak için şifreni gir.')))) {
+        og.ayAile.checked = true;
+      }
+    }
+    aileyiTazele();
+  });
+
   function temaSeciciyiKur() {
     og.temaSeridi.innerHTML = TEMALAR.map((t) => `
       <button type="button" class="tema-sec" data-tema="${t.id}" role="radio"
@@ -2460,6 +2573,12 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayAile.checked = motor.ayarlar.kip === 'aile';
+    og.aySinir.value = motor.ayarlar.gunlukSinirDk || 0;
+    og.ayYasak.checked = !!motor.ayarlar.yasakAcik;
+    og.ayYasakBas.value = motor.ayarlar.yasakBas || '21:00';
+    og.ayYasakBit.value = motor.ayarlar.yasakBit || '07:00';
+    aileyiTazele();
     etkinlikDurumunuGoster();
     og.ayHava.checked = havaAcik;
     havaDurumunuGoster();
@@ -2516,6 +2635,11 @@
     motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
     motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
     motor.ayarlar.saatlerAcik = og.aySaatler.checked;
+    motor.ayarlar.kip = og.ayAile.checked ? 'aile' : 'bireysel';
+    motor.ayarlar.gunlukSinirDk = Math.max(0, +og.aySinir.value || 0);
+    motor.ayarlar.yasakAcik = og.ayYasak.checked;
+    motor.ayarlar.yasakBas = og.ayYasakBas.value || '21:00';
+    motor.ayarlar.yasakBit = og.ayYasakBit.value || '07:00';
     motor.ayarlar.basSaat = og.ayBasSaat.value || '09:00';
     motor.ayarlar.bitSaat = og.ayBitSaat.value || '18:00';
     // Tema zaten daireye tıklanır tıklanmaz uygulandı, burada bir şey yapmıyoruz
