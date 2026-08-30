@@ -1170,13 +1170,35 @@
   });
 
   window.addEventListener('appinstalled', () => {
+    /* KURMAK "HAYIR" DEMEK DEĞİLDİR.
+
+       Burada eskiden `seridiGizle(true)` vardı; o `true` diske
+       "kullanıcı daveti kapattı" kaydı yazıyordu. Ama kullanıcı daveti
+       kapatmamıştı — tam tersini yapmış, uygulamayı KURMUŞTU.
+
+       Kullanıcı bildirdi (30.08.2026): "ben indirdiğim şeyi sildim,
+       tekrar indiremedim". Zincir şuydu: kur → kayıt yazılır →
+       uygulamayı sil → kayıt DURUR (localStorage silinmez) → davet bir
+       daha çıkmaz. Eski sürümde bu kayıt kalıcıydı, yani geri dönüş
+       yolu hiç yoktu.
+
+       Artık: davet yalnızca BU OTURUM için gizleniyor ve varsa eski
+       kayıt SİLİNİYOR — uygulamayı kuran biri daveti reddetmiş
+       sayılamaz. Kaldırırsa davet kendiliğinden geri gelir. */
     og.kur.classList.add('gizli');
     kurulumOlayi = null;
-    seridiGizle(true);
+    seridiGizle(false);
+    try { localStorage.removeItem(KURULUM_KAPATILDI); } catch {}
   });
 
   og.kur.addEventListener('click', () => $('kurulumEvet').click());
-  if (uygulamaKipi) og.kur.classList.add('gizli');
+  if (uygulamaKipi) {
+    og.kur.classList.add('gizli');
+    /* Uygulama kipinde açıldıysa kullanıcı onu KURMUŞ demektir; eski bir
+       "şimdi değil" kaydı artık geçersiz. Silmezsek, uygulamayı kaldırıp
+       tarayıcıya döndüğünde davet yine susardı. */
+    try { localStorage.removeItem(KURULUM_KAPATILDI); } catch {}
+  }
 
   /* iPhone'da beforeinstallprompt YOK — hiç tetiklenmez.
      Beklersek kullanıcı kurulabileceğini hiç öğrenemez. */

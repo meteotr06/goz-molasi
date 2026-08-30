@@ -227,6 +227,72 @@ DENETIM = r"""
 """
 
 
+# Android kullanici etiketi: kurulum daveti yalniz telefonda cikiyor.
+ANDROID = ("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 "
+           "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36")
+
+
+def kurulum_zinciri(tarayici, kok, hatalar):
+    """KUR -> SIL -> davet geri geliyor mu?
+
+    NIYE ZINCIR: kullanicinin bildirdigi hata (30.08.2026 - "indirdigim
+    seyi sildim, tekrar indiremedim") tek bir ekranda GORUNMUYORDU. Uc
+    adim gerekiyordu. Tek kareye bakan hicbir sinama bunu yakalayamaz.
+
+    Sebep: `appinstalled` olayinda diske "kullanici daveti kapatti"
+    kaydi yaziliyordu. Kurmak "hayir" demek degildir; uygulama
+    silinince o kayit kaliyor ve davet bir daha cikmiyordu.
+
+    SINIF ADI: "kendisinden uzun yasayan durum" - bir kaydin, anlattigi
+    seyden uzun omurlu olmasi.
+    """
+    c = tarayici.new_context(viewport={"width": 375, "height": 812},
+                             user_agent=ANDROID, locale="tr-TR")
+    s = c.new_page()
+    try:
+        serit = lambda: s.evaluate(
+            "() => { const e=document.getElementById('kurulumSerit');"
+            " return !!e && !e.classList.contains('gizli'); }")
+        kayit = lambda: s.evaluate(
+            "() => localStorage.getItem('goz-molasi-kurulum-kapatildi')")
+
+        s.goto(kok + "/index.html", wait_until="load", timeout=20000)
+        s.wait_for_timeout(4200)          # Android yedegi 3 sn sonra cikiyor
+        if not serit():
+            hatalar.append(("kurulum zinciri",
+                            {"tur": "davet-cikmadi", "adim": "ilk acilis"}))
+
+        s.evaluate("() => window.dispatchEvent(new Event('appinstalled'))")
+        s.wait_for_timeout(600)
+        if kayit() is not None:
+            hatalar.append(("kurulum zinciri",
+                            {"tur": "kurulumda-kapatildi-yazildi",
+                             "not": "kurmak 'hayir' demek degil"}))
+
+        s.reload(wait_until="load", timeout=20000)
+        s.wait_for_timeout(4200)
+        if not serit():
+            hatalar.append(("kurulum zinciri",
+                            {"tur": "silince-davet-gelmedi",
+                             "not": "kullanici tekrar kuramaz"}))
+
+        # TERS DAL: gercekten "simdi degil" derse SUSMALI. Yoksa
+        # duzeltme "her zaman goster"e donusur, o da rahatsiz eder.
+        s.evaluate("() => document.getElementById('kurulumHayir')?.click()")
+        s.wait_for_timeout(400)
+        s.reload(wait_until="load", timeout=20000)
+        s.wait_for_timeout(4200)
+        if serit():
+            hatalar.append(("kurulum zinciri",
+                            {"tur": "simdi-degil-tutmuyor",
+                             "not": "davet israrci oldu"}))
+    except Exception as e:
+        hatalar.append(("kurulum zinciri", {"tur": "zincir-kosulamadi",
+                                            "hata": str(e)[:80]}))
+    finally:
+        c.close()
+
+
 def soyle(s=""):
     try:
         print(s)
@@ -380,6 +446,9 @@ def main():
             finally:
                 baglam.close()
 
+        # Zincir sinamasi: tek kare degil, UC ADIM.
+        kurulum_zinciri(tarayici, kok, hatalar)
+
         tarayici.close()
     srv.shutdown()
 
@@ -390,6 +459,7 @@ def main():
     soyle("denetlenen metin düğümü : %d" % toplam_metin)
     soyle("denetlenen dokunma hedefi: %d" % toplam_hedef)
     soyle("durum sayısı             : 4 (telefon TR/EN · dar · yazı %200)")
+    soyle("zincir sınaması          : kur → sil → davet geri geldi mi")
 
     if hatalar:
         soyle()
