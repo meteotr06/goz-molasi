@@ -655,6 +655,14 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   margin: -8px -8px -4px;
 }
 
+/* Ayni sebep, alt bilgideki "Kisayollar": olculdu 50x29 px, parmak
+   icin 44 gerekiyor. Yine ortak sinifi degil YALNIZ bu ornegi
+   buyutuyoruz; negatif kenar bosluu satirin yerlesimini bozmuyor. */
+#kisayolAc {
+  padding: 10px 6px;
+  margin: -10px -6px;
+}
+
 .mola-ipucu {
   margin: 10px 0 0;
   padding: 8px 14px;
@@ -1771,6 +1779,19 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* DAR EKRANDA ETIKET USTE.
+   Olculdu (30.08.2026, 375 px): kip kartlari iki satira sariyor,
+   `align-items:center` yuzunden "KIP" etiketi iki satirin ORTASINDA
+   asili kaliyor ve ikinci satira aitmis gibi duruyor. Dar ekranda
+   etiket bir baslik gibi ustte dursun. */
+@media (max-width: 520px) {
+  .kip-serit {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
 }
 .kip-etiket {
   font-size: 0.6875rem;

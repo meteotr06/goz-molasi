@@ -302,8 +302,12 @@ class GozKapat extends Egzersiz {
   }
 
   anlikYonerge(gecen) {
+    /* TEK PARCA donuyor: sozluk anahtari metnin KENDISI oldugu icin
+       parca parca birlestirilen bir cumle sozlukte bulunamaz ve
+       Ingilizce arayuzde Turkce kalir (30.08.2026 olculdu). */
     const e = (gecen % 10) / 10;
-    return (e < 0.4 ? 'Nefes al…' : 'Yavaşça ver…') + '   gözlerin kapalı kalsın';
+    return e < 0.4 ? 'Nefes al…   gözlerin kapalı kalsın'
+                   : 'Yavaşça ver…   gözlerin kapalı kalsın';
   }
 }
 

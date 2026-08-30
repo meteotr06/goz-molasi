@@ -389,6 +389,14 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Şimdi YAKINA bak — parmağına': 'Now look NEAR — at your finger',
+  'Şimdi UZAĞA bak': 'Now look FAR',
+  'Nefes al…   gözlerin kapalı kalsın':
+    'Breathe in…   keep your eyes closed',
+  'Yavaşça ver…   gözlerin kapalı kalsın':
+    'Slowly out…   keep your eyes closed',
+  'Yavaşça SAĞA çevir': 'Turn slowly RIGHT',
+  'Yavaşça SOLA çevir': 'Turn slowly LEFT',
   'Aile kipi': 'Family mode',
   'Günlük süre sınırı ve yasak saatler. Şifre ister. Tarayıcıda bu bir kilit değil sınırdır: başka tarayıcıdan açılabilir.':
     'A daily time limit and blocked hours. Needs a password. In a browser '

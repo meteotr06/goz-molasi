@@ -1493,7 +1493,9 @@
     if (doluGun <= 1) {
       og.haftaOzet.textContent = CS(
         `Bugün ${toplam} mola · geçmiş birikiyor`,
-        `${toplam} breaks today · history is building up`);
+        // "1 breaks" olmasin: Turkcede sorun yok, Ingilizcede var.
+        `${toplam} break${toplam === 1 ? '' : 's'} today`
+        + ' · history is building up');
     } else {
       const ortalama = Math.round((toplam / 7) * 10) / 10;
       // Ondalık ayırıcı dile göre: Türkçe "6,7" · İngilizce "6.7"
@@ -1663,7 +1665,11 @@
         const kalanSn = motor.ayarlar.molaSuresi - gecen;
         const y = kalanSn <= 3 && kalanSn > 0
           ? C('Az kaldı — hazırlan')
-          : egzersiz.anlikYonerge(gecen);
+          // C() SART: bu yol mola sirasinda saniyede birkac kez
+          // yaziyor ve kullanicinin EN COK gordugu metin bu. Ustteki
+          // statik yol (satir ~1624) zaten C()'den geciyordu; burasi
+          // unutulmus ve Ingilizce arayuzde Turkce kaliyordu.
+          : C(egzersiz.anlikYonerge(gecen));
         if (y !== sonYonerge) { sonYonerge = y; og.molaAlt.textContent = y; }
         og.molaEkran.classList.toggle('bitmek-uzere', kalanSn <= 3);
       } catch { egzersiz = null; return; }   // egzersiz çökse bile mola sürsün
@@ -2148,7 +2154,7 @@
         C('Molalardaki egzersizler'), CIKAN_EGZERSIZLER.length,
         C('Mola ekranında sırayla çıkarlar. "Uzağa bak" asıl olan; '
           + 'diğerleri ekranın ezberlenip görünmez olmasını önlüyor.'),
-        CIKAN_EGZERSIZLER.map((E) => bilgiOgesi(E.ad, E.yonerge, ''))));
+        CIKAN_EGZERSIZLER.map((E) => bilgiOgesi(C(E.ad), C(E.yonerge), ''))));
     } catch {}
 
     // 4) Dünyadan — İngilizcede henüz yok
