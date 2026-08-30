@@ -645,6 +645,54 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   max-width: 52ch;
 }
 
+/* ---------- BASLIK YAZISI (Fraunces) ----------
+   Depoda duruyor, disaridan CEKILMIYOR: uygulama internetsiz calisiyor
+   ve Google'dan yazi cekmek o vaadi bozardi. `sw.js` onbellegine de
+   eklendi, yoksa cevrimdisi acilista baslik sistem yazisina duserdi.
+
+   Iki alt kume: Turkce'nin ğ/ş/İ harfleri `latin-ext` icinde. Ingilizce
+   kullanan biri o 32 KB'i hic indirmez.
+
+   `font-display: swap` bilincli: yazi gelene kadar baslik GORUNUR
+   kalsin. Gorunmez baslik, gec gelen baslikatan kotudur. */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('yazi/fraunces-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                 U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('yazi/fraunces-latinext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                 U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                 U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+                 U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Yalnizca BASLIKLAR. Govde ve sayaclar sistem yazisinda kaliyor:
+   sayac `tabular-nums` istiyor ve 67 KB'lik dosyayi ilk cizime
+   sokmuyoruz. */
+h1, h2, h3, h4, .marka > div {
+  font-family: Fraunces, Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+/* Marka altindaki kucuk satir serif OLMASIN - orada versal ve seyrek
+   harf araligi var, serif orada okunurlugu dusuruyor. */
+.marka > div small {
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  letter-spacing: .08em;
+}
+
 /* Şeritteki bağlantı: görünüm aynı, dokunma alanı büyük.
    Ortak `.baglanti-dugme` `padding:0` taşıyor ve 21px kalıyor —
    telefonda dar. Sınıfı değiştirmiyoruz, orada da kullanılıyor;
