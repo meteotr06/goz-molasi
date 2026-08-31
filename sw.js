@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v164';
+const SURUM = 'goz-molasi-v165';
 
 const DOSYALAR = [
   './',
@@ -90,8 +90,14 @@ self.addEventListener('message', (e) => {
       badge: './ikon-192.png',
       tag: 'goz-molasi',
       renotify: true,
-      requireInteraction: false,
+      /* KAYBOLMASIN. Mola hatirlatmasi gorulmezse hicbir ise
+         yaramaz; kullanici baska islerken kendiliginden silinen bir
+         bildirim, hic gonderilmemis gibidir. Kullanici istedi
+         (31.08.2026): "bildirimlerimizi yogunlastir". */
+      requireInteraction: true,
       silent: false,
+      /* Telefon sessizdeyken tek fark edilme yolu titresim. */
+      vibrate: veri.titresim || [140, 70, 140],
     });
   }
 });

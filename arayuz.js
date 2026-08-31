@@ -980,7 +980,23 @@
   /* ============================================================
      BİLDİRİM — sekme arka plandayken haber verir
      ============================================================ */
+  /** Kurulu uygulamanin simgesine rozet koy/kaldir.
+
+      Uygulama KAPALIYKEN "mola bekliyor" bilgisini gosterebilen tek
+      yol bu. Bildirim kaydirilip gecilebilir, rozet ana ekranda durur.
+
+      Desteklenmeyen tarayicida sessizce yok sayiliyor - `setAppBadge`
+      yalnizca kurulu uygulamalarda ve bazi tarayicilarda var. Burada
+      SESSIZ GECMEK dogru: rozet bir EK, kaybi bir sey bozmuyor. */
+  function rozet(sayi) {
+    try {
+      if (sayi > 0) navigator.setAppBadge?.(sayi);
+      else navigator.clearAppBadge?.();
+    } catch {}
+  }
+
   function bildirimGonder(baslik, metin) {
+    rozet(1);
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     navigator.serviceWorker?.ready
       .then((kayitli) => kayitli.active?.postMessage({ tur: 'bildirim', baslik, metin }))
@@ -1825,6 +1841,9 @@
       `Eye break started. ${sn} seconds. Look away from the screen, ` +
       'about 6 metres.'));
     og.molaEkran.classList.add('acik');
+    // Mola ekrana geldi: rozetin isi bitti. Beklemeyi anlatan bir
+    // isaret, bekleme bitince durmamali.
+    rozet(0);
     // Doğrudan çağırıyoruz, requestAnimationFrame ile değil:
     // sekme arka plandayken rAF hiç çalışmıyor ve egzersiz hiç
     // başlamıyordu. Mola ekranı görünmezken bile başlığın ve
