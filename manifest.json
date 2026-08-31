@@ -80,5 +80,11 @@
         }
       ]
     }
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://meteotr06.github.io/goz-molasi/manifest.json"
+    }
   ]
 }

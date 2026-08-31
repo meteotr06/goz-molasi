@@ -1137,6 +1137,32 @@
   const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const android = /android/i.test(navigator.userAgent);
 
+  /** ZATEN KURULU MU? -- TARAYICIYA SORAR, DISKE YAZMAZ.
+
+      Kullanıcı bildirdi (31.08.2026): "indirilmesine rağmen hâlâ
+      install diyor". Sebebi: kurulu olup olmadığına yalnız
+      `display-mode: standalone` ile karar veriyorduk. O ölçüt
+      uygulamanın KENDİ PENCERESİNDE doğru; kullanıcı aynı siteyi
+      tarayıcıda açtığında uygulama kurulu olsa bile `false` döner.
+      Android yedeği de düğmeyi "HER ZAMAN" gösterdiği için, kuran
+      kullanıcı davetten bir daha kurtulamıyordu.
+
+      Cevabı diske YAZMIYORUZ. Yazsaydık, uygulamayı silen kullanıcıya
+      davet bir daha çıkmazdı -- bu dosyada zaten kayıtlı olan hata
+      ("kur → sil → davet yok"). Kayıt, anlattığı şeyden uzun yaşamamalı;
+      o yüzden her açılışta yeniden sorulur. */
+  function kuruluMu() {
+    if (uygulamaKipi) return Promise.resolve(true);
+    if (!navigator.getInstalledRelatedApps) return Promise.resolve(false);
+    try {
+      return navigator.getInstalledRelatedApps()
+        .then(function (liste) {
+          return (liste || []).some(function (u) { return u.platform === 'webapp'; });
+        })
+        .catch(function () { return false; });   /* bilemiyorsak davet göster */
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   /* "Şimdi değil" SONSUZA KADAR DEĞİL — 7 gün.
 
      Ölçüldü (30.08.2026): eskiden 'evet' yazılıyordu ve bir daha hiç
@@ -1261,14 +1287,17 @@
      öğrenemiyordu; `kurDugme` de HTML'de gizli başlayıp yalnız o
      olayın içinde açıldığı için başka yol da kalmıyordu. */
   if (android && !uygulamaKipi) {
-    og.kur.classList.remove('gizli');          // düğme HER ZAMAN dursun
-    setTimeout(() => {
-      if (!kurulumOlayi && serit.classList.contains('gizli')) {
-        seridiGoster(C('Uygulama olarak kur'),
-                     C('Ana ekranına ekle, internetsiz de çalışsın'),
-                     C('Nasıl?'));
-      }
-    }, 3000);
+    kuruluMu().then(function (kurulu) {
+      if (kurulu) return;                      // kuruluysa davet YOK
+      og.kur.classList.remove('gizli');
+      setTimeout(() => {
+        if (!kurulumOlayi && serit.classList.contains('gizli')) {
+          seridiGoster(C('Uygulama olarak kur'),
+                       C('Ana ekranına ekle, internetsiz de çalışsın'),
+                       C('Nasıl?'));
+        }
+      }, 3000);
+    });
   }
 
   /* Masaüstü tarayıcılarda beforeinstallprompt gecikebilir ya da hiç
@@ -2559,11 +2588,25 @@
           if (not) {
             $('durumNotuBaslik').textContent = C('Aile kipi');
             $('durumNotuMetin').textContent =
-              C('Aile kipi için önce bir şifre koy (Kilit bölümünden).');
+              C('Aile kipi şifresiz açılamaz — çocuk tek dokunuşla kapatırdı. '
+              + 'Aşağıya 4-8 rakamlı bir şifre yaz, sonra anahtarı tekrar aç.');
             not.hidden = false;
             $('durumNotuKapat')?.addEventListener(
               'click', () => { not.hidden = true; });
           }
+          /* SEBEBI SOYLEMEK YETMIYOR, CAREYI DE GOSTER.
+
+             Kullanici bildirdi (31.08.2026): "aile kipi calismiyor,
+             acamadim bile". Hata degildi -- kip sifresiz acilamaz ve
+             anahtar kendiliginden geri kapaniyordu. Sebep ekranin BASKA
+             bir yerindeki notta yaziyordu; kullanici anahtarla o notu
+             baglayamadi, "bozuk" diye okudu.
+
+             Artik dogrudan sifre alanina goturuyoruz: sebep ile care
+             yan yana. Sessizce geri kapanan bir anahtar, en kotu
+             geri bildirimdir. */
+          og.ayKilitAlan?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          og.ayKilitAlan?.focus();
         } catch { }
       }
     } else if (motor.ayarlar.kip === 'aile') {
