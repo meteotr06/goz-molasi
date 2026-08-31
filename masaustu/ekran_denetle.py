@@ -232,6 +232,70 @@ ANDROID = ("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 "
            "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36")
 
 
+SAYAC_OKU = """() => {
+  const e = [...document.querySelectorAll('*')].find(
+    x => x.children.length === 0 && /^\\d{1,2}:\\d{2}$/.test((x.textContent||'').trim()));
+  return e ? e.textContent.trim() : null;
+}"""
+
+
+def saat_oyunu_zinciri(tarayici, kok, hatalar):
+    """Saat geri alininca sayac duruyor mu?
+
+    Liderlik kaydi `Date.now()` damgasi tasiyor. Damga GELECEKTE ise
+    (saat geri alindi, yaz saati, NTP duzeltmesi) fark negatif olur ve
+    OLU bir lider "canli" gorunur. Hicbir sekme devralmaz, sayac durur,
+    ekranda hicbir uyari cikmaz - mola hic gelmez.
+
+    Olculdu 31.08.2026 (duzeltmeden once):
+      KONTROL  temiz sayfa        : 19:58 -> 19:51  isliyor
+      BOZMA    damga ileri tarihli: 20:00 -> 20:00  DURMUS
+
+    SINIF: "kendisinden uzun yasayan durum" - ikinci ornek.
+
+    OLCUM TUZAGI (birinci denemede dusuldu): kaydi index.html uzerinden
+    yazip reload edersen `pagehide` liderlik kaydini SILER; yazdigini
+    kendi elinle silmis olursun ve "sorun yok" cikar. Kayit,
+    uygulamayi CALISTIRMAYAN bir sayfadan yazilmali.
+    """
+    def sayac_isliyor(s, sn=7):
+        a = s.evaluate(SAYAC_OKU)
+        s.wait_for_timeout(sn * 1000)
+        b = s.evaluate(SAYAC_OKU)
+        return a, b, (a is not None and b is not None and a != b)
+
+    c = tarayici.new_context(viewport={"width": 400, "height": 860}, locale="tr-TR")
+    s = c.new_page()
+    try:
+        # KONTROL: temiz sayfada sayac islemeli. Islemezse olcut ayirt
+        # edici degildir ve asagidaki bulgu anlamsiz olur.
+        s.goto(kok + "/index.html", wait_until="load", timeout=20000)
+        s.wait_for_timeout(2500)
+        a0, b0, temiz_isler = sayac_isliyor(s)
+        if not temiz_isler:
+            hatalar.append(("saat oyunu zinciri",
+                            {"tur": "olcum-gecersiz",
+                             "not": "temiz sayfada da sayac islemedi (%s->%s)" % (a0, b0)}))
+            return
+
+        # BOZMA: uygulamayi calistirmayan sayfadan ileri tarihli damga yaz
+        s.goto(kok + "/gizlilik.html", wait_until="load", timeout=20000)
+        s.evaluate("""() => localStorage.setItem('goz-molasi-lider',
+            JSON.stringify({kimlik: 'olu-sekme', an: Date.now() + 3600000}))""")
+        s.goto(kok + "/index.html", wait_until="load", timeout=20000)
+        s.wait_for_timeout(2500)
+        a1, b1, isler_mi = sayac_isliyor(s)
+        if not isler_mi:
+            hatalar.append(("saat oyunu zinciri",
+                            {"tur": "sayac-durdu", "olcum": "%s -> %s" % (a1, b1),
+                             "not": "saat geri alininca olu lider canli gorunuyor"}))
+    except Exception as e:
+        hatalar.append(("saat oyunu zinciri",
+                        {"tur": "zincir-kosulamadi", "hata": str(e)[:80]}))
+    finally:
+        c.close()
+
+
 def kurulum_zinciri(tarayici, kok, hatalar):
     """KUR -> SIL -> davet geri geliyor mu?
 
@@ -448,6 +512,7 @@ def main():
 
         # Zincir sinamasi: tek kare degil, UC ADIM.
         kurulum_zinciri(tarayici, kok, hatalar)
+        saat_oyunu_zinciri(tarayici, kok, hatalar)
 
         tarayici.close()
     srv.shutdown()
@@ -460,6 +525,7 @@ def main():
     soyle("denetlenen dokunma hedefi: %d" % toplam_hedef)
     soyle("durum sayısı             : 4 (telefon TR/EN · dar · yazı %200)")
     soyle("zincir sınaması          : kur → sil → davet geri geldi mi")
+    soyle("                          : saat geri alındı → sayaç duruyor mu")
 
     if hatalar:
         soyle()

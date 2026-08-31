@@ -405,10 +405,30 @@
     } catch {}
   }
 
+  /** Bu damga CANLI mı?
+
+      `an` GELECEKTE ise saat oynanmış demektir: kullanıcı saati geri
+      aldı, yaz saati değişti ya da NTP düzeltmesi geldi. O kayıt
+      güvenilmez.
+
+      Ölçüldü (31.08.2026): saat bir saat geri alınınca ölü bir liderin
+      damgası "canlı" görünüyordu ve HİÇBİR sekme devralmıyordu —
+      sayaç tamamen duruyordu, ekranda hiçbir uyarı olmadan. Mola hiç
+      gelmiyordu; uygulamanın tek işi bu.
+        KONTROL  temiz sayfa        : 19:58 -> 19:51  işliyor
+        BOZMA    damga ileri tarihli: 20:00 -> 20:00  DURMUŞ
+
+      GÜVENLİ YÖN devralmaktır: fazladan devralma zararsız (tek sekmede
+      zaten lider olunur), devralmamak uygulamayı tümüyle durdurur. */
+  function damgaCanli(l) {
+    const fark = Date.now() - l.an;
+    return fark >= 0 && fark < LIDER_OLU;
+  }
+
   /** Başka bir sekme şu an canlı lider mi? */
   function baskaLiderVar() {
     const l = liderOku();
-    return !!(l && l.kimlik !== SEKME_KIMLIGI && (Date.now() - l.an) < LIDER_OLU);
+    return !!(l && l.kimlik !== SEKME_KIMLIGI && damgaCanli(l));
   }
 
   function lideriDevral() {
@@ -440,7 +460,7 @@
     if (liderMiyim) {
       const l = liderOku();
       // Başka sekme devraldıysa sessizce geri çekil
-      if (l && l.kimlik !== SEKME_KIMLIGI && (Date.now() - l.an) < LIDER_OLU) {
+      if (l && l.kimlik !== SEKME_KIMLIGI && damgaCanli(l)) {
         liderligiBirak();
         return;
       }
