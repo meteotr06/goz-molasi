@@ -1141,7 +1141,11 @@
         localStorage.setItem(KURULUM_KAPATILDI, String(Date.now()));
         return true;
       }
-      return (Date.now() - Number(d)) < KAPATMA_SURESI;
+      /* Fark negatif olamaz: damga gelecekteyse saat oynanmış demektir.
+         Yoksa davet hak ettiğinden uzun susar. Aynı desen liderlik
+         kaydında sayacı tümüyle durduruyordu (31.08.2026). */
+      const fark = Date.now() - Number(d);
+      return fark >= 0 && fark < KAPATMA_SURESI;
     } catch { return false; }
   }
 

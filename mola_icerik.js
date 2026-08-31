@@ -26,6 +26,23 @@ const MolaIcerik = (() => {
   const HAVA_ANAHTAR = 'goz-molasi-hava';
   const HAVA_TAZELIK = 30 * 60 * 1000;      // 30 dk — daha sık sormaya gerek yok
 
+  /** Bu önbellek kaydı hâlâ TAZE mi?
+
+      Fark NEGATİF olamaz: damga gelecekteyse saat oynanmış demektir
+      (kullanıcı saati geri aldı, yaz saati, NTP düzeltmesi) ve kayıt
+      güvenilmez. Aksi hâlde günler önceki hava "taze" sayılıp GÜNCELMİŞ
+      gibi gösterilir.
+
+      Aynı desen liderlik kaydında da vardı ve orada sonucu ağırdı:
+      ölü lider canlı görünüyor, hiçbir sekme devralmıyor ve sayaç
+      tamamen duruyordu (31.08.2026 ölçüldü). Bir yerde çıkan hatanın
+      ikizleri de aranır. */
+  function tazeMi(kayit, omur) {
+    if (!kayit || typeof kayit.an !== 'number') return false;
+    const fark = Date.now() - kayit.an;
+    return fark >= 0 && fark < omur;
+  }
+
   /* ---------- Kısa pratik ipuçları ---------- */
   const IPUCLARI = [
     { baslik: 'Ekranı biraz aşağı al',
@@ -166,7 +183,7 @@ const MolaIcerik = (() => {
     // Taze önbellek varsa ağa hiç çıkma
     try {
       const eski = JSON.parse(localStorage.getItem(HAVA_ANAHTAR) || 'null');
-      if (eski && Date.now() - eski.an < HAVA_TAZELIK) return eski.veri;
+      if (tazeMi(eski, HAVA_TAZELIK)) return eski.veri;
     } catch {}
 
     try {
@@ -204,7 +221,7 @@ const MolaIcerik = (() => {
     if (!konum) return null;
     try {
       const eski = JSON.parse(localStorage.getItem(KALITE_ANAHTAR) || 'null');
-      if (eski && Date.now() - eski.an < HAVA_TAZELIK) return eski.veri;
+      if (tazeMi(eski, HAVA_TAZELIK)) return eski.veri;
     } catch {}
     try {
       const u = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${konum.enlem}` +
