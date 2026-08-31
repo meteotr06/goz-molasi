@@ -3461,7 +3461,45 @@
   try { yenilikNotunuGoster(); } catch (e) { }
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    /* GUNCELLEME DENETIMI — bunsuz kurulu uygulama ESKI kalir.
+
+       Kullanici bildirdi (31.08.2026): telefondaki kurulu uygulama
+       hicbir guncelleme almamis, logo bile eski. Olculdu: serit ve
+       `skipWaiting` dogru calisiyordu, ama `update()` HIC
+       cagrilmiyordu. Tarayici kurulu bir PWA'da sw.js'i kendiliginden
+       cok seyrek denetler; sormazsak kullanici suresiz eski surumde
+       kalir. Yayin dogru, teslimat yoktu. */
+    const DENETIM_ARASI = 15 * 60 * 1000;
+    let sonDenetim = 0;
+    const denetle = (kayit) => {
+      const simdi = Date.now();
+      // Fark negatif olamaz: saat geri alinirsa bir daha hic
+      // denetlemezdik (bu gece ayni desenden uc kusur cikti).
+      if (sonDenetim && simdi - sonDenetim >= 0 &&
+          simdi - sonDenetim < DENETIM_ARASI) return;
+      sonDenetim = simdi;
+      try { kayit.update(); } catch {}
+    };
+
     navigator.serviceWorker.register('sw.js').then((kayit) => {
+      denetle(kayit);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) denetle(kayit);
+      });
+      /* Yeni denetleyici devraldiysa haber ver. OTOMATIK YENILEMIYORUZ:
+         bu bir sayac uygulamasi, mola sirasinda kendiliginden yenilemek
+         molayi keser. Karar kullanicinin; serit "Yenile" sunuyor.
+
+         `denetleyiciVardi` SART: `controllerchange` ILK KURULUMDA da
+         tetikleniyor (`clients.claim` sayfayi ilk kez sahipleniyor).
+         Korumasiz birakinca uygulamayi yeni kuran kullaniciya "yeni
+         surum hazir" diyordu - olctum, kendi duzeltmemin urettigi yeni
+         bir hataydi. Ustteki `updatefound` dali ayni korumayi
+         `navigator.serviceWorker.controller` ile zaten yapiyor. */
+      const denetleyiciVardi = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (denetleyiciVardi) guncellemeSeridiniGoster();
+      });
       // Zaten bekleyen bir sürüm varsa (kullanıcı bu sekmeyi açık
       // bırakmışsa) hemen söyle
       if (kayit.waiting && navigator.serviceWorker.controller) {
