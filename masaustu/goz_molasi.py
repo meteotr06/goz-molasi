@@ -851,7 +851,9 @@ class MolaEkrani:
         )
         b = self.t.create_text(
             self.orta_x - genislik / 2, self.kart_y,
-            text="NEDEN? — " + baslik.upper(), anchor="nw",
+            # `.upper()` DEĞİL: Türkçe İ/i - I/ı çiftini bozuyordu
+            # ("miyopi" -> "MIYOPI"). Gerekçe gorunum.buyut() içinde.
+            text="NEDEN? — " + gor.buyut(baslik), anchor="nw",
             fill=gor.KEHRIBAR, font=("Segoe UI", 11, "bold"),
         )
         m = self.t.create_text(
@@ -3881,7 +3883,10 @@ class Uygulama:
             self.t.itemconfigure(
                 self.grafik_baslik,
                 text="EN ÇOK KULLANDIKLARIN   ·   TOPLAM %s ÖLÇÜLDÜ"
-                     % sure_okunakli(olculen).upper())
+                     # Bugün "sn/dk/sa" geliyor ve `.upper()` bunları
+                     # bozmuyor; yine de birim yazısı Türkçeleşirse
+                     # ("gün" gibi) sessizce bozulmasın diye buradan.
+                     % gor.buyut(sure_okunakli(olculen)))
         else:
             self.t.itemconfigure(self.grafik_baslik, text="EN ÇOK KULLANDIKLARIN")
         if not sirali:

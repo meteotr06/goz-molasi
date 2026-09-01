@@ -385,6 +385,54 @@ def tema_listesi():
 
 
 # ----------------------------------------------------------------------
+# YAZI — Türkçe farkındalıklı büyütme/küçültme
+#
+# NEDEN BU İŞLEV VAR: Python'un `.upper()` / `.lower()` işlevleri
+# İngilizce kurallarına göre çalışır ve Türkçe'nin İ/i · I/ı çiftini
+# BOZAR. Ölçüldü (01.09.2026): mola ekranındaki 39 kart başlığından
+# 29'u ekrana yanlış yazılıyordu.
+#     "Yakın iş ve miyopi".upper() -> "YAKIN IŞ VE MIYOPI"   (yanlış)
+#     doğrusu                      -> "YAKIN İŞ VE MİYOPİ"
+# Noktalı i büyüyünce noktasız I oluyor; Türkçe'de bu AYRI BİR HARF.
+#
+# NEDEN METİNLERİ BÜYÜK HARFLE SAKLAMADIK (elenen yol):
+#   1. Aynı başlıklar başka yerlerde NORMAL haliyle de gösteriliyor
+#      (mola kartı büyük yazıyor, panel/geçmiş normal). Kaynağı
+#      büyütürsek normal gösterim bozulur.
+#   2. `bilgiler.py` başındaki not: "Bu dosya web sürümündeki
+#      bilgiler.js ile aynı içeriktedir." `sinama_sozluk.py` iki tarafı
+#      karşılaştırıyor; içeriği büyütmek o sınamayı ve web eşleşmesini
+#      kırardı.
+# Bu yüzden düzeltme GÖSTERİM anında yapılıyor, kaynak metne
+# dokunulmuyor.
+#
+# NEDEN `str.translate` DEĞİL DE `replace` + `.upper()`: yalnız iki
+# harf yer değiştiriyor; onları önce hedef hallerine çevirip sonra
+# `.upper()` çağırmak, geri kalan bütün harfler (ç, ğ, ö, ş, ü ve
+# Latin dışı yazılar dahil) için Python'un kendi doğru tablosunu
+# kullanmayı sürdürür.
+# ----------------------------------------------------------------------
+def buyut(s):
+    """Türkçe kurallarına göre büyüt: i -> İ, ı -> I."""
+    if not s:
+        return s
+    return s.replace(u"i", u"İ").replace(u"ı", u"I").upper()
+
+
+def kucult(s):
+    """Türkçe kurallarına göre küçült: İ -> i, I -> ı.
+
+    NEDEN AYRI BİR İŞLEV: `"I".lower()` -> "i" verir (doğrusu "ı"),
+    `"İ".lower()` ise "i" + U+0307 (birleşen nokta) verir — harf gözle
+    "i" gibi görünür ama karşılaştırmada EŞLEŞMEZ. Arama/eşleştirme
+    yapan yerlerin sessizce boş sonuç dönmesinin sebebi budur.
+    """
+    if not s:
+        return s
+    return s.replace(u"İ", u"i").replace(u"I", u"ı").lower()
+
+
+# ----------------------------------------------------------------------
 # Renk yardımcıları
 # ----------------------------------------------------------------------
 def _onalti(renk):

@@ -40,6 +40,8 @@ SINAMALAR = [
      "Ekrana yazilan Turkce metin ceviriden geciyor mu"),
     ("sozluk", "sinama_sozluk.py",
      "C() ile cevrilen her metin sozlukte var mi"),
+    ("yazi", "sinama_yazi.py",
+     "Buyuk harf Turkce'yi bozuyor mu (i/İ · ı/I)"),
     ("yayin", "sinama_yayin.py", "İç sınama sayfası depoda izleniyor mu (yayına sızar)"),
     ("varsayilan", "sinama_varsayilan.py", "Telefon varsayılanı masaüstü varsayımına dönmüş mü"),
     ("damga", "damga_denetle.py", "Dosya değişti mi, sürüm damgası arttı mı"),
