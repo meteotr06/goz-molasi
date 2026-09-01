@@ -325,6 +325,40 @@ KLAVYE_DENETIM = r"""
 """
 
 
+def dil_ozniteligi_denetle(sayfa, hatalar, nerede, beklenen):
+    """`documentElement.lang` dogru mu?
+
+    NIYE ONEMLI: buyuk harfe cevirmeyi tarayici yapiyor ve SAYFA DILINE
+    gore karar veriyor. lang="tr" iken "Kip" -> "KİP" (dogru);
+    lang yanlissa ayni metin "KIP" olur. Masaustunde bu sinif 39
+    basligin 29'unu bozmustu; webde koruma calisiyor ama TEK BIR
+    ozniteligin dogrulugu sayesinde.
+
+    Ozniteligin bozulmasi hicbir hata uretmez, hicbir sinamayi
+    dusurmez - o yuzden bekcisi olmali.
+    """
+    d = sayfa.evaluate("() => document.documentElement.lang || ''")
+    if d != beklenen:
+        hatalar.append((nerede, {"tur": "sayfa-dili-yanlis",
+                                 "beklenen": beklenen, "bulunan": d or "(bos)",
+                                 "not": "Turkce buyuk harf buna bagli"}))
+        return
+    # Buyuk harfe cevrilen ve i/ı iceren oge var mi? Yoksa bu denetim
+    # bu sayfada bir sey KORUMUYOR demektir; sessizce "gecti" demeyelim.
+    kapsam = sayfa.evaluate("""() => {
+        let n = 0;
+        document.querySelectorAll('*').forEach((e) => {
+            if (e.children.length) return;
+            if (getComputedStyle(e).textTransform !== 'uppercase') return;
+            if (/[i\u0131]/.test((e.textContent || '').trim())) n++;
+        });
+        return n;
+    }""")
+    if beklenen == "tr" and kapsam == 0:
+        hatalar.append((nerede, {"tur": "olcum-gecersiz",
+                                 "not": "buyuk harfe cevrilen i/ı iceren oge yok"}))
+
+
 def klavye_denetle(sayfa, hatalar, nerede):
     """Tiklanabilir gorunup klavyeyle erisilemeyen oge var mi?
 
@@ -663,6 +697,7 @@ def main():
                 # --- ANA EKRAN ---
                 s = denetle(sayfa, esikler)
                 klavye_denetle(sayfa, hatalar, "%s · klavye" % ad)
+                dil_ozniteligi_denetle(sayfa, hatalar, "%s · dil" % ad, dil)
                 toplam_metin += s["sayac"]["metin"]
                 toplam_hedef += s["sayac"]["hedef"]
                 for b in s["bulgular"]:
