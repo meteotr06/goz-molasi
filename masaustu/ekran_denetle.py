@@ -296,6 +296,81 @@ def saat_oyunu_zinciri(tarayici, kok, hatalar):
         c.close()
 
 
+def cevrimdisi_zinciri(tarayici, kok, hatalar):
+    """Uygulama GERCEKTEN internetsiz calisiyor mu?
+
+    Bu bir SOZ: ekranda "internetsiz de calissin" yaziyor ve kurulum
+    daveti bunu vaat ediyor. Sozu sinamayan bir uygulama, sozunu
+    tutmadigini kullanicidan ogrenir.
+
+    Kirilma yollari sessizdir: birinin disaridan bir yazi tipi ya da
+    betik eklemesi yeter; cevrimici herkes iyi gorur, cevrimdisi
+    kullanici bozuk sayfa alir. Onbellek listesinden bir dosyanin
+    dusmesi de ayni sonucu verir.
+
+    Olculdu 01.09.2026: 25 dosya onbellekte, sayfa aciliyor, sayac
+    isliyor, mola aciliyor, depodaki yazi tipi geliyor.
+    """
+    SAYAC = """() => {
+      const e = [...document.querySelectorAll('*')].find(
+        x => x.children.length === 0 && /^\\d{1,2}:\\d{2}$/.test((x.textContent||'').trim()));
+      return e ? e.textContent.trim() : null;
+    }"""
+    c = tarayici.new_context(viewport={"width": 400, "height": 860}, locale="tr-TR")
+    s = c.new_page()
+    try:
+        s.goto(kok + "/index.html", wait_until="load", timeout=25000)
+        s.wait_for_timeout(4000)
+        dosya = s.evaluate("""async () => {
+            const a = await caches.keys();
+            if (!a.length) return 0;
+            const k = await caches.open(a[0]);
+            return (await k.keys()).length;
+        }""")
+        if not dosya:
+            # KONTROL: onbellek hic dolmadiysa asagidaki olcum anlamsiz.
+            hatalar.append(("cevrimdisi zinciri",
+                            {"tur": "olcum-gecersiz",
+                             "not": "onbellek bos, servis iscisi kurulmamis"}))
+            return
+
+        c.set_offline(True)
+        s.reload(wait_until="load", timeout=25000)
+        s.wait_for_timeout(3500)
+
+        if not s.evaluate("() => !!document.getElementById('molaEkran')"):
+            hatalar.append(("cevrimdisi zinciri",
+                            {"tur": "cevrimdisi-acilmiyor",
+                             "not": "sayfa internetsiz yuklenemedi"}))
+            return
+        a = s.evaluate(SAYAC)
+        if not s.evaluate("async () => { await document.fonts.ready;"
+                          " return document.fonts.check('600 20px Fraunces'); }"):
+            hatalar.append(("cevrimdisi zinciri",
+                            {"tur": "yazitipi-gelmedi",
+                             "not": "baslik yazisi cevrimdisi yuklenemiyor"}))
+        s.wait_for_timeout(7000)
+        b = s.evaluate(SAYAC)
+        if not (a and b and a != b):
+            hatalar.append(("cevrimdisi zinciri",
+                            {"tur": "sayac-durdu", "olcum": "%s -> %s" % (a, b)}))
+        s.evaluate("""() => {
+            const d = [...document.querySelectorAll('button')].find(
+              x => /mola/i.test(x.textContent) && /imdi/i.test(x.textContent));
+            if (d) d.click();
+        }""")
+        s.wait_for_timeout(2500)
+        if not s.evaluate("() => document.getElementById('molaEkran')"
+                          ".classList.contains('acik')"):
+            hatalar.append(("cevrimdisi zinciri",
+                            {"tur": "mola-acilmiyor", "not": "cevrimdisi"}))
+    except Exception as e:
+        hatalar.append(("cevrimdisi zinciri",
+                        {"tur": "zincir-kosulamadi", "hata": str(e)[:80]}))
+    finally:
+        c.close()
+
+
 def kurulum_zinciri(tarayici, kok, hatalar):
     """KUR -> SIL -> davet geri geliyor mu?
 
@@ -513,6 +588,7 @@ def main():
         # Zincir sinamasi: tek kare degil, UC ADIM.
         kurulum_zinciri(tarayici, kok, hatalar)
         saat_oyunu_zinciri(tarayici, kok, hatalar)
+        cevrimdisi_zinciri(tarayici, kok, hatalar)
 
         tarayici.close()
     srv.shutdown()
@@ -526,6 +602,7 @@ def main():
     soyle("durum sayısı             : 4 (telefon TR/EN · dar · yazı %200)")
     soyle("zincir sınaması          : kur → sil → davet geri geldi mi")
     soyle("                          : saat geri alındı → sayaç duruyor mu")
+    soyle("                          : internetsiz gerçekten çalışıyor mu")
 
     if hatalar:
         soyle()
