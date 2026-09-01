@@ -296,6 +296,50 @@ def saat_oyunu_zinciri(tarayici, kok, hatalar):
         c.close()
 
 
+KLAVYE_DENETIM = r"""
+() => {
+  /* `[role=button]` BILEREK YOK.
+     `role` ekran okuyucuya "bu bir dugme" der ama ogeyi ODAKLANABILIR
+     YAPMAZ. Role'u olup tabindex'i olmayan oge, en kotu hal: ekran
+     okuyucu dugme diye duyurur, klavye kullanicisi asla ulasamaz.
+     Olculdu (01.09.2026): ilk halim `[role=button]`u listeye koymustu
+     ve K-58 kirma sinamasinda hatayi YAKALAYAMADI - bekcinin kendi
+     kusuruydu, kirma sinamasi bulup cikardi. */
+  const ODAK = 'button,a[href],input,select,textarea,summary,label,[tabindex]';
+  const kotu = [];
+  let aday = 0;
+  document.querySelectorAll('*').forEach((e) => {
+    if (getComputedStyle(e).cursor !== 'pointer') return;
+    const r = e.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    aday++;
+    /* ATASINA BAK. Tiklanabilir bir ogenin ICINDEKI yazi imleci miras
+       alir; kendi basina odaklanabilir olmak zorunda degil. Bu kural
+       olmadan olcum 19 yanlis alarm veriyordu (01.09.2026 olculdu). */
+    if (e.closest(ODAK)) return;
+    kotu.push({etiket: e.tagName, yer: e.id || (e.className || '').slice(0, 24),
+               yazi: (e.textContent || '').trim().slice(0, 30)});
+  });
+  return {aday, kotu};
+}
+"""
+
+
+def klavye_denetle(sayfa, hatalar, nerede):
+    """Tiklanabilir gorunup klavyeyle erisilemeyen oge var mi?
+
+    Fareyi kullanamayan biri icin bu ogeler YOK demektir. Merkez ayni
+    sinifi uc kardes uygulamada buldu (K-69); burada da bir tane vardi.
+    """
+    s = sayfa.evaluate(KLAVYE_DENETIM)
+    if not s["aday"]:
+        hatalar.append((nerede, {"tur": "olcum-gecersiz",
+                                 "not": "tiklanabilir goruntulu oge bulunamadi"}))
+        return
+    for k in s["kotu"]:
+        hatalar.append((nerede, {"tur": "klavyeyle-erisilemez", **k}))
+
+
 def cevrimdisi_zinciri(tarayici, kok, hatalar):
     """Uygulama GERCEKTEN internetsiz calisiyor mu?
 
@@ -618,6 +662,7 @@ def main():
 
                 # --- ANA EKRAN ---
                 s = denetle(sayfa, esikler)
+                klavye_denetle(sayfa, hatalar, "%s · klavye" % ad)
                 toplam_metin += s["sayac"]["metin"]
                 toplam_hedef += s["sayac"]["hedef"]
                 for b in s["bulgular"]:

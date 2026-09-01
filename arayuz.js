@@ -1671,6 +1671,25 @@
   og.anaBilgiTiklama = $('anaBilgi');
   og.anaBilgiTiklama.style.cursor = 'pointer';
   og.anaBilgiTiklama.title = C('Başka bir bilgi göster');
+  /* KLAVYEYLE DE ERİŞİLSİN.
+
+     Kart tıklanınca başka bilgi gösteriyordu ama `tabindex` yoktu:
+     fareyi kullanamayan biri için bu özellik YOKTU. Ölçüldü
+     (01.09.2026): tıklanabilir görünen 52 ögeden erişilemeyen tek
+     yer burasıydı.
+
+     `aria-label` ŞART: `role="button"` konunca ekran okuyucu ögenin
+     BÜTÜN metnini ad diye okur — burada uzun bir paragraf var. */
+  og.anaBilgiTiklama.tabIndex = 0;
+  og.anaBilgiTiklama.setAttribute('role', 'button');
+  og.anaBilgiTiklama.setAttribute('aria-label', C('Başka bir bilgi göster'));
+  og.anaBilgiTiklama.addEventListener('keydown', (e) => {
+    // Space sayfayı kaydırır; düğme gibi davranan öge bunu engellemeli.
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      og.anaBilgiTiklama.click();
+    }
+  });
   og.anaBilgiTiklama.addEventListener('click', () => {
     bilgiSirasi++;
     bilgiGoster(og.anaBaslik, og.anaMetin, og.anaKaynak, bilgiSirasi);
