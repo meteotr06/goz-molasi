@@ -581,7 +581,16 @@ def bekci_notu_var_mi(klasor):
     """
     try:
         y = os.path.join(klasor, BEKCI_NOTU)
-        return os.path.exists(y) and (time.time() - os.path.getmtime(y)) < NOT_OMRU
+        if not os.path.exists(y):
+            return False
+        # Fark NEGATIF olamaz: dosya tarihi GELECEKTEYSE saat geri
+        # alinmis demektir. Burada yon guvenli tarafta - uyari
+        # fazladan cikar, eksik degil - ama gecmeyen bir uyari
+        # kullaniciya uyarilari onemsememeyi ogretir. Bu depoda ayni
+        # desenden dort kusur cikti (web tarafi), biri sayaci tumuyle
+        # durduruyordu.
+        fark = time.time() - os.path.getmtime(y)
+        return 0 <= fark < NOT_OMRU
     except Exception:
         return False
 
