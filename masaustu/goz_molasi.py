@@ -469,8 +469,7 @@ def aile_kipinde_mi(ayar):
     # butun koruma sessizce kalkiyordu. Uygulama bu degeri hep "aile"
     # yaziyor - yani bu yol yalnizca ayar dosyasi ELLE duzenlenince
     # acilir. Aile kipinde o dosya cocugun kendi klasorunde duruyor.
-    kip = ayar.get("kip")
-    kip = kip.strip().lower() if isinstance(kip, str) else kip
+    kip = esleme_metni(ayar.get("kip"))
     return bool(kip == "aile" and kilit_kaydi(ayar))
 
 
@@ -486,6 +485,30 @@ def kilit_kaydi(ayar):
 def sure_yazisi(saniye):
     saniye = max(0, int(saniye))
     return "%02d:%02d" % (saniye // 60, saniye % 60)
+
+
+def esleme_metni(s):
+    """Ayar dosyasindan gelen metni KARSILASTIRMA icin normallestirir.
+
+    Turkce'nin i/I sorunu: `"AİLE".lower()` -> "i" + birleşen nokta
+    verir ve "aile" ile ESLESMEZ. `"AILE".lower()` ise eslesir. Yani
+    ayni kelimenin iki buyuk harf yazimi farkli sonuc veriyordu.
+
+    Olculdu (01.09.2026): ayar dosyasina "AİLE" yazan ebeveynde aile
+    kipi SESSIZCE uygulanmiyordu; ayar ekrani "Aile" secili gosteriyordu.
+
+    NIYE `gorunum.kucult()` DEGIL: o islev GORUNTU icin ve dogru -
+    `kucult("AILE")` -> "aıle" verir (Turkce'de I'nin kucugu ı). Ama
+    eslestirmede ASCII yazan kullaniciyi da kabul etmek gerekiyor.
+    Goruntu ile eslestirme AYRI islerdir.
+
+    Yalnizca karsilastirmada kullanilir; ekrana hicbir sey yazmaz.
+    """
+    if not isinstance(s, str):
+        return s
+    for a, b in ((u"İ", u"i"), (u"I", u"i"), (u"ı", u"i")):
+        s = s.replace(a, b)
+    return s.strip().lower()
 
 
 def sayi_oku(metin, varsayilan=None):
@@ -2943,8 +2966,7 @@ class Uygulama:
         # calismazdi - oysa tam da uyarilmasi gereken an burasi.
         # Olculdu: `kilit` bosaltilinca kip sessizce uygulanmiyor ama
         # ayar ekraninda hala "Aile" SECILI gorunuyor.
-        kip = self.ayar.get("kip")
-        kip = kip.strip().lower() if isinstance(kip, str) else kip
+        kip = esleme_metni(self.ayar.get("kip"))
         if kip == "aile" and not kilit_kaydi(self.ayar):
             return "⚠ Aile kipi şifresiz — ayarlardan şifre koyun"
         if AYAR_DURUMU.get("bozuk_alanlar"):

@@ -50,7 +50,7 @@ class SahteUygulama(gm.Uygulama):
 # gösteriyor. `dene(...)` çağrılarının yarısı silinse bu sınama yine
 # "TAMAM" derdi — ve doğruladığı şey, ebeveynin çocuğuna güvenerek
 # açtığı koruma. Sayı buranın altına düşerse sonuç okunmaz.
-EN_AZ_DURUM = 49
+EN_AZ_DURUM = 62
 
 
 def main():
@@ -556,6 +556,39 @@ def main():
         hatalar.append("tek ornek SINANAMADI: %s: %s" % (type(e).__name__, e))
         print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",
                               "OLCULEMEDI"))
+
+    # ---------- Kip adinin YAZIMI ----------
+    #
+    # Ayar dosyasi elle duzenlenebiliyor ve Turkce'nin i/I sorunu
+    # yuzunden ayni kelimenin iki buyuk harf yazimi FARKLI sonuc
+    # veriyordu:
+    #     "AILE".lower() -> "aile"    eslesiyordu
+    #     "AILE".lower() -> "ai" + birlesen nokta + "le"   ESLESMIYORDU
+    # (ikincisi Turkce buyuk I ile yazilmis hali). Yani oyle yazan
+    # ebeveynde aile kipi SESSIZCE uygulanmiyor, ayar ekrani ise "Aile"
+    # secili gosteriyordu. En kotu hal: koruma yok ama var gorunuyor.
+    #
+    # Ters dal da olculuyor: aile DISI degerler aile sayilmamali. Yoksa
+    # "hepsine evet diyen" bir eslestirici de bu sinamayi gecerdi.
+    ESLESMELI = ("aile", "Aile", "AILE", "A\u0130LE", " Aile ", "AiLe")
+    ESLESMEMELI = ("bireysel", "Bireysel", "B\u0130REYSEL", "", "aileler",
+                   None, 5)
+
+    def _kip_ayari(k):
+        return {"kip": k, "kilit": "x" * 40, "kilit_tuz": "y" * 16}
+
+    for _y in ESLESMELI:
+        sayac["n"] += 1
+        if not gm.aile_kipinde_mi(_kip_ayari(_y)):
+            hatalar.append("kip yazimi: %r aile kipi sayilmadi "
+                           "(koruma sessizce uygulanmaz)" % (_y,))
+    for _y in ESLESMEMELI:
+        sayac["n"] += 1
+        if gm.aile_kipinde_mi(_kip_ayari(_y)):
+            hatalar.append("kip yazimi: %r aile kipi SAYILDI "
+                           "(olcut ayirt edici degil)" % (_y,))
+    print("  %-54s %s" % ("kip adi her yazimda dogru eslesiyor",
+                          "TAMAM" if not hatalar else "KALDI"))
 
     if hatalar:
         print("denenen durum : %d" % sayac["n"])
