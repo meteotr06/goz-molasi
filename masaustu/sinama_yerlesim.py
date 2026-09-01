@@ -23,10 +23,12 @@ NE DENETLER
 """
 import io
 import os
+import re
 import sys
 import time
 import tkinter as tk
 
+import goz_molasi as gm
 import gorunum as gor
 import ogeler as og
 import goz_molasi as gm
@@ -74,6 +76,109 @@ class SahtePanel(gm.Uygulama):
 
 
 BURASI = os.path.dirname(os.path.abspath(__file__))
+
+
+# Ekranda ASLA gorunmemesi gereken diziler. Hepsi bir hesabin ya da
+# okumanin sessizce bosa dustugunun isareti.
+YASAK_EKRAN = ("None", "nan", "NaN", "undefined", "cok", "-1", "-3", "-99")
+
+
+def _panel_metinleri(p):
+    """Gizli panelde GORUNEN butun metinleri toplar.
+
+    Hem oge metinleri (Label/Button) hem TUVAL yazilari okunuyor:
+    panelin sayaclari tuvale yaziliyor ve yalniz ogelere bakan bir
+    denetim onlari HIC gormez.
+    """
+    metinler = []
+
+    def gez(w):
+        try:
+            if isinstance(w, tk.Canvas):
+                for i in w.find_all():
+                    if w.type(i) == "text":
+                        metinler.append(str(w.itemcget(i, "text")))
+        except Exception:
+            pass
+        try:
+            metinler.append(str(w.cget("text")))
+        except Exception:
+            pass
+        for c in w.winfo_children():
+            gez(c)
+
+    gez(p.kok)
+    return [m for m in metinler if m and m.strip()]
+
+
+def ekranda_yasak_metin(hatalar):
+    """Bozuk istatistikle panel kurulunca ekranda yasak metin cikiyor mu?
+
+    NIYE: bozuk istatistik dosyasi bir zamanlar ekrana DOGRUDAN
+    basiliyordu - "cok mola", "-99 sn", "None". `istatistik_suz` kapiyi
+    kapatti, ama suzgec bir gun bozulursa kimse gormez. Bu denetim
+    SUZGECE degil EKRANA bakiyor.
+
+    Kontrol durumu da olculuyor: saglam veriyle yasak metin CIKMAMALI.
+    Iki durum ayni sonucu verirse olcut ayirt edici degildir.
+    """
+    BOZUK = {"gun": time.strftime("%Y-%m-%d"),
+             "tamamlanan": "cok", "ertelenen": -3, "uzun_mola": None,
+             "ekran_sn": "gun boyu", "kesintisiz_sn": float("nan"),
+             "programlar": {}}
+
+    for ad, ham in (("saglam veri", None), ("bozuk veri", BOZUK)):
+        p = None
+        try:
+            p = SahtePanel("koyu", 1.0)
+            # `_ciz` ayarlara bakiyor; SahtePanel bos sozlukle
+            # kuruluyor. Varsayilanlar verilmezse KeyError ile
+            # duser ve denetim hicbir sey olcmez.
+            p.ayar = dict(gm.VARSAYILAN)
+            # `_ciz` calisma durumuna da bakiyor; SahtePanel
+            # `__init__`i atladigi icin bunlar yok. Kalani
+            # `_panel_kur` zaten uretiyor (tuval oge numaralari).
+            p.durum = "calisiyor"
+            p.duraklama_bitis = 0
+            if ham is not None:
+                p.ist = dict(gm.Uygulama.istatistik_suz(ham))
+                # SAYACLARI `_ciz` yaziyor, `_panel_kur` DEGIL.
+                # Ilk halim yalniz paneli kuruyordu ve sayaclar hic
+                # cizilmiyordu; K-58 kirma sinamasi bunu ortaya cikardi -
+                # suzgec kapatildigi halde bekci otmuyordu, yani hicbir
+                # sey olcmuyordu.
+                p._panel_kur()
+                p._ciz(600)
+                p.kok.update_idletasks()
+            metinler = _panel_metinleri(p)
+            if not metinler:
+                hatalar.append("ekran metni: %s - panelde hic metin "
+                               "okunamadi (olcum gecersiz)" % ad)
+                continue
+            for m in metinler:
+                for y in YASAK_EKRAN:
+                    # Kelime siniri: "None" ararken "Nonemli" yakalanmasin.
+                    if re.search(r"(^|[^A-Za-z0-9])%s($|[^A-Za-z0-9])"
+                                 % re.escape(y), m):
+                        hatalar.append("ekran metni: %s icinde YASAK dizge "
+                                       "%r -> %r" % (ad, y, m[:60]))
+        except Exception as e:
+            # AYRIM: BOZUK veriyle cokmek bir URUN HATASIDIR - masaustunde
+            # tam bu yasandi. SAGLAM veriyle cokmek ise sinamanin kendi
+            # kurulum hatasidir. Ikisini ayni kefeye koymak, gercek
+            # bulguyu "olculemedi" diye gomer.
+            if ham is not None:
+                hatalar.append("ekran metni: BOZUK veriyle panel COKUYOR "
+                               "(%s: %s) - suzgec devrede degil"
+                               % (type(e).__name__, e))
+            else:
+                hatalar.append("ekran metni: %s olculemedi (sinama kurulum "
+                               "hatasi): %s: %s" % (ad, type(e).__name__, e))
+        finally:
+            if p:
+                p.kapat()
+    print("  %-54s %s" % ("panelde yasak metin yok (bozuk veriyle de)",
+                          "TAMAM" if not hatalar else "KALDI"))
 
 
 def kesisiyor_mu(a, b, pay=0):
@@ -247,6 +352,7 @@ def main():
     hatalar = []
     pencere_sigiyor_mu(hatalar)
     uyarilar_sigiyor_mu(hatalar)
+    ekranda_yasak_metin(hatalar)
     # Her tema ayrı denenir: renk değil YERLEŞİM aynı olmalı, ama
     # tema değişince panel baştan çiziliyor — o yol da sınansın.
     temalar = list(gor.TEMALAR.keys())
