@@ -873,6 +873,39 @@ const Gecmis = {
   },
 
   /** Son N gün: [{ad, sayi, bugunMu}, ...] */
+  /** Bugun, onceki gunlerin ortalamasina gore nerede?
+
+      Doner: null (karsilastirilamaz) ya da
+             { fark, ortalama, gunSayisi }
+      `fark` TAM SAYI: mola sayisi bir adet olcusudur, "1,3 mola fazla"
+      demek anlamsizdir.
+
+      PAYDA: onceki gunlerin hepsi degil, ILK DOLU GUNDEN itibaren
+      olanlar. Uygulamayi yeni kuran biri icin bastaki sifirlar "o gun
+      mola vermedi" demek degil, "o gun uygulama yoktu" demek - onlari
+      saymak ortalamayi haksiz yere dusurur ve kullaniciya her gun
+      "ortalamanin ustundesin" der. Ovmek de yaniltmaktir.
+
+      En az IKI gun yoksa null: tek gunluk gecmisten ortalama cikarmak
+      uydurmadir. */
+  gunlukKarsilastirma(gunler) {
+    if (!Array.isArray(gunler) || !gunler.length) return null;
+    const bugun = gunler.find((g) => g && g.bugunMu);
+    if (!bugun) return null;
+    const oncekiler = gunler.filter((g) => g && !g.bugunMu);
+    const ilkDolu = oncekiler.findIndex((g) => (g.sayi | 0) > 0);
+    if (ilkDolu === -1) return null;
+    const temel = oncekiler.slice(ilkDolu);
+    if (temel.length < 2) return null;
+    const toplam = temel.reduce((t, g) => t + (g.sayi | 0), 0);
+    const ortalama = toplam / temel.length;
+    return {
+      fark: Math.round((bugun.sayi | 0) - ortalama),
+      ortalama: Math.round(ortalama * 10) / 10,
+      gunSayisi: temel.length,
+    };
+  },
+
   sonGunler(adet = 7, bugunIstatistik = null) {
     const veri = this.oku();
     const bugun = new Date();

@@ -1591,10 +1591,29 @@
         + ' · history is building up');
     } else {
       const ortalama = Math.round((toplam / 7) * 10) / 10;
+      /* BUGUN ORTALAMAYA GORE NEREDE?
+         Ortalamayı göstermek yetmiyordu — kullanıcı kendi bugününü
+         onunla karşılaştıramıyordu. Hesap `Gecmis.gunlukKarsilastirma`
+         içinde ve ayrıca sınanıyor; arayüze gömülen hesap sınanamaz.
+         Karşılaştırılamıyorsa (yeterli geçmiş yok) HİÇBİR ŞEY
+         yazılmıyor — uydurma bir ortalama göstermektense susmak. */
+      const k = Gecmis.gunlukKarsilastirma(gunler);
+      let ek = '', ekEn = '';
+      if (k && k.fark > 0) {
+        ek = ` · bugün ortalamanın ${SAYI(k.fark)} üstünde`;
+        ekEn = ` · today ${SAYI(k.fark)} above average`;
+      } else if (k && k.fark < 0) {
+        ek = ` · bugün ortalamanın ${SAYI(-k.fark)} altında`;
+        ekEn = ` · today ${SAYI(-k.fark)} below average`;
+      } else if (k) {
+        ek = ' · bugün ortalamanda';
+        ekEn = ' · today at your average';
+      }
       // Ondalık ayırıcı dile göre: Türkçe "6,7" · İngilizce "6.7"
       og.haftaOzet.textContent = CS(
-        `${SAYI(toplam)} mola · günde ortalama ${SAYI(ortalama, 1)}`,
-        `${SAYI(toplam)} breaks · ${SAYI(ortalama, 1)} per day on average`);
+        `${SAYI(toplam)} mola · günde ortalama ${SAYI(ortalama, 1)}${ek}`,
+        `${SAYI(toplam)} breaks · ${SAYI(ortalama, 1)} per day on average`
+        + ekEn);
     }
 
     const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));

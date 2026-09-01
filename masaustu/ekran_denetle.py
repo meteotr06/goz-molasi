@@ -359,6 +359,51 @@ def dil_ozniteligi_denetle(sayfa, hatalar, nerede, beklenen):
                                  "not": "buyuk harfe cevrilen i/ı iceren oge yok"}))
 
 
+KARSILASTIRMA_DURUMLARI = r"""
+() => {
+  const G = (a) => a.map((n, i) => ({sayi: n, bugunMu: i === a.length - 1}));
+  const durumlar = [
+    ["ortalamanin ustunde",   [0,0,0,4,4,4,6], 2],
+    ["ortalamanin altinda",   [0,0,0,6,6,6,2], -4],
+    ["tam ortalamada",        [0,0,0,5,5,5,5], 0],
+    ["tek dolu gun",          [0,0,0,0,0,4,7], null],
+    ["hic gecmis yok",        [0,0,0,0,0,0,3], null],
+    ["bastaki sifirlar sayilmaz", [0,0,0,0,2,2,2], 0],
+  ];
+  const kotu = [];
+  for (const [ad, dizi, beklenen] of durumlar) {
+    const k = Gecmis.gunlukKarsilastirma(G(dizi));
+    const cikan = k ? k.fark : null;
+    if (cikan !== beklenen) kotu.push({durum: ad, beklenen, cikan});
+  }
+  return {sayi: durumlar.length, kotu};
+}
+"""
+
+
+def karsilastirma_denetle(sayfa, hatalar, nerede):
+    """Bugun/ortalama karsilastirmasi dogru mu?
+
+    Bu hesap EKRANA cikiyor ("bugun ortalamanin 2 ustunde"). Yanlis
+    olursa kullanici kendini yanlis degerlendirir - sessiz yanlis sayi.
+
+    Ozellikle iki tuzak sinaniyor:
+    · BASTAKI SIFIRLAR: uygulamayi yeni kuran birinde onceki gunler
+      sifir gorunur ama "o gun mola vermedi" degil, "o gun uygulama
+      yoktu" demektir. Sayilirsa ortalama haksiz duser ve kullaniciya
+      her gun "ustundesin" der. Ovmek de yaniltmaktir.
+    · YETERSIZ GECMIS: tek gunluk gecmisten ortalama cikarmak uydurma.
+      null donmeli, ekrana hicbir sey yazilmamali.
+    """
+    s = sayfa.evaluate(KARSILASTIRMA_DURUMLARI)
+    if not s["sayi"]:
+        hatalar.append((nerede, {"tur": "olcum-gecersiz",
+                                 "not": "hic durum denenmedi"}))
+        return
+    for k in s["kotu"]:
+        hatalar.append((nerede, {"tur": "karsilastirma-yanlis", **k}))
+
+
 def klavye_denetle(sayfa, hatalar, nerede):
     """Tiklanabilir gorunup klavyeyle erisilemeyen oge var mi?
 
@@ -697,6 +742,8 @@ def main():
                 # --- ANA EKRAN ---
                 s = denetle(sayfa, esikler)
                 klavye_denetle(sayfa, hatalar, "%s · klavye" % ad)
+                karsilastirma_denetle(sayfa, hatalar,
+                                      "%s · karsilastirma" % ad)
                 dil_ozniteligi_denetle(sayfa, hatalar, "%s · dil" % ad, dil)
                 toplam_metin += s["sayac"]["metin"]
                 toplam_hedef += s["sayac"]["hedef"]
