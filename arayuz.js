@@ -3077,7 +3077,16 @@
 
   // Daha önce izin verilmişse sessizce yeniden bağlan
   try {
-    if (localStorage.getItem(ETKINLIK_ANAHTAR) === '1') etkinligiBaslat(false);
+    if (localStorage.getItem(ETKINLIK_ANAHTAR) === '1') {
+      /* Izin tarayici ayarlarindan geri alinmis olabilir. Basarisizsa
+         kaydi TEMIZLE: yoksa her acilista bosuna deneniyor ve kayit,
+         anlattigi izinden uzun yasiyor (bu depoda dort kusur bu
+         siniftandi). Ekran zaten canli duruma bakiyor, yani yalan
+         soylenmiyordu - bu yalnizca savurganligin kapanmasi. */
+      etkinligiBaslat(false).then((oldu) => {
+        if (!oldu) { try { localStorage.removeItem(ETKINLIK_ANAHTAR); } catch {} }
+      }).catch(() => {});
+    }
   } catch {}
 
   /* ============================================================

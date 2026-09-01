@@ -371,6 +371,79 @@ def cevrimdisi_zinciri(tarayici, kok, hatalar):
         c.close()
 
 
+def sayi_zinciri(tarayici, kok, hatalar):
+    """Ekrandaki sayac, depoya yazilan sayiyla ayni mi?
+
+    K-22: en tehlikeli hata cokme degil, SESSIZ YANLIS SAYI. Masaustunde
+    bu siniftan bir kusur cikmisti (bir kart uzun molalari saymiyordu,
+    ayni ekranda iki farkli sayi vardi). Web tarafinda hicbir sinama
+    ekrandaki sayiya bakmiyordu.
+
+    Yontem: mola AL, sonra ekrandaki "tamamlanan mola" ile depodaki
+    `istatistik.tamamlananMola` karsilastir. Ayrismalari, birinin
+    yaniltmasi demektir.
+    """
+    c = tarayici.new_context(viewport={"width": 400, "height": 860},
+                             locale="tr-TR")
+    s = c.new_page()
+    try:
+        s.goto(kok + "/index.html", wait_until="load", timeout=25000)
+        s.wait_for_timeout(3000)
+
+        onceki = s.evaluate("""() => {
+            const b = document.getElementById('istMola');
+            return b ? b.textContent.trim() : null;
+        }""")
+        if onceki is None:
+            hatalar.append(("sayi zinciri",
+                            {"tur": "olcum-gecersiz", "not": "sayac kutusu yok"}))
+            return
+
+        # Molayi GERCEKTEN al: baslat, bitmesini bekle.
+        s.evaluate("""() => {
+            const d = [...document.querySelectorAll('button')].find(
+              x => /mola/i.test(x.textContent) && /imdi/i.test(x.textContent));
+            if (d) d.click();
+        }""")
+        s.wait_for_timeout(26000)          # 20 sn mola + pay
+
+        ekran = s.evaluate("""() => {
+            const b = document.getElementById('istMola');
+            return b ? b.textContent.trim() : null;
+        }""")
+        depo = s.evaluate("""() => {
+            try {
+                const v = JSON.parse(localStorage.getItem('goz-molasi-v1') || '{}');
+                return (v.istatistik || {}).tamamlananMola;
+            } catch { return null; }
+        }""")
+
+        # KONTROL: mola gercekten sayildi mi? Sayilmadiysa asagidaki
+        # karsilastirma "iki sifir esit" der ve hicbir sey olcmez.
+        if ekran == onceki:
+            hatalar.append(("sayi zinciri",
+                            {"tur": "olcum-gecersiz",
+                             "not": "mola alindi ama sayac artmadi (%s -> %s)"
+                                    % (onceki, ekran)}))
+            return
+
+        # Ekranda Turkce binlik ayraci olabilir; sayiya cevir.
+        try:
+            ekran_sayi = int(str(ekran).replace(".", "").replace(",", ""))
+        except Exception:
+            ekran_sayi = None
+        if ekran_sayi is None or depo is None or ekran_sayi != depo:
+            hatalar.append(("sayi zinciri",
+                            {"tur": "ekran-depo-ayristi",
+                             "ekran": ekran, "depo": depo,
+                             "not": "ekrandaki sayi depodakiyle ayni degil"}))
+    except Exception as e:
+        hatalar.append(("sayi zinciri",
+                        {"tur": "zincir-kosulamadi", "hata": str(e)[:80]}))
+    finally:
+        c.close()
+
+
 def kurulum_zinciri(tarayici, kok, hatalar):
     """KUR -> SIL -> davet geri geliyor mu?
 
@@ -589,6 +662,7 @@ def main():
         kurulum_zinciri(tarayici, kok, hatalar)
         saat_oyunu_zinciri(tarayici, kok, hatalar)
         cevrimdisi_zinciri(tarayici, kok, hatalar)
+        sayi_zinciri(tarayici, kok, hatalar)
 
         tarayici.close()
     srv.shutdown()
@@ -603,6 +677,7 @@ def main():
     soyle("zincir sınaması          : kur → sil → davet geri geldi mi")
     soyle("                          : saat geri alındı → sayaç duruyor mu")
     soyle("                          : internetsiz gerçekten çalışıyor mu")
+    soyle("                          : ekrandaki sayı = depodaki sayı mı")
 
     if hatalar:
         soyle()
