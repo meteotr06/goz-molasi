@@ -2594,6 +2594,18 @@
             $('durumNotuKapat')?.addEventListener(
               'click', () => { not.hidden = true; });
           }
+          /* SADECE SOYLEMEK YETMIYOR - KULLANICIYI ORAYA GOTUR.
+
+             Kullanici bildirdi (01.09.2026): "aile kipi calismiyor,
+             acamadim bile". Anahtar aciliyor, kendiliginden geri
+             kapaniyordu; sebebi ekranin BASKA bir yerinde yaziyordu ve
+             baglanti kurulamiyordu. Engellenen kullaniciya sebebi
+             soylemek yetmez, cikisi da gostermek gerekir. */
+          const alan = $('ayKilitAlan');
+          if (alan) {
+            alan.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(() => { try { alan.focus(); } catch {} }, 350);
+          }
           /* SEBEBI SOYLEMEK YETMIYOR, CAREYI DE GOSTER.
 
              Kullanici bildirdi (31.08.2026): "aile kipi calismiyor,
