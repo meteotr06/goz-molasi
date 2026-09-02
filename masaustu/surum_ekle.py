@@ -58,9 +58,23 @@ for ad in SAYFALAR:
 
 # Damga kaydını bırak: damga_denetle.py bir dosya değişip SURUM aynı
 # kaldıysa bunu görüp derlemeyi durduruyor.
+import damga_denetle
 try:
-    import damga_denetle
     damga_denetle.kaydet()
     print("  damga kaydı güncellendi")
+except damga_denetle.SurumArtmadi as e:
+    # SESSIZ ATLAMA YOK. Eskiden bu durum genel `except`e düşüyor,
+    # yumuşak bir satır yazıp çıkış 0 veriyordu; yani araç "oldu" gibi
+    # görünürken kusur duruyordu.
+    print()
+    print("DURDURULDU — %s" % e)
+    for a in e.degisen:
+        print("  -", a)
+    print()
+    print("Damga kaydı YAZILMADI (yazılsaydı damga_denetle susardı).")
+    print("Yapılacak: sw.js içindeki SURUM'u artır, sonra bu aracı")
+    print("           yeniden çalıştır.")
+    raise SystemExit(1)
 except Exception as e:
     print("  damga kaydı yazılamadı:", e)
+    raise SystemExit(1)

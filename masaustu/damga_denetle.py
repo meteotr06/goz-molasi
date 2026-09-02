@@ -96,10 +96,45 @@ def ozetler():
     return d
 
 
-def kaydet():
+class SurumArtmadi(Exception):
+    """Dosya değişti ama SURUM aynı — damga kaydı YAZILMAMALI."""
+
+    def __init__(self, degisen, surum):
+        self.degisen = list(degisen)
+        self.surum = surum
+        Exception.__init__(self, "%d dosya değişti, SURUM hâlâ %s"
+                           % (len(self.degisen), surum))
+
+
+def kaydet(zorla=False):
     """surum_ekle.py bunu çağırır."""
+    # DUZELTME ARACI ALARMI SUSTURAMAZ.
+    #
+    # Bu islev damga kaydini yeniler; yenilendikten sonra damga
+    # bekcisi "hicbir dosya degismemis" der. SURUM artirilmadan
+    # cagrilirsa DOGRU bir alarmi susturur ve degisen dosya, servis
+    # iscisi kurulu kullanicilara HIC ULASMAZ - onbellek anahtari
+    # ayni kaldigi icin.
+    #
+    # Yasandi (03.09.2026): cekirdek.js degisti, damga kirmizi verdi,
+    # SURUM artirma denemesi desen tutmadigi icin sessizce basarisiz
+    # oldu, sonra bu arac calisti ve kirmizi yesile dondu.
+    #
+    # `zorla=True` yalniz bilerek uzerine yazmak icindir.
+    surum = surum_oku()
+    if not zorla and os.path.exists(KAYIT):
+        try:
+            eski = json.load(io.open(KAYIT, encoding="utf-8-sig"))
+        except Exception:
+            eski = None
+        if eski and eski.get("surum") == surum:
+            simdi = ozetler()
+            degisen = [a for a in simdi
+                       if eski.get("ozetler", {}).get(a) != simdi[a]]
+            if degisen:
+                raise SurumArtmadi(degisen, surum)
     io.open(KAYIT, "w", encoding="utf-8").write(json.dumps(
-        {"surum": surum_oku(), "ozetler": ozetler()},
+        {"surum": surum, "ozetler": ozetler()},
         ensure_ascii=False, indent=1) + "\n")
 
 

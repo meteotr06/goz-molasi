@@ -53,6 +53,13 @@ SINAMALAR = [
     ("acilis", "sinama_acilis.py", "Derlenen exe açılıyor mu"),
     ("ekran", "ekran_denetle.py",
      "Kullanıcının GÖRDÜĞÜ ekran: yasak metin, 44 px, taşma, JS hatası"),
+    # `sinama.js` DEPODA VARDI ama kimse cagirmiyordu: kayitta yoktu,
+    # hicbir sayfa yuklemiyordu. 66 senaryo (sayac geri yukleme, saat
+    # oyunlari, mola akisi) her kosuda SESSIZCE atlaniyordu. Bu depoda
+    # ayni sinifin ucuncu ornegi - bir bekcinin VAR olmasi olculmez,
+    # CAGRILDIGI olculur.
+    ("cekirdek", "sinama_cekirdek.py",
+     "Cekirdek senaryolari (sinama.js) - gercek sayfada"),
     ("simge", "ikon_svg_uret.py --olc",
      "Yayındaki simge, depodaki üreteçten mi çıkıyor"),
 ]
@@ -63,7 +70,7 @@ EXE_GEREKENLER = {"acilis"}
 # Tarayıcı açar, ~2 dk sürer; "hizli" kipinde atlanır.
 # TAM koşuda zorunlu: 30.08.2026'da telefonda bulunan dört kusurun
 # DÖRDÜ de motor sınamalarını geçmişti, yalnızca ekranda görülüyordu.
-YAVASLAR = {"ekran", "simge"}
+YAVASLAR = {"ekran", "simge", "cekirdek"}
 
 
 def main():

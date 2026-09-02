@@ -729,9 +729,20 @@ class MolaMotoru {
        ölçümü güvenilmez: yaz saati geçişi ya da elle saat değişimi
        geçen süreyi olduğundan büyük/küçük gösterir. Kullanıcıya
        "kapalıydın" demek YANLIŞ olur — hiç ayrılmamış olabilir. */
+    /* `typeof ... === 'number'` SART, `+eskiFark` YETMEZ.
+
+       `+null` sifira donuyor ve `Number.isFinite(0)` DOGRU. Sifir da
+       gecerli bir saat farki (UTC). Yani alan EKSIKSE kullaniciya
+       "cihazin saati degismis gorunuyor" deniyordu - kendinden emin
+       ve YANLIS bir aciklama. Olculdu (03.09.2026): `saatFarki: null`
+       olan bir kayitla Turkiye saatinde tam bu mesaj cikti.
+
+       Bozuk ya da eksik bir alan, uydurma bir sebep uretmemeli:
+       bilinmiyorsa "saat degisti" demek yerine susmak dogru. */
     const eskiFark = veri.saatFarki;
-    const saatDegisti = Number.isFinite(+eskiFark)
-      && +eskiFark !== new Date().getTimezoneOffset();
+    const saatDegisti = typeof eskiFark === 'number'
+      && Number.isFinite(eskiFark)
+      && eskiFark !== new Date().getTimezoneOffset();
 
     /* Kullanıcı "uzak kalınca sıfırlama" ayarını kapattıysa süre
        sınırı yok: ne kadar uzak kalırsa kalsın sayaç devam eder.
