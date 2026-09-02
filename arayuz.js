@@ -33,6 +33,8 @@
     haftaGrafik: $('haftaGrafik'),
     seriRozet: $('seriRozet'),
     haftaOzet: $('haftaOzet'),
+    haftaBuyuk: $('haftaBuyuk'),
+    haftaOrtalama: $('haftaOrtalama'),
     hedefSayi: $('hedefSayi'),
 
     anaBaslik: $('anaBilgiBaslik'),
@@ -1615,9 +1617,15 @@
       }
       // Ondalık ayırıcı dile göre: Türkçe "6,7" · İngilizce "6.7"
       og.haftaOzet.textContent = CS(
-        `${SAYI(toplam)} mola · günde ortalama ${SAYI(ortalama, 1)}${ek}`,
-        `${SAYI(toplam)} breaks · ${SAYI(ortalama, 1)} per day on average`
-        + ekEn);
+        `${SAYI(toplam)} mola${ek}`,
+        `${SAYI(toplam)} breaks${ekEn}`);
+      /* Ortalama artik BUYUK sayida. Kucuk satirda da yazmak tekrar
+         olurdu; kullanicinin istegi "karisik olmasin" idi. */
+      og.haftaOrtalama.textContent = SAYI(ortalama, 1);
+      og.haftaBuyuk.classList.remove('gizli');
+      og.haftaBuyuk.setAttribute('aria-label', CS(
+        `Günde ortalama ${SAYI(ortalama, 1)} mola`,
+        `${SAYI(ortalama, 1)} breaks per day on average`));
     }
 
     const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));

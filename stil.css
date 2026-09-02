@@ -1727,6 +1727,26 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   .bitis-kart { transition: none; }
 }
 
+/* Ortalama BUYUK. Kullanicinin gosterdigi ekranda en dikkat cekici
+   sey buyuk puntolu tek sayiydi. Yeni kutu EKLENMEDI - ayni bilgi
+   kucuk satirdan buraya tasindi; ikisinde birden yazmak tekrar olurdu. */
+.hafta-buyuk {
+  margin: 6px 0 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.hafta-buyuk b {
+  font-size: 1.75rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;   /* rakamlar zipl amasin */
+  color: var(--vurgu);
+}
+.hafta-buyuk span {
+  font-size: 0.8125rem;
+  color: var(--yazi-soluk);
+}
+
 .hafta-ozet { display: block; margin-top: 2px; font-size: 0.75rem; font-weight: 400; color: var(--yazi-soluk); }
 
 /* ---- Kısa ekranlarda mola ekranı ----
