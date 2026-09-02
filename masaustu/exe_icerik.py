@@ -152,6 +152,42 @@ def _bizim_moduller():
     return ad
 
 
+def kaynak_daha_yeni_mi():
+    """Exe'ye giren kaynak dosyalari exe'den YENI mi?
+
+    NIYE: isaret listesi elle tutuluyor ve yeni bir duzeltmenin isareti
+    listeye eklenmezse arac onu ARAMAZ - "guncel" der, oysa degildir.
+    Olculdu (01.09.2026): exe 30.08'den, uc masaustu duzeltmesi
+    sonrasindan, arac yine de cikis 0 verdi.
+
+    Bu denetim kapsami ELLE YAZMIYOR: `_bizim_moduller()` klasorden
+    turetiyor. Yarin yeni bir modul eklense de kendiliginden kapsanir.
+
+    `mtime` kusursuz degil (git checkout tarihi tazeler) ama yaniliyorsa
+    "yeniden derle" yonunde yanilir - guvenli taraf.
+
+    Doner: (yeni_mi, en_yeni_dosya, fark_saniye)
+    """
+    exe = None
+    for ad in sorted(os.listdir(KOK)):
+        if ad.lower().endswith(".exe"):
+            exe = os.path.join(KOK, ad)
+            break
+    if not exe:
+        return False, None, 0
+    exe_an = os.path.getmtime(exe)
+    burasi = os.path.dirname(os.path.abspath(__file__))
+    en_yeni, en_yeni_ad = 0, None
+    for kok in list(_bizim_moduller()) + ["goz_molasi"]:
+        y = os.path.join(burasi, kok + ".py")
+        if not os.path.exists(y):
+            continue
+        t = os.path.getmtime(y)
+        if t > en_yeni:
+            en_yeni, en_yeni_ad = t, kok + ".py"
+    return (en_yeni > exe_an + 2), en_yeni_ad, int(en_yeni - exe_an)
+
+
 def modulu_cikar():
     """(veri, hata) döndürür. Uygulama ÇALIŞTIRILMAZ.
 
@@ -241,6 +277,26 @@ def isaretler_kaynakta_mi():
 
 
 def main():
+    # TARIH DENETIMI - isaret listesinden ONCE.
+    #
+    # Isaret listesi ELLE tutuluyor: yeni bir duzeltmenin isareti
+    # eklenmezse arac onu ARAMAZ ve "guncel" der. Olculdu (01.09.2026):
+    # exe 30.08'den, arada UC masaustu duzeltmesi vardi (Turkce buyuk
+    # harf, aile kipi eslesmesi, bekci notu) ve arac yine de cikis 0
+    # verdi. Elle tutulan kapsam curur.
+    #
+    # Bu denetim kapsami klasorden turetiyor, elle liste yok.
+    yeni, dosya, fark = kaynak_daha_yeni_mi()
+    if yeni:
+        print("DERLEME ESKI — kaynak exe'den YENI.")
+        print("  en yeni degisen : %s" % dosya)
+        print("  fark            : %d saat" % (fark / 3600))
+        print()
+        print("Kaynakta duzeltilmis olmasi yetmez; kullanicinin")
+        print("calistirdigi programda YOK. Yapilacak: DERLE.bat")
+        print("(uygulamayi acar - kullanicinin kendi karari).")
+        return 1
+
     yanlis = isaretler_kaynakta_mi()
     if yanlis:
         print("LISTE YANLIS — %d isaret KAYNAKTA da yok:" % len(yanlis))
