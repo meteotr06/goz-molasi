@@ -53,6 +53,10 @@ class SahteUygulama(gm.Uygulama):
 EN_AZ_DURUM = 62
 
 
+class _TekOrnekAtla(Exception):
+    """Tek ornek sinamasi olculemedi - kusur degil, ortam."""
+
+
 def main():
     hatalar = []
     sayac = {"n": 0}
@@ -534,16 +538,53 @@ def main():
         cagri = ("import sys;sys.path.insert(0, r'" + burasi + "');"
                  "import kilit as kl;print(kl.tek_ornek_al());")
 
-        # A: ilk kopya - mutex'i alir ve tutar
-        a = subprocess.Popen([sys.executable, "-c", cagri + "import time;time.sleep(8)"],
+        # A: ilk kopya - mutex'i alir ve tutar.
+        #
+        # SABIT BEKLEME YOK. Once `time.sleep(1.5)` vardi ve ilk
+        # kopyanin o sure icinde mutex'i aldigi VARSAYILIYORDU. Makine
+        # mesgulken (tarayici, derleme) yetmiyor; o zaman ikinci kopya
+        # da mutex'i aliyor ve sinama "koruma yok" diye RASTGELE
+        # kirmizi veriyordu. Iki kez yasandi (01.09.2026), dort kosuda
+        # tekrarlamadi - yani kusur uründe degil, sinamanin zamanlama
+        # varsayimindaydi.
+        #
+        # Artik ilk kopya sonucu yazinca O SATIR bekleniyor: varsayim
+        # yerine ISARET.
+        a = subprocess.Popen([sys.executable, "-c",
+                              cagri + "sys.stdout.flush();"
+                              "import time;time.sleep(8)"],
                              stdout=subprocess.PIPE, text=True)
-        time.sleep(1.5)
+        ilk = ""
+        try:
+            import threading
+            kutu = {}
+
+            def oku():
+                kutu["s"] = (a.stdout.readline() or "").strip()
+
+            t = threading.Thread(target=oku, daemon=True)
+            t.start()
+            t.join(10)                     # en cok 10 sn bekle
+            ilk = kutu.get("s", "")
+        except Exception:
+            pass
+
+        # ILK KOPYA MUTEX'I ALAMADIYSA asagidaki karsilastirma anlamsiz.
+        # "Koruma yok" demek yerine "olculemedi" demek dogru: yanlis
+        # sebeple kirmizi vermek, kirmizi vermemekten iyi degil.
+        if ilk != "True":
+            a.terminate()
+            hatalar.append("tek ornek OLCULEMEDI: ilk kopya mutex'i "
+                           "alamadi (%r) - makine mesgul olabilir" % ilk)
+            print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",
+                                  "OLCULEMEDI"))
+            raise _TekOrnekAtla()
+
         # B: ikinci kopya - False gormeli
         b = subprocess.run([sys.executable, "-c", cagri],
                            capture_output=True, text=True)
         ikinci = (b.stdout or "").strip()
         a.terminate()
-        ilk = (a.stdout.readline() or "").strip() if a.stdout else ""
 
         tamam = (ikinci == "False")
         if not tamam:
@@ -552,6 +593,8 @@ def main():
                 "ilk kopya %r" % (ikinci, ilk))
         print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",
                               "TAMAM" if tamam else "KALDI"))
+    except _TekOrnekAtla:
+        pass
     except Exception as e:
         hatalar.append("tek ornek SINANAMADI: %s: %s" % (type(e).__name__, e))
         print("  %-54s %s" % ("ikinci kopya acilamiyor (tek ornek)",

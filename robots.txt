@@ -1,4 +1,23 @@
+# BU DOSYA ATILDIR — KURAL BURADA DEĞİL.
+#
+# `robots.txt` YALNIZCA ALAN ADININ KÖKÜNDEN okunur. Bu uygulama
+# `meteotr06.github.io/goz-molasi/` altında yayınlanıyor, yani burası
+# kök değil. Adres tarayıcıda 200 dönüyor ve dosya "var" gibi
+# görünüyor, ama hiçbir arama motoru buna bakmaz.
+#
+# Ölçüldü (01.09.2026): buradaki "Allow: /" ve "Sitemap:" satırlarının
+# ikisi de yok sayılıyor. Geçerli olan tek dosya:
+#     https://meteotr06.github.io/robots.txt
+# Orada `Disallow: /*.py$` zaten `masaustu/*.py` dosyalarımızı
+# kapsıyor ve sitemap'imiz de oradan bildiriliyor. Yani koruma VAR —
+# ama bu dosyadan gelmiyor.
+#
+# NİYE SİLİNMEDİ: silinseydi sonraki okuyan "burada robots yok" deyip
+# yenisini yazardı ve aynı yanılgıya düşerdi; koruma sandığı dosya
+# konuşmuyor olurdu. Bu dosya o yanılgıyı önlemek için duruyor.
+#
+# BURAYA KURAL YAZMAYIN. Yazılacaksa yeri alan adının kökü:
+#     D:\Projeler\02 Hava Dururmu\robots.txt
+
 User-agent: *
 Allow: /
-
-Sitemap: https://meteotr06.github.io/goz-molasi/sitemap.xml
