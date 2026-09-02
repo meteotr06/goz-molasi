@@ -1583,6 +1583,11 @@
     // doğru ama görsel olarak bomboş duruyor: hedef 8, bugün 1 ise
     // çubuk %12 yükseklikte kalıyor ve kart 240 piksel boşluk oluyor.
     const doluGun = gunler.filter((g) => g.sayi > 0).length;
+    /* Ortalama DIS kapsamda: hem ozet yazisi hem grafik cizgisi
+       kullaniyor. Once ic blokta tanimliydi ve grafik onu
+       goremiyordu - ReferenceError butun grafigi olduruyordu
+       (01.09.2026 olculdu: cubuklar bile cizilmiyordu). */
+    const ortalama = Math.round((toplam / 7) * 10) / 10;
     if (doluGun <= 1) {
       og.haftaOzet.textContent = CS(
         `Bugün ${toplam} mola · geçmiş birikiyor`,
@@ -1590,7 +1595,6 @@
         `${toplam} break${toplam === 1 ? '' : 's'} today`
         + ' · history is building up');
     } else {
-      const ortalama = Math.round((toplam / 7) * 10) / 10;
       /* BUGUN ORTALAMAYA GORE NEREDE?
          Ortalamayı göstermek yetmiyordu — kullanıcı kendi bugününü
          onunla karşılaştıramıyordu. Hesap `Gecmis.gunlukKarsilastirma`
@@ -1625,9 +1629,11 @@
     // yakalayamaz — İngilizce sayfada Türkçe okunuyordu.
     og.haftaGrafik.setAttribute('aria-label', CS(
       'Son yedi gün: ' + gunler.map((g) => `${g.bugunMu ? 'bugün' : g.ad} ${g.sayi}`).join(', ') +
-        `. Toplam ${toplam} mola, günlük hedef ${GUNLUK_HEDEF}.`,
+        `. Toplam ${toplam} mola, günlük ortalama ${SAYI(ortalama, 1)}, `
+        + `günlük hedef ${GUNLUK_HEDEF}.`,
       'Last seven days: ' + gunler.map((g) => `${g.bugunMu ? 'today' : C(g.ad)} ${g.sayi}`).join(', ') +
-        `. ${toplam} breaks in total, daily goal ${GUNLUK_HEDEF}.`));
+        `. ${toplam} breaks in total, ${SAYI(ortalama, 1)} per day on `
+        + `average, daily goal ${GUNLUK_HEDEF}.`));
 
     for (const g of gunler) {
       const hucre = document.createElement('div');
@@ -1660,6 +1666,25 @@
     cizgi.className = 'hedef-cizgi';
     cizgi.style.setProperty('--hedef-oran', GUNLUK_HEDEF / enb);
     og.haftaGrafik.appendChild(cizgi);
+
+    /* ORTALAMA ÇİZGİSİ — kullanıcının kendi ölçütü.
+
+       Hedef BAŞKASININ koyduğu ölçüt; ortalama KENDİ ölçütün.
+       "Bugün ortalamamın üzerindeyim" bilgisi, "hedefin altındayım"dan
+       daha az suçluyor ve daha çok işe yarıyor. Kullanıcı bunu bir
+       ekran görüntüsüyle istedi (01.09.2026).
+
+       Hedeften AYRI görünüyor: bu düz ve vurgu renginde, hedef kesikli
+       ve soluk. İki kesikli çizgi yan yana ayırt edilemezdi.
+
+       Sıfır ortalamada çizilmiyor: tabana yapışan bir çizgi bilgi
+       vermez, yalnız kalabalık eder. */
+    if (ortalama > 0 && doluGun >= 2) {
+      const ort = document.createElement('div');
+      ort.className = 'ortalama-cizgi';
+      ort.style.setProperty('--ort-oran', Math.min(1, ortalama / enb));
+      og.haftaGrafik.appendChild(ort);
+    }
 
     // Tek günlük veriyle grafik boş görünüyor; ne olduğunu söyleyelim
     if (doluGun <= 1) {

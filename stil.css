@@ -523,6 +523,18 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
 
 /* Hedef çizgisi — çubuk alanının içinde, JS yüzdeyi veriyor.
    19px = gün adı satırı (16) + boşluk (4) eksi 1px kenarlık payı. */
+/* Ortalama çizgisi: DÜZ ve vurgu renginde.
+   Hedef çizgisi kesikli ve soluk; iki kesikli çizgi yan yana ayırt
+   edilemezdi. Renk tek başına anlatmıyor — biçim de farklı. */
+.ortalama-cizgi {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(19px + var(--ort-oran, .5) * var(--cubuk-alan));
+  border-top: 2px solid var(--vurgu);
+  opacity: .40;
+  pointer-events: none;
+}
+
 .hedef-cizgi {
   position: absolute;
   left: 0; right: 0;

@@ -161,6 +161,8 @@ const SOZLUK = {
   'Son 7 gün': 'Last 7 days',
   'Bugünkü durum': 'Today',
   'Kesikli çizgi günlük hedef:': 'Dashed line is the daily goal:',
+  'mola · düz çizgi kendi ortalaman':
+    'breaks · the solid line is your own average',
   'mola': 'breaks',
   'Yükleniyor…': 'Loading…',
   'Neden?': 'Why?',
