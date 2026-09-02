@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v174';
+const SURUM = 'goz-molasi-v175';
 
 const DOSYALAR = [
   './',
@@ -64,7 +64,31 @@ self.addEventListener('fetch', (e) => {
     try {
       // no-cache: tarayıcının kendi önbelleğini de atlayıp sunucuya sorar
       const cevap = await fetch(e.request, { cache: 'no-cache' });
-      if (cevap && cevap.ok) onbellek.put(e.request, cevap.clone());
+      /* ANAHTAR SORGUSUZ YAZILIR.
+
+         Eskiden `onbellek.put(e.request, ...)` idi, yani anahtar TAM
+         ADRESTI. Iki sonucu vardi (03.09.2026 olculdu: 6 sorgulu
+         adres onbellegi 25 -> 43 girdiye cikardi):
+
+         1. Her varlik IKI KEZ duruyordu: on yukleme `./stil.css`
+            yaziyor, sayfa `stil.css?s=v174` istiyor, ag-once yontem
+            de donen cevabi tam adresle yeniden yaziyordu.
+
+         2. Disaridan gelen HER sorgu (`?utm_source=...` gibi) kalici
+            yeni bir sayfa kopyasi aciyordu. Sayilari bizim elimizde
+            degil.
+
+         Kota dolunca tarayici yazmayi reddeder ve cevrimdisi katman
+         SESSIZCE olur - ekranda hicbir sey degismez.
+
+         Sorgu anahtardan cikarilabilir cunku onbellegin ADI zaten
+         surumle damgali; surum degisince tamami siliniyor. Okuma
+         tarafi da `ignoreSearch: true` kullaniyor. */
+      if (cevap && cevap.ok) {
+        const anahtar = new URL(e.request.url);
+        anahtar.search = '';
+        onbellek.put(anahtar.href, cevap.clone());
+      }
       return cevap;
     } catch {
       // ignoreSearch: dosya adreslerinde ?s=<sürüm> etiketi var.
