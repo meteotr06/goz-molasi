@@ -1103,6 +1103,7 @@
     try {
       const not = $('durumNotu');
       if (!not) return;
+      $('durumNotuSimge').textContent = '🔗';
       $('durumNotuBaslik').textContent = CS('Linki kopyala', 'Copy the link');
       const metin = $('durumNotuMetin');
       metin.textContent = PAYLASIM.url;
@@ -2657,10 +2658,29 @@
         try {
           const not = $('durumNotu');
           if (not) {
+            $('durumNotuSimge').textContent = '🔒';
             $('durumNotuBaslik').textContent = C('Aile kipi');
-            $('durumNotuMetin').textContent =
-              C('Aile kipi şifresiz açılamaz — çocuk tek dokunuşla kapatırdı. '
-              + 'Aşağıya 4-8 rakamlı bir şifre yaz, sonra anahtarı tekrar aç.');
+            /* HER ADIM YAZILIR.
+
+               Eski metin "şifre yaz, sonra anahtarı tekrar aç"
+               diyordu. Ölçüldü (03.09.2026): bunu harfiyen yapan
+               kullanıcı BAŞARAMIYOR — iki zorunlu adım eksikti:
+               "Şifreyi koy" (basılmazsa anahtar yine sessizce geri
+               kapanır) ve "Kaydet" (basılmazsa hiçbir ayar kalıcı
+               olmaz, yenilemede kip yok). Kullanıcının "aile kipi
+               çalışmıyor, açamadım bile" sözünün sebebi buydu;
+               özellik sağlam, yönerge eksikti.
+
+               `CS` kullanıldı: sözlüğe yeni uzun cümle eklemek
+               yerine iki dil yan yana dursun. */
+            $('durumNotuMetin').textContent = CS(
+              'Aile kipi şifresiz açılamaz — çocuk tek dokunuşla kapatırdı. '
+              + 'Sırayla: aşağıya 4–8 rakamlı şifreyi yaz, "Şifreyi koy"a bas, '
+              + 'anahtarı tekrar aç, sonra en altta "Kaydet"e bas.',
+              'Family mode cannot be enabled without a password — a child '
+              + 'would switch it off in one tap. In order: type a 4–8 digit '
+              + 'password below, press "Set password", turn the switch on '
+              + 'again, then press "Save" at the bottom.');
             not.hidden = false;
             $('durumNotuKapat')?.addEventListener(
               'click', () => { not.hidden = true; });
@@ -2999,6 +3019,7 @@
     try {
       const not = $('durumNotu');
       if (!not) return;
+      $('durumNotuSimge').textContent = '⚠';
       $('durumNotuBaslik').textContent = CS('Kayıt yapılamıyor', 'Cannot save');
       $('durumNotuMetin').textContent = CS(
         'Cihazın depolama alanı dolu olabilir ya da tarayıcı site '
@@ -3306,6 +3327,7 @@
         const kalanYazi = `${dk}:${String(sn).padStart(2, '0')}`;
         const not = $('durumNotu');
         if (not) {
+          $('durumNotuSimge').textContent = '🖥';
           const b = $('durumNotuBaslik');
           if (b) b.textContent = CS('Windows sürümüyle eşitlendi',
                                     'Synced with the Windows version');
@@ -3440,6 +3462,17 @@
         + `computer, the Windows version keeps measuring.`);
     }
     if (!metin) return;
+    /* KENDİ BAŞLIĞINI YAZ, VARSAYILANA GÜVENME.
+
+       Burası yalnız `durumNotuMetin` yazıyordu; başlık HTML'deki
+       varsayılandan ("Sayaç sıfırdan başladı") geliyordu. Aynı kutuyu
+       dolduran dört yer daha var ve onlar başlığı DEĞİŞTİRİYOR. Yani
+       önce "Linki kopyala" notu çıkmışsa, sonraki sıfırlama notu o
+       başlıkla görünüyordu: yanlış başlık, doğru metin. Kendisinden
+       uzun yaşayan durum. */
+    $('durumNotuSimge').textContent = '↺';
+    $('durumNotuBaslik').textContent = CS('Sayaç sıfırdan başladı',
+                                          'The timer started over');
     $('durumNotuMetin').textContent = metin;
     not.hidden = false;
     $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });

@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v175">
+<link rel="stylesheet" href="stil.css?s=v176">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -178,7 +178,11 @@
   </section>
 
   <section class="durum-notu" id="durumNotu" hidden role="status">
-    <span class="durum-notu-simge" aria-hidden="true">↺</span>
+    <!-- Simge her mesajda DEGISIR: bu kutuyu bes ayri yer
+         dolduruyor ve sabit `↺` (sifirlama) uc mesajda yanlis
+         duruyordu. Varsayilan yine `↺`, cunku kutunun ilk hali
+         sayac sifirlama notudur. -->
+    <span class="durum-notu-simge" id="durumNotuSimge" aria-hidden="true">↺</span>
     <div>
       <b id="durumNotuBaslik">Sayaç sıfırdan başladı</b>
       <p id="durumNotuMetin"></p>
@@ -841,17 +845,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v175"></script>
-  <script src="dil.js?s=v175"></script>
-  <script src="bilgiler.js?s=v175"></script>
-  <script src="bilgiler_en.js?s=v175"></script>
-  <script src="dunya.js?s=v175"></script>
-  <script src="egzersiz.js?s=v175"></script>
-  <script src="reklam.js?s=v175"></script>
-  <script src="kopru.js?s=v175"></script>
-  <script src="cekirdek.js?s=v175"></script>
-  <script src="mola_icerik.js?s=v175"></script>
-  <script src="arayuz.js?s=v175"></script>
+  <script src="degisiklikler.js?s=v176"></script>
+  <script src="dil.js?s=v176"></script>
+  <script src="bilgiler.js?s=v176"></script>
+  <script src="bilgiler_en.js?s=v176"></script>
+  <script src="dunya.js?s=v176"></script>
+  <script src="egzersiz.js?s=v176"></script>
+  <script src="reklam.js?s=v176"></script>
+  <script src="kopru.js?s=v176"></script>
+  <script src="cekirdek.js?s=v176"></script>
+  <script src="mola_icerik.js?s=v176"></script>
+  <script src="arayuz.js?s=v176"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
