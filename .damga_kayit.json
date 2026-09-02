@@ -1,10 +1,10 @@
 {
- "surum": "v170",
+ "surum": "v171",
  "ozetler": {
-  "index.html": "5e06507cfcadbf17",
-  "gizlilik.html": "659914940506a98f",
-  "rehber.html": "0bbb47f6272643fc",
-  "guide.html": "388c1eea74b36579",
+  "index.html": "3b76592fb55f05d2",
+  "gizlilik.html": "42511a662377c481",
+  "rehber.html": "824735d3a3201eb1",
+  "guide.html": "5903b76630d63c15",
   "stil.css": "15eed17b129fbeb0",
   "dil.js": "e48660e608ba3be5",
   "cekirdek.js": "11ded01d1221196a",
@@ -20,10 +20,10 @@
   "manifest.json": "39f557e01dbc2c58",
   "yazi/fraunces-latin.woff2": "170a928c701ef00e",
   "yazi/fraunces-latinext.woff2": "fffaa1960497be87",
-  "ikon-192.png": "27dcedfe08ee244c",
-  "ikon-512.png": "0392066cfaf8b0ae",
-  "ikon-maskeli.png": "1b2f35094884b3a4",
-  "onizleme.png": "68bed6e193d6fc5c",
-  "onizleme-en.png": "1a882f95c96b7e7b"
+  "ikon-192.png": "816a8cce7545cb89",
+  "ikon-512.png": "fdabc8ee6ff79586",
+  "ikon-maskeli.png": "039cfb1b23b3932a",
+  "onizleme.png": "a4a45c2b6ed35ebe",
+  "onizleme-en.png": "de544c1c4d629a0d"
  }
 }
