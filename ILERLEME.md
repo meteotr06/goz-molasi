@@ -314,3 +314,38 @@ olmayan bir şeyin eksikliği hata değildir.
 **Yön tek:** Windows → tarayıcı. Windows sürümü sürekli açık ve sekme
 kapalıyken de ölçebiliyor; hangisi daha çok şey biliyorsa doğru odur.
 Tarayıcıda verilen mola Windows tarafına GEÇMEZ — bilinen sınır.
+
+
+---
+
+## Uzun oturum ölçümü (03.09.2026) — bir daha koşturmaya gerek yok
+
+Merkez sordu: *sayaç kayıyor mu, bellek büyüyor mu, mola ekranı üst üste
+biniyor mu?* Üçü de ölçüldü; kod okunarak değil, uygulama **kullanılarak**.
+
+**25 dakika, kullanıcı hareketiyle** (dakikada bir örnek, düzenli girdi):
+
+| ölçülen | sonuç |
+|---|---|
+| sayaç kayması | 20 dakikada **±1 saniye** (duvar saatine karşı) |
+| bellek | 1,6–2,3 MB, **düz** — yükselen eğilim yok |
+| düğüm sayısı | 609 → 645 (ilk molada), sonra sabit |
+| örtü sayısı | mola sırasında **1**, diğer zaman 0 — üst üste binme yok |
+| JS hatası | **0** |
+
+**Altı mola çevrimi** ayrıca koşuldu, çünkü tek molayla "bir kerelik mi, her
+molada mı" ayırt edilemiyordu: düğüm sayısı ilk molada 645 olup **altı
+çevrim boyunca 645'te kaldı**. Yani mola ekranı bir kez kuruluyor; sızıntı
+yok. Bellek 2,5–4,9 MB arasında dalgalandı (çöp toplama gürültüsü).
+
+**Boşta bir saat** (girdi üretmeden): 6. dakikada durum `bosta` oldu ve sayaç
+dondu — **doğru davranış**, kullanıcı başında değilken saymamalı. O hâlde
+kayma ölçülemez; hareketli ölçüm bu yüzden ayrıca yapıldı. Boşta bellek
+2,0–2,3 MB düz, düğüm 609 sabit, JS hatası 0.
+
+**Ölçüm aracının kendi kusuru:** ilk denemede `#baslatDugme`ye koşulsuz
+basıyordum; uygulama zaten kendiliğinden başladığı için o basış sayacı
+**durdurdu** ve prova boyunca 19:58'de dondu. Bir saati duran sayaçla
+ölçecektim. Artık ölçüm, durum `calisiyor` olmadan **başlamıyor**. Ayrıca üç
+seçicinin üçü de yanlıştı (`#sayac`, `#baslatDur`, `#molaEkrani`) — kısa
+prova koşulmasaydı bir saat boyunca hiçbir şey ölçmemiş olacaktım.
