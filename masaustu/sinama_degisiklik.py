@@ -58,7 +58,19 @@ for i, satir in enumerate(satirlar):
     s = satir.strip()
     if not s.endswith("'") or s.endswith("',") or s.endswith("' +"):
         continue
-    sonraki = next((x.strip() for x in satirlar[i + 1:] if x.strip()), "")
+    # YORUM SATIRLARI DA ATLANIR, bos satirlar gibi.
+    #
+    # Ilk hali yalniz bos satiri atliyordu: dizge ile `+` arasina
+    # ACIKLAMA yazan sahte hata aliyordu. Yani iyi belgelenmis kodu
+    # cezalandiran bir denetimdi - belgelemeyi cezalandirir.
+    # Olculdu (02.09.2026, sentetik girdiyle): arada yorum varken
+    # "satir 1" hatasi veriyordu, yorumsuz halde temizdi.
+    def _islevsiz(x):
+        t = x.strip()
+        return (not t) or t.startswith("//") or t.startswith("/*")             or t.startswith("*")
+
+    sonraki = next((x.strip() for x in satirlar[i + 1:]
+                    if not _islevsiz(x)), "")
     if not sonraki.startswith("+"):
         h.append("degisiklikler.js:%d: dizge `+` ya da `,` olmadan bitiyor"
                  % (i + 1))
