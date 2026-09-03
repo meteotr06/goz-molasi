@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v177">
+<link rel="stylesheet" href="stil.css?s=v178">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -555,6 +555,28 @@
         </select>
       </div>
 
+      <!-- RENK TEMASI EN USTE ALINDI.
+           Olculdu (03.09.2026, telefon boyutunda): tema secici, 3320
+           piksellik ayar govdesinin %80'indeydi. Kullanicinin ona
+           ulasmasi icin 639 piksellik pencerede 2343 piksel kaydirmasi
+           gerekiyordu -- yaklasik DORT EKRAN boyu.
+
+           Kullanici "renk secenekleri getir" dedi. On bes tema ZATEN
+           vardi; bulunamiyordu. Bu, aile kipiyle ayni sinif: ozellik
+           saglam, ULASMA YOLU yok. Yeni ozellik yazmak yerine var
+           olani gorunur kilmak dogru cozum -- ustune bir on altincisini
+           eklemek, bulunamayan on besin uzerine bir tane daha koymak
+           olurdu.
+
+           Dilin hemen altinda: ikisi de "uygulama nasil GORUNSUN"
+           sorusu; sure ayarlari "nasil CALISSIN" sorusu ve o ayri. -->
+      <div class="satir" style="display:block">
+        <label>Renk teması
+          <small id="temaAdi">Seçince hemen uygulanır</small>
+        </label>
+        <div class="tema-seridi" id="temaSeridi" role="radiogroup" aria-label="Renk teması"></div>
+      </div>
+
       <div class="satir" style="display:block">
         <label>Hazır süreler
           <small>Kendine uyanı seç, istersen aşağıdan elle değiştir</small>
@@ -806,13 +828,6 @@
         <small id="canlilikDurum">Renklerin doygunluğu — yazı okunaklılığı değişmez</small>
       </div>
 
-      <div class="satir" style="display:block">
-        <label>Renk teması
-          <small id="temaAdi">Seçince hemen uygulanır</small>
-        </label>
-        <div class="tema-seridi" id="temaSeridi" role="radiogroup" aria-label="Renk teması"></div>
-      </div>
-
       <div class="satir">
         <label>Tüm verileri sıfırla
           <small id="sifirlamaDurum">Ayarlar, sayaçlar ve şifre silinir</small>
@@ -863,17 +878,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v177"></script>
-  <script src="dil.js?s=v177"></script>
-  <script src="bilgiler.js?s=v177"></script>
-  <script src="bilgiler_en.js?s=v177"></script>
-  <script src="dunya.js?s=v177"></script>
-  <script src="egzersiz.js?s=v177"></script>
-  <script src="reklam.js?s=v177"></script>
-  <script src="kopru.js?s=v177"></script>
-  <script src="cekirdek.js?s=v177"></script>
-  <script src="mola_icerik.js?s=v177"></script>
-  <script src="arayuz.js?s=v177"></script>
+  <script src="degisiklikler.js?s=v178"></script>
+  <script src="dil.js?s=v178"></script>
+  <script src="bilgiler.js?s=v178"></script>
+  <script src="bilgiler_en.js?s=v178"></script>
+  <script src="dunya.js?s=v178"></script>
+  <script src="egzersiz.js?s=v178"></script>
+  <script src="reklam.js?s=v178"></script>
+  <script src="kopru.js?s=v178"></script>
+  <script src="cekirdek.js?s=v178"></script>
+  <script src="mola_icerik.js?s=v178"></script>
+  <script src="arayuz.js?s=v178"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
