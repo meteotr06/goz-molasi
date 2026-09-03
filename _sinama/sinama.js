@@ -39,8 +39,36 @@
     ekle('sayaç', '35 dk kapanma → temiz başla', !r.ok,
          r.ok ? 'geri yükledi' : 'reddetti');
 
+    /* KURAL DEĞİŞTİ (03.09.2026) — kaçan mola artık DAYATILMIYOR.
+
+       Bu senaryo eskiden "kısa payla ver" diyordu: mola kapalıyken
+       geldiyse sayaç ~25 saniyeye ayarlanıyor, yani kullanıcı açar
+       açmaz mola üstüne düşüyordu. Kullanıcı bunu kusur olarak
+       bildirdi: "bak yine en başta açtığımda kendisi açtı".
+
+       Molayı tümden düşürmek de yanlış olurdu — aynı kullanıcı daha
+       önce "mola hiç gelmiyor" demişti. Yeni davranış ikisinin
+       ortası: sayaç NORMAL süresiyle işliyor (pusu yok) ve kaçan
+       mola kaybolmuyor, `gecikmisMolaSerit` ile TEKLİF ediliyor
+       ("Molan sen yokken geldi · Molamı şimdi ver").
+
+       Ölçüldü (03.09.2026, gerçek sayfada, mola 30 sn önce dolmuş ve
+       uygulama 40 sn kapalı kalmış): sayaç 19:57, teklif şeridi VAR,
+       mola ekranı `visibility:hidden` + `opacity:0` — yani AÇILMIYOR.
+
+       Sınama bu yüzden artık TAM ÇEVRİM bekliyor. Eski beklenti
+       ürünün değil, eski tasarımın kaydıydı; bayat bir sınama, geri
+       alınmış bir kusuru "doğru" diye savunur. */
     r = dene({ hedefZaman: s - 30e3, durum: 'calisiyor', kayitAni: s - 40e3 });
-    ekle('sayaç', 'kaçan mola, kısa kapanma → kısa payla ver', r.ok && yakin(r.kalan, 25, 4), `${r.kalan} sn`);
+    ekle('sayaç', 'kaçan mola, kısa kapanma → pusu YOK, tam çevrim',
+         r.ok && yakin(r.kalan, A.calismaSuresi, 5),
+         r.ok ? `${r.kalan} sn` : 'reddetti');
+
+    /* Teklifin KENDİSİ duruyor mu: şerit sayfadan kaldırılırsa kaçan
+       mola sessizce kaybolur ve üstteki senaryo yine "geçti" der. */
+    ekle('sayaç', 'kaçan mola için teklif şeridi sayfada duruyor',
+         !!document.getElementById('gecikmisMolaSerit'),
+         document.getElementById('gecikmisMolaSerit') ? '' : 'şerit YOK');
 
     r = dene({ hedefZaman: s - 600e3, durum: 'calisiyor', kayitAni: s - 700e3 });
     ekle('sayaç', 'kaçan mola, uzun kapanma → temiz başla', !r.ok, '');

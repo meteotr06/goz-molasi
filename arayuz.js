@@ -3709,27 +3709,88 @@
          bu bir sayac uygulamasi, mola sirasinda kendiliginden yenilemek
          molayi keser. Karar kullanicinin; serit "Yenile" sunuyor.
 
-         `denetleyiciVardi` SART: `controllerchange` ILK KURULUMDA da
-         tetikleniyor (`clients.claim` sayfayi ilk kez sahipleniyor).
-         Korumasiz birakinca uygulamayi yeni kuran kullaniciya "yeni
-         surum hazir" diyordu - olctum, kendi duzeltmemin urettigi yeni
-         bir hataydi. Ustteki `updatefound` dali ayni korumayi
-         `navigator.serviceWorker.controller` ile zaten yapiyor. */
-      const denetleyiciVardi = !!navigator.serviceWorker.controller;
+         BOOLEAN YETMIYOR - ADRESE BAKILIYOR.
+
+         Once `denetleyiciVardi` (yalnizca "bir denetleyici var miydi")
+         kullaniliyordu. UC ayri durum bu boole ile ayni gorunuyor:
+           1. Ilk kurulum       - denetleyici yoktu (bu eleniyordu)
+           2. DEVIR             - sayfayi BASKA bir isci kontrol
+                                  ediyordu, simdi bizimki devraldi
+           3. Gercek guncelleme - ayni iscinin yeni surumu gecti
+
+         2 NUMARA ELENMIYORDU. Portal kokte durdugu icin iscisinin
+         kapsami `/`, yani butun siteyi ortuyor: kullanici portali acip
+         Goz Molasi'na gectiginde sayfa once PORTALIN iscisi altinda
+         aciliyor, sonra bizimki kurulup devraliyor. O devir de
+         `controllerchange` atesliyor ve serit "Yeni surum hazir"
+         diyordu - ortada hicbir yeni surum yokken.
+
+         OLCULDU (03.09.2026, canli adres, v178):
+           tertemiz acilis     -> serit YOK  (0/6)
+           portal -> Goz Molasi -> serit VAR (4/4)
+         Ayni olcum Muhasebe ve Kahve'de 0/4: onlar ortak modulu
+         (`ortak/guncelle.js`) kullaniyor ve o modul tam bu ayrimi
+         adrese bakarak yapiyor. Burada kendi kopyamiz vardi, ayrim
+         eksikti.
+
+         AYIRT EDICI: gercek guncellemede iscinin ADRESI AYNI KALIR -
+         ayni dosyanin yeni surumu gecer. Devirde adres DEGISIR. */
+      let oncekiBetik = navigator.serviceWorker.controller
+        ? navigator.serviceWorker.controller.scriptURL
+        : null;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (denetleyiciVardi) guncellemeSeridiniGoster();
+        const yeniBetik = navigator.serviceWorker.controller
+          ? navigator.serviceWorker.controller.scriptURL
+          : null;
+        if (!oncekiBetik) {
+          /* Ilk kurulum. Adresi YAZIP donuyoruz: yazmazsak bu sayfa
+             oturumu boyunca `oncekiBetik` null kalir ve ayni oturumda
+             gelen GERCEK bir guncelleme de sessizce kacar. */
+          oncekiBetik = yeniBetik;
+          return;
+        }
+        if (oncekiBetik !== yeniBetik) {
+          /* Devir. Adresi guncelliyoruz ki BIZIM iscimizin bundan
+             sonraki gercek guncellemesi yakalanabilsin. */
+          oncekiBetik = yeniBetik;
+          return;
+        }
+        guncellemeSeridiniGoster();
       });
+      /* "DENETLEYICI VAR MI" YETMIYOR - "BIZIM MI" diye sorulmali.
+
+         Asagidaki iki dal `navigator.serviceWorker.controller` dogru mu
+         diye bakiyordu. Portaldan girildiginde o denetleyici PORTALIN
+         iscisi oluyor (kapsami `/`, butun siteyi ortuyor) - yani sayfa
+         bizim yeni surumumuzu degil, BASKA bir iscinin devrini
+         yasiyor. Iki dal da bunu "guncelleme" sanip serit gosteriyordu.
+
+         Olculdu (03.09.2026, once canlida sonra yerelde taklit edilen
+         portal duzeninde): yalnizca `controllerchange` dalini
+         duzeltmek YETMEDI, serit bu daldan cikmaya devam etti. Uc yol
+         da ayni olcute baglandi.
+
+         BIZIM ISCIMIZIN ADRESI: `register('sw.js')` cagrisiyla ayni
+         cozulen mutlak adres. Denetleyicinin adresi buna esitse
+         guncelleme bizimdir; degilse devirdir. */
+      const bizimBetik = new URL('sw.js', location.href).href;
+      const bizimDenetleyicimizMi = () => {
+        const d = navigator.serviceWorker.controller;
+        return !!d && d.scriptURL === bizimBetik;
+      };
+
       // Zaten bekleyen bir sürüm varsa (kullanıcı bu sekmeyi açık
       // bırakmışsa) hemen söyle
-      if (kayit.waiting && navigator.serviceWorker.controller) {
+      if (kayit.waiting && bizimDenetleyicimizMi()) {
         guncellemeSeridiniGoster();
       }
       kayit.addEventListener('updatefound', () => {
         const yeni = kayit.installing;
         if (!yeni) return;
         yeni.addEventListener('statechange', () => {
-          // controller varsa bu bir GÜNCELLEME; yoksa ilk kurulum
-          if (yeni.state === 'installed' && navigator.serviceWorker.controller) {
+          // BIZIM denetleyicimiz varsa bu bir GUNCELLEME; yoksa ilk
+          // kurulum ya da baska bir isciden devir.
+          if (yeni.state === 'installed' && bizimDenetleyicimizMi()) {
             guncellemeSeridiniGoster();
           }
         });
