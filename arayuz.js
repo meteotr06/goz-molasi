@@ -1433,7 +1433,18 @@
   og.engelEbeveyn.addEventListener('click', async () => {
     if (!(await sifreSor(C('Ek süre vermek için şifreni gir.')))) return;
     motor.ayarlar.ekSureBitis = Date.now() + 15 * 60 * 1000;
-    motor.kaydet();
+    /* `motor.kaydet()` DEĞİL — MolaMotoru'nda öyle bir metot YOK.
+       Ölçüldü (03.09.2026, gerçek sayfa): `typeof molaMotoru.kaydet`
+       = "undefined", prototipte de yok. Yani bu satır her seferinde
+       istisna atıyordu: ebeveyn şifresini doğru giriyor, ek süre
+       BELLEĞE yazılıyor, sonra istisna `engeliTazele()`yi de
+       düşürüyor — ekran açılmıyor ve süre diske hiç yazılmıyor.
+
+       Üstteki yorum "bu OLMAZSA kullanıcı kendini kilitler" diyor;
+       tam da o oluyordu. Kendi sınırını koyan kullanıcı, sınır
+       dolunca ayarlara giremiyor ve geri alamıyordu. Doğru işlev
+       modül düzeyindeki `kaydet()`. */
+    kaydet();
     engeliTazele();
   });
 

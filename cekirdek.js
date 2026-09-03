@@ -116,11 +116,21 @@ function ayarlariSuz(ayarlar) {
   for (const [ad, [enAz, enCok]] of Object.entries(SURE_SINIRLARI)) {
     if (!(ad in c)) continue;
     const s = Number(c[ad]);
-    // Sayı değilse ya da aralık dışıysa varsayılana dön. Sessizce
-    // kırpmak yerine varsayılan: 0 girilmişse niyet belirsizdir,
-    // 60'a kırpmak kullanıcının istemediği bir değeri "seçilmiş"
-    // gibi gösterirdi.
-    c[ad] = (Number.isFinite(s) && s >= enAz && s <= enCok)
+    /* "KAPALI" BIR ARALIK DISI DEGER DEGIL, BIR SECIMDIR.
+
+       `bostaEsigi` kapatildiginda arayuz 1e9 yaziyor ("bir daha asla
+       bosta sayma"). Bu deger [10, 3600] araliginin disinda oldugu
+       icin asagidaki kural onu VARSAYILANA (90) ceviriyordu: kutu
+       "kapali" gorunurken motor 90 saniyelik esikle calisiyordu.
+
+       OLCULDU (03.09.2026, gercek formdan): kutu kapatildi, kayda
+       1000000000 yazildi, yenilemeden sonra kutu False gorunuyor ama
+       `molaMotoru.ayarlar.bostaEsigi` = 90. Ayar yalan soyluyordu.
+
+       Kullanicinin kapattigi bir ayari sessizce geri acmak, hic
+       kapatilamamasindan kotudur: kullanici kapattigini SANIYOR. */
+    const kapaliSecimi = (ad === 'bostaEsigi' && s >= enCok * 1000);
+    c[ad] = (kapaliSecimi || (Number.isFinite(s) && s >= enAz && s <= enCok))
       ? s
       : VARSAYILAN_AYARLAR[ad];
   }
@@ -360,7 +370,32 @@ class MolaMotoru {
       if (gercektenUzaklasti) {
         this.istatistik.kesintisizSure = 0;   // gerçekten dinlenildi
         this._duyur('dinlenildi', Math.round(uzaktaKalinan / 1000));
-        this.sifirla();
+        /* AYARA BAK — "uzun süre uzak kalınca sıfırla" KAPALI olabilir.
+
+           Bu canlı yol o ayara HİÇ bakmıyordu. `sayaciGeriYukle` (kapat-aç
+           yolu) bakıyor, burası bakmıyordu; yani aynı ayar iki yolda iki
+           türlü davranıyordu.
+
+           Neden ağır: TELEFONDA bu ayar VARSAYILAN KAPALI (dokunmatik
+           göçü, arayuz.js). Yani kullanıcı hiç dokunmadan "sıfırlama"
+           demiş oluyor, ama uygulama açıkken telefon cebe girip 15+
+           dakika sonra çıkınca sayaç yine de başa dönüyordu.
+
+           ÖLÇÜLDÜ (03.09.2026): ayar AÇIK -> 1200 sn (sıfırlandı),
+           ayar KAPALI -> 1200 sn (yine sıfırlandı). İki dal aynı.
+
+           Kullanıcının aylardır bildirdiği "sayaç kendini sıfırlıyor"
+           şikâyetinin kaynağı büyük olasılıkla burası. Dün gece
+           üretememiştim çünkü kapat-aç yolunu ölçmüştüm — o yol zaten
+           doğruydu.
+
+           `kesintisizSure` yine sıfırlanıyor: kişi gerçekten uzaktaydı,
+           bu bir OLGU. Ayar sayacı ilgilendiriyor, istatistiği değil. */
+        if (this.ayarlar.uzakKalincaSifirla === false) {
+          this.devamEt();
+        } else {
+          this.sifirla();
+        }
       } else {
         this.devamEt();
       }
