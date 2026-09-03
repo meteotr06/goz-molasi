@@ -483,8 +483,32 @@
     try { motor.askidanCikar(); } catch {}
     liderDamgala();
     og.ikinciSekme.hidden = true;
-    // Sayaç kaydı ortak; devralan sekme kaldığı yerden sürdürür.
-    try { motor.sayaciGeriYukle(JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}')); } catch {}
+    /* İSTATİSTİK DE GERİ YÜKLENİR — YOKSA BUGÜNÜN SAYISI SİLİNİR.
+
+       Burada yalnız `sayaciGeriYukle` çağrılıyordu; o SAYACI geri
+       yükler, İSTATİSTİĞİ yüklemez (onu `iceAktar` yapıyor, o da
+       yalnızca açılışta koşuyor). Sonuç: bu sekme açıldıktan SONRA
+       öteki sekmede biriken molalar bu sekmenin belleğinde yok; devir
+       alınca da yüklenmiyor ve bu sekme lider olduğu için ilk
+       kaydında diskteki doğru sayıyı KENDİ bayat sıfırıyla eziyor.
+
+       ÖLÇÜLDÜ (03.09.2026, iki gerçek sekme): B açıldı (0), A'da sayı
+       5'e çıktı ve diske yazıldı, A kapandı, B devraldı → B'nin
+       belleğinde 0, diskte 5. B'nin bir sonraki kaydı bugünün mola
+       sayısını sıfırlayacaktı.
+
+       `iceAktar`ın tamamı çağrılmıyor BİLEREK: o ayarları ve temayı da
+       geri yazıyor; devralan sekmenin kullanıcının o an değiştirdiği
+       ayarları ezmesi ayrı bir kusur olurdu. Yalnız istatistik, ve
+       `iceAktar`ın kendi süzgeciyle: bozuk depo doğrudan ekrana
+       çıkmasın (ölçülmüştü — "cok" ve "-3" mola sayısı görünüyordu),
+       ve gün değiştiyse dünün sayısı bugüne taşınmasın. */
+    try {
+      const kayitli = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
+      const temiz = istatistikSuz(kayitli.istatistik);
+      if (temiz.gun && temiz.gun === motor._bugun()) motor.istatistik = temiz;
+      motor.sayaciGeriYukle(kayitli);
+    } catch {}
     motor._kalpAtisiBaslat();
     ekraniCiz(motor.anlikDurum());
     clearInterval(liderZaman);
