@@ -341,14 +341,59 @@
      dürüst kullanıcıyı kilitli bırakıyor. O yüzden açık bir çıkış yolu
      veriyoruz — ama ne olacağını net söyleyerek. */
   $('sifreUnuttum').addEventListener('click', () => {
-    const onay = confirm(
+    /* BU DÜĞME EBEVEYN KAPISININ YANINDA DURUYOR.
+
+       Şifre penceresi aile kipinin kapısı; "Şifremi unuttum" ise tek
+       dokunuşta her şeyi silip o kapıyı kaldırıyordu. Çocuk için bu
+       gayet uygun bir takas: geçmişi kaybet, sınırdan kurtul.
+
+       Kaldıramayız — sunucu yok, e-postayla kurtarma yok; şifresini
+       gerçekten unutan ebeveyn kendi cihazında kilitli kalır. O yüzden
+       çıkış DURUYOR ama artık tek dokunuş değil: silineceklerin
+       arasında AİLE KİPİ de açıkça yazıyor ve onay için bir kelime
+       yazmak gerekiyor.
+
+       AÇIKÇA SÖYLÜYORUM: bu bir kilit değil, HIZ KESİCİ. Kararlı bir
+       çocuk kelimeyi de yazar. Sunucusuz bir uygulamada bundan iyisi
+       yok; "kilitledik" demek yanlış olurdu.
+
+       Metin ESKİDEN YALNIZ TÜRKÇEYDİ. Uygulama iki dilli; İngilizce
+       kullanan biri, GERİ ALINAMAZ bir silmeden önce anlamadığı bir
+       duvar görüyordu. Onay metni geri alınamaz bir işlemde
+       kullanıcının dilinde olmak zorunda. */
+    const aileVar = motor.ayarlar.kip === 'aile';
+    const onay = confirm(CS(
       ['Şifreni sıfırlamanın tek yolu tüm verileri silmek.',
        '',
-       'Silinecekler: şifre, ayarların, bugünkü sayaçlar ve 7 günlük geçmiş.',
+       'Silinecekler: şifre, ayarların, bugünkü sayaçlar ve 7 günlük geçmiş.'
+       + (aileVar ? '\nAİLE KİPİ ve koyduğun bütün sınırlar da kalkacak.' : ''),
        'Uygulama ilk günkü haline döner.',
        '',
-       'Devam edilsin mi?'].join('\n'));
+       'Devam edilsin mi?'].join('\n'),
+      ['The only way to reset your password is to erase all data.',
+       '',
+       'This deletes: your password, your settings, today’s counters and '
+       + 'the 7-day history.'
+       + (aileVar ? '\nFAMILY MODE and every limit you set will also be removed.' : ''),
+       'The app returns to its first-run state.',
+       '',
+       'Continue?'].join('\n')));
     if (!onay) return;
+    if (aileVar) {
+      const kelime = CS('SİL', 'DELETE');
+      const yazilan = prompt(CS(
+        `Onaylamak için ${kelime} yaz.`,
+        `Type ${kelime} to confirm.`));
+      /* KARŞILAŞTIRMA KÜÇÜK HARFTE, `tr-TR` ile.
+
+         Bu depoda Türkçe büyük/küçük harf bir kez ısırdı: `"AİLE"`in
+         küçüğü birleşik noktalı `'ai̇le'` çıkıyor ve `'aile'`ye eşit
+         olmuyor. Burada da "SİL"i büyütmeye kalksak aynı tuzak vardı.
+         Küçültme yönü güvenli: `'SİL' → 'sil'`, `'DELETE' → 'delete'`.
+         Kullanıcı ister büyük ister küçük yazsın kabul ediliyor. */
+      const kucuk = (x) => (x || '').trim().toLocaleLowerCase('tr-TR');
+      if (kucuk(yazilan) !== kucuk(kelime)) return;
+    }
     silindi = true;
     try {
       localStorage.removeItem(KAYIT_ANAHTARI);
@@ -2824,6 +2869,38 @@
   og.ayarAc.addEventListener('click', () => { ayarlariPencereyeYaz(); og.pencere.showModal(); });
   og.ayarVazgec.addEventListener('click', () => og.pencere.close());
   og.ayarKaydet.addEventListener('click', async () => {
+    /* AİLE KİPİNDE SINIRLARI DEĞİŞTİRMEK ŞİFRE İSTER.
+
+       Ölçüldü (03.09.2026, gerçek formdan): aile kipi AÇIK, şifre KURULU
+       iken günlük sınır 15 → 480 dakikaya HİÇBİR ŞİFRE SORULMADAN
+       değiştirildi ve kaydedildi. Yani ebeveyn denetimi süstü: çocuk
+       kipi kapatmıyor (o zaten şifre istiyor), sınırı sonuna çekiyor.
+
+       Kapı burada, çünkü aile alanları TEK YERDEN kaydediliyor.
+       Zararsız tercihler (tema, ses, titreşim) serbest kalıyor —
+       kilitlenmesi gereken şey ebeveynin koyduğu KURALLAR.
+
+       `kilitOzeti` yoksa sorulmuyor: kip zaten şifresiz açılamıyor,
+       şifresiz bir "aile kipi" varsa o bozuk bir kayıttır ve
+       kullanıcıyı kendi ayarlarından kilitlemenin âlemi yok. */
+    if (motor.ayarlar.kip === 'aile' && kilitOzeti) {
+      const yeniSinir = Math.max(0, +og.aySinir.value || 0);
+      const aileDegisti =
+        yeniSinir !== (motor.ayarlar.gunlukSinirDk || 0) ||
+        og.ayYasak.checked !== !!motor.ayarlar.yasakAcik ||
+        (og.ayYasakBas.value || '21:00') !== motor.ayarlar.yasakBas ||
+        (og.ayYasakBit.value || '07:00') !== motor.ayarlar.yasakBit ||
+        og.ayMolaKilit.checked !== molaKilit ||
+        og.ayAtla.checked !== !!motor.ayarlar.molaAtlanabilir;
+      if (aileDegisti &&
+          !(await sifreSor(CS(
+            'Aile kipi kurallarını değiştirmek için şifreni gir.',
+            'Enter your password to change family mode rules.')))) {
+        ayarlariPencereyeYaz();   // ekran depoyla yeniden aynı olsun
+        return;
+      }
+    }
+
     havaAcik = og.ayHava.checked;
     try { localStorage.setItem(HAVA_ACIK_ANAHTAR, havaAcik ? '1' : '0'); } catch {}
     MolaIcerik.havaAyarla(havaAcik);
