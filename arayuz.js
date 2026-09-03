@@ -499,6 +499,21 @@
        her durum geçişinde onu yeniden başlatıyor. Ölçüldü — ikinci
        sekme kendini ikinci sekme gösterip yine sayıyordu, üstelik
        liderden farklı bir sayı. Artık motor askıya alınıyor. */
+    /* MOLA EKRANI AÇIKSA ÖNCE KAPATILIR — YOKSA KALICI KİLİTLENİR.
+
+       Motoru askıya almak molayı da donduruyor: mola ekranı tam ekran
+       açık kalıyor ve süresi HİÇ dolmuyor, çünkü sayacı ilerletecek
+       tik artık koşmuyor. Kullanıcı tam ekranın arkasında kalıyor.
+
+       ÖLÇÜLDÜ (03.09.2026, iki gerçek sekme): A molaya girdi, B
+       liderliği aldı ve damgalamayı sürdürdü. A'da mola ekranı
+       60+ saniye açık kaldı — mola süresi 20 saniye. Uygulama
+       kullanılamaz hâle geliyordu.
+
+       Molayı bu sekmede bitirmek doğru: mola KULLANICIYA ait, sekmeye
+       değil. Lider sekme molayı kendi yürütüyor; bu sekmenin görevi
+       "ikinci sekme" olduğunu söylemek. */
+    if (molaAcik) molaEkraniKapat();
     try { motor.askiyaAl(); } catch {}
   }
 
