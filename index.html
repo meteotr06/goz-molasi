@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v176">
+<link rel="stylesheet" href="stil.css?s=v177">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -188,6 +188,24 @@
       <p id="durumNotuMetin"></p>
     </div>
     <button type="button" class="durum-notu-kapat" id="durumNotuKapat"
+            aria-label="Kapat">✕</button>
+  </section>
+
+  <!-- GECIKMIS MOLA TEKLIFI -- KENDI OGESI.
+       Ustteki `durumNotu` kutusunu BES ayri yer dolduruyor. Oraya bir
+       eylem dugmesi koysaydim, o bes yazardan biri notu doldurdugunda
+       dugmeyi gizlemeyi unutur ve alakasiz bir notun altinda basibos
+       bir "Molami simdi ver" dugmesi kalirdi. Paylasilan bir kutuya
+       tek bir yolun kontrol ettigi ogeyi koymak, o yolu digerlerine
+       bagimli kilar. Bu yuzden ayri. -->
+  <section class="durum-notu" id="gecikmisMolaSerit" hidden role="status">
+    <span class="durum-notu-simge" aria-hidden="true">⏰</span>
+    <div>
+      <b id="gecikmisMolaBaslik"></b>
+      <p id="gecikmisMolaMetin"></p>
+      <button type="button" id="gecikmisMolaVer"></button>
+    </div>
+    <button type="button" class="durum-notu-kapat" id="gecikmisMolaKapat"
             aria-label="Kapat">✕</button>
   </section>
 
@@ -845,17 +863,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v176"></script>
-  <script src="dil.js?s=v176"></script>
-  <script src="bilgiler.js?s=v176"></script>
-  <script src="bilgiler_en.js?s=v176"></script>
-  <script src="dunya.js?s=v176"></script>
-  <script src="egzersiz.js?s=v176"></script>
-  <script src="reklam.js?s=v176"></script>
-  <script src="kopru.js?s=v176"></script>
-  <script src="cekirdek.js?s=v176"></script>
-  <script src="mola_icerik.js?s=v176"></script>
-  <script src="arayuz.js?s=v176"></script>
+  <script src="degisiklikler.js?s=v177"></script>
+  <script src="dil.js?s=v177"></script>
+  <script src="bilgiler.js?s=v177"></script>
+  <script src="bilgiler_en.js?s=v177"></script>
+  <script src="dunya.js?s=v177"></script>
+  <script src="egzersiz.js?s=v177"></script>
+  <script src="reklam.js?s=v177"></script>
+  <script src="kopru.js?s=v177"></script>
+  <script src="cekirdek.js?s=v177"></script>
+  <script src="mola_icerik.js?s=v177"></script>
+  <script src="arayuz.js?s=v177"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

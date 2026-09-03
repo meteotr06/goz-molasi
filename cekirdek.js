@@ -809,7 +809,22 @@ class MolaMotoru {
       : (this.ayarlar.dinlenmeEsigi || 300);
     if (kalan <= 0 && kapaliKalan <= molaPenceresi) {
       this._kalpAtisiBaslat();
-      this.hedefZaman = simdi + 25000;
+      /* PUSU KURMA, TEKLIF ET.
+
+         Burada eskiden `simdi + 25000` vardi: uygulamayi acan
+         kullaniciya 25 saniye sonra tam ekran mola DUSUYORDU. Kullanici
+         bunu kusur olarak bildirdi (03.09.2026): "bak yine en basta
+         actigimda kendisi acti".
+
+         Ama molayi tumden dusurmek de YANLIS olurdu -- ayni kullanici
+         daha once tam tersini sikayet etmisti: "mola hic gelmiyor".
+         Iki sikayet ayni koda bakiyor.
+
+         Cozum ikisini de karsiliyor: sayac NORMAL suresiyle basliyor
+         (pusu yok), `gecikmisMola` yine kuruluyor ve arayuz kullaniciya
+         DUGMEYLE soruyor. Mola kaybolmuyor, dayatilmiyor. Karar
+         kullanicida -- zaten uygulamanin butun mantigi bu. */
+      this.hedefZaman = simdi + this.ayarlar.calismaSuresi * 1000;
       this.durum = 'calisiyor';
       this.sonHareket = simdi;
       this.gecikmisMola = { dakika: Math.round(kapaliKalan / 60) };

@@ -3395,12 +3395,44 @@
 
     let metin = null;
     if (gec) {
+      /* TEKLIF, DAYATMA DEGIL.
+
+         Eski davranis: bu not cikiyor ve 25 saniye sonra tam ekran mola
+         KENDILIGINDEN dusuyordu. Kullanicinin bildirdigi kusur buydu:
+         "bak yine en basta actigimda kendisi acti".
+
+         Molayi tumden dusurmek de yanlis olurdu; ayni kullanici daha
+         once "mola hic gelmiyor" demisti. Bu yuzden mola KAYBOLMUYOR,
+         SORULUYOR. Sayac normal suresiyle isliyor; kullanici dugmeye
+         basarsa molayi hemen aliyor, basmazsa sirasinda zaten alacak.
+
+         AYRI SERIT KULLANILIYOR: `durumNotu` kutusunu bes ayri yer
+         dolduruyor; oraya dugme koymak, gizlemesini o bes yazara
+         birakmak olurdu. */
       const g = Math.max(1, gec.dakika | 0);
-      metin = CS(
-        `Mola sen uzaktayken geldi (${g} dakika). Sayaç sıfırlanmadı — `
-        + `molan birazdan başlıyor.`,
-        `Your break came due while you were away (${g} min). The timer was `
-        + `not reset — your break starts shortly.`);
+      const serit = $('gecikmisMolaSerit');
+      if (serit) {
+        $('gecikmisMolaBaslik').textContent =
+          CS('Molan sen yokken geldi', 'Your break came due while you were away');
+        $('gecikmisMolaMetin').textContent = CS(
+          `${g} dakika uzaktaydın. Sayaç sıfırlanmadı ve mola kaybolmadı —`
+          + ` istersen şimdi alabilirsin, istemezsen sırasında gelir.`,
+          `You were away for ${g} min. The timer was not reset and the break`
+          + ` was not lost — take it now, or wait for the next one.`);
+        const ver = $('gecikmisMolaVer');
+        ver.textContent = CS('Molamı şimdi ver', 'Take my break now');
+        ver.addEventListener('click', () => {
+          serit.hidden = true;
+          if (motor.durum === 'hazir') motor.basla();
+          motor.molayaGec();
+        }, { once: true });
+        $('gecikmisMolaKapat')?.addEventListener(
+          'click', () => { serit.hidden = true; }, { once: true });
+        serit.hidden = false;
+      }
+      /* Ustteki ortak kutu bu durumda HIC kullanilmiyor: iki kutu birden
+         acilirsa kullanici hangisine bakacagini bilemez. */
+      metin = null;
     } else if (sebep && sebep.tur === 'mola-sirasinda') {
       /* BIR DAKIKANIN ALTINDA SURE SOYLEMIYORUZ.
 
