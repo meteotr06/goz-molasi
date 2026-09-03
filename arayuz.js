@@ -2012,6 +2012,25 @@
       'yaklaşık 6 metre uzağa bak.',
       `Eye break started. ${sn} seconds. Look away from the screen, ` +
       'about 6 metres.'));
+    /* AÇIK PENCERELER KAPANIR — YOKSA MOLA ARKADA KALIR.
+
+       `<dialog open>` tarayıcının ÜST KATMANINDA çiziliyor. Orası
+       z-index'in üstünde: mola örtüsüne kaç verirsek verelim modalın
+       ARKASINDA kalıyor.
+
+       ÖLÇÜLDÜ (03.09.2026): ayar penceresi açıkken mola başlatıldı.
+       `molaEkran` "acik" sınıfını aldı ama ekranın tam ortasındaki öğe
+       `tema-sec` çıktı — yani kullanıcı ayarlardayken molayı HİÇ
+       görmüyor. Göz molası uygulamasında molanın kaçırılması, kaçırılan
+       tek şey değil: sayaç molayı yaşanmış sayıp yeni çevrime geçiyor.
+
+       BEDELİ VAR, saklamıyorum: ayarlarda kaydedilmemiş bir değişiklik
+       varsa kapanınca gider. Yine de doğru takas — mola 20 saniye ve
+       kaçırılan mola bir daha geri gelmiyor; ayarları yeniden açmak
+       ise bir dokunuş. */
+    for (const p of document.querySelectorAll('dialog[open]')) {
+      try { p.close(); } catch {}
+    }
     og.molaEkran.classList.add('acik');
     // Mola ekrana geldi: rozetin isi bitti. Beklemeyi anlatan bir
     // isaret, bekleme bitince durmamali.
