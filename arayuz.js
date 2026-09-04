@@ -507,7 +507,34 @@
       const kayitli = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
       const temiz = istatistikSuz(kayitli.istatistik);
       if (temiz.gun && temiz.gun === motor._bugun()) motor.istatistik = temiz;
+
+      /* AYARLAR VE KİLİT DE GERİ YÜKLENİR — YOKSA ŞİFRE SİLİNİYOR.
+
+         Bu sekme lider DEĞİLDİ; belleğindeki ayarlar, açıldığı andan
+         kalma. Devralınca lider oluyor ve ilk kaydında `disaAktar()`
+         o bayat ayarları diske yazıyor. Diskteki doğru hâl (son
+         liderin yazdığı) siliniyor.
+
+         ÖLÇÜLDÜ (03.09.2026, iki gerçek sekme): B açıldı, A'da şifre
+         kuruldu ve çalışma süresi 45 dk yapıldı, A kapandı, B devraldı
+         ve kaydetti → diskte ŞİFRE YOK, süre 20 dk. Yani veli şifre
+         koyuyor, öteki sekme devralınca aile kipi koruması sessizce
+         kalkıyordu. Güvenlik sınıfı, veri sınıfından da ağır.
+
+         Kilit `motor.ayarlar` içinde değil, modül düzeyinde tutuluyor;
+         o yüzden ayrıca yazılıyor — açılıştaki okumanın aynısı. */
+      /* BIRLESTIRILIYOR, tumden degistirilmiyor: `iceAktar` da boyle
+         yapiyor (`{...this.ayarlar, ...veri.ayarlar}`). Diskte olmayan
+         bir alan varsayilanini korusun; tumden degistirmek yeni
+         eklenmis bir ayari kayittan silerdi. */
+      if (kayitli.ayarlar) {
+        motor.ayarlar = ayarlariSuz({ ...motor.ayarlar, ...kayitli.ayarlar });
+      }
+      kilitOzeti = kayitli.kilitOzeti || null;
+      kilitTuz = kayitli.kilitTuz || null;
+
       motor.sayaciGeriYukle(kayitli);
+      ayarlariPencereyeYaz();   // ekran depoyla yeniden aynı olsun
     } catch {}
     motor._kalpAtisiBaslat();
     ekraniCiz(motor.anlikDurum());
