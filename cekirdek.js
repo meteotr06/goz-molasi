@@ -251,8 +251,14 @@ class MolaMotoru {
     (this.dinleyiciler[olay] ||= []).push(fn);
     return this;
   }
-  _duyur(olay, veri) {
-    (this.dinleyiciler[olay] || []).forEach((fn) => fn(veri));
+  /* Ikinci bir deger tasiyabiliyor. Sebebi olculdu: `molaBitti`
+     dinleyicisi molanin UZUN mu oldugunu `this.uzunMoladaMi`den
+     okuyordu, ama cekirdek o bayragi duyurudan ONCE sifirliyor -
+     dinleyici her zaman false goruyor ve bes dakikalik uzun mola
+     25 yerine 10 puan getiriyordu. Bir bilgiyi dinleyiciye TAHMIN
+     ETTIRMEK yerine olayla birlikte GONDERIYORUZ. */
+  _duyur(olay, veri, ek) {
+    (this.dinleyiciler[olay] || []).forEach((fn) => fn(veri, ek));
   }
 
   /* ---------- Kontrol ---------- */
@@ -394,6 +400,20 @@ class MolaMotoru {
       unutulması demekti. */
   _molayiAtlayarakBitir() {
     this.istatistik.atlananMola++;
+    /* UZUN MOLA BAYRAGI BURADA DA TEMIZLENIYOR.
+
+       Eskiden bayragi yalnizca mola TAMAMLANINCA (tik icinde) false
+       yapiyorduk. Uzun molayi ATLAYAN biri icin bayrak true kaliyor
+       ve bir SONRAKI normal mola "uzun mola" sayiliyordu: tamamlanan
+       mola artmiyor, yedi gun grafiginde bugunun cubugu buyumuyor,
+       seri ilerlemiyor. Ustelik `kesintisizSure` sifirlanip iki
+       saatlik uzun mola sayaci basa donuyordu - kisi hic
+       dinlenmedigi halde.
+
+       Atlanan mola `uzunMola` sayilmiyor: yapilmamis bir mola
+       yapilmis sayilamaz. `kesintisizSure`ye de dokunulmuyor -
+       dinlenilmedi. */
+    this.uzunMoladaMi = false;
     this._duyur('molaAtlandi', this.istatistik);
     this._asamayaGec('calisiyor', this.ayarlar.calismaSuresi);
     return true;
@@ -655,6 +675,7 @@ class MolaMotoru {
 
     if (kalan <= 0) {
       if (this.durum === 'mola') {
+        const uzunMuydu = !!this.uzunMoladaMi;
         if (this.uzunMoladaMi) {
           this.istatistik.uzunMola++;
           this.istatistik.kesintisizSure = 0;   // uzun mola sayacı sıfırlar
@@ -662,7 +683,9 @@ class MolaMotoru {
         } else {
           this.istatistik.tamamlananMola++;
         }
-        this._duyur('molaBitti', this.istatistik);
+        /* Molanin UZUN mu oldugu bilgisi olayla birlikte gidiyor:
+           bayrak yukarida zaten sifirlandi, dinleyici okuyamaz. */
+        this._duyur('molaBitti', this.istatistik, uzunMuydu);
 
         // 2 saati aşan kesintisiz çalışma varsa uzun mola ÖNER (zorlama yok)
         if (this.ayarlar.uzunMolaAcik &&
@@ -968,10 +991,29 @@ class MolaMotoru {
       return false;
     }
 
-    const kalan = (hedef - simdi) / 1000;
+    /* 'bosta' ICINDE DONDURULMUS KALAN SURE GERI YUKLENIYOR.
+
+       Sekme gizliyken sayac 'bosta'ya giriyor ve o andaki kalan sure
+       `kalanDondurulmus` olarak diske yaziliyor — ama `hedefZaman`
+       donmuyor, saat ilerlemeye devam ediyor. Geri yuklerken donmus
+       deger YALNIZCA 'duraklatildi' dalinda okunuyordu; 'bosta' icin
+       hic okunmuyordu.
+
+       Sonuc: 18:00'de donan sayac, on dakika sonra uygulama acilinca
+       18:00'den degil 8:00'den basliyordu; yeterince beklenmisse
+       hedef gecmis olup tumden sifirlaniyordu. Ayni durum iki yoldan
+       iki farkli sayi veriyordu: sekmeye DONMEK donmus degeri
+       kullaniyor, KAPAT-AC kullanmiyordu.
+
+       'saatDisi' de ayni sekilde donuyor, o da dahil. */
+    const donmusHam = +veri.kalanDondurulmus;
+    const donmusGecerli = (veri.durum === 'bosta' || veri.durum === 'saatDisi')
+      && Number.isFinite(donmusHam) && donmusHam > 0
+      && donmusHam <= this.ayarlar.calismaSuresi;
+    const kalan = donmusGecerli ? donmusHam : (hedef - simdi) / 1000;
     if (kalan > 0 && kalan <= this.ayarlar.calismaSuresi) {
       this._kalpAtisiBaslat();
-      this.hedefZaman = hedef;
+      this.hedefZaman = donmusGecerli ? (simdi + donmusHam * 1000) : hedef;
       /* SURELI DURAKLATMA sekme kapaliyken de biter.
          Olculdu: eskiden "5 dakika duraklat" deyip sekmeyi kapatan
          kullanici geri donunce KALICI olarak duraklamis oluyordu -
@@ -1126,14 +1168,25 @@ const Gecmis = {
 
       En az IKI gun yoksa null: tek gunluk gecmisten ortalama cikarmak
       uydurmadir. */
+  /** ORTALAMA TABANI — ilk dolu günden itibaren olan günler.
+
+      Baştaki sıfırlar "o gün mola vermedi" değil "o gün uygulama
+      yoktu" demek; onları bölene katmak ortalamayı haksız yere
+      düşürür. `gunlukKarsilastirma` bu ilkeyi zaten uyguluyordu ama
+      HAFTALIK KARTIN BÜYÜK SAYISI ayrıca 7'ye bölüyordu — aynı kartta
+      birbirini tutmayan iki ortalama. Bölen artık tek yerde. */
+  ortalamaTabani(gunler) {
+    if (!Array.isArray(gunler)) return [];
+    const ilk = gunler.findIndex((g) => g && (g.sayi | 0) > 0);
+    return ilk === -1 ? [] : gunler.slice(ilk);
+  },
+
   gunlukKarsilastirma(gunler) {
     if (!Array.isArray(gunler) || !gunler.length) return null;
     const bugun = gunler.find((g) => g && g.bugunMu);
     if (!bugun) return null;
     const oncekiler = gunler.filter((g) => g && !g.bugunMu);
-    const ilkDolu = oncekiler.findIndex((g) => (g.sayi | 0) > 0);
-    if (ilkDolu === -1) return null;
-    const temel = oncekiler.slice(ilkDolu);
+    const temel = this.ortalamaTabani(oncekiler);
     if (temel.length < 2) return null;
     const toplam = temel.reduce((t, g) => t + (g.sayi | 0), 0);
     const ortalama = toplam / temel.length;
@@ -1168,6 +1221,106 @@ const Gecmis = {
      görünüyordu — yanlış değil ama EKSİK, ve eksik olduğu
      söylenmiyordu. */
   saklananGun: SAKLANAN_GUN,
+
+  /** HAFTALIK ÖZET — rapor ekranının tek veri kaynağı.
+
+      Döner:
+        { gunler, doluGun, yeterliVeri, toplamMola, toplamAtlanan,
+          toplamEkran, ortalama, enIyi, enSakin, hedefTutan, hedef,
+          oncekiToplam, fark }
+
+      `gunler[i].veriVar` BU İŞLEVİN EN ÖNEMLİ ALANI: o gün için hiç
+      kayıt yoksa `false`. "O gün 0 mola verdi" ile "o gün uygulama
+      yoktu" farklı şeylerdir; ikisini karıştıran bir rapor kullanıcıya
+      "en kötü günün pazartesi" der — hâlbuki pazartesi uygulamayı
+      henüz kurmamıştı. `gunlukKarsilastirma` bu tuzağı zaten biliyor,
+      burada da aynı ilke.
+
+      YETERSİZ VERİDE SONUÇ YOK: üç dolu günün altında `yeterliVeri`
+      false döner ve arayüz sonuç cümlesi kurmaz. İki günlük geçmişten
+      "en iyi günün" çıkarmak uydurma bir kesinlik verir. */
+  haftaOzeti(bugunIstatistik = null, hedef = GUNLUK_HEDEF, adet = 7) {
+    const veri = this.oku();
+    const bugun = new Date();
+    const gunAl = (geriGun) => {
+      const t = new Date(bugun.getTime() - geriGun * 86400000);
+      const anahtar = this.gunAdi(t);
+      const kayit = veri[anahtar];
+      const bugunMu = geriGun === 0;
+      const canli = bugunMu && bugunIstatistik;
+      return {
+        anahtar,
+        ad: GUN_ADLARI[t.getDay()],
+        mola: canli ? (bugunIstatistik.tamamlananMola | 0) : ((kayit || {}).mola | 0),
+        atlanan: canli ? (bugunIstatistik.atlananMola | 0) : ((kayit || {}).atlanan | 0),
+        ekran: canli ? Math.round(bugunIstatistik.ekranSuresi || 0)
+                     : ((kayit || {}).ekran | 0),
+        /* Kayıt YOKSA veri yok. Kayıt varsa sıfır bile olsa veridir:
+           o gün uygulama açıktı ve mola verilmedi — bu bir bilgidir.
+
+           BUGÜN AYRI: `bugunIstatistik` her zaman veriliyor, yani
+           bugünü koşulsuz "dolu gün" saymak eşiği tümden işlevsiz
+           bırakıyordu — iki günlük geçmişi olan yeni kullanıcı üç gün
+           sayılıp sonuç cümlesi görüyordu. Bugün ancak GERÇEKTEN bir
+           şey olduysa sayılıyor. */
+        veriVar: !!kayit || !!(canli && (
+          (bugunIstatistik.tamamlananMola | 0) > 0
+          || (bugunIstatistik.atlananMola | 0) > 0
+          || Math.round(bugunIstatistik.ekranSuresi || 0) > 0)),
+        bugunMu,
+      };
+    };
+
+    const gunler = [];
+    for (let i = adet - 1; i >= 0; i--) gunler.push(gunAl(i));
+    const dolu = gunler.filter((g) => g.veriVar);
+
+    const topla = (liste, alan) => liste.reduce((t, g) => t + (g[alan] | 0), 0);
+    const toplamMola = topla(dolu, 'mola');
+
+    // Önceki dönem: aynı uzunlukta, bir dönem geride. Orada da yalnız
+    // DOLU günler sayılıyor; yoksa "geçen hafta 0'dı, bu hafta harika"
+    // gibi uydurma bir ilerleme çıkardı.
+    const oncekiler = [];
+    for (let i = adet * 2 - 1; i >= adet; i--) oncekiler.push(gunAl(i));
+    const oncekiDolu = oncekiler.filter((g) => g.veriVar);
+    const oncekiToplam = oncekiDolu.length ? topla(oncekiDolu, 'mola') : null;
+
+    /* EN IYI / EN SAKIN YALNIZ TAMAMLANMIS GUNLERDEN.
+
+       Bugun daha bitmedi. Sabah dokuzda "en sakin gunun bugun" demek
+       haksiz ve her sabah tekrarlanirdi. Olculdu: iki gunluk gecmiste
+       "En sakin gunun Cum: 0 mola" ciktiginda o gun BUGUNDU. */
+    let enIyi = null;
+    let enSakin = null;
+    const tamamlanan = dolu.filter((g) => !g.bugunMu);
+    if (tamamlanan.length >= 3) {
+      const sirali = tamamlanan.slice().sort((a, b) => b.mola - a.mola);
+      enIyi = sirali[0];
+      const son = sirali[sirali.length - 1];
+      // Hepsi aynıysa "en sakin gün" diye bir şey yok.
+      if (son.mola !== enIyi.mola) enSakin = son;
+    }
+
+    return {
+      gunler,
+      doluGun: dolu.length,
+      yeterliVeri: dolu.length >= 3,
+      // Sonuc cumlesi icin ayri esik: bugun sayilmaz.
+      tamamlananGun: tamamlanan.length,
+      toplamMola,
+      toplamAtlanan: topla(dolu, 'atlanan'),
+      toplamEkran: topla(dolu, 'ekran'),
+      ortalama: dolu.length
+        ? Math.round((toplamMola / dolu.length) * 10) / 10 : null,
+      enIyi,
+      enSakin,
+      hedefTutan: dolu.filter((g) => g.mola >= hedef).length,
+      hedef,
+      oncekiToplam,
+      fark: oncekiToplam === null ? null : toplamMola - oncekiToplam,
+    };
+  },
 
   seri(bugunIstatistik = null, hedef = GUNLUK_HEDEF) {
     const veri = this.oku();

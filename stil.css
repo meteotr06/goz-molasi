@@ -1908,6 +1908,66 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .seviye-cubuk { height: 100%; width: 0; background: var(--vurgu); border-radius: 6px; }
 .seviye-kart small { font-size: .75rem; color: var(--yazi-soluk); }
 
+.rapor-kart {
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  margin: 12px 0;
+}
+.rapor-baslik { margin: 0; font-size: 1.15rem; }
+.rapor-alt { margin: 2px 0 14px; font-size: .8125rem; color: var(--yazi-soluk); }
+.rapor-buyuk { display: flex; align-items: baseline; gap: 8px; }
+.rapor-buyuk b { font-size: 2.6rem; line-height: 1; color: var(--vurgu); }
+.rapor-buyuk span { font-size: .9375rem; color: var(--yazi-soluk); }
+.rapor-fark { margin: 8px 0 0; font-size: .875rem; }
+.rapor-fark[data-yon="artis"] { color: var(--basari, var(--vurgu)); }
+.rapor-kutucuklar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 16px 0 4px;
+}
+/* Gun satirlari: cubuk GENISLIKLE, sayi da YAZIYLA veriliyor -
+   bilgi yalniz renkte ya da yalniz uzunlukta durmasin. */
+.rapor-gunler { margin: 14px 0 4px; }
+.rapor-gun {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr 2.6rem;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: .8125rem;
+}
+.rapor-gun .ad { color: var(--yazi-soluk); }
+.rapor-gun .yol {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cizgi);
+  overflow: hidden;
+}
+.rapor-gun .dolgu {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--vurgu);
+  min-width: 2px;
+}
+.rapor-gun .sayi { text-align: right; font-variant-numeric: tabular-nums; }
+.rapor-gun[data-bugun="1"] .ad { color: var(--yazi); font-weight: 600; }
+/* Veri OLMAYAN gun: sifir mola DEGIL, kayit yok. Ikisi ayni
+   gorunurse rapor kullaniciya yalan soyler. */
+.rapor-gun[data-veri="yok"] { opacity: .55; }
+.rapor-gun[data-veri="yok"] .dolgu { display: none; }
+.rapor-cumle { margin: 12px 0 0; font-size: .875rem; line-height: 1.5; }
+.rapor-yetersiz {
+  margin: 12px 0 0;
+  font-size: .875rem;
+  line-height: 1.5;
+  color: var(--yazi-soluk);
+}
+.rapor-not { margin: 10px 0 0; font-size: .8125rem; color: var(--yazi-soluk); }
+#raporPaylas { margin-top: 14px; width: 100%; }
+
 /* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
    yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
    metniyle veriliyor. Sayi RENKLE degil YAZIYLA da soyleniyor. */

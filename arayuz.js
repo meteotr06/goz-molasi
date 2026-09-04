@@ -33,6 +33,19 @@
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
     saatlikEksen: $('saatlikEksen'),
+    raporAralik: $('raporAralik'),
+    raporToplam: $('raporToplam'),
+    raporToplamEtiket: $('raporToplamEtiket'),
+    raporFark: $('raporFark'),
+    raporOrtalama: $('raporOrtalama'),
+    raporHedefGun: $('raporHedefGun'),
+    raporEkran: $('raporEkran'),
+    raporAtlanan: $('raporAtlanan'),
+    raporGunler: $('raporGunler'),
+    raporCumle: $('raporCumle'),
+    raporYetersiz: $('raporYetersiz'),
+    raporPaylas: $('raporPaylas'),
+    raporNot: $('raporNot'),
     ayAksam: $('ayAksam'),
     ayAksamSaat: $('ayAksamSaat'),
     ayAksamSatir: $('ayAksamSatir'),
@@ -238,9 +251,45 @@
   }
   // Varsayilan ACIK: kullanici bunu acikca istedi.
   let molaKilit = kayit.molaKilit !== false;
-  motor.ayarlar.uzakKalincaSifirla = uzakSifirla;
-  if (!bostaAcik) motor.ayarlar.bostaEsigi = 1e9;
-  motor.iceAktar(kayit);
+  /* SIRA ONEMLI — BU IKI SATIR ONCE GELIYORDU VE EZILIYORDU.
+
+     `iceAktar` depodaki `ayarlar`i motorun uzerine yaziyor
+     (`{ ...this.ayarlar, ...veri.ayarlar }`). Yani yukaridaki telefon
+     gocu "uzak kalinca sifirla"yi kapatiyor, hemen ardindaki
+     `iceAktar` depodaki eski `true` ile onu yeniden aciyordu.
+     Kullanicinin gordugu sey: ayar anahtari KAPALI, etiketi
+     "kapaliyken hic sifirlanmaz" diyor, ama yirmi dakika uzak kalip
+     donunce sayac 20:00'a doniyor. Kullanici bunu aylardir bildiriyor.
+
+     Duzeltmeyi `iceAktar`dan SONRAYA koymak YETMEZDI: `iceAktar` ayni
+     cagrida `sayaciGeriYukle`yi de calistiriyor (cekirdek.js), yani o
+     acilistaki sifirlama karari coktan verilmis olurdu. Degerler
+     kayda GIRMEDEN once giriyor. */
+  /** DEPODAN GELEN KAYDI DUZELT — TEK YER.
+
+      Telefon gocu (`uzakSifirla`) ve "bosta durdurma kapali" secimi,
+      depodaki ESKI degerlerin uzerine yazilmali. Iki ayri yerde elle
+      yapmak, birinin unutulmasi demekti - NITEKIM UNUTULDU: acilista
+      duzeltmistim, liderligi devralma bloğu ayni ham kaydi yeniden
+      okuyup ayarlari geri yaziyor ve sayaci o yanlis ayarla geri
+      yukluyordu. Duzeltmem calismiyor sanip aramaya devam ettim;
+      mesele iki kopyaydi.
+
+      Degerler CAGRI ANINDA okunuyor: kullanici ayari degistirirse
+      yeni deger gecerli olsun. */
+  function kaydiDuzelt(ham) {
+    if (!ham || typeof ham !== 'object') return ham;
+    return {
+      ...ham,
+      ayarlar: {
+        ...(ham.ayarlar || {}),
+        uzakKalincaSifirla: uzakSifirla,
+        ...(bostaAcik ? {} : { bostaEsigi: 1e9 }),
+      },
+    };
+  }
+
+  motor.iceAktar(kaydiDuzelt(kayit));
   let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
   let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
@@ -554,8 +603,16 @@
        `iceAktar`ın kendi süzgeciyle: bozuk depo doğrudan ekrana
        çıkmasın (ölçülmüştü — "cok" ve "-3" mola sayısı görünüyordu),
        ve gün değiştiyse dünün sayısı bugüne taşınmasın. */
+    /* DEVRALIRKEN DE `kaydiDuzelt`TEN GECIYOR. Ham kayit dogrudan
+       kullanilirsa telefon gocu ve "bosta kapali" secimi geri aliniyor,
+       `sayaciGeriYukle` karari YANLIS ayarla veriliyor ve sayac
+       sifirlaniyordu. (Aciklama `try`in USTUNDE: `sinama_depo.py`
+       depo erisiminin dort satir icinde bir `try` gormek istiyor ve
+       araya giren yorum onu itiyordu -- denetci hakliydi, yorum
+       yuzunden korumasiz GORUNEN bir erisim, gozle ayirt edilemez.) */
     try {
-      const kayitli = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
+      const hamKayit = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
+      const kayitli = kaydiDuzelt(hamKayit);
       const temiz = istatistikSuz(kayitli.istatistik);
       if (temiz.gun && temiz.gun === motor._bugun()) motor.istatistik = temiz;
 
@@ -822,7 +879,8 @@
 
   function bitisKartiniGoster(istatistik, atlandiMi = false) {
     const bugun = (istatistik && istatistik.tamamlananMola) | 0;
-    const seri = Gecmis.seri(istatistik);
+    // Hedef ayardan — mola bitis karti da ayni seriyi gostermeli.
+    const seri = Gecmis.seri(istatistik, hedefAl());
 
     og.bitisBaslik.textContent = atlandiMi
       ? CS('Mola atlandı', 'Break skipped')
@@ -1759,7 +1817,13 @@
     haftaImza = imza;
 
     const toplam = gunler.reduce((t, g) => t + g.sayi, 0);
-    const s = Gecmis.seri(motor.istatistik);
+    /* HEDEF AYARDAN. `seri()` ikinci argumani almazsa sabit 8'e
+       goruyor; ayni kartin altindaki etiketler ise ayari kullaniyordu.
+       Hedefini 3'e ceken kullanici rozeti hic goremiyor, etiket ise
+       "12 gundur araliksiz" diyordu - ayni kartta iki farkli seri.
+       Ayar ekrani "Seri ve etiketler bu hedefe gore calisir" diye
+       soz veriyor. */
+    const s = Gecmis.seri(motor.istatistik, hedefAl());
     // VERİ TARAFI: bu rozet ancak seri oluşunca beliriyor. Temiz
     // bir tarayıcıda sınama koşunca DOM'da hiç yok ve dil taraması
     // geçiyordu.
@@ -1796,7 +1860,19 @@
        kullaniyor. Once ic blokta tanimliydi ve grafik onu
        goremiyordu - ReferenceError butun grafigi olduruyordu
        (01.09.2026 olculdu: cubuklar bile cizilmiyordu). */
-    const ortalama = Math.round((toplam / 7) * 10) / 10;
+    /* BOLEN 7 DEGIL: ilk dolu gunden itibaren olan gun sayisi.
+
+       Eskiden sabit 7'ye bolunuyordu, yani uygulamanin daha kurulu
+       OLMADIGI gunler de ortalamaya katiliyordu. Uc gundur kullanan
+       ve gunde bes mola veren biri "gunde ortalama 2,1" goruyordu.
+       Ustelik ayni kartin karsilastirma cumlesi BASKA bir tabana
+       (ilk dolu gunden itibaren) gore konusuyordu - kullanici ayni
+       kartta birbirini tutmayan iki ortalama goruyordu. Taban artik
+       `Gecmis.ortalamaTabani` ile tek yerde. */
+    const taban = Gecmis.ortalamaTabani(gunler);
+    const ortalama = taban.length
+      ? Math.round((taban.reduce((t, g) => t + (g.sayi | 0), 0) / taban.length) * 10) / 10
+      : 0;
     if (doluGun <= 1) {
       og.haftaOzet.textContent = CS(
         `Bugün ${toplam} mola · geçmiş birikiyor`,
@@ -1879,7 +1955,11 @@
     // Hedef çizgisi: çubuk alanının içinde, en büyük değere göre oranlı
     const cizgi = document.createElement('div');
     cizgi.className = 'hedef-cizgi';
-    cizgi.style.setProperty('--hedef-oran', GUNLUK_HEDEF / enb);
+    /* AYARDAN. Sabit 8 kullaniliyordu: hedefini 4 yapan kullanicida
+       oran 8/4=2 cikip cizgi grafigin disina tasiyor, efsane ise var
+       olmayan bir cizgiyi tarif ediyordu. Olcek (`enb`) ve cubuk
+       rengi zaten ayardan geliyordu - yalniz cizgi geride kalmisti. */
+    cizgi.style.setProperty('--hedef-oran', hedefAl() / enb);
     og.haftaGrafik.appendChild(cizgi);
 
     /* ORTALAMA ÇİZGİSİ — kullanıcının kendi ölçütü.
@@ -1907,9 +1987,9 @@
       not.className = 'hafta-not';
       not.textContent = CS(
         'Grafik her gün biraz daha dolacak. '
-          + `Kesikli çizgi günlük hedef: ${GUNLUK_HEDEF} mola.`,
+          + `Kesikli çizgi günlük hedef: ${hedefAl()} mola.`,
         'The chart fills in a little more each day. '
-          + `Dashed line is the daily goal: ${GUNLUK_HEDEF} breaks.`);
+          + `Dashed line is the daily goal: ${hedefAl()} breaks.`);
       og.haftaGrafik.after(not);
     }
   }
@@ -2442,21 +2522,39 @@
   }
   og.ayHaftaSonu?.addEventListener('change', haftaSonuSatiriniTazele);
 
+  /** SÜRE BİÇİMLEYİCİ — TEK YER.
+
+      `saatlikCiz` içinde yerel bir kopyası vardı. Rapor ekranı da aynı
+      biçime ihtiyaç duyunca ikinci bir kopya yazmak yerine buraya
+      çıkarıldı: iki yerde tutulan bir biçimleyici kayar ve aynı süre
+      iki ekranda iki türlü görünür.
+
+      `saatYaz` bir SAAT biçimleyicisi (Date -> "14:30"), süre değil;
+      adına bakıp onu kullanmak sessizce yanlış metin üretirdi. */
+  function sureMetni(sn) {
+    const t = Math.round(+sn || 0);
+    if (t < 60) return CS(`${t} sn`, `${t} s`);
+    const d = Math.floor(t / 60), s = Math.floor(d / 60);
+    if (s < 1) return CS(`${d} dk`, `${d} min`);
+    return CS(`${s} sa ${d % 60} dk`, `${s} h ${d % 60} min`);
+  }
+
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
        bicimleyicisi (Date -> "14:30"), sure degil; adina bakip
        kullansaydim sessizce yanlis metin uretirdi. */
-    const sur = (sn) => {
-      const t = Math.round(+sn || 0);
-      if (t < 60) return CS(`${t} sn`, `${t} s`);
-      const d = Math.floor(t / 60), s = Math.floor(d / 60);
-      if (s < 1) return CS(`${d} dk`, `${d} min`);
-      return CS(`${s} sa ${d % 60} dk`, `${s} h ${d % 60} min`);
-    };
+    const sur = sureMetni;
     const ham = motor.istatistik && motor.istatistik.saatlik;
     const kovalar = Array.isArray(ham) ? ham : new Array(24).fill(0);
-    const enCok = Math.max(1, ...kovalar.map((x) => +x || 0));
+    /* IKI AYRI SAYI, BILEREK.
+       `enCok` cubuk yuksekligini olceklemek icin; sifira bolmemek
+       adina tabani 1. Ama o taban dizide OLMAYAN bir deger uretir ve
+       `indexOf` -1 doner: ekranda "en yogun saat -1:00" yaziyordu.
+       "En yogun saat"i bulmak icin dizinin GERCEK en buyugu
+       kullaniliyor. */
+    const gercekEnCok = Math.max(0, ...kovalar.map((x) => +x || 0));
+    const enCok = Math.max(1, gercekEnCok);
     const toplam = kovalar.reduce((t, x) => t + (+x || 0), 0);
 
     /* IZGARA BİR KEZ KURULUR, SONRA YALNIZCA GÜNCELLENİR.
@@ -2507,7 +2605,7 @@
       /* EN YOGUN SAAT ISARETLENIYOR. Ustteki yazi zaten "en yogun saat
          13:00" diyor; grafikte bunun karsiligi yoktu, yani yazi bir
          seyi gosteriyor ama gosterdigi sey gorunmuyordu. */
-      const yogun = (toplam > 0 && deger === enCok);
+      const yogun = (gercekEnCok > 0 && deger === gercekEnCok);
       if (yogun) { if (sutun.dataset.yogun !== '1') sutun.dataset.yogun = '1'; }
       else if (sutun.dataset.yogun) delete sutun.dataset.yogun;
     }
@@ -2516,12 +2614,15 @@
       `Screen time by hour. ${sur(toplam)} today.`));
 
     if (og.saatlikAlt) {
-      if (toplam <= 0) {
+      /* ESIK BIR SANIYE: yarim saniyelik birikim `Math.round` ile
+         "0 sn" olarak yaziliyordu, yani "bugun toplam 0 sn" diyen bir
+         satirin yaninda bir de saat gosteriliyordu. */
+      if (toplam < 1 || gercekEnCok <= 0) {
         og.saatlikAlt.textContent = CS(
           'Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
           'Nothing measured yet today — it builds up while the app is open.');
       } else {
-        const enYogun = kovalar.indexOf(enCok);
+        const enYogun = kovalar.indexOf(gercekEnCok);
         og.saatlikAlt.textContent = CS(
           `Bugün toplam ${sur(toplam)} · en yoğun saat `
           + `${String(enYogun).padStart(2, '0')}:00`,
@@ -2733,13 +2834,16 @@
     .uzerine('degisti', (d) => { ekraniCiz(d); kaydet(); })
     .uzerine('uyari', (kalan) => balonGoster(kalan))
     .uzerine('molaBasladi', () => { balonGizle(); molaEkraniAc(); })
-    .uzerine('molaBitti', () => {
+    .uzerine('molaBitti', (istatistik, uzunMuydu) => {
       // Şifre penceresi açıkken mola kendi kendine bittiyse pencereyi de kapat
       if (og.sifrePencere.open) sifreKapat(false);
       /* PUAN: yalnız TAMAMLANAN moladan. Atlanan moladan puan
          DÜŞÜLMÜYOR — ceza kullanıcıyı uygulamayı bırakmaya iter;
          kazanılmayan puan zaten yeterli geri bildirim. */
-      puan += motor.uzunMoladaMi ? PUAN_UZUN : PUAN_MOLA;
+      /* `motor.uzunMoladaMi` BURADA HER ZAMAN FALSE: cekirdek onu
+         duyurudan once sifirliyor. Olculdu - bes dakikalik uzun mola
+         25 yerine 10 puan getiriyordu. Bilgi artik olayla geliyor. */
+      puan += uzunMuydu ? PUAN_UZUN : PUAN_MOLA;
       seviyeCiz();
       molaEkraniKapat();
       calSes(990, 0.4);
@@ -2943,9 +3047,168 @@
     try { degisiklikleriKur(); } catch {}
   }
 
+  /* ---------- HAFTALIK RAPOR ---------- */
+  /** Rapor ekranını çiz. TEK VERİ KAYNAĞI `Gecmis.haftaOzeti`;
+      buradaki hiçbir sayı yeniden hesaplanmıyor — aynı sayıyı iki
+      yerde hesaplamak, ikisinin ayrışması demektir. */
+  function raporCiz() {
+    if (!og.raporToplam) return;
+    let o;
+    try { o = Gecmis.haftaOzeti(motor.istatistik, hedefAl()); } catch { return; }
+
+    og.raporToplam.textContent = SAYI(o.toplamMola);
+    og.raporToplamEtiket.textContent = CS('göz molası', 'eye breaks');
+    /* ONDALIKLI: haftalik kart "5,5" derken rapor "6" diyordu -
+       ayni sayi iki ekranda iki turlu gorunuyordu. */
+    og.raporOrtalama.textContent = o.ortalama === null
+      ? '—' : SAYI(o.ortalama, 1);
+    og.raporHedefGun.textContent = SAYI(o.hedefTutan);
+    og.raporEkran.textContent = sureMetni(o.toplamEkran);
+    og.raporAtlanan.textContent = SAYI(o.toplamAtlanan);
+    og.raporAralik.textContent = CS(
+      `son 7 gün · ${o.doluGun} günde veri var`,
+      `last 7 days · data on ${o.doluGun} of them`);
+
+    /* GEÇEN HAFTA SATIRI ANCAK VERİ VARSA. Önceki dönemde hiç kayıt
+       yoksa `oncekiToplam` null gelir; "geçen hafta 0'dı" demek
+       uygulamanın o zaman kurulu olmadığını gizlerdi. */
+    if (o.fark === null) {
+      og.raporFark.classList.add('gizli');
+    } else {
+      og.raporFark.classList.remove('gizli');
+      og.raporFark.dataset.yon = o.fark > 0 ? 'artis' : 'duz';
+      og.raporFark.textContent = o.fark === 0
+        ? CS('önceki 7 günle aynı', 'same as the previous 7 days')
+        : (o.fark > 0
+          ? CS(`önceki 7 güne göre ${SAYI(o.fark)} mola fazla`,
+               `${SAYI(o.fark)} more than the previous 7 days`)
+          : CS(`önceki 7 güne göre ${SAYI(-o.fark)} mola az`,
+               `${SAYI(-o.fark)} fewer than the previous 7 days`));
+    }
+
+    // Gün satırları
+    const enb = Math.max(1, ...o.gunler.map((g) => g.mola | 0));
+    og.raporGunler.innerHTML = '';
+    for (const g of o.gunler) {
+      const satir = document.createElement('div');
+      satir.className = 'rapor-gun';
+      if (g.bugunMu) satir.dataset.bugun = '1';
+      if (!g.veriVar) satir.dataset.veri = 'yok';
+      const ad = document.createElement('span');
+      ad.className = 'ad';
+      ad.textContent = g.bugunMu ? CS('Bugün', 'Today') : C(g.ad) || g.ad;
+      const yol = document.createElement('span');
+      yol.className = 'yol';
+      const dolgu = document.createElement('span');
+      dolgu.className = 'dolgu';
+      dolgu.style.width = Math.round((g.mola / enb) * 100) + '%';
+      yol.appendChild(dolgu);
+      const sayi = document.createElement('span');
+      sayi.className = 'sayi';
+      // Veri yoksa SAYI YAZMIYORUZ. "0" yazmak "o gün hiç mola
+      // vermedin" demektir; oysa o gün uygulama yoktu.
+      sayi.textContent = g.veriVar ? SAYI(g.mola) : '—';
+      satir.append(ad, yol, sayi);
+      og.raporGunler.appendChild(satir);
+    }
+    og.raporGunler.setAttribute('aria-label', CS(
+      `Günlük mola sayıları: ` + o.gunler.map((g) =>
+        `${g.bugunMu ? 'bugün' : g.ad} ${g.veriVar ? g.mola : 'veri yok'}`).join(', '),
+      `Breaks by day: ` + o.gunler.map((g) =>
+        `${g.bugunMu ? 'today' : g.ad} ${g.veriVar ? g.mola : 'no data'}`).join(', ')));
+
+    /* SONUÇ CÜMLESİ ANCAK YETERLİ VERİYLE. Üç dolu günün altında
+       "en iyi günün salı" demek uydurma bir kesinlik verir; bu depoda
+       aynı eşik alışkanlık etiketlerinde ve günlük karşılaştırmada
+       zaten uygulanıyor. */
+    if (o.yeterliVeri && o.enIyi) {
+      og.raporYetersiz.classList.add('gizli');
+      og.raporCumle.classList.remove('gizli');
+      /* GUN ADI CEVRILIYOR. Gun satirlari `C(g.ad)` kullaniyordu ama
+         CUMLE ham adi yaziyordu: Ingilizce raporda "Your best day was
+         Per" cikiyordu. */
+      const gunAdi = (g) => C(g.ad) || g.ad;
+      const parca = [CS(
+        `En iyi günün ${gunAdi(o.enIyi)}: ${SAYI(o.enIyi.mola)} mola.`,
+        `Your best day was ${gunAdi(o.enIyi)} with ${SAYI(o.enIyi.mola)} breaks.`)];
+      if (o.enSakin) {
+        parca.push(CS(
+          `En sakin günün ${gunAdi(o.enSakin)}: ${SAYI(o.enSakin.mola)} mola.`,
+          `Your quietest was ${gunAdi(o.enSakin)} with ${SAYI(o.enSakin.mola)} breaks.`));
+      }
+      /* EKSIZ KURULDU. "6 günün 2'inde" yanlisti (dogrusu "2'sinde"),
+         "0'inde" ise "0'inda" olmaliydi. Sayiya gore degisen Turkce
+         eki uretmek yerine cumle ekten kacacak bicimde yazildi -
+         uydurma dilbilgisi yerine sade sayi. */
+      parca.push(CS(
+        `Günlük hedef ${SAYI(o.hedef)} mola · hedefi tutturduğun gün: `
+        + `${SAYI(o.hedefTutan)} / ${SAYI(o.doluGun)}.`,
+        `Daily goal ${SAYI(o.hedef)} breaks · days on goal: `
+        + `${SAYI(o.hedefTutan)} / ${SAYI(o.doluGun)}.`));
+      og.raporCumle.textContent = parca.join(' ');
+    } else {
+      og.raporCumle.classList.add('gizli');
+      og.raporYetersiz.classList.remove('gizli');
+      /* SAYI, ASIL KURALIN SAYISI OLMALI. Once `doluGun` yaziyordu:
+         "su an 3 gun var" derken ekran sonuc cikarmiyordu, cunku
+         engel dolu gun degil TAMAMLANMIS gun sayisiydi (bugun daha
+         bitmedi). Kullaniciya kurali soyleyip baska bir sayi
+         gostermek, kurali hic soylememekten kotu. */
+      const eksik = SAYI(o.tamamlananGun | 0);
+      og.raporYetersiz.textContent = CS(
+        `Sonuç çıkarmak için en az üç TAMAMLANMIŞ gün gerekiyor; şu an ${eksik} gün var `
+        + '(bugün henüz bitmedi, o yüzden sayılmıyor). '
+        + 'Birkaç gün daha kullanınca bu ekran haftanın özetini çıkarır.',
+        `At least three COMPLETED days are needed before drawing conclusions; `
+        + `there ${(o.tamamlananGun | 0) === 1 ? 'is' : 'are'} ${eksik} so far `
+        + '(today is not over, so it does not count). '
+        + 'After a few more days this screen will summarise your week.');
+    }
+  }
+
+  /** Özeti paylaş — nereye gideceğine KULLANICI karar veriyor.
+      `navigator.share` işletim sisteminin kendi penceresini açıyor;
+      yoksa panoya kopyalanıyor. Hiçbir şey kendiliğinden dışarı
+      gitmiyor. */
+  async function raporPaylas() {
+    let o;
+    try { o = Gecmis.haftaOzeti(motor.istatistik, hedefAl()); } catch { return; }
+    const satirlar = [
+      CS('Göz Molası — bu hafta', 'Eye Break — this week'),
+      CS(`${SAYI(o.toplamMola)} göz molası · ${sureMetni(o.toplamEkran)} ekran süresi`,
+         `${SAYI(o.toplamMola)} eye breaks · ${sureMetni(o.toplamEkran)} screen time`),
+    ];
+    if (o.yeterliVeri && o.enIyi) {
+      satirlar.push(CS(
+        `En iyi gün ${C(o.enIyi.ad) || o.enIyi.ad} (${SAYI(o.enIyi.mola)} mola) · hedef tutan gün: ${SAYI(o.hedefTutan)}/${SAYI(o.doluGun)}`,
+        `Best day ${C(o.enIyi.ad) || o.enIyi.ad} (${SAYI(o.enIyi.mola)}) · goal met on ${SAYI(o.hedefTutan)}/${SAYI(o.doluGun)} days`));
+    }
+    const metin = satirlar.join('\n');
+    const bildir = (m) => {
+      if (!og.raporNot) return;
+      og.raporNot.textContent = m;
+      og.raporNot.hidden = false;
+      setTimeout(() => { og.raporNot.hidden = true; }, 4000);
+    };
+    try {
+      if (navigator.share) { await navigator.share({ text: metin }); return; }
+      await navigator.clipboard.writeText(metin);
+      bildir(CS('Özet panoya kopyalandı.', 'Summary copied to the clipboard.'));
+    } catch {
+      /* Kullanici paylasma penceresini KAPATMIS olabilir - bu bir hata
+         degil, bir karardir; ona "basarisiz" demiyoruz. Panoya yazma
+         da izinsiz reddedilebilir; o zaman metni gosteriyoruz ki
+         kullanici kendi secip kopyalayabilsin. */
+      bildir(metin);
+    }
+  }
+
+  og.raporPaylas?.addEventListener('click', raporPaylas);
+
   /* ---------- Sekme değiştirme ---------- */
   const sekmeler = [
     { dugme: $('sekmeDugmeSayac'), panel: $('sekmeSayac') },
+    { dugme: $('sekmeDugmeRapor'), panel: $('sekmeRapor') },
     { dugme: $('sekmeDugmeBilgiler'), panel: $('sekmeBilgiler') },
   ];
   function sekmeSec(ad) {
@@ -2957,6 +3220,10 @@
       s.panel.hidden = !secili;
     });
     if (ad === 'sekmeBilgiler') bilgileriKur();
+    /* Rapor SEKMEYE GIRILINCE ciziliyor, her tikte degil: haftalik
+       veri saniyede dort kez degismiyor ve bos yere cizmek bugun
+       saatlik grafikte titremeye yol acmisti. */
+    if (ad === 'sekmeRapor') raporCiz();
   }
   sekmeler.forEach((s) => s.dugme?.addEventListener(
     'click', () => sekmeSec(s.panel.id)));

@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v207">
+<link rel="stylesheet" href="stil.css?s=v210">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -109,9 +109,47 @@
   <nav class="sekme-cubugu" role="tablist" aria-label="Bölümler">
     <button type="button" class="sekme secili" id="sekmeDugmeSayac"
             role="tab" aria-selected="true" aria-controls="sekmeSayac">Sayaç</button>
+    <button type="button" class="sekme" id="sekmeDugmeRapor"
+            role="tab" aria-selected="false" aria-controls="sekmeRapor">Rapor</button>
     <button type="button" class="sekme" id="sekmeDugmeBilgiler"
             role="tab" aria-selected="false" aria-controls="sekmeBilgiler">Bilgiler</button>
   </nav>
+
+  <!-- HAFTALIK RAPOR.
+       Kullanicinin gosterdigi StayFree ekraninda haftalik ozet vardi.
+       Bizdeki karsiligi BIZIM verimizle: baska uygulamalarin suresini
+       web'den gormek mumkun degil, o yuzden vaat de edilmiyor.
+       YETERSIZ VERIDE SONUC CIKARMIYOR - asagidaki `rapor-yetersiz`
+       bloğu o durumda gorunuyor. -->
+  <section id="sekmeRapor" role="tabpanel" hidden
+           aria-labelledby="sekmeDugmeRapor">
+    <section class="rapor-kart">
+      <h2 class="rapor-baslik">Bu hafta</h2>
+      <p class="rapor-alt" id="raporAralik">son 7 gün</p>
+
+      <div class="rapor-buyuk">
+        <b id="raporToplam">0</b>
+        <span id="raporToplamEtiket">göz molası</span>
+      </div>
+      <p class="rapor-fark gizli" id="raporFark"></p>
+
+      <div class="rapor-kutucuklar">
+        <div class="kutucuk"><b id="raporOrtalama">0</b><span>günde ortalama</span></div>
+        <div class="kutucuk"><b id="raporHedefGun">0</b><span>hedef tutan gün</span></div>
+        <div class="kutucuk"><b id="raporEkran">0</b><span>ekran süresi</span></div>
+        <div class="kutucuk"><b id="raporAtlanan">0</b><span>atlanan mola</span></div>
+      </div>
+
+      <div class="rapor-gunler" id="raporGunler"></div>
+
+      <p class="rapor-cumle gizli" id="raporCumle"></p>
+
+      <p class="rapor-yetersiz gizli" id="raporYetersiz"></p>
+
+      <button type="button" class="dugme sade" id="raporPaylas">Özeti paylaş</button>
+      <p class="rapor-not" id="raporNot" role="status" hidden></p>
+    </section>
+  </section>
 
   <div id="sekmeSayac" role="tabpanel" aria-labelledby="sekmeDugmeSayac">
 
@@ -1021,17 +1059,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v207"></script>
-  <script src="dil.js?s=v207"></script>
-  <script src="bilgiler.js?s=v207"></script>
-  <script src="bilgiler_en.js?s=v207"></script>
-  <script src="dunya.js?s=v207"></script>
-  <script src="egzersiz.js?s=v207"></script>
-  <script src="reklam.js?s=v207"></script>
-  <script src="kopru.js?s=v207"></script>
-  <script src="cekirdek.js?s=v207"></script>
-  <script src="mola_icerik.js?s=v207"></script>
-  <script src="arayuz.js?s=v207"></script>
+  <script src="degisiklikler.js?s=v210"></script>
+  <script src="dil.js?s=v210"></script>
+  <script src="bilgiler.js?s=v210"></script>
+  <script src="bilgiler_en.js?s=v210"></script>
+  <script src="dunya.js?s=v210"></script>
+  <script src="egzersiz.js?s=v210"></script>
+  <script src="reklam.js?s=v210"></script>
+  <script src="kopru.js?s=v210"></script>
+  <script src="cekirdek.js?s=v210"></script>
+  <script src="mola_icerik.js?s=v210"></script>
+  <script src="arayuz.js?s=v210"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
