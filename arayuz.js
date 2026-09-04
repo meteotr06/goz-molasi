@@ -2257,6 +2257,7 @@
 
       Etiketler renkle degil YAZIYLA anlam tasiyor: uyarici olan da
       ayni bicimde, yalniz metni farkli. */
+  let etiketImza = null;
   function etiketleriCiz() {
     if (!og.etiketler) return;
     const ist = motor.istatistik || {};
@@ -2299,6 +2300,20 @@
       cikan.push(CS(`Bu hafta ${SAYI(hafta)} mola`, `${SAYI(hafta)} breaks this week`));
     }
 
+    /* AYNI ETIKETLER YENIDEN KURULMAZ.
+
+       DOM'u her cizimde yeniden kurmak animasyonu da her seferinde
+       BASTAN baslatiyordu; `degisti` olayi sik atesledigi icin
+       etiketler kalici olarak silik kaliyordu. OLCULDU: hareket
+       acikken gorunur etiket 0, kapaliyken 2 - yani animasyon
+       icerigi GIZLIYORDU, tam da birinci kuralin yasakladigi sey.
+
+       Deponun kendi kalibi kullanildi (`haftaImza` gibi): veri
+       degismediyse DOM'a dokunulmuyor. */
+    const imza = cikan.join('|');
+    if (imza === etiketImza) return;
+    etiketImza = imza;
+
     og.etiketler.innerHTML = '';
     og.etiketler.hidden = cikan.length === 0;
     for (const m of cikan) {
@@ -2318,6 +2333,7 @@
   }
   og.ayHaftaSonu?.addEventListener('change', haftaSonuSatiriniTazele);
 
+  let saatlikImza = null;
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
@@ -2334,6 +2350,14 @@
     const kovalar = Array.isArray(ham) ? ham : new Array(24).fill(0);
     const enCok = Math.max(1, ...kovalar.map((x) => +x || 0));
     const toplam = kovalar.reduce((t, x) => t + (+x || 0), 0);
+
+    /* Cubuklar da imzayla korunuyor: her cizimde yeniden kurmak
+       buyume animasyonunu bastan baslatir ve grafik titrer. */
+    const sImza = kovalar.join(',');
+    if (sImza === saatlikImza && og.saatlikGrafik.children.length === 24) {
+      return;
+    }
+    saatlikImza = sImza;
 
     og.saatlikGrafik.innerHTML = '';
     for (let s = 0; s < 24; s++) {

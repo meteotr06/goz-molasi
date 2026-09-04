@@ -1756,6 +1756,54 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+/* ===== HAREKET — BUGUN EKLENEN OGELER =====================
+   Dort kural, hepsi zorunlu:
+   1. VARSAYILAN HAL DAIMA GORUNUR. Butun hareket asagidaki medya
+      sorgusunun ICINDE; sorgu tutmazsa tek piksel oynamaz ve cubuklar,
+      etiketler, seviye cubugu oldugu gibi durur. Animasyona guvenip
+      `opacity:0` ile baslamak, animasyon kosmazsa BOS EKRAN birakir -
+      ustelik hicbir hata gorunmez.
+   2. `prefers-reduced-motion` bir zevk degil ERISILEBILIRLIK ayari:
+      vestibuler rahatsizligi olanda kayan arayuz bas donmesi yapar.
+      Bu bir GOZ SAGLIGI uygulamasi; burada ozellikle onemli.
+   3. Hareket RENK ya da ANLAM tasimiyor. Saatlik cubugun yuksekligi
+      zaten `title` ve ekran okuyucu metniyle de veriliyor.
+   4. Sureler kisa (<=.45s) ve gecikmeler <=.20s: veri ekrani her
+      cizimde yeniden kosuyor, uzun animasyon burada yorucu olur.
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  /* Saatlik cubuklar asagidan buyusun. `transform` kullaniliyor
+     (yukseklik degil): yukseklik animasyonu her karede yeniden
+     yerlesim yaptirir, telefonda takilir. */
+  @keyframes cubukBuyu { from { transform: scaleY(.06); } to { transform: scaleY(1); } }
+  .saatlik-cubuk {
+    transform-origin: bottom;
+    animation: cubukBuyu .45s cubic-bezier(.2,.9,.3,1) both;
+  }
+  .saatlik-sutun:nth-child(6n+2) .saatlik-cubuk { animation-delay: .04s; }
+  .saatlik-sutun:nth-child(6n+3) .saatlik-cubuk { animation-delay: .08s; }
+  .saatlik-sutun:nth-child(6n+4) .saatlik-cubuk { animation-delay: .12s; }
+  .saatlik-sutun:nth-child(6n+5) .saatlik-cubuk { animation-delay: .16s; }
+  .saatlik-sutun:nth-child(6n)   .saatlik-cubuk { animation-delay: .20s; }
+
+  /* Seviye cubugu doldugunu gostersin. Genislik JS'ten geliyor;
+     burada yalnizca ona GIDIS yumusuyor. */
+  .seviye-cubuk { transition: width .5s cubic-bezier(.2,.9,.3,1); }
+
+  /* Etiketler sirayla belirsin. Opaklik .001'den - tam gorunmezlik
+     hic olmuyor, ki animasyon yarida kalsa bile metin okunabilir. */
+  @keyframes etiketGel { from { opacity:.001; transform: translateY(4px); } to { opacity:1; transform:none; } }
+  .etiket { animation: etiketGel .3s ease both; }
+  .etiket:nth-child(2) { animation-delay: .05s; }
+  .etiket:nth-child(3) { animation-delay: .10s; }
+  .etiket:nth-child(4) { animation-delay: .15s; }
+
+  /* Seviye karti dokunulabilir degil; yalnizca ilk gelisinde
+     yumusakca otursun. */
+  @keyframes kartGel { from { opacity:.001; transform: translateY(6px); } to { opacity:1; transform:none; } }
+  .seviye-kart { animation: kartGel .34s ease both; }
+}
+
 /* ALISKANLIK ETIKETLERI. Anlam RENKTE degil METINDE - uyarici etiket
    de ayni bicimde, yalniz yazisi farkli. Renk koru kullanici ayni
    bilgiyi aliyor. */
