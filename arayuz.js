@@ -32,6 +32,7 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    etiketler: $('etiketler'),
     seviyeAd: $('seviyeAd'),
     seviyePuan: $('seviyePuan'),
     seviyeCubuk: $('seviyeCubuk'),
@@ -1670,7 +1671,8 @@
 
     haftayiCiz();
     saatlikCiz();
-    seviyeCiz();   // saatlik dagilim da ayni anda tazelenir
+    seviyeCiz();
+    etiketleriCiz();   // saatlik dagilim da ayni anda tazelenir
   }
 
   /* ============================================================
@@ -2219,6 +2221,67 @@
       og.seviyeCubuk.style.width = '100%';
       og.seviyeSonraki.textContent = CS('En üst seviye', 'Top level');
       og.seviyeCubuk.parentElement.setAttribute('aria-valuenow', '100');
+    }
+  }
+
+  /** ALISKANLIK ETIKETLERI.
+
+      VERI YETMIYORSA ETIKET YOK. Tek gunluk veriyle "sen sabahcisin"
+      demek uydurma bir kesinlik verir; her etiketin bir esigi var ve
+      esik altinda o etiket HIC cikmiyor. Bu depoda ayni ilke haftalik
+      ortalamada zaten uygulaniyor.
+
+      Etiketler renkle degil YAZIYLA anlam tasiyor: uyarici olan da
+      ayni bicimde, yalniz metni farkli. */
+  function etiketleriCiz() {
+    if (!og.etiketler) return;
+    const ist = motor.istatistik || {};
+    const cikan = [];
+
+    // 1) SERI — ust uste hedefi tutturulan gun
+    let seri = 0;
+    try { seri = Gecmis.seri(ist) | 0; } catch {}
+    if (seri >= 3) {
+      cikan.push(CS(`${SAYI(seri)} gündür aralıksız`,
+                    `${SAYI(seri)} days in a row`));
+    }
+
+    // 2) YOGUN SAAT — bugun, o saatte en az 10 dakika varsa
+    const s24 = Array.isArray(ist.saatlik) ? ist.saatlik : [];
+    if (s24.length === 24) {
+      const enCok = Math.max(...s24.map((x) => +x || 0));
+      if (enCok >= 600) {
+        const saat = s24.indexOf(enCok);
+        cikan.push(CS(
+          `En yoğun saatin ${String(saat).padStart(2, '0')}:00`,
+          `Your busiest hour is ${String(saat).padStart(2, '0')}:00`));
+      }
+    }
+
+    // 3) MOLA DISIPLINI
+    const tam = ist.tamamlananMola | 0;
+    const atl = ist.atlananMola | 0;
+    if (tam >= 3 && atl === 0) {
+      cikan.push(CS('Bugün hiç mola atlamadın', 'No breaks skipped today'));
+    } else if (atl >= 3 && atl > tam) {
+      cikan.push(CS('Molaların çoğunu atlıyorsun',
+                    'You skip most of your breaks'));
+    }
+
+    // 4) HAFTALIK TEMPO
+    let hafta = 0;
+    try { hafta = Gecmis.sonGunler(7, ist).reduce((t, g) => t + g.sayi, 0); } catch {}
+    if (hafta >= 20) {
+      cikan.push(CS(`Bu hafta ${SAYI(hafta)} mola`, `${SAYI(hafta)} breaks this week`));
+    }
+
+    og.etiketler.innerHTML = '';
+    og.etiketler.hidden = cikan.length === 0;
+    for (const m of cikan) {
+      const e = document.createElement('span');
+      e.className = 'etiket';
+      e.textContent = m;
+      og.etiketler.appendChild(e);
     }
   }
 

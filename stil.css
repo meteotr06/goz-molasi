@@ -1747,6 +1747,19 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+/* ALISKANLIK ETIKETLERI. Anlam RENKTE degil METINDE - uyarici etiket
+   de ayni bicimde, yalniz yazisi farkli. Renk koru kullanici ayni
+   bilgiyi aliyor. */
+.etiketler { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 2px; }
+.etiket {
+  padding: 5px 10px;
+  border: 1px solid var(--cizgi);
+  border-radius: 999px;
+  font-size: .75rem;
+  color: var(--yazi-soluk);
+  background: var(--kart, transparent);
+}
+
 /* SEVIYE KARTI. Ilerleme hem cubukla hem YAZIYLA veriliyor - cubugu
    goremeyen ya da rengi ayirt edemeyen kullanici ayni bilgiyi alsin. */
 .seviye-kart {
