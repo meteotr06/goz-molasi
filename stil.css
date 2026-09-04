@@ -354,7 +354,12 @@ body {
 .dugme.ana {
   background: var(--vurgu);
   border-color: var(--vurgu);
-  color: #001a16;              /* açık temada da 4.5:1 kontrastı geçsin */
+  /* Yazi rengi SABIT DEGIL: kullanici kendi vurgu rengini secebiliyor
+     ve `--vurgu` burada ZEMIN. Sabit koyu yazi, koyu bir vurguda
+     okunmaz kaliyordu - olculdu: #111111 vurguda karsitlik 1,04.
+     `--vurgu-yazi` JS'te rengin parlakligindan hesaplaniyor; ayarli
+     degilse eski sabit deger yedek olarak kaliyor. */
+  color: var(--vurgu-yazi, #001a16);
 }
 /* İkincil, dar düğmeler — yine de parmakla basılabilir kalsın */
 .dugme.kucuk { padding: 9px 14px; min-height: 40px; font-size: 0.8125rem; }

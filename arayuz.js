@@ -3221,8 +3221,39 @@
       okunmaz bir birlesim uretebilirdi. */
   function kendiVurguyuUygula() {
     const kok = document.documentElement;
-    if (kendiVurgu) kok.style.setProperty('--vurgu', kendiVurgu);
-    else kok.style.removeProperty('--vurgu');
+    if (!kendiVurgu) {
+      kok.style.removeProperty('--vurgu');
+      kok.style.removeProperty('--vurgu-yazi');
+      return;
+    }
+    kok.style.setProperty('--vurgu', kendiVurgu);
+
+    /* ÜSTÜNDEKİ YAZI RENGİ HESAPLANIYOR — K-85: BİR ROLÜ ÖLÇMEK
+       RENGİ ÖLÇMEZ.
+
+       `--vurgu` yalnız yazı rengi değil ZEMİN olarak da kullanılıyor
+       (ana düğme). Kullanıcı istediği rengi seçebildiği için üstündeki
+       yazı okunmaz kalabilir.
+
+       ÖLÇÜLDÜ (03.09.2026, gerçek düğmede): düğme yazısı KOYU, yani
+       koyu bir vurgu seçilince karşıtlık çöküyor —
+         #111111 -> 1,04   ·   #7c5cff -> 4,17   (eşik 4,5)
+       Açık renkler geçiyordu; yani kusur "bazı renklerde" değil, tam
+       da kullanıcının seçebildiği yarıda.
+
+       Çözüm: rengin parlaklığından siyah/beyaz seçiliyor. Sabit bir
+       renk yazmak, seçeneklerin yarısını okunmaz bırakırdı. */
+    const m = kendiVurgu.match(/^#(..)(..)(..)$/);
+    if (m) {
+      const kanal = (h) => {
+        const v = parseInt(h, 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      const L = 0.2126 * kanal(m[1]) + 0.7152 * kanal(m[2]) + 0.0722 * kanal(m[3]);
+      const beyazla = 1.05 / (L + 0.05);
+      const siyahla = (L + 0.05) / 0.05;
+      kok.style.setProperty('--vurgu-yazi', beyazla >= siyahla ? '#ffffff' : '#000000');
+    }
   }
 
   function temaUygula(t) {
