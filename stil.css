@@ -1151,6 +1151,15 @@ kbd {
 }
 .mola-ekran.acik { opacity: 1; visibility: visible; }
 
+/* Mola ekranindaki kaynak satirlari (karti disinda kalanlar da)
+   TEMANIN degil MOLA EKRANININ rengini kullanir: ekran her temada
+   koyu, tema rengi ise acik temalarda koyu olur ve kaybolur.
+   Asil kusur `.neden-kart .kaynak` kuralindaydi - asagida. */
+.mola-ekran .kaynak {
+  color: var(--mola-yazi);
+  opacity: 1;
+}
+
 .mola-baslik {
   font-size: clamp(20px, 5vw, 28px);
   font-weight: 700;
@@ -1247,7 +1256,22 @@ kbd {
   color: var(--mola);
 }
 .neden-kart p { margin: 0; font-size: 0.9375rem; line-height: 1.6; }
-.neden-kart .kaynak { color: var(--mola-soluk); }
+/* KAYNAK SATIRI KARTIN KENDI YAZI RENGINDE.
+
+   `--mola-soluk` ile yaziliyordu ve kartin zemini uzerinde karsitlik
+   3,83-4,39 arasinda kaliyordu (esik 4,5) - on sekiz temanin sekizinde.
+   Ayni kartin BASLIGI ayni ekranda 13,5-15,5 aliyor, cunku o
+   `--mola-yazi` kullaniyor. Fark renkte, zeminde degil.
+
+   OLCUM YONTEMI (bu maddede uc kez yanlis olctum, yazIYORUM):
+   · Mola ekraninin zemini `rgba(0,0,0,0)`; gorunen renk bir
+     `radial-gradient`ten geliyor. Degiskenden olcen arac 1,5 gibi
+     tumden yanlis sayilar uretti.
+   · Ince yazida ekrandan piksel ornekleyince kenar yumusatmasi
+     olcumu asagi cekiyor.
+   · Dogrusu MELEZ: yazi rengi hesaplanan degerden, zemin ekrandan
+     (metin olmayan seritten) ornekleniyor. */
+.neden-kart .kaynak { color: var(--mola-yazi); }
 
 .mola-alt-sira { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; min-height: 44px; }
 .mola-ekran .dugme {
