@@ -370,6 +370,29 @@ class MolaMotoru {
   /** Molayı atla — istatistiğe kaydedilir, saklamıyoruz */
   molayiAtla() {
     if (this.durum !== 'mola' || !this.ayarlar.molaAtlanabilir) return false;
+    return this._molayiAtlayarakBitir();
+  }
+
+  /** ACİL ÇIKIŞ — "mola atlanabilsin" KAPALI iken bile molayı bitirir.
+
+      Neden var: ayar kapalıyken çıkış yolu hiç yoktu ve mola süresi
+      üç dakikaya, uzun mola yirmi dakikaya çıkabiliyor. Telefonda
+      yirmi dakikalık, çıkılamayan tam ekran demekti. Arayüz bu yolu
+      yalnızca molanın 20. saniyesinden sonra ve basılı tutunca açıyor;
+      çekirdek tarafında bir eşik yok, karar tek yerde (arayüzde)
+      kalsın diye — iki eşik iki ayrı doğru demekti.
+
+      İstatistikte ATLANAN MOLA sayılır: yapılmamış bir molayı
+      yapılmış saymak istatistiği yalancı yapardı. */
+  molayiAcilBitir() {
+    if (this.durum !== 'mola') return false;
+    return this._molayiAtlayarakBitir();
+  }
+
+  /** Atlama ve acil çıkışın ORTAK gövdesi — tek yer.
+      İkiye ayırmak, yarın birine eklenen bir satırın öbüründe
+      unutulması demekti. */
+  _molayiAtlayarakBitir() {
     this.istatistik.atlananMola++;
     this._duyur('molaAtlandi', this.istatistik);
     this._asamayaGec('calisiyor', this.ayarlar.calismaSuresi);
@@ -1018,6 +1041,11 @@ class MolaMotoru {
    Masaüstü sürümündeki gecmis.py ile aynı mantık.
    ============================================================ */
 
+/* ACIL CIKIS ESIGI. Kural tek cumle: hicbir molada bundan fazla
+   cikissiz kalinmaz. Yirmi saniye uygulamanin kendi sozu (20-20-20);
+   20 sn'lik molada dugme hic gorunmez, cunku mola zaten bitmistir. */
+const ACIL_CIKIS_ESIGI = 20;
+
 const GUNLUK_HEDEF = 8;          // günde bu kadar mola = hedef tuttu
 const SAKLANAN_GUN = 120;
 const GUN_ADLARI = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
@@ -1148,5 +1176,6 @@ const Gecmis = {
 
 if (typeof module !== 'undefined') {
   module.exports = { MolaMotoru, VARSAYILAN_AYARLAR, dakikaOku, Gecmis, GUNLUK_HEDEF,
+    ACIL_CIKIS_ESIGI,
                      istatistikSuz };
 }

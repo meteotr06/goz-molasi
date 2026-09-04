@@ -391,6 +391,10 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Mola boyunca tam ekrana geçer; geri tuşu ve Esc molayı bitirmez. Kilitlemez: 20 saniye sonra "Molayı bitir" düğmesi belirir, sekme ve uygulama değiştirme hep açıktır.':
+    'Goes full screen for the break; the back key and Esc do not end it. Not a lock: an “End break” button appears after 20 seconds, and switching tabs or apps always works.',
+  'Kapatırsan atlama düğmesi çıkmaz; yine de 20 saniye sonra bitirme düğmesi belirir':
+    'Turning this off hides the skip button; an end-break button still appears after 20 seconds',
   'Günlük mola hedefi': 'Daily break goal',
   'Yalnızca bu uygulamada geçen süreyi sayar — telefonun tamamını değil':
     'Counts only time spent in this app — not your whole phone',

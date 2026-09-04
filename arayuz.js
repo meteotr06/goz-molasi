@@ -32,6 +32,7 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    saatlikEksen: $('saatlikEksen'),
     ayAksam: $('ayAksam'),
     ayAksamSaat: $('ayAksamSaat'),
     ayAksamSatir: $('ayAksamSatir'),
@@ -1660,6 +1661,7 @@
     if (d.durum === 'mola') {
       og.sure.textContent = `${Math.ceil(d.kalan)}`;
       og.molaSayi.textContent = Math.ceil(d.kalan);
+      acilCikisiTazele(d.kalan);
       og.molaHalka.style.strokeDashoffset = CEVRE_MOLA * d.ilerleme;
     } else {
       og.sure.textContent = ss(d.kalan);
@@ -1957,6 +1959,10 @@
      ============================================================ */
   let nedenZaman = null;
   let molaAcik = false;
+  /* Acil çıkış kipi: atla düğmesi "Molayı bitir"e dönüştü mü.
+     Burada duruyor çünkü `molaEkraniAc` de, çizim de, ipucu da
+     okuyor — üçü ayrı yerde ayrı bayrak tutsaydı biri kayardı. */
+  let acilKip = false;
 
   /* ---------- Rehberli egzersiz ----------
      Mola ekranı boş bir geri sayım değil: ne yapman gerektiğini
@@ -2113,11 +2119,16 @@
   function molaIpucuGoster() {
     const e = $('molaIpucu');
     if (!e) return;
+    /* ÜÇ DURUM. Eskiden ikiydi ve ikincisi "birkaç saniye kaldı"
+       diyordu — yirmi dakikalık uzun molada düpedüz yalan. */
     e.textContent = motor.ayarlar.molaAtlanabilir
       ? CS('Mola sürüyor. Bitirmek için "Molayı atla"yı basılı tut.',
            'Break in progress. Hold “Skip break” to end it.')
-      : CS('Mola sürüyor — birkaç saniye kaldı.',
-           'Break in progress — a few seconds left.');
+      : acilKip
+        ? CS('Mola sürüyor. Bitirmek için "Molayı bitir"i basılı tut.',
+             'Break in progress. Hold “End break” to end it.')
+        : CS(`Mola sürüyor. ${ACIL_CIKIS_ESIGI} saniye sonra bitirme düğmesi çıkar.`,
+             `Break in progress. An end-break button appears after ${ACIL_CIKIS_ESIGI} seconds.`);
     e.hidden = false;
     clearTimeout(ipucuZaman);
     ipucuZaman = setTimeout(() => { e.hidden = true; }, 2500);
@@ -2227,12 +2238,21 @@
       }
     }, nedenGecikme);
 
-    // Atla düğmesi ayardan kapalıysa hiç gösterme
+    // Atla düğmesi ayardan kapalıysa BAŞTA gizli — acil çıkış
+    // molanın 20. saniyesinde `acilCikisiTazele` ile beliriyor.
+    acilKip = false;
     og.atla.classList.toggle('gizli', !motor.ayarlar.molaAtlanabilir);
+    og.atla.textContent = atlaEtiketi();
 
-    og.okuyucu.textContent = CS(
-      `Mola başladı. ${motor.ayarlar.molaSuresi} saniye boyunca uzağa bak.`,
-      `Break started. Look away for ${motor.ayarlar.molaSuresi} seconds.`);
+    /* IKINCI DUYURU KALDIRILDI. Burada `og.okuyucu.textContent`
+       dogrudan yazilıyordu ve `ayarlar.molaSuresi` okudugu icin uzun
+       molada YANLIS sayiyi soyluyordu. Ustelik SENKRON oldugu icin
+       yukaridaki dogru cumleden ONCE duyuruluyordu: ekran okuyucu
+       once yanlisi, 60 ms sonra dogruyu okuyordu.
+
+       OLCUM HATASI DA BURADAN: sondaki `textContent`e bakan bir olcum
+       yalniz KALINTIYI gorur, duyuru AKISINI degil. Artik akis
+       olculuyor (MutationObserver). */
     calSes(660, 0.55);
     titret([120, 80, 120]);         // iki kısa: "dur"
     uyanikTut();
@@ -2422,7 +2442,6 @@
   }
   og.ayHaftaSonu?.addEventListener('change', haftaSonuSatiriniTazele);
 
-  let saatlikImza = null;
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
@@ -2440,27 +2459,57 @@
     const enCok = Math.max(1, ...kovalar.map((x) => +x || 0));
     const toplam = kovalar.reduce((t, x) => t + (+x || 0), 0);
 
-    /* Cubuklar da imzayla korunuyor: her cizimde yeniden kurmak
-       buyume animasyonunu bastan baslatir ve grafik titrer. */
-    const sImza = kovalar.join(',');
-    if (sImza === saatlikImza && og.saatlikGrafik.children.length === 24) {
-      return;
-    }
-    saatlikImza = sImza;
+    /* IZGARA BİR KEZ KURULUR, SONRA YALNIZCA GÜNCELLENİR.
 
-    og.saatlikGrafik.innerHTML = '';
+       Eskiden her çizimde `innerHTML` sıfırlanıyordu. Bir imza koruması
+       vardı ama imza HAM DEĞERDEN üretiliyordu: ekran süresi her tikte
+       (çeyrek saniyede bir) artıyor, yani imza her tikte değişiyor ve
+       koruma hiç tutmuyordu. `.saatlik-cubuk` üzerindeki 0,45 sn'lik
+       büyüme animasyonu 0,25 sn'de bir baştan başlıyordu.
+
+       KULLANICI BUNU GÖRDÜ ve "in çık yapıyor" dedi. Ölçüldü: 6 saniyede
+       çubuk ızgarası 24 kez yeniden kuruluyordu.
+
+       İmzayı düzeltmek yetmezdi — yüzde bir değişince yine baştan
+       kurulurdu. Doğrusu: kur, sonra güncelle. Yazmadan önce de
+       karşılaştır; değer değişmediyse DOM'a hiç dokunma. */
+    if (og.saatlikGrafik.children.length !== 24) {
+      og.saatlikGrafik.innerHTML = '';
+      for (let s = 0; s < 24; s++) {
+        const sutun = document.createElement('div');
+        sutun.className = 'saatlik-sutun';
+        sutun.appendChild(document.createElement('div'))
+             .className = 'saatlik-cubuk';
+        og.saatlikGrafik.appendChild(sutun);
+      }
+      /* SAAT EKSENI de burada, bir kez. Telefonda 24 etiket yan yana
+         sigmiyor; dortte biri yaziliyor, otekiler bos kalıyor ki
+         izgara kaymasin. */
+      if (og.saatlikEksen) {
+        og.saatlikEksen.innerHTML = '';
+        for (let s = 0; s < 24; s++) {
+          const e = document.createElement('span');
+          e.textContent = (s % 6 === 0) ? String(s).padStart(2, '0') : '';
+          og.saatlikEksen.appendChild(e);
+        }
+      }
+    }
     for (let s = 0; s < 24; s++) {
       const deger = +kovalar[s] || 0;
-      const sutun = document.createElement('div');
-      sutun.className = 'saatlik-sutun';
-      if (deger <= 0) sutun.dataset.bos = '1';
-      const cubuk = document.createElement('div');
-      cubuk.className = 'saatlik-cubuk';
-      cubuk.style.height = Math.round((deger / enCok) * 100) + '%';
+      const sutun = og.saatlikGrafik.children[s];
+      const cubuk = sutun.firstElementChild;
+      const yuk = Math.round((deger / enCok) * 100) + '%';
+      if (cubuk.style.height !== yuk) cubuk.style.height = yuk;
       const etiket = `${String(s).padStart(2, '0')}:00 — ` + sur(deger);
-      cubuk.title = etiket;
-      sutun.appendChild(cubuk);
-      og.saatlikGrafik.appendChild(sutun);
+      if (cubuk.title !== etiket) cubuk.title = etiket;
+      if (deger > 0) { if (sutun.dataset.bos) delete sutun.dataset.bos; }
+      else if (sutun.dataset.bos !== '1') sutun.dataset.bos = '1';
+      /* EN YOGUN SAAT ISARETLENIYOR. Ustteki yazi zaten "en yogun saat
+         13:00" diyor; grafikte bunun karsiligi yoktu, yani yazi bir
+         seyi gosteriyor ama gosterdigi sey gorunmuyordu. */
+      const yogun = (toplam > 0 && deger === enCok);
+      if (yogun) { if (sutun.dataset.yogun !== '1') sutun.dataset.yogun = '1'; }
+      else if (sutun.dataset.yogun) delete sutun.dataset.yogun;
     }
     og.saatlikGrafik.setAttribute('aria-label', CS(
       `Saatlik ekran süresi. Bugün toplam ${sur(toplam)}.`,
@@ -2497,26 +2546,62 @@
     holdIptal();
   }
 
+  /** ACİL ÇIKIŞ DÜĞMESİNİ TAZELE.
+
+      Kural: hiçbir molada `ACIL_CIKIS_ESIGI` saniyeden fazla çıkışsız
+      kalınmaz. "Mola atlanabilsin" açıksa düğme zaten baştan duruyor,
+      burada işimiz yok.
+
+      HER TİKTE `textContent` YAZMIYOR: yalnız kip DEĞİŞİNCE. Aksi
+      hâlde kullanıcı düğmeyi basılı tutarken "Bırakma…" yazısı her
+      çeyrek saniyede silinirdi — basılı tutma görünürde çalışmaz,
+      gerçekte çalışırdı. */
+  function acilCikisiTazele(kalan) {
+    if (!molaAcik || !og.atla) return;
+    if (motor.ayarlar.molaAtlanabilir) { acilKip = false; return; }
+    const gecen = molaSuresiAl() - kalan;
+    const acilmali = gecen >= ACIL_CIKIS_ESIGI;
+    if (acilmali === acilKip) return;
+    acilKip = acilmali;
+    og.atla.classList.toggle('gizli', !acilmali);
+    og.atla.textContent = atlaEtiketi();
+    og.atla.setAttribute('aria-label', atlaEtiketi());
+    /* Ekran okuyucuya DA söyle: düğmenin belirmesi görsel bir olay,
+       görmeyen kullanıcı için hiç olmamış demektir. */
+    if (acilmali) {
+      okuyucuyaSoyle(CS('Molayı bitirme düğmesi çıktı. Bitirmek için basılı tut.',
+                        'An end-break button appeared. Press and hold to end it.'));
+    }
+  }
+
   /* ---------- "Basılı tut" ile atlama ----------
      Tek tıkla atlanabilse refleks olurdu. 800 ms basılı tutmak
      küçük ama gerçek bir engel: kazara atlamayı bitirir,
      acil durumda ise seni hapsetmez. */
   let holdZaman = null;
   const HOLD_SURE = 800;
+  /* Acil çıkış bilerek konmuş bir ayarı aşıyor; daha uzun tutmak
+     "bu kazara olmadı" demek. Üç saniye fazla olurdu — amaç
+     kullanıcıyı cezalandırmak değil, refleksi ayırmak. */
+  const HOLD_ACIL = 1500;
 
   function holdBasla(e) {
     e.preventDefault();
     if (holdZaman) return;
+    const sure = acilKip ? HOLD_ACIL : HOLD_SURE;
     og.atla.textContent = C('Bırakma…');
-    og.atla.style.transition = `background ${HOLD_SURE}ms linear`;
+    og.atla.style.transition = `background ${sure}ms linear`;
     og.atla.style.background = 'rgba(255,255,255,0.34)';
     holdZaman = setTimeout(async () => {
+      const acildi = acilKip;
       holdIptal();
-      motor.molayiAtla();
-    }, HOLD_SURE);
+      if (acildi) motor.molayiAcilBitir(); else motor.molayiAtla();
+    }, sure);
   }
   function atlaEtiketi() {
-    return CS('Atlamak için basılı tut', 'Press and hold to skip');
+    return acilKip
+      ? CS('Molayı bitir — basılı tut', 'End break — press and hold')
+      : CS('Atlamak için basılı tut', 'Press and hold to skip');
   }
   function holdIptal() {
     clearTimeout(holdZaman);
@@ -2907,7 +2992,16 @@
 
   /* Mola ekranı açıkken Esc ile kaçış yok — atlamak için basılı tutulmalı */
   document.addEventListener('keydown', (e) => {
-    if (molaAcik && e.key === 'Escape') e.preventDefault();
+    if (!molaAcik || e.key !== 'Escape') return;
+    e.preventDefault();
+    /* Esc TEK BAŞINA molayı bitirmiyor — tek tuş kaza demek, bu ayar
+       zaten kazayı önlemek için var. Ama klavye kullanıcısını da
+       çıkışsız bırakmıyor: çıkış yolu açıksa Esc oraya GÖTÜRÜYOR.
+       Açık değilse ipucu ne zaman açılacağını söylüyor. */
+    if (!og.atla.classList.contains('gizli')) {
+      try { og.atla.focus(); } catch {}
+    }
+    molaIpucuGoster();
   }, true);
 
   /* ============================================================

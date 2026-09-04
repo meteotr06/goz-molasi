@@ -1828,6 +1828,9 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   .saatlik-cubuk {
     transform-origin: bottom;
     animation: cubukBuyu .45s cubic-bezier(.2,.9,.3,1) both;
+    /* Izgara artik yeniden kurulmuyor, yukseklik yerinde degisiyor;
+       gecis olmasa sayi her degistiginde sicrardi. */
+    transition: height .35s cubic-bezier(.2,.9,.3,1);
   }
   .saatlik-sutun:nth-child(6n+2) .saatlik-cubuk { animation-delay: .04s; }
   .saatlik-sutun:nth-child(6n+3) .saatlik-cubuk { animation-delay: .08s; }
@@ -1904,10 +1907,24 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .saatlik-cubuk {
   background: var(--vurgu);
   border-radius: 3px 3px 0 0;
-  min-height: 2px;              /* sifir bile olsa izgara bozulmasin */
+  min-height: 3px;              /* sifir bile olsa izgara bozulmasin */
   opacity: .92;
 }
-.saatlik-sutun[data-bos="1"] .saatlik-cubuk { background: var(--cizgi); opacity: .5; }
+/* BOS SAAT: eskiden kil gibi bir cizgiydi ve grafik "bozuk" duruyordu.
+   Artik acikca bir TABAN CIZGISI - "o saatte veri yok" okunuyor. */
+.saatlik-sutun[data-bos="1"] .saatlik-cubuk {
+  background: var(--cizgi);
+  opacity: .45;
+  border-radius: 2px;
+}
+/* En yogun saat: ustteki yazinin grafikteki karsiligi. Renk TEK BASINA
+   anlam tasimiyor - ayni bilgi yaziyla da veriliyor. */
+.saatlik-sutun[data-yogun="1"] .saatlik-cubuk {
+  opacity: 1;
+  box-shadow: 0 0 0 1px var(--vurgu);
+}
+/* Grafigin oturdugu zemin cizgisi: cubuklar havada durmasin. */
+.saatlik-grafik { border-bottom: 1px solid var(--cizgi); padding-bottom: 1px; }
 .saatlik-eksen {
   display: grid;
   grid-template-columns: repeat(24, 1fr);

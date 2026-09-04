@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v205">
+<link rel="stylesheet" href="stil.css?s=v206">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -285,6 +285,10 @@
       <span>günde ortalama mola</span>
     </p>
     <div class="hafta-grafik" id="haftaGrafik"></div>
+    <!-- EFSANE ANLATTIĞI GRAFİĞİN YANINDA. Yeni bloklar araya girince
+         en dibe düşmüş, saatlik grafiğin altında kalmıştı; orada ne
+         kesikli çizgi var ne düz çizgi. -->
+    <span class="kaynak">Kesikli çizgi günlük hedef: <b id="hedefSayi">8</b> mola · düz çizgi kendi ortalaman</span>
 
     <!-- SAATLIK DAGILIM. Kullanicinin gosterdigi StayFree ekraninda en
          belirgin sey buydu: gunun her saati icin bir cubuk. Bizde
@@ -314,7 +318,11 @@
     <p class="saatlik-alt" id="saatlikAlt"></p>
     <div class="saatlik-grafik" id="saatlikGrafik" role="img"
          aria-label="Saatlik ekran süresi"></div>
-    <span class="kaynak">Kesikli çizgi günlük hedef: <b id="hedefSayi">8</b> mola · düz çizgi kendi ortalaman</span>
+    <!-- SAAT EKSENI. Stil dosyasinda `.saatlik-eksen` tanimliydi ve
+         "yalniz 0/6/12/18 yaziliyor" diye aciklamasi da vardi; oge
+         hic konmamisti. 24 isimsiz cubuk kullaniciya hicbir sey
+         anlatmiyordu. -->
+    <div class="saatlik-eksen" id="saatlikEksen" aria-hidden="true"></div>
   </section>
 
   <!-- ANA EKRANDAKİ BİLGİ KARTI -->
@@ -827,14 +835,14 @@
            çıkıyor". Kilitleme değil — Esc her zaman çalışır. -->
       <div class="satir">
         <label for="ayMolaKilit">Molada kazayla çıkmayı önle
-          <small>Mola boyunca tam ekrana geçer ve geri tuşu molayı bitirmez. Kilitlemez: Esc her zaman çıkarır, istersen molayı yine atlayabilirsin.</small>
+          <small>Mola boyunca tam ekrana geçer; geri tuşu ve Esc molayı bitirmez. Kilitlemez: 20 saniye sonra "Molayı bitir" düğmesi belirir, sekme ve uygulama değiştirme hep açıktır.</small>
         </label>
         <span class="anahtar"><input type="checkbox" id="ayMolaKilit"><i></i></span>
       </div>
 
       <div class="satir">
         <label for="ayAtla">Mola atlanabilsin
-          <small>Kapatırsan molayı geçemezsin</small>
+          <small>Kapatırsan atlama düğmesi çıkmaz; yine de 20 saniye sonra bitirme düğmesi belirir</small>
         </label>
         <span class="anahtar"><input type="checkbox" id="ayAtla"><i></i></span>
       </div>
@@ -1013,17 +1021,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v205"></script>
-  <script src="dil.js?s=v205"></script>
-  <script src="bilgiler.js?s=v205"></script>
-  <script src="bilgiler_en.js?s=v205"></script>
-  <script src="dunya.js?s=v205"></script>
-  <script src="egzersiz.js?s=v205"></script>
-  <script src="reklam.js?s=v205"></script>
-  <script src="kopru.js?s=v205"></script>
-  <script src="cekirdek.js?s=v205"></script>
-  <script src="mola_icerik.js?s=v205"></script>
-  <script src="arayuz.js?s=v205"></script>
+  <script src="degisiklikler.js?s=v206"></script>
+  <script src="dil.js?s=v206"></script>
+  <script src="bilgiler.js?s=v206"></script>
+  <script src="bilgiler_en.js?s=v206"></script>
+  <script src="dunya.js?s=v206"></script>
+  <script src="egzersiz.js?s=v206"></script>
+  <script src="reklam.js?s=v206"></script>
+  <script src="kopru.js?s=v206"></script>
+  <script src="cekirdek.js?s=v206"></script>
+  <script src="mola_icerik.js?s=v206"></script>
+  <script src="arayuz.js?s=v206"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
