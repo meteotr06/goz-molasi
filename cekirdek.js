@@ -709,6 +709,21 @@ class MolaMotoru {
   /* ---------- Yardımcılar ---------- */
   _asamayaGec(yeniDurum, saniye) {
     this.durum = yeniDurum;
+    /* ASAMANIN GERCEK SURESI — TEK KAYNAK.
+
+       Arayuz mola ekraninda `ayarlar.molaSuresi` kullaniyordu. UZUN
+       MOLADA (`uzunMolaSuresi`, varsayilan 300 sn) ve TANITIM MOLASINDA
+       (6 sn) o deger YANLIS.
+
+       OLCULDU (03.09.2026): uzun mola baslatildi, ekran 299'dan geri
+       sayarken ekran okuyucu "Goz molasi basladi. 30 saniye." dedi.
+       Az goren kullanici icin ekrandaki sayiyi hic gormeden TEK bilgi
+       kaynagi o cumle. Ayrica "Az kaldi" esigi de o yanlis sayidan
+       hesaplandigi icin 4,5 DAKIKA erken cikiyordu.
+
+       Suresi saklanan tek yer burasi; her asama gecisi buradan geciyor,
+       yani ikinci bir kaynak dogmasi mumkun degil. */
+    this.asamaSuresi = saniye;
     this.asamaBaslangic = Date.now();
     this.hedefZaman = this.asamaBaslangic + saniye * 1000;
     this.kalanDondurulmus = null;
@@ -783,6 +798,9 @@ class MolaMotoru {
     return {
       durum: this.durum,
       kalan: this.kalanSaniye(),
+      // Asamanin GERCEK suresi: arayuz "kac saniye" derken bunu
+      // kullanmali, ayardaki mola suresini degil.
+      asamaSuresi: this.asamaSuresi,
       ilerleme: this.ilerleme(),
       istatistik: this.istatistik,
     };

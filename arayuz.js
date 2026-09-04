@@ -2017,7 +2017,7 @@
     } catch {}
 
     // İlk kareyi hemen çiz — rAF beklemeden ekranda bir şey olsun
-    try { egzersiz.ciz(0, motor.ayarlar.molaSuresi); } catch {}
+    try { egzersiz.ciz(0, molaSuresiAl()); } catch {}
 
     if (hareketAzalt?.matches) {
       // Hareket hassasiyeti olan kullanıcı: animasyon yok, yazı rehberlik eder
@@ -2027,11 +2027,11 @@
       if (!molaAcik || !egzersiz) return;
       const gecen = (Date.now() - egzersizBaslangic) / 1000;
       try {
-        egzersiz.ciz(gecen, motor.ayarlar.molaSuresi);
+        egzersiz.ciz(gecen, molaSuresiAl());
         // Son üç saniyede haber ver: mola aniden bitince ekrana dönmek
         // sarsıcı oluyordu. Bakmadan da duyulsun diye metin değil,
         // ekranın kendisi hazırlık yapıyor.
-        const kalanSn = motor.ayarlar.molaSuresi - gecen;
+        const kalanSn = molaSuresiAl() - gecen;
         const y = kalanSn <= 3 && kalanSn > 0
           ? C('Az kaldı — hazırlan')
           // C() SART: bu yol mola sirasinda saniyede birkac kez
@@ -2129,6 +2129,18 @@
      kullanan biri molanın başladığını hiç duymuyordu. Bu bir göz
      sağlığı uygulaması; az gören kullanıcı burada normalden fazla
      olabilir. */
+  /** SUREN MOLANIN GERCEK SURESI.
+
+      `ayarlar.molaSuresi` UZUN MOLADA ve TANITIM MOLASINDA yanlis.
+      Cekirdek artik her asama gecisinde `asamaSuresi` sakliyor; mola
+      ekraninin okudugu tek kaynak o. Deger yoksa (eski kayit, mola
+      disi durum) ayardaki sureye dusuyor. */
+  function molaSuresiAl() {
+    const s = +(motor && motor.asamaSuresi);
+    if (Number.isFinite(s) && s > 0) return s;
+    return motor.ayarlar.molaSuresi;
+  }
+
   function okuyucuyaSoyle(metin) {
     if (!og.okuyucu) return;
     // Aynı metni üst üste yazmak duyurulmuyor; kısa bir boşluk şart.
@@ -2139,11 +2151,19 @@
   function molaEkraniAc() {
     molaAcik = true;
     molaCikisKorumasiKur();
-    const sn = Math.round(motor.ayarlar.molaSuresi);
+    const sn = Math.round(molaSuresiAl());
+    /* UZUN SUREYI DAKIKA OLARAK SOYLE. "300 saniye" teknik olarak
+       dogru ama ekran okuyucu kullanicisinin kafasinda hemen bir
+       karsiligi yok; "5 dakika" var. Altmisin altinda saniye kaliyor,
+       cunku "0,5 dakika" daha kotu olurdu. */
+    const sureSozu = sn >= 60
+      ? CS(`${SAYI(Math.round(sn / 60))} dakika`,
+           `${SAYI(Math.round(sn / 60))} minutes`)
+      : CS(`${SAYI(sn)} saniye`, `${SAYI(sn)} seconds`);
     okuyucuyaSoyle(CS(
-      `Göz molası başladı. ${sn} saniye. Gözünü ekrandan ayır, ` +
+      `Göz molası başladı. ${sureSozu}. Gözünü ekrandan ayır, ` +
       'yaklaşık 6 metre uzağa bak.',
-      `Eye break started. ${sn} seconds. Look away from the screen, ` +
+      `Eye break started. ${sureSozu}. Look away from the screen, ` +
       'about 6 metres.'));
     /* AÇIK PENCERELER KAPANIR — YOKSA MOLA ARKADA KALIR.
 
@@ -2177,7 +2197,7 @@
     // "Neden?" kartı molanın ilk beşte birinde belirsin (20 sn'de 4. saniye).
     // Önce gözünü ekrandan ayırmasını istiyoruz; hemen okunacak bir şey
     // versek gözü ekranda tutmuş olurduk. Kısa molalarda gecikme de kısalır.
-    const nedenGecikme = Math.min(4000, motor.ayarlar.molaSuresi * 200);
+    const nedenGecikme = Math.min(4000, molaSuresiAl() * 200);
     og.nedenKart.classList.remove('gorunur');
     clearTimeout(nedenZaman);
     nedenZaman = setTimeout(async () => {
