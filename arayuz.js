@@ -94,6 +94,7 @@
     ikinciSekme: $('ikinciSekme'),
     buradaDevam: $('buradaDevamDugme'),
     kipDugmeler: $('kipDugmeler'),
+    kipNot: $('kipNot'),
     tanitimKart: $('tanitimKart'),
     tanitimMetin: $('tanitimMetin'),
     tanitimGoster: $('tanitimGoster'),
@@ -766,9 +767,56 @@
     });
   }
 
+  /* AILE KIPINDE SIFREYLE KORUNAN ALANLAR.
+     Ayarlar penceresi bunlari sifre sorarak koruyor; kip dugmeleri
+     ayni alani sorgusuz degistiriyordu. Liste TEK YERDE dursun ki
+     ikisi ayrismasin. */
+  const KORUNAN_ALANLAR = ['molaAtlanabilir', 'molaKilit'];
+
+  /** Kipin eksik uygulandigini SOYLE. Bos listede notu gizliyor. */
+  function kipNotuGoster(atlananlar) {
+    const e = og.kipNot;
+    if (!e) return;
+    if (!atlananlar || !atlananlar.length) {
+      e.classList.add('gizli');
+      e.textContent = '';
+      return;
+    }
+    e.classList.remove('gizli');
+    e.textContent = CS(
+      'Aile kipi açık: bu kipin "mola atlanabilsin" ayarı '
+      + 'uygulanmadı. Değiştirmek için ayarlardan şifre gerekiyor.',
+      'Family mode is on: this preset\u2019s \u201Cbreaks can be skipped\u201D '
+      + 'setting was not applied. Changing it needs the password in settings.');
+    okuyucuyaSoyle(e.textContent);
+  }
+
   function kipiUygula(k) {
     const oncekiSure = motor.ayarlar.calismaSuresi;
-    Object.assign(motor.ayarlar, k.ayar);
+    /* KIP, AILE KIPININ KAPISINI ATLAYAMAZ.
+
+       'Toplanti' ve 'Film · oyun' kipleri `molaAtlanabilir: true`
+       iceriyor. Ayarlardan bu alani acmak sifre istiyor; ana ekrandaki
+       kip dugmesi ise tek dokunusla aciyordu - ebeveynin koydugu kural
+       ayarlar penceresine hic girmeden kalkiyordu.
+
+       SESSIZCE KIRPMIYORUZ: dugme yine calisiyor ve kullaniciya NEDEN
+       eksik uygulandigi yaziliyor. Sessizce eksik uygulamak, bu
+       depoda "yalan soyleyen arayuz" diye adlandirilan sinif. */
+    const uygulanacak = { ...k.ayar };
+    const kilitli = motor.ayarlar.kip === 'aile' && !!kilitOzeti;
+    const atlananlar = [];
+    if (kilitli) {
+      for (const alan of KORUNAN_ALANLAR) {
+        if (alan in uygulanacak
+            && uygulanacak[alan] !== motor.ayarlar[alan]) {
+          delete uygulanacak[alan];
+          atlananlar.push(alan);
+        }
+      }
+    }
+    kipNotuGoster(atlananlar);
+    Object.assign(motor.ayarlar, uygulanacak);
     kaydet();
     /* Sayaç yeni süreyle baştan başlasın; yarım kalmış eski süreyle
        devam etmek kafa karıştırıyor.
@@ -3952,6 +4000,26 @@
      bir dahaki açılışta şerit yine çıkıyordu. */
   function kaydet() {
     if (silindi) return;
+    /* LIDER OLMAYAN SEKME DISKE YAZMAZ.
+
+       Bu sekme lider degilse bellegindeki her sey acildigi andan
+       kalma. `kaydet()` ayarlarin TAMAMINI, aile kipi sifresini ve
+       puani yaziyor; 15 saniyede bir kosan bu yol, oteki sekmede
+       kurulan sifreyi siliyor (kilitOzeti null), calisma suresini
+       varsayilana donduruyor ve puani geri aliyordu. Devir yolu daha
+       once kapatilmisti; periyodik yazma yolu acik kalmisti.
+
+       ONCE `!liderMiyim && baskaLiderVar()` YAZDIM, OLCUM CURUTTU:
+       arka plandaki lider sekmenin zamanlayicisi tarayici tarafindan
+       kisiliyor, kalp atisi bayatliyor ve `baskaLiderVar()` false
+       donuyor - takipci "ortada lider yok" sanip yine yaziyordu.
+       OLCULDU: lider 45 dk yazdi, takipci 20 dk ile ezdi.
+
+       Olcut artik sekmenin KENDI durumu: lider degilsem yazmam. Bu,
+       ekranda gordugu seyle de tutarli - lider olmayan sekme zaten
+       "baska sekmede acik" ortusunu gosteriyor ve kullanici devralana
+       kadar sayac islemiyor. Devralinca lider oluyor ve yaziyor. */
+    if (!liderMiyim) return;
     // Günün özetini kalıcı geçmişe de yaz (7 gün grafiği ve seri için)
     try {
       // NOT: `gunuIsle` kendi içinde de MAX alıyor; buradaki çağrı

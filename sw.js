@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v210';
+const SURUM = 'goz-molasi-v211';
 
 const DOSYALAR = [
   './',
@@ -70,10 +70,29 @@ self.addEventListener('install', (e) => {
   })());
 });
 
+/* ONBELLEK ADI ONEKI — YALNIZ KENDI ONBELLEKLERIMIZI SILIYORUZ.
+
+   `caches` (CacheStorage) KOKEN basinadir, kapsam (scope) basina
+   DEGIL. Eski temizlik "adi SURUM olmayan her onbellegi sil" diyordu
+   ve `meteotr06.github.io` kokenindeki BUTUN kardes uygulamalarin
+   onbellegini siliyordu: Hava Durumu portali, Hesap Araclari,
+   Muhasebe, Kur Pusulasi, Planlayici.
+
+   Kullanicinin gordugu sey: ucakta/metroda kurulu Hesap Araclari'ni
+   aciyor, bos sayfa geliyor. Simetrik olarak onlar da bizim
+   onbellegimizi siliyordu, yani Goz Molasi'nin kendi cevrimdisi
+   yetenegi de surekli yok ediliyordu. Hicbir hata mesaji yok -
+   cevrimiciyken her sey kusursuz calistigi icin sebebi bulunamiyor.
+
+   Onek SURUM'den turetiliyor ki ikisi birbirinden ayrisamasin. */
+const ONEK = SURUM.replace(/v\d+$/, '');
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((adlar) => Promise.all(adlar.filter((a) => a !== SURUM).map((a) => caches.delete(a))))
+      .then((adlar) => Promise.all(adlar
+        .filter((a) => a !== SURUM && a.startsWith(ONEK))
+        .map((a) => caches.delete(a))))
       .then(() => self.clients.claim())
   );
 });

@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v210">
+<link rel="stylesheet" href="stil.css?s=v211">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -241,7 +241,7 @@
     <div>
       <b id="gecikmisMolaBaslik"></b>
       <p id="gecikmisMolaMetin"></p>
-      <button type="button" id="gecikmisMolaVer"></button>
+      <button type="button" class="dugme ana kucuk" id="gecikmisMolaVer"></button>
     </div>
     <button type="button" class="durum-notu-kapat" id="gecikmisMolaKapat"
             aria-label="Kapat">✕</button>
@@ -255,6 +255,9 @@
   <section class="kip-serit" aria-label="Kip">
     <span class="kip-etiket">Kip</span>
     <div class="kip-dugmeler" id="kipDugmeler" role="group"></div>
+  <!-- Kip aile kipi yuzunden eksik uygulandiysa SEBEBI yaziliyor.
+       Sessizce eksik uygulamak "yalan soyleyen arayuz" olurdu. -->
+  <p class="kip-not gizli" id="kipNot" role="status"></p>
   </section>
 
   <!-- İLK AÇILIŞ TANITIMI
@@ -1059,17 +1062,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v210"></script>
-  <script src="dil.js?s=v210"></script>
-  <script src="bilgiler.js?s=v210"></script>
-  <script src="bilgiler_en.js?s=v210"></script>
-  <script src="dunya.js?s=v210"></script>
-  <script src="egzersiz.js?s=v210"></script>
-  <script src="reklam.js?s=v210"></script>
-  <script src="kopru.js?s=v210"></script>
-  <script src="cekirdek.js?s=v210"></script>
-  <script src="mola_icerik.js?s=v210"></script>
-  <script src="arayuz.js?s=v210"></script>
+  <script src="degisiklikler.js?s=v211"></script>
+  <script src="dil.js?s=v211"></script>
+  <script src="bilgiler.js?s=v211"></script>
+  <script src="bilgiler_en.js?s=v211"></script>
+  <script src="dunya.js?s=v211"></script>
+  <script src="egzersiz.js?s=v211"></script>
+  <script src="reklam.js?s=v211"></script>
+  <script src="kopru.js?s=v211"></script>
+  <script src="cekirdek.js?s=v211"></script>
+  <script src="mola_icerik.js?s=v211"></script>
+  <script src="arayuz.js?s=v211"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

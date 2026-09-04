@@ -639,6 +639,15 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
    Aynı hata iki ayrı projede daha çıktı, yani sınıfsal. Tek kural
    hepsini kapatıyor. `!important` burada haklı: `hidden` bir niyet
    beyanı, görünüm tercihi değil. */
+/* `--soluk` ON KURALDA KULLANILIYOR, HICBIR TEMADA TANIMLI DEGILDI.
+   Tanimsiz bir degiskene basvuran `color` bildirimi GECERSIZ sayilir
+   ve oge devraldigi rengi alir: soluk gorunmesi gereken on yazi
+   (kisayol tablosu, rehber yukleniyor, kapatma carpilari) tam
+   kontrastla ciziliyordu. Kardesi `--yazi-soluk` on sekiz yerde,
+   her temada tanimli; takma ad olarak baglandi - ikinci bir palet
+   tanimlamak ikisinin ayrismasi demekti. */
+:root { --soluk: var(--yazi-soluk); }
+
 [hidden] { display: none !important; }
 
 /* "Uygulama başlamadı" uyarısı. Stil dosyası gelmemiş olabilir diye
@@ -1967,6 +1976,13 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 }
 .rapor-not { margin: 10px 0 0; font-size: .8125rem; color: var(--yazi-soluk); }
 #raporPaylas { margin-top: 14px; width: 100%; }
+
+.kip-not {
+  margin: 6px 2px 0;
+  font-size: .8125rem;
+  line-height: 1.45;
+  color: var(--yazi-soluk);
+}
 
 /* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
    yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
