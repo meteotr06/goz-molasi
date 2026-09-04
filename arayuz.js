@@ -2850,6 +2850,7 @@
       `${kalanSn} sn sonra ekran ${molaSn} saniye kararacak`,
       `The screen goes dark for ${molaSn} s in ${kalanSn} s`);
     og.balon.classList.add('acik');
+    balonErisimi(true);
     calSes(1100, 0.18);
     /* Bildirim metni SABİT TÜRKÇEYDİ — İngilizce kullanan biri
        Türkçe bildirim alıyordu. Ayrıca ne olacağını söylemiyordu. */
@@ -2863,10 +2864,43 @@
     clearTimeout(balonZaman);
     balonZaman = setTimeout(balonGizle, saniye * 1000);
   }
+  /** BALONUN ERISILEBILIRLIGI — CSS GECISINE BIRAKILMAZ.
+
+      Dun balonu `visibility: hidden` ile sekme sirasindan cikardim ve
+      kayip animasyonu bitsin diye gecise gecikme koydum
+      (`visibility 0s .35s`). OLCTUM, DELIK VAR:
+        · kapandiktan sonraki 350 ms boyunca dugme hala odaklanabilir
+        · SEKME ARKA PLANDAYKEN gecis ilerlemiyor; iki saniye sonra
+          balon hala `visibility: visible` ve dugme BASILABILIR
+      Yani gorunmez bir dugme sekme sirasinda kaliyordu - tam da
+      duzeltmeye calistigim kusur, bu kez suresiz.
+
+      Merkezin ayni gun cikardigi sinif: gizli panelde CSS gecisleri
+      ILERLEMEZ ve olcum baslangic degerinde donar. Erisilebilirlik
+      gibi bir sey, ilerleyecegi garanti olmayan bir gecise
+      dayanamaz.
+
+      Artik JS ile ANINDA ve kesin: `inert` ogeyi hem odak sirasindan
+      hem erisilebilirlik agacindan cikariyor. Desteklemeyen tarayici
+      icin `aria-hidden` + dugmenin `tabIndex`i yedek. CSS kurallari
+      duruyor - ikinci katman olarak zararsiz. */
+  function balonErisimi(acik) {
+    const b = og.balon;
+    if (!b) return;
+    try { b.inert = !acik; } catch {}
+    b.setAttribute('aria-hidden', acik ? 'false' : 'true');
+    // `inert` desteklenmeyen tarayicida tek gercek kapi bu.
+    if (og.ertele) og.ertele.tabIndex = acik ? 0 : -1;
+  }
+
   function balonGizle() {
     og.balon.classList.remove('acik');
+    balonErisimi(false);
     clearTimeout(balonZaman);
   }
+  // Acilista da kapali baslasin: balon HTML'de duruyor ve ilk
+  // `balonGizle` cagrisina kadar odak sirasinda kalirdi.
+  balonErisimi(false);
   og.ertele.addEventListener('click', async () => {
     motor.ertele(5 * 60);
     balonGizle();
