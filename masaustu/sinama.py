@@ -62,6 +62,13 @@ SINAMALAR = [
      "Cekirdek senaryolari (sinama.js) - gercek sayfada"),
     ("simge", "ikon_svg_uret.py --olc",
      "Yayındaki simge, depodaki üreteçten mi çıkıyor"),
+    # SINAMA-LISTESI 413. `stil.css` `.saatlik-eksen`i tanimliyordu,
+    # aciklamasi niyeti de soyluyordu, ama `index.html`de oyle bir oge
+    # YOKTU. Kullanici 24 isimsiz cubuga bakti ve "hatalar var" dedi.
+    # Eksik oge hata VERMEZ, yalnizca gorunmez - bu yuzden ancak
+    # boyle bir denetim yakalar. Arac kendini de sinar.
+    ("oge", "sinama_oge.py",
+     "Söz verilen öğe konmuş mu (stil/id/olay karşılıksız kalmasın)"),
 ]
 
 # Bunlar exe gerektirir; "hizli" kipinde atlanır

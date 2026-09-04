@@ -593,10 +593,27 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+              visibility 0s 0.35s;
+  /* KAPALIYKEN SEKME SIRASINDAN DA CIKIYOR.
+     Balon yalnizca ekran DISINA itiliyordu; `visibility` acik kaldigi
+     icin icindeki "5 dk ertele" dugmesi odaklanabilir kaliyordu.
+     OLCULDU: 30 odaklanabilir ogenin 29.'su; Tab'la oraya varip
+     Enter'a basan biri gormedigi bir dugmeye basiyor ve sayac
+     1199 sn'den 299 sn'ye dusuyordu - "ertele" dugmesi molayi on bes
+     dakika ONE cekiyordu. Ekran okuyucu da olmayan bir dugmeyi
+     okuyordu.
+     Gecis suresi kadar gecikme: kayip animasyonu bitsin, sonra
+     agactan cikssin. */
+  visibility: hidden;
   max-width: calc(100vw - 24px);
 }
-.uyari-balon.acik { transform: translate(-50%, 0); }
+.uyari-balon.acik {
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+              visibility 0s;
+}
 /* `nowrap` KALDIRILDI — yazı sarabilsin.
 
    Ölçüldü (28.08.2026, %200 yazı): uyarı yazısı 398px'e çıkıyor,

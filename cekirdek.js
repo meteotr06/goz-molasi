@@ -399,11 +399,23 @@ class MolaMotoru {
     return true;
   }
 
-  /** Molayı ertele — sayacı belirtilen saniye kadar ileri al */
+  /** Molayı ertele — mola en az `saniye` sonraya kalsın.
+
+      ERTELEME KISALTAMAZ. Eskiden kalan süreyi doğrudan `saniye`ye
+      AYARLIYORDU: yirmi dakika kalmışken "5 dk ertele" demek süreyi
+      5 dakikaya indiriyor, yani molayı on beş dakika ÖNE çekiyordu.
+      Düğmenin adı "ertele" olduğu için kullanıcı bunun tersini bekler
+      ve ekranda gördüğü sayı da o an değişip gider.
+      ÖLÇÜLDÜ (04.09.2026): 1199 sn -> 299 sn.
+
+      Amaçlanan yolda (uyarı balonu, ~15 sn kala) sonuç aynı kalıyor:
+      max(15, 300) = 300. Yani düzeltme doğru davranışı bozmuyor,
+      yalnızca yanlış olanı imkânsız kılıyor. */
   ertele(saniye) {
     if (this.durum !== 'calisiyor' && this.durum !== 'uyari') return false;
-    this._asamayaGec('calisiyor', saniye);
-    this._duyur('ertelendi', saniye);
+    const hedef = Math.max(this.kalanSaniye(), +saniye || 0);
+    this._asamayaGec('calisiyor', hedef);
+    this._duyur('ertelendi', hedef);
     return true;
   }
 

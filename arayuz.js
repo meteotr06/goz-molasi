@@ -2715,7 +2715,20 @@
   /* ============================================================
      MOTOR OLAYLARI
      ============================================================ */
+  /* ERTELEME DUYURULUYOR. Cekirdek `ertelendi` olayini yayiyordu ve
+     BUNU DINLEYEN YOKTU (`sinama_oge.py` yakaladi). Goren kullanici
+     sayacin sicradigini goruyor; gormeyene hicbir sey ulasmiyordu -
+     "bastim mi, oldu mu?" sorusu cevapsiz kaliyordu. Bir goz sagligi
+     uygulamasinda az goren kullanici burada normalden fazla var. */
   motor
+    .uzerine('ertelendi', (saniye) => {
+      const dk = Math.round((+saniye || 0) / 60);
+      /* "…dakika ERTELENDI" demek yanlis olurdu: cekirdek molayi
+         `hedef` saniye SONRAYA aliyor, uzerine eklemiyor. Cumle
+         olculen davranisi anlatmali. */
+      okuyucuyaSoyle(CS(`Mola ${dk} dakika sonraya alındı.`,
+                        `Break moved to ${dk} minutes from now.`));
+    })
     .uzerine('tik', ekraniCiz)
     .uzerine('degisti', (d) => { ekraniCiz(d); kaydet(); })
     .uzerine('uyari', (kalan) => balonGoster(kalan))
