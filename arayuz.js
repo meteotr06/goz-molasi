@@ -32,6 +32,10 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    seviyeAd: $('seviyeAd'),
+    seviyePuan: $('seviyePuan'),
+    seviyeCubuk: $('seviyeCubuk'),
+    seviyeSonraki: $('seviyeSonraki'),
     saatlikAlt: $('saatlikAlt'),
     seriRozet: $('seriRozet'),
     haftaOzet: $('haftaOzet'),
@@ -261,6 +265,10 @@
     } catch {}
   }
 
+  /* PUAN BIRIKIMLI: `istatistik` her gun sifirlaniyor, puan sifirlanmaz.
+     Bozuk deger 0'a duser - kirpmak "makul gorunen bir yalan" uretirdi. */
+  let puan = (Number.isFinite(+kayit.puan) && +kayit.puan >= 0
+              && +kayit.puan <= 1e7) ? Math.floor(+kayit.puan) : 0;
   let kilitOzeti = kayit.kilitOzeti || null;
   let kilitTuz = kayit.kilitTuz || null;
   let yanlisSayisi = 0;
@@ -1661,7 +1669,8 @@
     }
 
     haftayiCiz();
-    saatlikCiz();   // saatlik dagilim da ayni anda tazelenir
+    saatlikCiz();
+    seviyeCiz();   // saatlik dagilim da ayni anda tazelenir
   }
 
   /* ============================================================
@@ -2167,6 +2176,52 @@
       Sayi yalniz renkle degil YAZIYLA da veriliyor (baslik altindaki
       satir + her cubugun `title`i + ekran okuyucu metni). Renk tek
       basina anlam tasimamali. */
+  /* SEVIYELER — goz temasi. "Baykus" bilerek yok: gece uyanik kalmayi
+     ovmek bir goz sagligi uygulamasinda yanlis mesaj olurdu. */
+  const PUAN_MOLA = 10;
+  const PUAN_UZUN = 25;
+  const SEVIYELER = [
+    { p: 0,    tr: 'Yeni Göz',      en: 'New Eye' },
+    { p: 100,  tr: 'Uyanık Göz',    en: 'Awake Eye' },
+    { p: 300,  tr: 'Dinlenmiş Göz', en: 'Rested Eye' },
+    { p: 700,  tr: 'Keskin Göz',    en: 'Sharp Eye' },
+    { p: 1500, tr: 'Şahin Gözü',    en: 'Hawk Eye' },
+    { p: 3000, tr: 'Kartal Gözü',   en: 'Eagle Eye' },
+    { p: 6000, tr: 'Efsane Göz',    en: 'Legendary Eye' },
+  ];
+
+  function seviyeBul(p) {
+    let simdi = SEVIYELER[0], sonraki = null;
+    for (const s of SEVIYELER) {
+      if (p >= s.p) simdi = s;
+      else { sonraki = s; break; }
+    }
+    return { simdi, sonraki };
+  }
+
+  /** Seviye karti. Sayi yalniz cubukla degil YAZIYLA da veriliyor:
+      renk ya da uzunluk goremeyen kullanici da ayni bilgiyi aliyor. */
+  function seviyeCiz() {
+    if (!og.seviyeAd) return;
+    const { simdi, sonraki } = seviyeBul(puan);
+    og.seviyeAd.textContent = CS(simdi.tr, simdi.en);
+    og.seviyePuan.textContent = CS(`${SAYI(puan)} puan`, `${SAYI(puan)} points`);
+    if (sonraki) {
+      const aralik = sonraki.p - simdi.p;
+      const ilerleme = Math.max(0, Math.min(100,
+        Math.round(((puan - simdi.p) / aralik) * 100)));
+      og.seviyeCubuk.style.width = ilerleme + '%';
+      og.seviyeSonraki.textContent = CS(
+        `${SAYI(sonraki.p - puan)} puan sonra ${sonraki.tr}`,
+        `${SAYI(sonraki.p - puan)} points to ${sonraki.en}`);
+      og.seviyeCubuk.parentElement.setAttribute('aria-valuenow', String(ilerleme));
+    } else {
+      og.seviyeCubuk.style.width = '100%';
+      og.seviyeSonraki.textContent = CS('En üst seviye', 'Top level');
+      og.seviyeCubuk.parentElement.setAttribute('aria-valuenow', '100');
+    }
+  }
+
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
@@ -2374,6 +2429,11 @@
     .uzerine('molaBitti', () => {
       // Şifre penceresi açıkken mola kendi kendine bittiyse pencereyi de kapat
       if (og.sifrePencere.open) sifreKapat(false);
+      /* PUAN: yalnız TAMAMLANAN moladan. Atlanan moladan puan
+         DÜŞÜLMÜYOR — ceza kullanıcıyı uygulamayı bırakmaya iter;
+         kazanılmayan puan zaten yeterli geri bildirim. */
+      puan += motor.uzunMoladaMi ? PUAN_UZUN : PUAN_MOLA;
+      seviyeCiz();
       molaEkraniKapat();
       calSes(990, 0.4);
       titret(200);                  // tek uzun: "devam"
@@ -2384,6 +2444,10 @@
         tanitimMolasi = false;
         motor.istatistik.tamamlananMola =
           Math.max(0, (motor.istatistik.tamamlananMola | 0) - 1);
+        /* Puan da AYNI YERDE geri alınıyor. Ayrı yerlerde dursaydı
+           tanıtım molası puan kazandırır, mola sayısı artmazdı — iki
+           sayı birbirini yalanlardı. */
+        puan = Math.max(0, puan - PUAN_MOLA);
         kaydet();
         ekraniCiz(motor.anlikDurum());
         return;
@@ -3217,6 +3281,7 @@
         uzakSifirlaSecildi,
         uzakSifirlaGocu,
         molaKilit,
+        puan,
         otomatikBasla,
         titresimAcik,
         arkaPlanAcik,

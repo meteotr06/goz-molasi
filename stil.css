@@ -1747,6 +1747,28 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+/* SEVIYE KARTI. Ilerleme hem cubukla hem YAZIYLA veriliyor - cubugu
+   goremeyen ya da rengi ayirt edemeyen kullanici ayni bilgiyi alsin. */
+.seviye-kart {
+  margin: 18px 0 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--cizgi);
+  border-radius: 14px;
+  background: var(--kart, transparent);
+}
+.seviye-ust { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.seviye-ust b { font-size: 1.0625rem; }
+.seviye-ust span { font-size: .8125rem; color: var(--yazi-soluk); font-variant-numeric: tabular-nums; }
+.seviye-yol {
+  margin: 8px 0 6px;
+  height: 8px;
+  border-radius: 6px;
+  background: var(--cizgi);
+  overflow: hidden;
+}
+.seviye-cubuk { height: 100%; width: 0; background: var(--vurgu); border-radius: 6px; }
+.seviye-kart small { font-size: .75rem; color: var(--yazi-soluk); }
+
 /* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
    yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
    metniyle veriliyor. Sayi RENKLE degil YAZIYLA da soyleniyor. */

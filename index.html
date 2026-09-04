@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v190">
+<link rel="stylesheet" href="stil.css?s=v191">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -290,6 +290,21 @@
          belirgin sey buydu: gunun her saati icin bir cubuk. Bizde
          olculen sey BU uygulamadaki ekran suresi; baska uygulamalari
          web'den gormek mumkun degil, o yuzden vaat de edilmiyor. -->
+    <!-- SEVIYE. Kullanicinin gosterdigi ekranda "Titanyum · 769 puan ·
+         231 puan Vibranyum icin" vardi; bizdeki karsiligi goz temali.
+         Puan YALNIZ tamamlanan moladan geliyor. -->
+    <section class="seviye-kart">
+      <div class="seviye-ust">
+        <b id="seviyeAd">Yeni Göz</b>
+        <span id="seviyePuan">0 puan</span>
+      </div>
+      <div class="seviye-yol" role="progressbar" aria-valuemin="0"
+           aria-valuemax="100" aria-label="Seviye ilerlemesi">
+        <div class="seviye-cubuk" id="seviyeCubuk"></div>
+      </div>
+      <small id="seviyeSonraki"></small>
+    </section>
+
     <h3 class="saatlik-baslik" id="saatlikBaslik">Gün içindeki ekran süren</h3>
     <p class="saatlik-alt" id="saatlikAlt"></p>
     <div class="saatlik-grafik" id="saatlikGrafik" role="img"
@@ -887,17 +902,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v190"></script>
-  <script src="dil.js?s=v190"></script>
-  <script src="bilgiler.js?s=v190"></script>
-  <script src="bilgiler_en.js?s=v190"></script>
-  <script src="dunya.js?s=v190"></script>
-  <script src="egzersiz.js?s=v190"></script>
-  <script src="reklam.js?s=v190"></script>
-  <script src="kopru.js?s=v190"></script>
-  <script src="cekirdek.js?s=v190"></script>
-  <script src="mola_icerik.js?s=v190"></script>
-  <script src="arayuz.js?s=v190"></script>
+  <script src="degisiklikler.js?s=v191"></script>
+  <script src="dil.js?s=v191"></script>
+  <script src="bilgiler.js?s=v191"></script>
+  <script src="bilgiler_en.js?s=v191"></script>
+  <script src="dunya.js?s=v191"></script>
+  <script src="egzersiz.js?s=v191"></script>
+  <script src="reklam.js?s=v191"></script>
+  <script src="kopru.js?s=v191"></script>
+  <script src="cekirdek.js?s=v191"></script>
+  <script src="mola_icerik.js?s=v191"></script>
+  <script src="arayuz.js?s=v191"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
