@@ -80,6 +80,10 @@ const VARSAYILAN_AYARLAR = {
 
   // Çalışma saatleri: bu aralığın dışında hatırlatma gelmez.
   // Gece 23:00'te ders çalışan biri sabah 9'da mola istemez.
+  /* Gunluk mola hedefi. Once `GUNLUK_HEDEF` sabitiydi; seri,
+     haftalik grafik ve etiketler hep ona bakiyordu. Artik
+     kullanici seciyor ve TEK KAYNAK burasi. */
+  gunlukHedef: 8,
   saatlerAcik: false,
   basSaat: '09:00',
   bitSaat: '18:00',
@@ -138,6 +142,10 @@ function ayarlariSuz(ayarlar) {
 }
 
 /* İSTATİSTİK SINIRLARI — bir günde olabilecek en büyük değerler. */
+// Gunluk hedef 1..30: bir gunde 30'dan cok mola hedeflemek
+// gercekci degil, 0 ise hedef diye bir sey kalmaz.
+SURE_SINIRLARI.gunlukHedef = [1, 30];
+
 const ISTATISTIK_SINIRLARI = {
   tamamlananMola: 1000,
   atlananMola: 1000,

@@ -32,6 +32,8 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    ayHedef: $('ayHedef'),
+    ayHedefDeger: $('ayHedefDeger'),
     etiketler: $('etiketler'),
     seviyeAd: $('seviyeAd'),
     seviyePuan: $('seviyePuan'),
@@ -1680,7 +1682,14 @@
      Grafik her tikte değil, yalnızca veri değişince çizilir.
      ============================================================ */
   let haftaImza = null;
-  og.hedefSayi.textContent = GUNLUK_HEDEF;
+  /* Hedef ARTIK AYARDAN. Sabiti dogrudan yazmak, ayar
+     degistiginde ekranin eski sayiyi gostermesi demekti. */
+  const hedefAl = () => {
+    const h = +(motor.ayarlar && motor.ayarlar.gunlukHedef);
+    return (Number.isFinite(h) && h >= 1 && h <= 30) ? Math.floor(h)
+                                                     : GUNLUK_HEDEF;
+  };
+  og.hedefSayi.textContent = hedefAl();
 
   function haftayiCiz() {
     const gunler = Gecmis.sonGunler(7, motor.istatistik);
@@ -1765,7 +1774,7 @@
         `${SAYI(ortalama, 1)} breaks per day on average`));
     }
 
-    const enb = Math.max(GUNLUK_HEDEF, ...gunler.map((g) => g.sayi));
+    const enb = Math.max(hedefAl(), ...gunler.map((g) => g.sayi));
 
     // Grafiğin tamamını ekran okuyucuya tek cümlede anlat
     og.haftaGrafik.setAttribute('role', 'img');
@@ -1775,20 +1784,20 @@
     og.haftaGrafik.setAttribute('aria-label', CS(
       'Son yedi gün: ' + gunler.map((g) => `${g.bugunMu ? 'bugün' : g.ad} ${g.sayi}`).join(', ') +
         `. Toplam ${toplam} mola, günlük ortalama ${SAYI(ortalama, 1)}, `
-        + `günlük hedef ${GUNLUK_HEDEF}.`,
+        + `günlük hedef ${hedefAl()}.`,
       'Last seven days: ' + gunler.map((g) => `${g.bugunMu ? 'today' : C(g.ad)} ${g.sayi}`).join(', ') +
         `. ${toplam} breaks in total, ${SAYI(ortalama, 1)} per day on `
-        + `average, daily goal ${GUNLUK_HEDEF}.`));
+        + `average, daily goal ${hedefAl()}.`));
 
     for (const g of gunler) {
       const hucre = document.createElement('div');
       hucre.className = 'gun'
-        + (g.sayi >= GUNLUK_HEDEF ? ' hedefte' : '')
+        + (g.sayi >= hedefAl() ? ' hedefte' : '')
         + (g.bugunMu ? ' bugun' : '');
       // Fare üstüne gelince kesin sayı görünsün
       hucre.title = CS(`${g.bugunMu ? 'Bugün' : g.ad}: ${g.sayi} mola`,
                        `${g.bugunMu ? 'Today' : C(g.ad)}: ${g.sayi} breaks`)
-                  + (g.sayi >= GUNLUK_HEDEF ? ' — hedef tamam' : '');
+                  + (g.sayi >= hedefAl() ? ' — hedef tamam' : '');
 
       const sayi = document.createElement('b');
       sayi.textContent = g.sayi || '';
@@ -2240,7 +2249,7 @@
 
     // 1) SERI — ust uste hedefi tutturulan gun
     let seri = 0;
-    try { seri = Gecmis.seri(ist) | 0; } catch {}
+    try { seri = Gecmis.seri(ist, hedefAl()) | 0; } catch {}
     if (seri >= 3) {
       cikan.push(CS(`${SAYI(seri)} gündür aralıksız`,
                     `${SAYI(seri)} days in a row`));
@@ -3123,6 +3132,9 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayHedef.value = hedefAl();
+    og.ayHedefDeger.textContent = CS(`${hedefAl()} mola`,
+                                     `${hedefAl()} breaks`);
     og.ayAile.checked = motor.ayarlar.kip === 'aile';
     og.aySinir.value = motor.ayarlar.gunlukSinirDk || 0;
     og.ayYasak.checked = !!motor.ayarlar.yasakAcik;
@@ -3216,6 +3228,13 @@
     motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
     motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
     motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
+    motor.ayarlar.gunlukHedef =
+      Math.min(30, Math.max(1, +og.ayHedef.value || 8));
+    /* Ekrandaki hedef sayisi da HEMEN tazelensin: once yalniz
+       acilista yaziliyordu ve kaydettikten sonra eski sayi
+       duruyordu - ekran ayarla celisiyordu. */
+    og.hedefSayi.textContent = motor.ayarlar.gunlukHedef;
+    haftaImza = null;   // grafik yeni hedefle yeniden cizilsin
     motor.ayarlar.saatlerAcik = og.aySaatler.checked;
     motor.ayarlar.kip = og.ayAile.checked ? 'aile' : 'bireysel';
     motor.ayarlar.gunlukSinirDk = Math.max(0, +og.aySinir.value || 0);

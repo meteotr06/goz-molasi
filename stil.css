@@ -1340,6 +1340,11 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    Sayı kutusuna elle yazmak telefonda zahmetli; kaydırıcıyla
    parmakla ayarlanıyor ve değer anında yanında görünüyor. */
 .kaydirici { padding: 12px 0 4px; }
+/* KAYDIRICILAR 44 PX. Ekran nobetcisi olctu (03.09.2026): yeni eklenen
+   hedef kaydiricisi 129x32 idi, dokunma esiginin altinda - dort ekran
+   durumunda da. Kural tek kaydiriciya degil HEPSINE yaziliyor:
+   ayni esigi bir sonraki eklenen de gecsin. */
+.kaydirici input[type=range] { min-height: 44px; }
 .kaydirici-ust {
   display: flex;
   align-items: baseline;

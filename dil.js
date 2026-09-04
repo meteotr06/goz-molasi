@@ -391,6 +391,9 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Günlük mola hedefi': 'Daily break goal',
+  'Seri ve etiketler bu hedefe göre çalışır':
+    'Your streak and labels follow this goal',
   'Yeni Göz': 'New Eye',
   'Gün içindeki ekran süren': 'Your screen time through the day',
   'günde ortalama mola': 'breaks per day on average',

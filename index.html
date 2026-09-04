@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v192">
+<link rel="stylesheet" href="stil.css?s=v195">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -643,6 +643,21 @@
       <!-- Seçilen süreler günde ne demek? -->
       <div class="ozet-kart" id="sureOzeti"></div>
 
+      <!-- GUNLUK HEDEF. Bilerek uzun mola blogunun DISINDA: ilk
+           denememde `#uzunMolaAyar` icine dusmustu ve o blok uzun mola
+           kapaliyken GIZLI - ayar kullaniciya hic gorunmuyordu. -->
+      <!-- EV KALIBI: `.kaydirici` SARMALAYICI div, sinif input'ta degil.
+           Ilk denememde sinifi input'a vermistim ve satir ev duzenine
+           uymuyordu. -->
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayHedef">Günlük mola hedefi</label>
+          <output for="ayHedef" id="ayHedefDeger">8 mola</output>
+        </div>
+        <input type="range" id="ayHedef" min="1" max="30" step="1" value="8">
+        <small>Seri ve etiketler bu hedefe göre çalışır</small>
+      </div>
+
       <div class="satir">
         <label for="ayUzunMola">Uzun mola
           <small id="uzunMolaAciklama">Uzun çalışmadan sonra daha uzun bir mola</small>
@@ -907,17 +922,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v192"></script>
-  <script src="dil.js?s=v192"></script>
-  <script src="bilgiler.js?s=v192"></script>
-  <script src="bilgiler_en.js?s=v192"></script>
-  <script src="dunya.js?s=v192"></script>
-  <script src="egzersiz.js?s=v192"></script>
-  <script src="reklam.js?s=v192"></script>
-  <script src="kopru.js?s=v192"></script>
-  <script src="cekirdek.js?s=v192"></script>
-  <script src="mola_icerik.js?s=v192"></script>
-  <script src="arayuz.js?s=v192"></script>
+  <script src="degisiklikler.js?s=v195"></script>
+  <script src="dil.js?s=v195"></script>
+  <script src="bilgiler.js?s=v195"></script>
+  <script src="bilgiler_en.js?s=v195"></script>
+  <script src="dunya.js?s=v195"></script>
+  <script src="egzersiz.js?s=v195"></script>
+  <script src="reklam.js?s=v195"></script>
+  <script src="kopru.js?s=v195"></script>
+  <script src="cekirdek.js?s=v195"></script>
+  <script src="mola_icerik.js?s=v195"></script>
+  <script src="arayuz.js?s=v195"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
