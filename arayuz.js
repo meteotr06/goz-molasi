@@ -32,6 +32,11 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    ayAksam: $('ayAksam'),
+    ayAksamSaat: $('ayAksamSaat'),
+    ayAksamSatir: $('ayAksamSatir'),
+    ayVurgu: $('ayVurgu'),
+    ayVurguSifirla: $('ayVurguSifirla'),
     ayHaftaSonu: $('ayHaftaSonu'),
     ayHsBas: $('ayHsBas'),
     ayHsBit: $('ayHsBit'),
@@ -236,8 +241,32 @@
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
   // İlk açılışta beyaz. Ana ekranın aydınlık olması mola ekranıyla
   // çelişmiyor: mola ekranı her temada koyu kalıyor.
+  /* AKSAM KIPI VE KENDI VURGU — `temaUygula`DAN ONCE tanimlanmali.
+
+     Once asagida (`kilitOzeti` yaninda) tanimlamistim; `temaUygula`
+     hemen burada cagriliyor ve icinden `kendiVurguyuUygula()` bu
+     degiskeni okuyor. `let` gecici olu bolgede oldugu icin acilis
+     "Cannot access 'kendiVurgu' before initialization" ile COKUYORDU -
+     ve cokunce ekranda "baslamadi" uyarisi tam ekran kaliyor, ayar
+     dugmesi bile tiklanamiyordu. Olcumle yakalandi.
+
+     Bozuk deger sessizce varsayilana duser - ekranin okunmaz hale
+     gelmesindense kapali. */
+  let aksamKipi = kayit.aksamKipi === true;
+  let aksamSaat = (Number.isFinite(+kayit.aksamSaat)
+                   && +kayit.aksamSaat >= 15 && +kayit.aksamSaat <= 23)
+                  ? Math.floor(+kayit.aksamSaat) : 20;
+  let kendiVurgu = (typeof kayit.kendiVurgu === 'string'
+                    && /^#[0-9a-f]{6}$/i.test(kayit.kendiVurgu))
+                   ? kayit.kendiVurgu : '';
   let tema = kayit.tema || 'beyaz';
   temaUygula(tema);
+  /* Aksam kipi SAAT ILERLEDIKCE degisiyor; sayfa acik kalirsa
+     kendiliginden guncellensin. Dakikada bir yeterli - saat basi
+     beklemek, saat 20:00'de acan kullaniciya 59 dakika yanlis
+     gosterirdi. */
+  setInterval(() => { try { aksamiUygula(); } catch {} }, 60000);
+
 
   /* ============================================================
      KİLİT (KATI MOD)
@@ -2327,6 +2356,23 @@
   /* Saat satiri YALNIZ "ayri saat" secildiyse gorunur - secilmeyen bir
      secenegin alanlarini gostermek, kullaniciya calismayan bir sey
      sunmaktir. */
+  /* Vurgu rengi ANINDA uygulaniyor: kullanici secerken sonucu gorsun,
+     "Kaydet"e basana kadar beklemesin. Kalicilik yine kaydetmede. */
+  og.ayVurgu?.addEventListener('input', () => {
+    kendiVurgu = og.ayVurgu.value || '';
+    kendiVurguyuUygula();
+  });
+  og.ayVurguSifirla?.addEventListener('click', () => {
+    kendiVurgu = '';
+    kendiVurguyuUygula();
+    kaydet();
+  });
+  og.ayAksam?.addEventListener('change', () => {
+    og.ayAksamSatir.classList.toggle('gizli', !og.ayAksam.checked);
+    aksamKipi = og.ayAksam.checked;
+    aksamiUygula();
+  });
+
   function haftaSonuSatiriniTazele() {
     if (!og.ayHsSatir) return;
     og.ayHsSatir.classList.toggle('gizli', og.ayHaftaSonu.value !== 'ayri');
@@ -3142,12 +3188,51 @@
       : CS('Seçince hemen uygulanır', 'Applies immediately');
   }
 
+  /** AKSAM KIPI — saat ilerledikce ekran isinir ve kisilir.
+
+      Renk degiskenlerini tek tek degistirmek yerine KOK ogeye filtre
+      uygulaniyor. Sebebi: 18 tema var; her birinde ayri ayri dogru
+      gorunmesi gerekirdi ve biri mutlaka unutulurdu - bu depoda
+      "elle tutulan kapsam curur" sinifi.
+
+      Yogunluk saate gore artiyor ama BIR YERDE DURUYOR: en fazla
+      sepia .28 / parlaklik .88. Daha fazlasi metni okunmaz yapiyor -
+      olculdu, .5 sepiada govde yazisi sariya boguluyor.
+
+      Mola ekrani haric TUTULMUYOR: aksamsa mola ekrani da yumusak
+      olmali, zaten amac o. */
+  function aksamiUygula() {
+    const kok = document.documentElement;
+    if (!aksamKipi) { kok.style.removeProperty('filter'); return; }
+    const saat = new Date().getHours();
+    // Gece yarisindan sonra da surer (saat 0-5 arasi en yogun).
+    const gece = (saat >= aksamSaat) || (saat < 6);
+    if (!gece) { kok.style.removeProperty('filter'); return; }
+    const ilerleme = saat >= aksamSaat
+      ? Math.min(1, (saat - aksamSaat + 1) / 4)
+      : 1;
+    const sepia = (0.10 + 0.18 * ilerleme).toFixed(2);
+    const parlak = (1 - 0.12 * ilerleme).toFixed(2);
+    kok.style.setProperty('filter', `sepia(${sepia}) brightness(${parlak})`);
+  }
+
+  /** Kendi vurgu rengi — tema uzerine YALNIZ `--vurgu` biniyor.
+      Zemin ve yazi renkleri temaya ait kaliyor; yoksa kullanici
+      okunmaz bir birlesim uretebilirdi. */
+  function kendiVurguyuUygula() {
+    const kok = document.documentElement;
+    if (kendiVurgu) kok.style.setProperty('--vurgu', kendiVurgu);
+    else kok.style.removeProperty('--vurgu');
+  }
+
   function temaUygula(t) {
     document.documentElement.dataset.tema = t;
     // Tarayıcı çubuğunun rengi de temayla uyumlu olsun
     const renk = getComputedStyle(document.documentElement)
       .getPropertyValue('--zemin').trim() || '#141130';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', renk);
+    kendiVurguyuUygula();
+    aksamiUygula();
   }
   og.tema.addEventListener('click', () => {
     tema = temaSirasi[(temaSirasi.indexOf(tema) + 1) % temaSirasi.length];
@@ -3180,6 +3265,10 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayAksam.checked = aksamKipi;
+    og.ayAksamSaat.value = aksamSaat;
+    og.ayAksamSatir.classList.toggle('gizli', !aksamKipi);
+    og.ayVurgu.value = kendiVurgu || '#7c5cff';
     og.ayHaftaSonu.value = motor.ayarlar.haftaSonu || 'ayni';
     og.ayHsBas.value = motor.ayarlar.haftaSonuBas || '11:00';
     og.ayHsBit.value = motor.ayarlar.haftaSonuBit || '20:00';
@@ -3283,6 +3372,9 @@
     motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
     motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
     motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
+    aksamKipi = og.ayAksam.checked;
+    aksamSaat = Math.min(23, Math.max(15, +og.ayAksamSaat.value || 20));
+    aksamiUygula();
     motor.ayarlar.haftaSonu = og.ayHaftaSonu.value || 'ayni';
     motor.ayarlar.haftaSonuBas = og.ayHsBas.value || '11:00';
     motor.ayarlar.haftaSonuBit = og.ayHsBit.value || '20:00';
@@ -3436,6 +3528,9 @@
         uzakSifirlaSecildi,
         uzakSifirlaGocu,
         molaKilit,
+        aksamKipi,
+        aksamSaat,
+        kendiVurgu,
         puan,
         otomatikBasla,
         titresimAcik,

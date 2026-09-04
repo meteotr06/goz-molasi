@@ -393,6 +393,13 @@ const SOZLUK = {
   'Ana ekrana ekle': 'Add to home screen',
   'Günlük mola hedefi': 'Daily break goal',
   'Hafta sonu': 'Weekend',
+  'Akşam kipi': 'Evening mode',
+  'Akşamdan sonra ekran ısınsın ve kısılsın':
+    'Warm and dim the screen after evening',
+  'Akşam saati': 'Evening starts at',
+  'Kendi vurgu rengin': 'Your own accent colour',
+  'Temanın üstüne yalnız vurgu rengi biner':
+    'Only the accent colour overrides the theme',
   'Cumartesi ve pazar nasıl çalışsın': 'How Saturday and Sunday work',
   'Hafta içiyle aynı': 'Same as weekdays',
   'Kapalı — mola gelmesin': 'Off — no breaks',

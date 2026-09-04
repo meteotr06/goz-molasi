@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v199';
+const SURUM = 'goz-molasi-v200';
 
 const DOSYALAR = [
   './',
@@ -30,13 +30,44 @@ const DOSYALAR = [
   './onizleme-en.png',
 ];
 
+/* ÇEKİRDEK DOSYALAR — bunlar olmadan uygulama çevrimdışı AÇILMAZ.
+   Ötekiler (ikonlar, yazı tipi, bilgi dosyaları) eksik olsa da uygulama
+   çalışır; bir tanesi yüzünden güncellemeyi tümden durdurmak daha
+   büyük zarar olurdu. */
+const CEKIRDEK_DOSYALAR = [
+  './', './index.html', './stil.css', './cekirdek.js', './arayuz.js', './dil.js',
+];
+
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(SURUM)
-      .then((c) => c.addAll(DOSYALAR))
-      .catch(() => null)          // bir dosya eksikse kurulum çökmesin
-      .then(() => self.skipWaiting())
-  );
+  /* `addAll` HEP-YA-HİÇ: tek dosya düşerse hiçbiri eklenmiyordu ve
+     `.catch(() => null)` bunu YUTUP `skipWaiting()`e geçiyordu. Sonra
+     `activate` çalışan ESKİ önbelleği siliyordu — yani bir dosyanın
+     eksikliği, çalışan çevrimdışı katmanı sessizce öldürebilirdi.
+
+     DÜRÜST NOT: bu zararı ÜRETEMEDİM (03.09.2026, üç deneme). Ağ-önce
+     yöntem önbelleği çalışırken yeniden dolduruyor, üstelik dosyayı
+     diskten kaldırsam bile tarayıcının kendi HTTP önbelleği onu
+     sunuyor — yani "404" kurulamadı. Kusuru GÖSTEREMEDİM; düzeltme
+     kanıta değil, kodun şekline dayanıyor ve bunu saklamıyorum.
+
+     Yeni davranış: dosyalar TEK TEK ekleniyor, biri düşse ötekiler
+     duruyor. Yalnız ÇEKİRDEK bir dosya düşerse kurulum başarısız
+     sayılıyor ve `skipWaiting` ÇAĞRILMIYOR — eski işçi görevde kalır,
+     çalışan önbellek silinmez. Kullanıcı eski ama ÇALIŞAN sürümde
+     kalır; bozuk bir sürümde kalmasından iyidir. */
+  e.waitUntil((async () => {
+    const c = await caches.open(SURUM);
+    const dusenler = [];
+    await Promise.all(DOSYALAR.map(async (d) => {
+      try { await c.add(d); } catch { dusenler.push(d); }
+    }));
+    const cekirdekDustu = dusenler.some((d) => CEKIRDEK_DOSYALAR.includes(d));
+    if (cekirdekDustu) {
+      // Bilerek fırlatılıyor: kurulum başarısız olsun ki eski işçi kalsın.
+      throw new Error('cekirdek dosya eksik: ' + dusenler.join(', '));
+    }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (e) => {

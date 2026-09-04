@@ -1756,6 +1756,14 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+/* Kendi vurgu rengi secimi. Renk kutusu dokunma esigini gecsin. */
+.vurgu-secim { display: flex; align-items: center; gap: 8px; }
+.vurgu-secim input[type=color] {
+  width: 52px; min-height: 44px;
+  border: 1px solid var(--cizgi); border-radius: 10px;
+  background: none; cursor: pointer; padding: 2px;
+}
+
 /* ===== HAREKET — BUGUN EKLENEN OGELER =====================
    Dort kural, hepsi zorunlu:
    1. VARSAYILAN HAL DAIMA GORUNUR. Butun hareket asagidaki medya

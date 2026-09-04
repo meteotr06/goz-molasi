@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v199">
+<link rel="stylesheet" href="stil.css?s=v200">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -649,6 +649,39 @@
       <!-- EV KALIBI: `.kaydirici` SARMALAYICI div, sinif input'ta degil.
            Ilk denememde sinifi input'a vermistim ve satir ev duzenine
            uymuyordu. -->
+      <!-- AKSAM KIPI. Renk secenegine "bir tane daha tema" degil,
+           uygulamanin AMACINA bagli bir yaklasim: aksam saatlerinde
+           ekran kendiliginden isinir ve kisilir. -->
+      <div class="satir">
+        <label for="ayAksam">Akşam kipi
+          <small>Akşamdan sonra ekran ısınsın ve kısılsın</small>
+        </label>
+        <span class="anahtar"><input type="checkbox" id="ayAksam"><i></i></span>
+      </div>
+      <div class="satir gizli" id="ayAksamSatir">
+        <label for="ayAksamSaat">Akşam saati</label>
+        <select id="ayAksamSaat">
+          <option value="17">17:00</option>
+          <option value="18">18:00</option>
+          <option value="19">19:00</option>
+          <option value="20">20:00</option>
+          <option value="21">21:00</option>
+          <option value="22">22:00</option>
+        </select>
+      </div>
+
+      <!-- KENDI VURGU RENGIN. Hazir listeden secmek yerine kullanici
+           kendi rengini seciyor; tema uzerine YALNIZ vurgu biniyor. -->
+      <div class="satir">
+        <label for="ayVurgu">Kendi vurgu rengin
+          <small>Temanın üstüne yalnız vurgu rengi biner</small>
+        </label>
+        <span class="vurgu-secim">
+          <input type="color" id="ayVurgu" value="#7c5cff">
+          <button type="button" class="dugme sade kucuk" id="ayVurguSifirla">Sıfırla</button>
+        </span>
+      </div>
+
       <!-- HAFTA SONU. Uc secenek tek ayarda; saat alanlari yalniz
            "ayrı saat" secilince gorunuyor. -->
       <div class="satir">
@@ -942,17 +975,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v199"></script>
-  <script src="dil.js?s=v199"></script>
-  <script src="bilgiler.js?s=v199"></script>
-  <script src="bilgiler_en.js?s=v199"></script>
-  <script src="dunya.js?s=v199"></script>
-  <script src="egzersiz.js?s=v199"></script>
-  <script src="reklam.js?s=v199"></script>
-  <script src="kopru.js?s=v199"></script>
-  <script src="cekirdek.js?s=v199"></script>
-  <script src="mola_icerik.js?s=v199"></script>
-  <script src="arayuz.js?s=v199"></script>
+  <script src="degisiklikler.js?s=v200"></script>
+  <script src="dil.js?s=v200"></script>
+  <script src="bilgiler.js?s=v200"></script>
+  <script src="bilgiler_en.js?s=v200"></script>
+  <script src="dunya.js?s=v200"></script>
+  <script src="egzersiz.js?s=v200"></script>
+  <script src="reklam.js?s=v200"></script>
+  <script src="kopru.js?s=v200"></script>
+  <script src="cekirdek.js?s=v200"></script>
+  <script src="mola_icerik.js?s=v200"></script>
+  <script src="arayuz.js?s=v200"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
