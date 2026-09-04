@@ -1137,6 +1137,12 @@ kbd {
      saf GPU israfıydı — üstelik 20 saniye boyunca her karede. */
   color: var(--mola-yazi);
 
+  /* KARARTMA ORTUSU. Gradyanin uzerine siyah bir katman biniyor;
+     yogunlugu `--mola-karartma` ayarindan geliyor. Renkleri tek tek
+     koyulastirmak 18 temada ayri ayri dogru gorunmeyi gerektirirdi. */
+  box-shadow: inset 0 0 0 100vmax
+    rgba(0, 0, 0, var(--mola-karartma, 0.15));
+
   /* İçerik ekrana sığmazsa kaydırılabilsin.
      "safe center": normal center, taşma olduğunda içeriği İKİ uçtan
      birden kırpıyor — 1280x600 gibi kısa ekranlarda hem başlık hem
@@ -1150,6 +1156,12 @@ kbd {
   transition: opacity 0.45s ease, visibility 0.45s;
 }
 .mola-ekran.acik { opacity: 1; visibility: visible; }
+
+/* ICERIK SECIMI. Gizlenen oge `display:none` ile tumden cikiyor:
+   `visibility` biraksaydik ekran okuyucu yine okurdu. */
+.mola-ekran[data-icerik="sayac"] .nefes,
+.mola-ekran[data-icerik="sayac"] .egzersiz-tuval { display: none; }
+.mola-ekran[data-icerik="nefes"] .egzersiz-tuval { display: none; }
 
 /* Mola ekranindaki kaynak satirlari (karti disinda kalanlar da)
    TEMANIN degil MOLA EKRANININ rengini kullanir: ekran her temada

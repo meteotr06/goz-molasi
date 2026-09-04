@@ -84,6 +84,11 @@ const VARSAYILAN_AYARLAR = {
      haftalik grafik ve etiketler hep ona bakiyordu. Artik
      kullanici seciyor ve TEK KAYNAK burasi. */
   gunlukHedef: 8,
+  /* Mola ekrani gorunumu. Karartma 0..0.55 - tam karartma mola
+     ekranindaki sayiyi ve ipucunu da okunmaz yapar. */
+  molaKarartma: 0.15,
+  molaIcerik: 'tam',        // 'tam' | 'sayac' | 'nefes'
+  molaSesTonu: 'yumusak',   // 'yumusak' | 'zil' | 'yok'
   saatlerAcik: false,
   /* HAFTA SONU. 'ayni' = hafta ici ile ayni · 'kapali' = sayac hic
      islemez · 'ayri' = kendi saat araligi. Tek ayar, uc secenek. */
@@ -150,6 +155,8 @@ function ayarlariSuz(ayarlar) {
 // Gunluk hedef 1..30: bir gunde 30'dan cok mola hedeflemek
 // gercekci degil, 0 ise hedef diye bir sey kalmaz.
 SURE_SINIRLARI.gunlukHedef = [1, 30];
+// Karartma 0..0.55: ustu metni okunmaz yapiyor.
+SURE_SINIRLARI.molaKarartma = [0, 0.55];
 
 const ISTATISTIK_SINIRLARI = {
   tamamlananMola: 1000,

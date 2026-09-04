@@ -396,6 +396,19 @@ const SOZLUK = {
     'Counts only time spent in this app — not your whole phone',
   'Hafta sonu': 'Weekend',
   'Akşam kipi': 'Evening mode',
+  'Mola ekranı karartması': 'Break screen dimming',
+  'Yüzde elli beşin üstüne çıkılmıyor: mola ekranındaki sayı okunur kalmalı':
+    'Capped at 55%: the number on the break screen must stay readable',
+  'Mola ekranında ne olsun': 'What to show during a break',
+  'Hareketli içerik istemiyorsan sadece sayaç seç':
+    'Choose timer only if you would rather not see moving content',
+  'Nefes halkası ve egzersiz': 'Breathing ring and exercise',
+  'Sadece nefes halkası': 'Breathing ring only',
+  'Sadece sayaç': 'Timer only',
+  'Mola sesi': 'Break sound',
+  'Yumuşak': 'Soft',
+  'Zil': 'Bell',
+  'Sessiz': 'Silent',
   'Akşamdan sonra ekran ısınsın ve kısılsın':
     'Warm and dim the screen after evening',
   'Akşam saati': 'Evening starts at',

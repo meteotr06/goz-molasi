@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v203">
+<link rel="stylesheet" href="stil.css?s=v204">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -649,6 +649,37 @@
       <!-- EV KALIBI: `.kaydirici` SARMALAYICI div, sinif input'ta degil.
            Ilk denememde sinifi input'a vermistim ve satir ev duzenine
            uymuyordu. -->
+      <!-- MOLA EKRANI GORUNUMU. Kullanicinin istedigi ucuncu ayar
+           grubu: karartma, icerik, ses tonu. -->
+      <div class="kaydirici">
+        <div class="kaydirici-ust">
+          <label for="ayKarartma">Mola ekranı karartması</label>
+          <output for="ayKarartma" id="ayKarartmaDeger">15%</output>
+        </div>
+        <input type="range" id="ayKarartma" min="0" max="55" step="5" value="15">
+        <small>Yüzde elli beşin üstüne çıkılmıyor: mola ekranındaki sayı okunur kalmalı</small>
+      </div>
+
+      <div class="satir">
+        <label for="ayMolaIcerik">Mola ekranında ne olsun
+          <small>Hareketli içerik istemiyorsan sadece sayaç seç</small>
+        </label>
+        <select id="ayMolaIcerik">
+          <option value="tam">Nefes halkası ve egzersiz</option>
+          <option value="nefes">Sadece nefes halkası</option>
+          <option value="sayac">Sadece sayaç</option>
+        </select>
+      </div>
+
+      <div class="satir">
+        <label for="aySesTonu">Mola sesi</label>
+        <select id="aySesTonu">
+          <option value="yumusak">Yumuşak</option>
+          <option value="zil">Zil</option>
+          <option value="yok">Sessiz</option>
+        </select>
+      </div>
+
       <!-- AKSAM KIPI. Renk secenegine "bir tane daha tema" degil,
            uygulamanin AMACINA bagli bir yaklasim: aksam saatlerinde
            ekran kendiliginden isinir ve kisilir. -->
@@ -982,17 +1013,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v203"></script>
-  <script src="dil.js?s=v203"></script>
-  <script src="bilgiler.js?s=v203"></script>
-  <script src="bilgiler_en.js?s=v203"></script>
-  <script src="dunya.js?s=v203"></script>
-  <script src="egzersiz.js?s=v203"></script>
-  <script src="reklam.js?s=v203"></script>
-  <script src="kopru.js?s=v203"></script>
-  <script src="cekirdek.js?s=v203"></script>
-  <script src="mola_icerik.js?s=v203"></script>
-  <script src="arayuz.js?s=v203"></script>
+  <script src="degisiklikler.js?s=v204"></script>
+  <script src="dil.js?s=v204"></script>
+  <script src="bilgiler.js?s=v204"></script>
+  <script src="bilgiler_en.js?s=v204"></script>
+  <script src="dunya.js?s=v204"></script>
+  <script src="egzersiz.js?s=v204"></script>
+  <script src="reklam.js?s=v204"></script>
+  <script src="kopru.js?s=v204"></script>
+  <script src="cekirdek.js?s=v204"></script>
+  <script src="mola_icerik.js?s=v204"></script>
+  <script src="arayuz.js?s=v204"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

@@ -41,6 +41,10 @@
     ayHsBas: $('ayHsBas'),
     ayHsBit: $('ayHsBit'),
     ayHsSatir: $('ayHsSatir'),
+    ayKarartma: $('ayKarartma'),
+    ayKarartmaDeger: $('ayKarartmaDeger'),
+    ayMolaIcerik: $('ayMolaIcerik'),
+    aySesTonu: $('aySesTonu'),
     ayHedef: $('ayHedef'),
     ayHedefDeger: $('ayHedefDeger'),
     etiketler: $('etiketler'),
@@ -1078,7 +1082,18 @@
   document.addEventListener('pointerdown', sesiUyandir, { once: true });
   document.addEventListener('keydown', sesiUyandir, { once: true });
 
+  /* Ses tonu ayari: `yok` tumden sessiz, `zil` daha tiz ve kisa.
+     Ses TEK BASINA anlam tasimiyor - mola ekrani zaten gorunuyor. */
+  function sesFrekansi(varsayilan) {
+    const ton = motor.ayarlar.molaSesTonu || 'yumusak';
+    if (ton === 'yok') return 0;
+    if (ton === 'zil') return Math.round(varsayilan * 1.35);
+    return varsayilan;
+  }
+
   function calSes(frekans = 880, sure = 0.5) {
+    frekans = sesFrekansi(frekans);
+    if (!frekans) return;   // 'yok' tonu: hic calma
     if (!motor.ayarlar.sesAcik || !sesMotoru || sesMotoru.state !== 'running') return;
     const t = sesMotoru.currentTime;
     const osc = sesMotoru.createOscillator();
@@ -2358,6 +2373,14 @@
      sunmaktir. */
   /* Vurgu rengi ANINDA uygulaniyor: kullanici secerken sonucu gorsun,
      "Kaydet"e basana kadar beklemesin. Kalicilik yine kaydetmede. */
+  og.ayKarartma?.addEventListener('input', () => {
+    og.ayKarartmaDeger.textContent = og.ayKarartma.value + '%';
+    /* ANINDA UYGULANIYOR: karartmayi secerken sonucu gormek gerekir,
+       "Kaydet"e basip mola ekranini beklemek degil. */
+    document.documentElement.style.setProperty(
+      '--mola-karartma', String((+og.ayKarartma.value || 0) / 100));
+  });
+
   og.ayVurgu?.addEventListener('input', () => {
     kendiVurgu = og.ayVurgu.value || '';
     kendiVurguyuUygula();
@@ -3256,6 +3279,16 @@
     }
   }
 
+  /** Mola ekrani gorunumu: karartma + icerik secimi.
+      Ikisi de veri DEGIL gorunum; kayitta tutuluyor ama sayaci
+      etkilemiyor. */
+  function molaGorunumuUygula() {
+    const k = Math.min(0.55, Math.max(0, +motor.ayarlar.molaKarartma || 0));
+    document.documentElement.style.setProperty('--mola-karartma', String(k));
+    const ic = motor.ayarlar.molaIcerik || 'tam';
+    if (og.molaEkran) og.molaEkran.dataset.icerik = ic;
+  }
+
   function temaUygula(t) {
     document.documentElement.dataset.tema = t;
     // Tarayıcı çubuğunun rengi de temayla uyumlu olsun
@@ -3264,6 +3297,7 @@
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', renk);
     kendiVurguyuUygula();
     aksamiUygula();
+    molaGorunumuUygula();
   }
   og.tema.addEventListener('click', () => {
     tema = temaSirasi[(temaSirasi.indexOf(tema) + 1) % temaSirasi.length];
@@ -3304,6 +3338,10 @@
     og.ayHsBas.value = motor.ayarlar.haftaSonuBas || '11:00';
     og.ayHsBit.value = motor.ayarlar.haftaSonuBit || '20:00';
     haftaSonuSatiriniTazele();
+    og.ayKarartma.value = Math.round((+motor.ayarlar.molaKarartma || 0) * 100);
+    og.ayKarartmaDeger.textContent = og.ayKarartma.value + '%';
+    og.ayMolaIcerik.value = motor.ayarlar.molaIcerik || 'tam';
+    og.aySesTonu.value = motor.ayarlar.molaSesTonu || 'yumusak';
     og.ayHedef.value = hedefAl();
     og.ayHedefDeger.textContent = CS(`${hedefAl()} mola`,
                                      `${hedefAl()} breaks`);
@@ -3409,6 +3447,11 @@
     motor.ayarlar.haftaSonu = og.ayHaftaSonu.value || 'ayni';
     motor.ayarlar.haftaSonuBas = og.ayHsBas.value || '11:00';
     motor.ayarlar.haftaSonuBit = og.ayHsBit.value || '20:00';
+    motor.ayarlar.molaKarartma =
+      Math.min(0.55, Math.max(0, (+og.ayKarartma.value || 0) / 100));
+    motor.ayarlar.molaIcerik = og.ayMolaIcerik.value || 'tam';
+    motor.ayarlar.molaSesTonu = og.aySesTonu.value || 'yumusak';
+    molaGorunumuUygula();
     motor.ayarlar.gunlukHedef =
       Math.min(30, Math.max(1, +og.ayHedef.value || 8));
     /* Ekrandaki hedef sayisi da HEMEN tazelensin: once yalniz
