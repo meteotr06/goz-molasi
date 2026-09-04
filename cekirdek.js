@@ -560,8 +560,37 @@ class MolaMotoru {
         this._duyur('degisti', this.anlikDurum());
         return;
       }
-      this.istatistik.ekranSuresi += 0.25;
-      this.istatistik.kesintisizSure += 0.25;
+      /* EKRAN SURESI DUVAR SAATIYLE OLCULUR, TIK SAYISIYLA DEGIL.
+
+         Once her tikte sabit `0.25` ekleniyordu, yani "tikler saniyede
+         dort kez gelir" VARSAYILIYORDU. Tarayici arka plandaki sekmenin
+         zamanlayicisini kisiyor (dakikada bire kadar): sayac gercekte
+         gecen surenin cok altinda kaliyordu.
+
+         OLCULDU (03.09.2026): 40 tik ardarda cagrildi, gercekte 0 saniye
+         gecti, `ekranSuresi`ne 10 SANIYE eklendi. Yani sayi tik
+         sayisinin turevi, surenin degil.
+
+         NEDEN AGIR: aile kipinin GUNLUK EKRAN SURESI SINIRI bu sayidan
+         besleniyor. Ebeveyn "60 dk" koyuyor, cocuk sekmeyi arka plana
+         atip telefonu saatlerce kullaniyor, sinir HIC dolmuyor ve engel
+         ekrani cikmiyor. Cekirdegin kendi yorumu bunu zaten yaziyor:
+         "olmayan bir korumaya guvendirmek, hic koruma koymamaktan
+         kotudur."
+
+         UST SINIR 2 SANIYE: sekme gizliyken ya da kisilmisken aradaki
+         buyuk bosluk EKRAN SURESI SAYILMAMALI - kullanici o sirada bu
+         uygulamaya bakmiyordu. Kisilmis ama ONDEKI bir sekmede tikler
+         saniyede bire duser; orada 1 saniye eklenir ve dogru olur.
+
+         UC SAYI DA AYNI DELTAYI KULLANIYOR: ayri ayri artsalardi biri
+         otekinden kayardi - bu depoda bilinen sinif. */
+      const oncekiTik = this._sonTikAni || simdi;
+      this._sonTikAni = simdi;
+      const delta = Math.min(2, Math.max(0, (simdi - oncekiTik) / 1000));
+
+      this.istatistik.ekranSuresi += delta;
+      this.istatistik.kesintisizSure += delta;
       /* Saatlik kova. `ekranSuresi` ile ayni satirda artiyor: ikisi
          ayri yerlerde artsaydi biri kacirdiginda toplamlar sessizce
          uyusmaz olurdu. */
@@ -569,7 +598,7 @@ class MolaMotoru {
       if (!Array.isArray(this.istatistik.saatlik)) {
         this.istatistik.saatlik = new Array(24).fill(0);
       }
-      this.istatistik.saatlik[saat] = (this.istatistik.saatlik[saat] || 0) + 0.25;
+      this.istatistik.saatlik[saat] = (this.istatistik.saatlik[saat] || 0) + delta;
     }
     if (this.durum === 'bosta') return;
 

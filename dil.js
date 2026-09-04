@@ -392,6 +392,8 @@ const SOZLUK = {
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
   'Günlük mola hedefi': 'Daily break goal',
+  'Yalnızca bu uygulamada geçen süreyi sayar — telefonun tamamını değil':
+    'Counts only time spent in this app — not your whole phone',
   'Hafta sonu': 'Weekend',
   'Akşam kipi': 'Evening mode',
   'Akşamdan sonra ekran ısınsın ve kısılsın':
