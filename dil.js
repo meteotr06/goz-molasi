@@ -391,6 +391,7 @@ const SOZLUK = {
 
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
+  'Gün içindeki ekran süren': 'Your screen time through the day',
   'günde ortalama mola': 'breaks per day on average',
   'Şimdi YAKINA bak — parmağına': 'Now look NEAR — at your finger',
   'Şimdi UZAĞA bak': 'Now look FAR',

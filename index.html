@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v188">
+<link rel="stylesheet" href="stil.css?s=v190">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -285,6 +285,15 @@
       <span>günde ortalama mola</span>
     </p>
     <div class="hafta-grafik" id="haftaGrafik"></div>
+
+    <!-- SAATLIK DAGILIM. Kullanicinin gosterdigi StayFree ekraninda en
+         belirgin sey buydu: gunun her saati icin bir cubuk. Bizde
+         olculen sey BU uygulamadaki ekran suresi; baska uygulamalari
+         web'den gormek mumkun degil, o yuzden vaat de edilmiyor. -->
+    <h3 class="saatlik-baslik" id="saatlikBaslik">Gün içindeki ekran süren</h3>
+    <p class="saatlik-alt" id="saatlikAlt"></p>
+    <div class="saatlik-grafik" id="saatlikGrafik" role="img"
+         aria-label="Saatlik ekran süresi"></div>
     <span class="kaynak">Kesikli çizgi günlük hedef: <b id="hedefSayi">8</b> mola · düz çizgi kendi ortalaman</span>
   </section>
 
@@ -878,17 +887,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v188"></script>
-  <script src="dil.js?s=v188"></script>
-  <script src="bilgiler.js?s=v188"></script>
-  <script src="bilgiler_en.js?s=v188"></script>
-  <script src="dunya.js?s=v188"></script>
-  <script src="egzersiz.js?s=v188"></script>
-  <script src="reklam.js?s=v188"></script>
-  <script src="kopru.js?s=v188"></script>
-  <script src="cekirdek.js?s=v188"></script>
-  <script src="mola_icerik.js?s=v188"></script>
-  <script src="arayuz.js?s=v188"></script>
+  <script src="degisiklikler.js?s=v190"></script>
+  <script src="dil.js?s=v190"></script>
+  <script src="bilgiler.js?s=v190"></script>
+  <script src="bilgiler_en.js?s=v190"></script>
+  <script src="dunya.js?s=v190"></script>
+  <script src="egzersiz.js?s=v190"></script>
+  <script src="reklam.js?s=v190"></script>
+  <script src="kopru.js?s=v190"></script>
+  <script src="cekirdek.js?s=v190"></script>
+  <script src="mola_icerik.js?s=v190"></script>
+  <script src="arayuz.js?s=v190"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

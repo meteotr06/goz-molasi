@@ -31,6 +31,8 @@
     istSure: $('istSure'),
 
     haftaGrafik: $('haftaGrafik'),
+    saatlikGrafik: $('saatlikGrafik'),
+    saatlikAlt: $('saatlikAlt'),
     seriRozet: $('seriRozet'),
     haftaOzet: $('haftaOzet'),
     haftaBuyuk: $('haftaBuyuk'),
@@ -1659,6 +1661,7 @@
     }
 
     haftayiCiz();
+    saatlikCiz();   // saatlik dagilim da ayni anda tazelenir
   }
 
   /* ============================================================
@@ -2153,6 +2156,66 @@
     og.molaEkran.addEventListener('transitionend', odakla, { once: true });
     setTimeout(odakla, 80);
     setTimeout(odakla, 400);
+  }
+
+  /** SAATLIK GRAFIK — gunun hangi saatinde ne kadar ekran basindaydi.
+
+      Cubuk yuksekligi EN YUKSEK saate gore olceklenir; mutlak bir
+      esige gore degil. Sebebi: gunun basinda butun kovalar kucuk olur
+      ve sabit olcekte grafik bos gorunur, kullanici "calismiyor" sanir.
+
+      Sayi yalniz renkle degil YAZIYLA da veriliyor (baslik altindaki
+      satir + her cubugun `title`i + ekran okuyucu metni). Renk tek
+      basina anlam tasimamali. */
+  function saatlikCiz() {
+    if (!og.saatlikGrafik) return;
+    /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
+       bicimleyicisi (Date -> "14:30"), sure degil; adina bakip
+       kullansaydim sessizce yanlis metin uretirdi. */
+    const sur = (sn) => {
+      const t = Math.round(+sn || 0);
+      if (t < 60) return CS(`${t} sn`, `${t} s`);
+      const d = Math.floor(t / 60), s = Math.floor(d / 60);
+      if (s < 1) return CS(`${d} dk`, `${d} min`);
+      return CS(`${s} sa ${d % 60} dk`, `${s} h ${d % 60} min`);
+    };
+    const ham = motor.istatistik && motor.istatistik.saatlik;
+    const kovalar = Array.isArray(ham) ? ham : new Array(24).fill(0);
+    const enCok = Math.max(1, ...kovalar.map((x) => +x || 0));
+    const toplam = kovalar.reduce((t, x) => t + (+x || 0), 0);
+
+    og.saatlikGrafik.innerHTML = '';
+    for (let s = 0; s < 24; s++) {
+      const deger = +kovalar[s] || 0;
+      const sutun = document.createElement('div');
+      sutun.className = 'saatlik-sutun';
+      if (deger <= 0) sutun.dataset.bos = '1';
+      const cubuk = document.createElement('div');
+      cubuk.className = 'saatlik-cubuk';
+      cubuk.style.height = Math.round((deger / enCok) * 100) + '%';
+      const etiket = `${String(s).padStart(2, '0')}:00 — ` + sur(deger);
+      cubuk.title = etiket;
+      sutun.appendChild(cubuk);
+      og.saatlikGrafik.appendChild(sutun);
+    }
+    og.saatlikGrafik.setAttribute('aria-label', CS(
+      `Saatlik ekran süresi. Bugün toplam ${sur(toplam)}.`,
+      `Screen time by hour. ${sur(toplam)} today.`));
+
+    if (og.saatlikAlt) {
+      if (toplam <= 0) {
+        og.saatlikAlt.textContent = CS(
+          'Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
+          'Nothing measured yet today — it builds up while the app is open.');
+      } else {
+        const enYogun = kovalar.indexOf(enCok);
+        og.saatlikAlt.textContent = CS(
+          `Bugün toplam ${sur(toplam)} · en yoğun saat `
+          + `${String(enYogun).padStart(2, '0')}:00`,
+          `${sur(toplam)} today · busiest hour `
+          + `${String(enYogun).padStart(2, '0')}:00`);
+      }
+    }
   }
 
   function molaEkraniKapat() {

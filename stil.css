@@ -1747,6 +1747,36 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+/* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
+   yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
+   metniyle veriliyor. Sayi RENKLE degil YAZIYLA da soyleniyor. */
+.saatlik-baslik { margin: 18px 0 2px; font-size: 1rem; }
+.saatlik-alt { margin: 0 0 10px; font-size: .8125rem; color: var(--yazi-soluk); }
+.saatlik-grafik {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  align-items: end;
+  gap: 2px;
+  height: 96px;
+}
+.saatlik-sutun { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+.saatlik-cubuk {
+  background: var(--vurgu);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;              /* sifir bile olsa izgara bozulmasin */
+  opacity: .92;
+}
+.saatlik-sutun[data-bos="1"] .saatlik-cubuk { background: var(--cizgi); opacity: .5; }
+.saatlik-eksen {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  margin-top: 4px;
+  font-size: .625rem;
+  color: var(--yazi-soluk);
+}
+.saatlik-eksen span { text-align: center; }
+
 .hafta-ozet { display: block; margin-top: 2px; font-size: 0.75rem; font-weight: 400; color: var(--yazi-soluk); }
 
 /* ---- Kısa ekranlarda mola ekranı ----

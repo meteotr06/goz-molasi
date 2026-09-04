@@ -169,6 +169,22 @@ function istatistikSuz(ham) {
     // 0 hem doğru hem de "burada veri yok" diyor.
     c[ad] = (Number.isFinite(s) && s >= 0 && s <= enCok) ? s : 0;
   }
+  /* SAATLIK DIZI — acikca ele alinmali.
+
+     Bu islev yalnizca `ISTATISTIK_SINIRLARI` anahtarlarini kopyaliyor;
+     kural yazilmasaydi `saatlik` her geri yuklemede SESSIZCE DUSER,
+     grafik de her acilista bosalirdi. Sebebi de kimse bulamazdi.
+
+     Bozuk kova sifirlanir, kirpilmaz - yanindaki sayilarla ayni
+     gerekce: sinira cekmek "makul gorunen bir yalan" uretir. */
+  const s24 = ham && ham.saatlik;
+  c.saatlik = new Array(24).fill(0);
+  if (Array.isArray(s24)) {
+    for (let i = 0; i < 24; i++) {
+      const v = Number(s24[i]);
+      c.saatlik[i] = (Number.isFinite(v) && v >= 0 && v <= 3600) ? v : 0;
+    }
+  }
   const g = ham && ham.gun;
   c.gun = (typeof g === 'string' && GUN_BICIMI.test(g)) ? g : null;
   return c;
@@ -194,6 +210,9 @@ class MolaMotoru {
       ekranSuresi: 0,        // saniye — bugün toplam
       kesintisizSure: 0,     // saniye — son gerçek dinlenmeden beri
       uzunMola: 0,
+      /* Saatlik dagilim: 24 kova, her biri o saatte gecen saniye.
+         `ekranSuresi` ile AYNI yerde artiyor ki ikisi ayrisamasin. */
+      saatlik: new Array(24).fill(0),
       gun: this._bugun(),
     };
     this.uzunMoladaMi = false;
@@ -430,6 +449,7 @@ class MolaMotoru {
     this.istatistik.atlananMola = 0;
     this.istatistik.ekranSuresi = 0;
     this.istatistik.uzunMola = 0;
+    this.istatistik.saatlik = new Array(24).fill(0);
     // `kesintisizSure` SIFIRLANMAZ: gece yarısı geçti diye kişinin
     // kesintisiz çalışması bitmiş olmuyor.
     return true;
@@ -529,6 +549,14 @@ class MolaMotoru {
       }
       this.istatistik.ekranSuresi += 0.25;
       this.istatistik.kesintisizSure += 0.25;
+      /* Saatlik kova. `ekranSuresi` ile ayni satirda artiyor: ikisi
+         ayri yerlerde artsaydi biri kacirdiginda toplamlar sessizce
+         uyusmaz olurdu. */
+      const saat = new Date().getHours();
+      if (!Array.isArray(this.istatistik.saatlik)) {
+        this.istatistik.saatlik = new Array(24).fill(0);
+      }
+      this.istatistik.saatlik[saat] = (this.istatistik.saatlik[saat] || 0) + 0.25;
     }
     if (this.durum === 'bosta') return;
 
