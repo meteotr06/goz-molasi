@@ -494,7 +494,34 @@ class MolaMotoru {
     // Cihaz kullanılmıyorsa sayacı boşuna işletme.
     // (Kahve molasındayken "mola ver" demek en sinir bozucu şey.)
     if (this.durum === 'calisiyor' || this.durum === 'uyari') {
-      if (simdi - this.sonHareket > this.ayarlar.bostaEsigi * 1000) {
+      /* EKRAN GÖRÜNÜYORSA GÖZ ÇALIŞIYOR — DOKUNMASA DA.
+
+         KULLANICININ BİLDİRDİĞİ KUSUR (03.09.2026): "süresi sıfırlanıyor
+         ve mola kolayca devreye girmiyor — en çok mobilde ama bütün
+         cihazlarda."
+
+         ÖLÇÜLDÜ (telefon kipinde, sayfa GÖRÜNÜR, kullanıcı okuyor ve
+         dokunmuyor): 90 saniye sonra durum `bosta` oldu ve sayaç
+         1106 saniyede DONDU. Bir daha inmedi. Yani mola hiç gelmiyor;
+         sonra dönünce de sıfırlanmış buluyor.
+
+         Kök sebep: "dokunmadı" ile "ekrana bakmıyor" aynı sayılıyordu.
+         Bu ders zaten `hareketVar()` içinde YAZILI ("uzun bir metni
+         okuyan biri ekrana bakıyor — tam da mola gereken durum") ama
+         yalnız SIFIRLAMA tarafına uygulanmış; DURDURMA tarafı hâlâ
+         girdiye bakıyordu.
+
+         Bir göz molası uygulamasında doğru ölçüt görünürlüktür: ekran
+         açık ve sayfa öndeyse gözler çalışıyordur. Sayfa gizlendiğinde
+         (arka plan, kilit) zaten `visibilitychange` ile duruyor.
+
+         Masaüstünde kullanıcı ekranı açık bırakıp kalkabilir; o zaman
+         mola boş odaya gelir - zararsız. Şimdiki davranış ise molanın
+         HİÇ gelmemesi, yani uygulamanın işini hiç yapmaması. */
+      const ekrandaMi = (typeof document === 'undefined')
+        || document.visibilityState !== 'hidden';
+      if (!ekrandaMi
+          && simdi - this.sonHareket > this.ayarlar.bostaEsigi * 1000) {
         this.kalanDondurulmus = this.kalanSaniye();
         this.durum = 'bosta';
         this._duyur('degisti', this.anlikDurum());
