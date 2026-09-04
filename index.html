@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v195">
+<link rel="stylesheet" href="stil.css?s=v197">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -649,6 +649,26 @@
       <!-- EV KALIBI: `.kaydirici` SARMALAYICI div, sinif input'ta degil.
            Ilk denememde sinifi input'a vermistim ve satir ev duzenine
            uymuyordu. -->
+      <!-- HAFTA SONU. Uc secenek tek ayarda; saat alanlari yalniz
+           "ayrı saat" secilince gorunuyor. -->
+      <div class="satir">
+        <label for="ayHaftaSonu">Hafta sonu
+          <small>Cumartesi ve pazar nasıl çalışsın</small>
+        </label>
+        <select id="ayHaftaSonu">
+          <option value="ayni">Hafta içiyle aynı</option>
+          <option value="kapali">Kapalı — mola gelmesin</option>
+          <option value="ayri">Ayrı saat aralığı</option>
+        </select>
+      </div>
+      <div class="satir gizli" id="ayHsSatir">
+        <label for="ayHsBas">Hafta sonu saatleri</label>
+        <span class="saat-ikili">
+          <input type="time" id="ayHsBas" value="11:00">
+          <input type="time" id="ayHsBit" value="20:00" aria-label="Hafta sonu bitiş saati">
+        </span>
+      </div>
+
       <div class="kaydirici">
         <div class="kaydirici-ust">
           <label for="ayHedef">Günlük mola hedefi</label>
@@ -922,17 +942,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v195"></script>
-  <script src="dil.js?s=v195"></script>
-  <script src="bilgiler.js?s=v195"></script>
-  <script src="bilgiler_en.js?s=v195"></script>
-  <script src="dunya.js?s=v195"></script>
-  <script src="egzersiz.js?s=v195"></script>
-  <script src="reklam.js?s=v195"></script>
-  <script src="kopru.js?s=v195"></script>
-  <script src="cekirdek.js?s=v195"></script>
-  <script src="mola_icerik.js?s=v195"></script>
-  <script src="arayuz.js?s=v195"></script>
+  <script src="degisiklikler.js?s=v197"></script>
+  <script src="dil.js?s=v197"></script>
+  <script src="bilgiler.js?s=v197"></script>
+  <script src="bilgiler_en.js?s=v197"></script>
+  <script src="dunya.js?s=v197"></script>
+  <script src="egzersiz.js?s=v197"></script>
+  <script src="reklam.js?s=v197"></script>
+  <script src="kopru.js?s=v197"></script>
+  <script src="cekirdek.js?s=v197"></script>
+  <script src="mola_icerik.js?s=v197"></script>
+  <script src="arayuz.js?s=v197"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

@@ -32,6 +32,10 @@
 
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
+    ayHaftaSonu: $('ayHaftaSonu'),
+    ayHsBas: $('ayHsBas'),
+    ayHsBit: $('ayHsBit'),
+    ayHsSatir: $('ayHsSatir'),
     ayHedef: $('ayHedef'),
     ayHedefDeger: $('ayHedefDeger'),
     etiketler: $('etiketler'),
@@ -2294,6 +2298,15 @@
     }
   }
 
+  /* Saat satiri YALNIZ "ayri saat" secildiyse gorunur - secilmeyen bir
+     secenegin alanlarini gostermek, kullaniciya calismayan bir sey
+     sunmaktir. */
+  function haftaSonuSatiriniTazele() {
+    if (!og.ayHsSatir) return;
+    og.ayHsSatir.classList.toggle('gizli', og.ayHaftaSonu.value !== 'ayri');
+  }
+  og.ayHaftaSonu?.addEventListener('change', haftaSonuSatiriniTazele);
+
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
@@ -3132,6 +3145,10 @@
     og.ayUzunMola.checked = !!motor.ayarlar.uzunMolaAcik;
     og.ayUzunSure.value = Math.round(motor.ayarlar.uzunMolaSuresi / 60);
     og.aySaatler.checked = !!motor.ayarlar.saatlerAcik;
+    og.ayHaftaSonu.value = motor.ayarlar.haftaSonu || 'ayni';
+    og.ayHsBas.value = motor.ayarlar.haftaSonuBas || '11:00';
+    og.ayHsBit.value = motor.ayarlar.haftaSonuBit || '20:00';
+    haftaSonuSatiriniTazele();
     og.ayHedef.value = hedefAl();
     og.ayHedefDeger.textContent = CS(`${hedefAl()} mola`,
                                      `${hedefAl()} breaks`);
@@ -3228,6 +3245,9 @@
     motor.ayarlar.bostaEsigi = bostaAcik ? BOSTA_ESIGI : 1e9;
     motor.ayarlar.uzunMolaAcik = og.ayUzunMola.checked;
     motor.ayarlar.uzunMolaSuresi = Math.max(60, +og.ayUzunSure.value * 60);
+    motor.ayarlar.haftaSonu = og.ayHaftaSonu.value || 'ayni';
+    motor.ayarlar.haftaSonuBas = og.ayHsBas.value || '11:00';
+    motor.ayarlar.haftaSonuBit = og.ayHsBit.value || '20:00';
     motor.ayarlar.gunlukHedef =
       Math.min(30, Math.max(1, +og.ayHedef.value || 8));
     /* Ekrandaki hedef sayisi da HEMEN tazelensin: once yalniz

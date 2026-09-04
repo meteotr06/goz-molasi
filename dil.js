@@ -392,6 +392,12 @@ const SOZLUK = {
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
   'Günlük mola hedefi': 'Daily break goal',
+  'Hafta sonu': 'Weekend',
+  'Cumartesi ve pazar nasıl çalışsın': 'How Saturday and Sunday work',
+  'Hafta içiyle aynı': 'Same as weekdays',
+  'Kapalı — mola gelmesin': 'Off — no breaks',
+  'Ayrı saat aralığı': 'Separate hours',
+  'Hafta sonu saatleri': 'Weekend hours',
   'Seri ve etiketler bu hedefe göre çalışır':
     'Your streak and labels follow this goal',
   'Yeni Göz': 'New Eye',

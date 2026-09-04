@@ -85,6 +85,11 @@ const VARSAYILAN_AYARLAR = {
      kullanici seciyor ve TEK KAYNAK burasi. */
   gunlukHedef: 8,
   saatlerAcik: false,
+  /* HAFTA SONU. 'ayni' = hafta ici ile ayni · 'kapali' = sayac hic
+     islemez · 'ayri' = kendi saat araligi. Tek ayar, uc secenek. */
+  haftaSonu: 'ayni',
+  haftaSonuBas: '11:00',
+  haftaSonuBit: '20:00',
   basSaat: '09:00',
   bitSaat: '18:00',
 };
@@ -607,14 +612,29 @@ class MolaMotoru {
       Bitiş saati başlangıçtan küçükse gece yarısını aşan vardiya sayılır
       (örn. 22:00 — 04:00). */
   saatUygunMu(simdi = new Date()) {
-    if (!this.ayarlar.saatlerAcik) return true;
+    const gun = simdi.getDay();               // 0 pazar · 6 cumartesi
+    const haftaSonu = (gun === 0 || gun === 6);
+    const hs = this.ayarlar.haftaSonu || 'ayni';
+
+    /* HAFTA SONU KARARI BURADA — tek karar yeri.
+       Ikinci bir yere koymak, iki yerin birbirinden ayrismasi
+       demekti; bu depoda bilinen sinif. Suren mola yarida kesilmez:
+       cagiran taraf zaten `durum !== 'mola'` kosuluyla giriyor. */
+    if (haftaSonu && hs === 'kapali') return false;
+
+    const ayriSaat = (haftaSonu && hs === 'ayri');
+    // "Hafta sonu ayri saat" secildiyse genel saat anahtari KAPALI olsa
+    // bile hafta sonu araligi uygulanir - kullanici o araligi bilerek
+    // yazdi; yok saymak sessizce ayari cope atmak olurdu.
+    if (!this.ayarlar.saatlerAcik && !ayriSaat) return true;
+
     const dk = (s) => {
       const [a, b] = String(s || '0:0').split(':').map(Number);
       return (a || 0) * 60 + (b || 0);
     };
     const su = simdi.getHours() * 60 + simdi.getMinutes();
-    const bas = dk(this.ayarlar.basSaat);
-    const bit = dk(this.ayarlar.bitSaat);
+    const bas = dk(ayriSaat ? this.ayarlar.haftaSonuBas : this.ayarlar.basSaat);
+    const bit = dk(ayriSaat ? this.ayarlar.haftaSonuBit : this.ayarlar.bitSaat);
     if (bas === bit) return true;                 // 24 saat
     return bas < bit ? (su >= bas && su < bit) : (su >= bas || su < bit);
   }

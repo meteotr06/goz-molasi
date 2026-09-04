@@ -1345,6 +1345,10 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    durumunda da. Kural tek kaydiriciya degil HEPSINE yaziliyor:
    ayni esigi bir sonraki eklenen de gecsin. */
 .kaydirici input[type=range] { min-height: 44px; }
+/* SECIM KUTULARI DA 44 PX. Yeni eklenen hafta sonu secimi 43 px cikti -
+   bir piksel eksik de eksiktir. Kural tek kutuya degil ayarlar
+   penceresindeki HEPSINE yaziliyor. */
+.ayarlar select { min-height: 44px; }
 .kaydirici-ust {
   display: flex;
   align-items: baseline;
