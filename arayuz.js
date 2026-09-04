@@ -676,11 +676,22 @@
   }
 
   function kipiUygula(k) {
+    const oncekiSure = motor.ayarlar.calismaSuresi;
     Object.assign(motor.ayarlar, k.ayar);
     kaydet();
-    // Sayaç yeni süreyle baştan başlasın; yarım kalmış eski süreyle
-    // devam etmek kafa karıştırıyor.
-    if (motor.durum !== 'mola') motor.sifirla();
+    /* Sayaç yeni süreyle baştan başlasın; yarım kalmış eski süreyle
+       devam etmek kafa karıştırıyor.
+
+       AMA YALNIZ SÜRE DEĞİŞTİYSE. Eskiden koşulsuzdu: kullanıcı ZATEN
+       seçili olan kipe yeniden dokununca da sayaç başa dönüyordu.
+       Ölçüldü (03.09.2026): "Çalışma" kipindeyken yine "Çalışma"ya
+       dokunuldu, 1191 sn -> 1199 sn. Kullanıcı için bu "sayaç kendi
+       kendine sıfırlandı" demek — ayarlardaki Kaydet ile aynı sınıf,
+       aynı ölçüt uygulandı. */
+    if (motor.durum !== 'mola'
+        && motor.ayarlar.calismaSuresi !== oncekiSure) {
+      motor.sifirla();
+    }
     og.aciklama.textContent = aciklamaMetni(
       Math.round(k.ayar.calismaSuresi / 60), k.ayar.molaSuresi);
     // Kip ADI sozlukte var ama cumle kalibi koda gomuluydu:
@@ -3209,6 +3220,9 @@
     try { localStorage.setItem(HAVA_ACIK_ANAHTAR, havaAcik ? '1' : '0'); } catch {}
     MolaIcerik.havaAyarla(havaAcik);
 
+    /* Sayaci SIFIRLAMAK gerekir mi? Yalniz calisma suresi degistiyse.
+       Onceki hali burada not aliniyor - asagida karsilastirilacak. */
+    const oncekiCalisma = motor.ayarlar.calismaSuresi;
     const dk = Math.min(90, Math.max(1, +og.ayCalisma.value || 20));
     const ml = Math.min(180, Math.max(5, +og.ayMola.value || 20));
     let uy = Math.min(60, Math.max(0, +og.ayUyari.value || 0));
@@ -3267,7 +3281,22 @@
 
     og.aciklama.textContent = aciklamaMetni(dk, ml);
 
-    if (motor.durum !== 'hazir') motor.sifirla();
+    /* SAYAC YALNIZ GEREKINCE SIFIRLANIR.
+
+       Eskiden bu satir KOSULSUZDU: kullanici yalnizca temayi ya da sesi
+       degistirip Kaydet'e bassa bile donen sayac basa doniyordu.
+
+       OLCULDU (03.09.2026): ayarlar acilmadan once 1191 sn, hicbir sey
+       degistirmeden Kaydet -> 1199 sn. Kullanici acisindan bu "sayac
+       kendi kendine sifirlandi" demek - sikayetin bir baska kaynagi.
+
+       Calisma suresi DEGISTIYSE sifirlama dogru: yeni sureyi yarim
+       kalmis bir cevrime uygulamak anlamsiz olurdu. Degismediyse
+       dokunmuyoruz. */
+    if (motor.durum !== 'hazir'
+        && motor.ayarlar.calismaSuresi !== oncekiCalisma) {
+      motor.sifirla();
+    }
     kaydet();
     kipleriTazele();
     og.pencere.close();
