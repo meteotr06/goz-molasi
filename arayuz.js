@@ -389,9 +389,15 @@
     if (!kilitOzeti) return Promise.resolve(true);
 
     const kalanBekleme = Math.ceil((bekletmeBitis - Date.now()) / 1000);
+    /* CEVIRILIYOR. `aciklama` cagri yerlerinde TURKCE literal olarak
+       veriliyor ve buraya HAM yaziliyordu; ceviriler sozlukte VARDI
+       ama hic cagrilmiyordu (dil.js:386, 388). Ingilizce kullanan biri
+       sifre penceresinde Turkce bir cumle okuyordu. Bekleme cumlesinde
+       degisen bir sayi var, o yuzden sozluge konamaz - `CS`. */
     og.sifreAciklama.textContent = kalanBekleme > 0
-      ? `Çok fazla yanlış deneme. ${kalanBekleme} saniye bekle.`
-      : aciklama;
+      ? CS(`Çok fazla yanlış deneme. ${kalanBekleme} saniye bekle.`,
+           `Too many wrong attempts. Wait ${kalanBekleme} seconds.`)
+      : (C(aciklama) || aciklama);
     og.sifreAlan.value = '';
     og.sifreHata.textContent = '';
     og.sifreAlan.disabled = kalanBekleme > 0;
@@ -2384,7 +2390,12 @@
     calSes(660, 0.55);
     titret([120, 80, 120]);         // iki kısa: "dur"
     uyanikTut();
-    bildirimGonder('Göz molası', 'Gözünü ekrandan ayır, 6 metre uzağa bak.');
+    /* CS SART: bildirim metni SABIT TURKCEYDI. Ayni kusur yirmi alti
+       satir yukarida on uyari bildirimi icin zaten yazili olarak
+       kapatilmis, bu ikisi atlanmisti. */
+    bildirimGonder(CS('Göz molası', 'Eye break'),
+                   CS('Gözünü ekrandan ayır, 6 metre uzağa bak.',
+                      'Look away from the screen, about 6 metres.'));
     /* ODAK, ÖGE GÖRÜNÜR OLDUKTAN SONRA.
        `.acik` sınıfı opacity/visibility geçişi başlatıyor; geçiş
        bitmeden `focus()` çağırmak SESSİZCE hiçbir şey yapmıyor —
@@ -2912,12 +2923,21 @@
         return;
       }
 
-      bildirimGonder('Mola bitti', 'Gözlerin dinlendi. Devam edebilirsin.');
+      bildirimGonder(CS('Mola bitti', 'Break finished'),
+                     CS('Gözlerin dinlendi. Devam edebilirsin.',
+                        'Your eyes have rested. You can carry on.'));
       bitisKartiniGoster(motor.istatistik);
     })
     .uzerine('dinlenildi', (sn) => {
       const dk = Math.max(1, Math.round(sn / 60));
-      const mesaj = `${dk} dakika ekrandan uzak kaldın — gözlerin zaten dinlendi, sayaç baştan başladı.`;
+      /* CS SART: bu mesaj ana ekranin aciklama satirini SEKIZ SANIYE
+         boyunca Turkceye ceviriyordu ve ekran okuyucuya da Turkce
+         gidiyordu. Icinde degisen bir sayi var, sozluge konamaz. */
+      const mesaj = CS(
+        `${dk} dakika ekrandan uzak kaldın — gözlerin zaten dinlendi, `
+        + 'sayaç baştan başladı.',
+        `You were away from the screen for ${dk} minutes — your eyes have `
+        + 'already rested, so the timer started over.');
       og.okuyucu.textContent = mesaj;
       const eski = og.aciklama.textContent;
       og.aciklama.textContent = mesaj;

@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v211';
+const SURUM = 'goz-molasi-v212';
 
 const DOSYALAR = [
   './',
@@ -180,7 +180,21 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((liste) => {
-      for (const c of liste) if ('focus' in c) return c.focus();
+      /* YALNIZ KENDI PENCERELERIMIZ.
+
+         `includeUncontrolled: true` ile `matchAll`, iscinin KAPSAMINI
+         degil KOKENINI doner: ayni adresteki Hesap Araclari, Hava
+         Durumu, Muhasebe pencereleri de listeye giriyor ve liste en
+         son odaklanan pencereden basliyor. Mola bildirimine tiklayan
+         kullanicinin karsisina Goz Molasi degil BASKA bir uygulama
+         geliyordu.
+
+         Kapsam `self.registration.scope` -- sabit yazmak, uygulama
+         baska bir yola tasininca sessizce bozulurdu. */
+      const kapsam = self.registration.scope;
+      for (const c of liste) {
+        if (c.url && c.url.startsWith(kapsam) && 'focus' in c) return c.focus();
+      }
       if (self.clients.openWindow) return self.clients.openWindow('./index.html');
     })
   );
