@@ -1984,6 +1984,67 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk);
 }
 
+.saatlik-amac {
+  margin: 0 0 8px;
+  font-size: .8125rem;
+  line-height: 1.45;
+  color: var(--yazi-soluk);
+}
+/* Olcek yazisi: en yuksek cubugun kac oldugunu SOYLUYOR. Cubuklar en
+   buyuge gore olceklendigi icin, olcek yazilmazsa 23 saniyelik bir gun
+   23 saatlik bir gunle AYNI gorunur. */
+.saatlik-olcek {
+  display: flex;
+  justify-content: space-between;
+  font-size: .6875rem;
+  color: var(--yazi-soluk);
+  margin: 0 0 2px;
+}
+
+.saatlik-gezgin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 2px 0 8px;
+}
+.saatlik-gezgin b { font-size: .875rem; min-width: 9.5rem; text-align: center; }
+.gezgin-ok {
+  /* `width` VE `flex-shrink:0` SART, `min-width` YETMEZ.
+
+     Ustteki `#sekmeSayac *, #sekmeBilgiler * { min-width: 0 }` kurali
+     (eski bir tasma duzeltmesi) ID ozgullugu tasiyor ve bu iki panelin
+     ICINDEKI HER `min-width` dokunma hedefini eziyor. Olculdu: ok
+     dugmesi 20x44 cikti - yuksekligi tuttu, genisligi tutmadi ve
+     `ekran_denetle` on iki bulguyla yakaladi.
+
+     Ayni ders dosyanin 367. satirinda `.dugme.yuvarlak` icin zaten
+     yaziliymis; orada `width: 44px` de var, o yuzden o dugme kurtuluyor.
+     WCAG 2.5.8 alt siniri 44x44. */
+  width: 44px; flex: 0 0 44px;
+  padding: 0;
+  min-width: 44px; min-height: 44px;      /* dokunma esigi */
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  background: var(--kart);
+  color: var(--yazi);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.gezgin-ok[disabled] { opacity: .4; cursor: default; }
+
+/* Cubuk ustu deger. Yalniz en yogun uc saatte yaziliyor: 390 pikselde
+   24 etiket yan yana sigmaz ve okunmayan etiket, olmayan etiketten
+   kotudur. */
+.saatlik-deger {
+  font-size: .5625rem;
+  color: var(--yazi-soluk);
+  text-align: center;
+  line-height: 1;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
 /* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
    yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
    metniyle veriliyor. Sayi RENKLE degil YAZIYLA da soyleniyor. */

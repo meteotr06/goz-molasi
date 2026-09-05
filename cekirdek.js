@@ -1170,10 +1170,30 @@ const Gecmis = {
     const veri = this.oku();
     const eski = veri[gun] || {};
     const buyuk = (a, b) => Math.max(a | 0, b | 0);
+    /* SAATLIK DAGILIM DA SAKLANIYOR.
+
+       Kullanicinin gosterdigi ekranda gunler arasinda gezilebiliyor ve
+       her gunun SAAT dagilimi goruluyordu. Bizde saatlik dizi yalnizca
+       BUGUN icin bellekte duruyordu; gun degisince siliniyordu, yani
+       dun hangi saatte ekranda oldugunu bilmenin hicbir yolu yoktu.
+
+       Her kova TAM SAYI saniye olarak yaziliyor: kesirli saniyeleri
+       saklamak kaydi buyutur ve hicbir seye yaramaz.
+
+       Artan sayac kurali burada da gecerli - bir gunun saatlik degeri
+       geri gidemez; hangi sekme yazarsa yazsin buyuk olan kalir. */
+    const eskiSaatlik = Array.isArray(eski.saatlik) ? eski.saatlik : [];
+    const yeniSaatlik = Array.isArray(istatistik.saatlik) ? istatistik.saatlik : [];
+    const saatlik = new Array(24);
+    for (let s = 0; s < 24; s++) {
+      saatlik[s] = buyuk(Math.round(+eskiSaatlik[s] || 0),
+                         Math.round(+yeniSaatlik[s] || 0));
+    }
     veri[gun] = {
       mola: buyuk(eski.mola, istatistik.tamamlananMola),
       atlanan: buyuk(eski.atlanan, istatistik.atlananMola),
       ekran: buyuk(eski.ekran, Math.round(istatistik.ekranSuresi || 0)),
+      saatlik,
     };
     this.yaz(veri);
   },
@@ -1201,6 +1221,28 @@ const Gecmis = {
       düşürür. `gunlukKarsilastirma` bu ilkeyi zaten uyguluyordu ama
       HAFTALIK KARTIN BÜYÜK SAYISI ayrıca 7'ye bölüyordu — aynı kartta
       birbirini tutmayan iki ortalama. Bölen artık tek yerde. */
+  /** Bir gunun saatlik dagilimi. Kayit yoksa `null` -- BOS DIZI DEGIL:
+      "o gun hic ekranda degildin" ile "o gunun kaydi yok" ayri seyler
+      ve arayuz ikisini ayri gostermeli. */
+  saatlikGun(anahtar) {
+    const veri = this.oku();
+    const k = veri[anahtar];
+    if (!k || !Array.isArray(k.saatlik)) return null;
+    const c = new Array(24);
+    for (let s = 0; s < 24; s++) c[s] = Math.max(0, +k.saatlik[s] || 0);
+    return c;
+  },
+
+  /** Bugunden geriye `adet` gunun anahtarlari (eskiden yeniye). */
+  gunAnahtarlari(adet = 7) {
+    const bugun = new Date();
+    const liste = [];
+    for (let i = adet - 1; i >= 0; i--) {
+      liste.push(this.gunAdi(new Date(bugun.getTime() - i * 86400000)));
+    }
+    return liste;
+  },
+
   ortalamaTabani(gunler) {
     if (!Array.isArray(gunler)) return [];
     const ilk = gunler.findIndex((g) => g && (g.sayi | 0) > 0);

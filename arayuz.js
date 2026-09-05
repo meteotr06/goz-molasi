@@ -33,6 +33,12 @@
     haftaGrafik: $('haftaGrafik'),
     saatlikGrafik: $('saatlikGrafik'),
     saatlikEksen: $('saatlikEksen'),
+    saatlikGezgin: $('saatlikGezgin'),
+    saatlikGeri: $('saatlikGeri'),
+    saatlikIleri: $('saatlikIleri'),
+    saatlikGunAdi: $('saatlikGunAdi'),
+    saatlikOlcek: $('saatlikOlcek'),
+    saatlikAmac: $('saatlikAmac'),
     raporAralik: $('raporAralik'),
     raporToplam: $('raporToplam'),
     raporToplamEtiket: $('raporToplamEtiket'),
@@ -2598,14 +2604,55 @@
     return CS(`${s} sa ${d % 60} dk`, `${s} h ${d % 60} min`);
   }
 
+  /* Kacinci gune bakiyoruz: 0 = bugun, 1 = dun, ... En fazla alti gun
+     geriye, cunku gunluk gecmis yedi gun saklaniyor. */
+  let saatlikGeriGun = 0;
+  const SAATLIK_EN_GERI = 6;
+
+  function saatlikGunuKaydir(adim) {
+    const yeni = Math.min(SAATLIK_EN_GERI, Math.max(0, saatlikGeriGun + adim));
+    if (yeni === saatlikGeriGun) return;
+    saatlikGeriGun = yeni;
+    saatlikCiz();
+  }
+  og.saatlikGeri?.addEventListener('click', () => saatlikGunuKaydir(1));
+  og.saatlikIleri?.addEventListener('click', () => saatlikGunuKaydir(-1));
+
   function saatlikCiz() {
     if (!og.saatlikGrafik) return;
     /* Sure bicimleyicisi YERINDE tanimli. `saatYaz` bir SAAT
        bicimleyicisi (Date -> "14:30"), sure degil; adina bakip
        kullansaydim sessizce yanlis metin uretirdi. */
     const sur = sureMetni;
-    const ham = motor.istatistik && motor.istatistik.saatlik;
+    /* HANGI GUN? Bugun bellekten, oteki gunler gunluk gecmisten.
+       `null` gelmesi "kayit yok" demek -- BOS DIZI DEGIL: bos dizi
+       gostermek "o gun hic ekranda degildin" demek olurdu ve bu
+       surumden onceki gunler icin yanlis olurdu. */
+    let ham;
+    let kayitYok = false;
+    if (saatlikGeriGun === 0) {
+      ham = motor.istatistik && motor.istatistik.saatlik;
+    } else {
+      const anahtarlar = Gecmis.gunAnahtarlari(SAATLIK_EN_GERI + 1);
+      const anahtar = anahtarlar[anahtarlar.length - 1 - saatlikGeriGun];
+      let gecmisKova = null;
+      try { gecmisKova = Gecmis.saatlikGun(anahtar); } catch {}
+      kayitYok = !gecmisKova;
+      ham = gecmisKova || new Array(24).fill(0);
+    }
     const kovalar = Array.isArray(ham) ? ham : new Array(24).fill(0);
+
+    // Gezgin yazisi ve oklarin durumu
+    if (og.saatlikGunAdi) {
+      const t = new Date(Date.now() - saatlikGeriGun * 86400000);
+      og.saatlikGunAdi.textContent = saatlikGeriGun === 0
+        ? CS('Bugün', 'Today')
+        : (saatlikGeriGun === 1 ? CS('Dün', 'Yesterday')
+           : `${C(GUN_ADLARI[t.getDay()]) || GUN_ADLARI[t.getDay()]} `
+             + `${t.getDate()}.${String(t.getMonth() + 1).padStart(2, '0')}`);
+    }
+    if (og.saatlikGeri) og.saatlikGeri.disabled = saatlikGeriGun >= SAATLIK_EN_GERI;
+    if (og.saatlikIleri) og.saatlikIleri.disabled = saatlikGeriGun <= 0;
     /* IKI AYRI SAYI, BILEREK.
        `enCok` cubuk yuksekligini olceklemek icin; sifira bolmemek
        adina tabani 1. Ama o taban dizide OLMAYAN bir deger uretir ve
@@ -2635,6 +2682,11 @@
       for (let s = 0; s < 24; s++) {
         const sutun = document.createElement('div');
         sutun.className = 'saatlik-sutun';
+        // Deger yazisi cubugun USTUNDE; bos birakiliyor, dolduran
+        // asagidaki dongu.
+        const deger = document.createElement('span');
+        deger.className = 'saatlik-deger';
+        sutun.appendChild(deger);
         sutun.appendChild(document.createElement('div'))
              .className = 'saatlik-cubuk';
         og.saatlikGrafik.appendChild(sutun);
@@ -2651,10 +2703,16 @@
         }
       }
     }
+    /* En yogun uc saatin esigi. Ucten az dolu saat varsa hepsi
+       yaziliyor. */
+    const doluDegerler = kovalar.map((x) => +x || 0)
+      .filter((x) => x > 0).sort((a, b) => b - a);
+    const esik = doluDegerler.length ? doluDegerler[Math.min(2, doluDegerler.length - 1)] : 0;
+
     for (let s = 0; s < 24; s++) {
       const deger = +kovalar[s] || 0;
       const sutun = og.saatlikGrafik.children[s];
-      const cubuk = sutun.firstElementChild;
+      const cubuk = sutun.lastElementChild;
       const yuk = Math.round((deger / enCok) * 100) + '%';
       if (cubuk.style.height !== yuk) cubuk.style.height = yuk;
       const etiket = `${String(s).padStart(2, '0')}:00 — ` + sur(deger);
@@ -2667,25 +2725,61 @@
       const yogun = (gercekEnCok > 0 && deger === gercekEnCok);
       if (yogun) { if (sutun.dataset.yogun !== '1') sutun.dataset.yogun = '1'; }
       else if (sutun.dataset.yogun) delete sutun.dataset.yogun;
+
+      /* CUBUK USTU DEGER, yalniz en yogun uc saatte. 390 pikselde 24
+         etiket yan yana sigmiyor; okunmayan bir etiket, olmayan bir
+         etiketten kotudur. */
+      const yazi = sutun.firstElementChild;
+      if (yazi) {
+        const gorunsun = deger > 0 && esik > 0 && deger >= esik;
+        const metin = gorunsun ? sureMetni(deger) : '';
+        if (yazi.textContent !== metin) yazi.textContent = metin;
+      }
     }
+    /* HANGI GUNE BAKILDIGI YAZIYOR. Gun gezgini gelince "Bugun toplam"
+       cumlesi "Dun"e gecince de aynen duruyordu: ekranda dunun
+       grafigi, yazida "Bugun". Olculdu - yalan soyleyen arayuz. */
+    const gunSozu = og.saatlikGunAdi
+      ? (og.saatlikGunAdi.textContent || '').trim()
+      : CS('Bugün', 'Today');
     og.saatlikGrafik.setAttribute('aria-label', CS(
-      `Saatlik ekran süresi. Bugün toplam ${sur(toplam)}.`,
-      `Screen time by hour. ${sur(toplam)} today.`));
+      `Saatlik ekran süresi. ${gunSozu}: toplam ${sur(toplam)}.`,
+      `Screen time by hour. ${gunSozu}: ${sur(toplam)} in total.`));
+
+    /* OLCEK YAZILIYOR. Cubuklar en buyuk degere gore olcekleniyor;
+       olcegi soylemezsek 23 saniyelik bir gun 23 saatlik bir gunle
+       AYNI gorunur. Kullanici tam bunu bildirdi: "burasi hic
+       anlasilmiyor". */
+    if (og.saatlikOlcek) {
+      og.saatlikOlcek.textContent = gercekEnCok > 0
+        ? CS(`en yüksek saat: ${sureMetni(gercekEnCok)}`,
+             `busiest hour: ${sureMetni(gercekEnCok)}`)
+        : '';
+    }
 
     if (og.saatlikAlt) {
       /* ESIK BIR SANIYE: yarim saniyelik birikim `Math.round` ile
          "0 sn" olarak yaziliyordu, yani "bugun toplam 0 sn" diyen bir
          satirin yaninda bir de saat gosteriliyordu. */
-      if (toplam < 1 || gercekEnCok <= 0) {
+      if (kayitYok) {
+        /* "O GUN HIC EKRANDA DEGILDIN" DEMIYORUZ. Saatlik dagilim bu
+           surumden once gunluk gecmise yazilmiyordu; eski gunler icin
+           bos bir grafik gostermek uydurma olurdu. */
         og.saatlikAlt.textContent = CS(
-          'Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
-          'Nothing measured yet today — it builds up while the app is open.');
+          'Bu günün saat dağılımı kaydedilmemiş.',
+          'No hourly breakdown was recorded for this day.');
+      } else if (toplam < 1 || gercekEnCok <= 0) {
+        og.saatlikAlt.textContent = saatlikGeriGun === 0
+          ? CS('Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
+               'Nothing measured yet today — it builds up while the app is open.')
+          : CS(`${gunSozu}: ölçülen süre yok.`,
+               `${gunSozu}: no measured time.`);
       } else {
         const enYogun = kovalar.indexOf(gercekEnCok);
         og.saatlikAlt.textContent = CS(
-          `Bugün toplam ${sur(toplam)} · en yoğun saat `
+          `${gunSozu}: toplam ${sur(toplam)} · en yoğun saat `
           + `${String(enYogun).padStart(2, '0')}:00`,
-          `${sur(toplam)} today · busiest hour `
+          `${gunSozu}: ${sur(toplam)} in total · busiest hour `
           + `${String(enYogun).padStart(2, '0')}:00`);
       }
     }

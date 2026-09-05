@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v214">
+<link rel="stylesheet" href="stil.css?s=v216">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -356,7 +356,25 @@
     </section>
 
     <h3 class="saatlik-baslik" id="saatlikBaslik">Gün içindeki ekran süren</h3>
+    <!-- NE ISE YARADIGI YAZIYOR. Kullanici bu grafigi gosterip
+         "burasi hic anlasilmiyor" dedi: baslik ne olcuyor soyluyor
+         ama NE ISE YARADIGINI soylemiyordu. -->
+    <p class="saatlik-amac" id="saatlikAmac">Hangi saatlerde ekran başındasın. En yoğun saatlerini bilirsen molanı ona göre kurabilirsin.</p>
+    <!-- GUN GEZGINI. Kullanicinin gosterdigi ekranda gunler arasinda
+         `< 1 Eylul 2026 >` ile geziliyordu. Saatlik dagilim artik
+         gunluk gecmise de yazildigi icin bizde de mumkun. -->
+    <div class="saatlik-gezgin" id="saatlikGezgin">
+      <button type="button" class="gezgin-ok" id="saatlikGeri"
+              aria-label="Önceki gün">‹</button>
+      <b id="saatlikGunAdi">Bugün</b>
+      <button type="button" class="gezgin-ok" id="saatlikIleri"
+              aria-label="Sonraki gün" disabled>›</button>
+    </div>
     <p class="saatlik-alt" id="saatlikAlt"></p>
+    <!-- OLCEK. Cubuklar en buyuk degere gore olcekleniyor; olcek
+         yazilmazsa 23 saniyelik bir gun 23 saatlik bir gunle ayni
+         gorunur. -->
+    <p class="saatlik-olcek" id="saatlikOlcek"></p>
     <div class="saatlik-grafik" id="saatlikGrafik" role="img"
          aria-label="Saatlik ekran süresi"></div>
     <!-- SAAT EKSENI. Stil dosyasinda `.saatlik-eksen` tanimliydi ve
@@ -1062,17 +1080,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v214"></script>
-  <script src="dil.js?s=v214"></script>
-  <script src="bilgiler.js?s=v214"></script>
-  <script src="bilgiler_en.js?s=v214"></script>
-  <script src="dunya.js?s=v214"></script>
-  <script src="egzersiz.js?s=v214"></script>
-  <script src="reklam.js?s=v214"></script>
-  <script src="kopru.js?s=v214"></script>
-  <script src="cekirdek.js?s=v214"></script>
-  <script src="mola_icerik.js?s=v214"></script>
-  <script src="arayuz.js?s=v214"></script>
+  <script src="degisiklikler.js?s=v216"></script>
+  <script src="dil.js?s=v216"></script>
+  <script src="bilgiler.js?s=v216"></script>
+  <script src="bilgiler_en.js?s=v216"></script>
+  <script src="dunya.js?s=v216"></script>
+  <script src="egzersiz.js?s=v216"></script>
+  <script src="reklam.js?s=v216"></script>
+  <script src="kopru.js?s=v216"></script>
+  <script src="cekirdek.js?s=v216"></script>
+  <script src="mola_icerik.js?s=v216"></script>
+  <script src="arayuz.js?s=v216"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
