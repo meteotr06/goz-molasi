@@ -508,6 +508,46 @@ class MolaMotoru {
     }
   }
 
+  /** Sayfa GİZLENDİ — sayacı O ANDA dondur.
+   *
+   * KULLANICININ AYLARDIR BİLDİRDİĞİ "SAYAÇ SIFIRLANIYOR" KUSURUNUN
+   * MOBİLDEKİ SEBEBİ BUYDU (kullanıcı 06.09.2026'da yine bildirdi:
+   * "göz uygulaması hâlâ kendini sıfırlıyor... mobil ve bütün
+   * cihazlarda"). Zincir:
+   *
+   *   1. Telefon kilitlenir, sayfa gizlenir.
+   *   2. `visibilitychange` dinleyicisinin GİZLENME DALI YOKTU —
+   *      `if (!document.hidden)` ile yalnız görünür olunca çalışıyordu.
+   *   3. Tik döngüsü `bosta`ya geçirebilirdi, ama tarayıcı gizli
+   *      sekmenin zamanlayıcısını kısıyor; telefon kilitliyken **hiç
+   *      tık koşmuyor.** Yani dondurma, koşmayan bir tıka bağlıydı.
+   *   4. Kilit açılınca ilk tık `kalanSaniye()`yi çağırıyor, o da
+   *      `Math.max(0, hedefZaman - Date.now())` hesaplıyor. 30 dakika
+   *      geçmişse sonuç **0** — ekranda "00:00".
+   *
+   * GEÇ KALAN BİR DONDURMA İŞE YARAMAZDI: o an okunacak değer zaten 0
+   * olurdu. Dondurma, gizlenme ANINDA olmak zorunda.
+   *
+   * `ekranKilitlendi` bayrağı bu boşluğu kapatmıyordu: onu yalnız
+   * `IdleDetector` kuruyor, o da Chrome'a özel ve izin istiyor —
+   * telefonda pratikte hiç yok.
+   *
+   * NEDEN YALNIZ 'calisiyor': molada gizlenmek molanın ta kendisidir
+   * (gözler dinleniyor), sayaç akmaya devam etmeli. 'duraklatildi',
+   * 'bosta' ve 'saatDisi' zaten donmuş.
+   *
+   * DÖNÜŞTE NE OLACAĞINA BURASI KARAR VERMEZ: `hareketVar()` zaten
+   * "gerçekten uzaklaştı mı" ayrımını yapıyor — kısa yokluk kaldığı
+   * yerden devam eder, uzun yokluk baştan başlar. Burası yalnızca
+   * DOĞRU değeri dondurur.
+   */
+  gizlendi() {
+    if (this.durum !== 'calisiyor') return;
+    this.kalanDondurulmus = this.kalanSaniye();
+    this.durum = 'bosta';
+    this._duyur('degisti', this.anlikDurum());
+  }
+
   /** Ekran kilitlendi — kişi gerçekten uzaklaştı demektir.
       IdleDetector izni verilmişse arayüz bunu bildiriyor. */
   ekranKilitlendiBildir() {

@@ -376,6 +376,76 @@ window.__cekirdekHazir = window.__onbellekHazir.then(function () {
         m2.istatistik.tamamlananMola === 7 && m2.istatistik.atlananMola === 2);
   })();
 
+  /* ============================================================
+     GİZLENME YOLU — SAYAÇ SIFIRLANMASININ MOBİLDEKİ SEBEBİ
+
+     Bu yol hiç ölçülmemişti ve hata tam bu yüzden aylarca yaşadı.
+     Var olan sınamalar `sayaciGeriYukle()` (kapat-aç) yolunu
+     deniyordu; O YOL ZATEN DOĞRUYDU. Kırık olan CANLI yoldu:
+     sayfa gizlenince hiçbir şey donmuyordu.
+
+     Kullanıcı 06.09.2026'da yine bildirdi: "göz uygulaması hâlâ
+     kendini sıfırlıyor — mobil ve bütün cihazlarda."
+
+     Zincir: telefon kilitlenir → tarayıcı gizli sekmenin
+     zamanlayıcısını kısar, hiç tık koşmaz → `bosta`ya geçilmez →
+     kilit açılınca `kalanSaniye()` = max(0, hedef − şimdi) = 0.
+     ============================================================ */
+  (function () {
+    // Telefon varsayılanı: uzun yoklukta sıfırlama KAPALI.
+    function telefonMotoru() {
+      var m = motorKur();
+      m.ayarlar.calismaSuresi = 1200;
+      m.ayarlar.uzakKalincaSifirla = false;
+      m.sifirla();
+      m.hedefZaman -= 300 * 1000;        // 5 dk çalışıldı → 900 kaldı
+      return m;
+    }
+
+    // 1) Gizlenince O ANDA donmalı.
+    var m1 = telefonMotoru();
+    m1.gizlendi();
+    yaz('gizlenince sayaç O ANDA donuyor', 'bosta / 900 sn',
+        m1.durum + ' / ' + Math.round(m1.kalanDondurulmus) + ' sn',
+        m1.durum === 'bosta' && Math.round(m1.kalanDondurulmus) === 900);
+
+    // 2) ASIL KUSUR: 30 dk kilitten sonra dönüşte 00:00 OLMAMALI.
+    var m2 = telefonMotoru();
+    m2.gizlendi();
+    m2.hedefZaman -= 1800 * 1000;        // telefon 30 dk kilitli
+    m2.sonHareket = Date.now() - 1800 * 1000;
+    m2.hareketVar();                     // kilit açıldı
+    var k2 = Math.round(m2.kalanSaniye());
+    yaz('30 dk kilit sonrası dönüş', 'kaldığı yerden (900 sn)',
+        k2 + ' sn', k2 === 900);
+
+    // 3) TERS DAL — dondurma olmasaydı 0 görülürdü. Sınamanın
+    //    bozulunca BAĞIRDIĞINI gösterir (K-58).
+    var m3 = telefonMotoru();
+    m3.hedefZaman -= 1800 * 1000;        // gizlendi() ÇAĞRILMADI
+    var k3 = Math.round(m3.kalanSaniye());
+    yaz('ters dal: dondurmadan 30 dk', '0 sn (kusurun kendisi)',
+        k3 + ' sn', k3 === 0);
+
+    // 4) Mola eşiğindeyken kilitlenmek molayı KAYBETMEMELİ.
+    var m4 = telefonMotoru();
+    m4.hedefZaman = Date.now() + 5 * 1000;
+    m4.gizlendi();
+    m4.hedefZaman -= 600 * 1000;
+    m4.sonHareket = Date.now() - 600 * 1000;
+    m4.hareketVar();
+    var k4 = Math.round(m4.kalanSaniye());
+    yaz('mola 5 sn kalmışken 10 dk kilit', 'mola kaybolmasın (≤5 sn)',
+        k4 + ' sn', k4 > 0 && k4 <= 5);
+
+    // 5) MOLADA gizlenmek dondurmamalı: gözler zaten dinleniyor.
+    var m5 = motorKur();
+    m5.molayaGec();
+    m5.gizlendi();
+    yaz('molada gizlenme sayacı dondurmuyor', 'mola',
+        m5.durum, m5.durum === 'mola');
+  })();
+
   /* ÖLÇÜLEN SÜRÜM (madde 358) — hangi dosyayı ölçtüğümüz yazılı
      olsun. Burada çekirdek ÖNBELLEKSİZ yükleniyor (`?t=` damgası),
      yani her koşuda diskteki hâli ölçülüyor; yine de adresi yazıyoruz

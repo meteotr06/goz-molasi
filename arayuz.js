@@ -4716,13 +4716,49 @@
      sekmeye dönüldüğünde bir kez elle tetikleyip yakalatıyoruz.
      ============================================================ */
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      motor.hareketVar();
-      motor.tik();
-      ekraniCiz(motor.anlikDurum());
+    /* GİZLENME DALI — BURASI YOKTU, VE MOBİLDEKİ "SAYAÇ SIFIRLANIYOR"
+       KUSURUNUN SEBEBİ BUYDU.
+
+       Eskiden yalnız `if (!document.hidden)` vardı: sayfa gizlenince
+       hiçbir şey yapılmıyordu. Aşağıdaki yorum "motor Date.now() farkı
+       kullandığı için süre şaşmaz" diyor — bu KISA yokluklar için
+       doğru, uzun olanlar için tam tersi. Telefon 30 dakika kilitli
+       kalınca `hedefZaman - Date.now()` negatife düşüyor ve dönüşte
+       ekranda 00:00 çıkıyordu.
+
+       Motorun tik döngüsünde `bosta`ya geçiren bir dal var, ama o
+       koşmayan bir tıka bağlı: tarayıcı gizli sekmenin zamanlayıcısını
+       kısıyor, telefon kilitliyken hiç tık gelmiyor. Geç kalan bir
+       dondurma da işe yaramazdı — okunacak değer zaten 0 olurdu.
+
+       Bu yüzden dondurma gizlenme ANINDA yapılıyor. Dönüşte ne
+       olacağına `hareketVar()` karar veriyor (kısa yokluk → devam,
+       uzun yokluk → baştan); burası yalnız doğru değeri saklıyor. */
+    if (document.hidden) {
+      motor.gizlendi();
+      return;
     }
+    motor.hareketVar();
+    motor.tik();
+    ekraniCiz(motor.anlikDurum());
   });
-  window.addEventListener('pageshow', () => { motor.tik(); ekraniCiz(motor.anlikDurum()); });
+  /* `pagehide` DE DONDURUR — iOS'ta gerekli.
+     iOS Safari sayfayı bfcache'e alırken `visibilitychange`
+     göndermeyebiliyor; `pagehide` ise gönderiliyor. İkisi de
+     dondurursa biri kaçsa da öteki yakalar. `gizlendi()` yalnız
+     'calisiyor' durumunda iş yapıyor, iki kez çağrılması zararsız. */
+  window.addEventListener('pagehide', () => { motor.gizlendi(); });
+  /* DÖNÜŞ DE SİMETRİK OLMALI. Eskiden burada yalnız `tik()` vardı,
+     ama `tik()` 'bosta' durumundan ÇIKMAZ (cekirdek.js: `if (durum ===
+     'bosta') return`). Gizlenirken donduruyor, dönerken çözmüyorduk:
+     bfcache'ten geri gelen sayfa donmuş sayaçla kalırdı.
+     `hareketVar()` çözer ve "kısa yokluk mu, gerçekten uzaklaşma mı"
+     ayrımını da o yapar. */
+  window.addEventListener('pageshow', () => {
+    motor.hareketVar();
+    motor.tik();
+    ekraniCiz(motor.anlikDurum());
+  });
 
   /* ============================================================
      AÇILIŞ
