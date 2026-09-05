@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v217">
+<link rel="stylesheet" href="stil.css?s=v218">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -244,6 +244,18 @@
       <button type="button" class="dugme ana kucuk" id="gecikmisMolaVer"></button>
     </div>
     <button type="button" class="durum-notu-kapat" id="gecikmisMolaKapat"
+            aria-label="Kapat">✕</button>
+  </section>
+
+  <!-- DONUS ANI. Gunler sonra donen kullaniciya KENDI sayilariyla tek
+       cumle. Gecmisi yoksa hic cikmiyor; uydurma ovgu yok. -->
+  <section class="durum-notu" id="hosGeldinSerit" hidden role="status">
+    <span class="durum-notu-simge" aria-hidden="true">👁️</span>
+    <div>
+      <b id="hosGeldinBaslik"></b>
+      <p id="hosGeldinMetin"></p>
+    </div>
+    <button type="button" class="durum-notu-kapat" id="hosGeldinKapat"
             aria-label="Kapat">✕</button>
   </section>
 
@@ -1080,17 +1092,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v217"></script>
-  <script src="dil.js?s=v217"></script>
-  <script src="bilgiler.js?s=v217"></script>
-  <script src="bilgiler_en.js?s=v217"></script>
-  <script src="dunya.js?s=v217"></script>
-  <script src="egzersiz.js?s=v217"></script>
-  <script src="reklam.js?s=v217"></script>
-  <script src="kopru.js?s=v217"></script>
-  <script src="cekirdek.js?s=v217"></script>
-  <script src="mola_icerik.js?s=v217"></script>
-  <script src="arayuz.js?s=v217"></script>
+  <script src="degisiklikler.js?s=v218"></script>
+  <script src="dil.js?s=v218"></script>
+  <script src="bilgiler.js?s=v218"></script>
+  <script src="bilgiler_en.js?s=v218"></script>
+  <script src="dunya.js?s=v218"></script>
+  <script src="egzersiz.js?s=v218"></script>
+  <script src="reklam.js?s=v218"></script>
+  <script src="kopru.js?s=v218"></script>
+  <script src="cekirdek.js?s=v218"></script>
+  <script src="mola_icerik.js?s=v218"></script>
+  <script src="arayuz.js?s=v218"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

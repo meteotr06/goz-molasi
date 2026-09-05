@@ -1331,10 +1331,19 @@ const Gecmis = {
            bırakıyordu — iki günlük geçmişi olan yeni kullanıcı üç gün
            sayılıp sonuç cümlesi görüyordu. Bugün ancak GERÇEKTEN bir
            şey olduysa sayılıyor. */
+        /* ESIK "SIFIRDAN BUYUK" DEGIL, "ANLAMLI" OLMALI.
+
+           Once `> 0` yazmistim. Olculdu: uygulamayi yeni acan
+           kullanicinin bugunu UC SANIYE ekran suresiyle "dolu gun"
+           sayiliyor ve rapor "son 7 gun - 1 gunde veri var · gunde
+           ortalama 0,0" diyordu. Uc saniye bir gun degildir.
+
+           Bir mola (tamamlanmis ya da atlanmis) her zaman veridir;
+           mola yoksa en az bir dakika ekran suresi araniyor. */
         veriVar: !!kayit || !!(canli && (
           (bugunIstatistik.tamamlananMola | 0) > 0
           || (bugunIstatistik.atlananMola | 0) > 0
-          || Math.round(bugunIstatistik.ekranSuresi || 0) > 0)),
+          || Math.round(bugunIstatistik.ekranSuresi || 0) >= 60)),
         bugunMu,
       };
     };

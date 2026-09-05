@@ -100,6 +100,10 @@
     ikinciSekme: $('ikinciSekme'),
     buradaDevam: $('buradaDevamDugme'),
     kipDugmeler: $('kipDugmeler'),
+    hosGeldinSerit: $('hosGeldinSerit'),
+    hosGeldinBaslik: $('hosGeldinBaslik'),
+    hosGeldinMetin: $('hosGeldinMetin'),
+    hosGeldinKapat: $('hosGeldinKapat'),
     kipNot: $('kipNot'),
     tanitimKart: $('tanitimKart'),
     tanitimMetin: $('tanitimMetin'),
@@ -3250,6 +3254,80 @@
     try { degisiklikleriKur(); } catch {}
   }
 
+  /* ---------- DONUS ANI ---------- */
+  /** Gunler sonra donen kullaniciya KENDI sayilariyla tek cumle.
+
+      OLCULDU (05.09.2026): "uc gun sonra donen kullanici" ekrani, hic
+      kullanmamis kullanicinin ekraniyla BIREBIR AYNIYDI. Gecmisinde on
+      alti mola vardi ve uygulama tek kelime etmiyordu.
+
+      KURALLAR
+      · Gecmisi yoksa HICBIR SEY yazilmiyor. Yeni kullaniciya "harika
+        gidiyorsun" demek uydurma bir ovgudur.
+      · Butun sayilar kullanicinin KENDI verisinden. "Ideal ekran
+        suresi" gibi uydurma bir olcut yok.
+      · Gunde bir kez; kapatilinca o gun bir daha cikmiyor. Her
+        acilista tekrarlayan bir kutlama, kutlama degildir. */
+  const HOSGELDIN_ANAHTAR = 'goz-molasi-hosgeldin';
+
+  function hosGeldinGoster() {
+    if (!og.hosGeldinSerit) return;
+    let sonGosterim = '';
+    try { sonGosterim = localStorage.getItem(HOSGELDIN_ANAHTAR) || ''; } catch {}
+    const bugun = motor._bugun();
+    if (sonGosterim === bugun) return;
+
+    let ozet;
+    try { ozet = Gecmis.haftaOzeti(motor.istatistik, hedefAl()); } catch { return; }
+    // Bugun disinda veri yoksa soylenecek bir sey yok.
+    const oncekiler = ozet.gunler.filter((g) => g.veriVar && !g.bugunMu);
+    if (!oncekiler.length) return;
+
+    const toplam = oncekiler.reduce((t, g) => t + (g.mola | 0), 0);
+    if (toplam <= 0) return;
+
+    /* Kac gundur ugranmamis: son DOLU gunden bugune. Bugun sayilmiyor,
+       cunku gun daha bitmedi. */
+    const sonDolu = ozet.gunler.reduce(
+      (en, g, i) => (g.veriVar && !g.bugunMu ? i : en), -1);
+    const araGun = sonDolu === -1 ? 0 : (ozet.gunler.length - 1 - sonDolu);
+
+    let seri = 0;
+    try { seri = Gecmis.seri(motor.istatistik, hedefAl()) | 0; } catch {}
+
+    let baslik;
+    let metin;
+    if (seri >= 2) {
+      baslik = CS('Serin sürüyor', 'Your streak is alive');
+      metin = CS(
+        `${SAYI(seri)} gündür üst üste günlük hedefini tutturuyorsun. `
+        + `Son 7 günde ${SAYI(toplam)} göz molası.`,
+        `${SAYI(seri)} days in a row on your daily goal. `
+        + `${SAYI(toplam)} eye breaks in the last 7 days.`);
+    } else if (araGun >= 2) {
+      baslik = CS('Tekrar hoş geldin', 'Welcome back');
+      metin = CS(
+        `${SAYI(araGun)} gündür uğramamışsın. Son 7 gününde `
+        + `${SAYI(toplam)} göz molası var — kaldığın yerden devam.`,
+        `You have been away for ${SAYI(araGun)} days. Your last 7 days `
+        + `hold ${SAYI(toplam)} eye breaks — pick up where you left off.`);
+    } else {
+      baslik = CS('Hoş geldin', 'Welcome back');
+      metin = CS(
+        `Son 7 günde ${SAYI(toplam)} göz molası verdin.`,
+        `You took ${SAYI(toplam)} eye breaks in the last 7 days.`);
+    }
+
+    og.hosGeldinBaslik.textContent = baslik;
+    og.hosGeldinMetin.textContent = metin;
+    og.hosGeldinSerit.hidden = false;
+    try { localStorage.setItem(HOSGELDIN_ANAHTAR, bugun); } catch {}
+  }
+
+  og.hosGeldinKapat?.addEventListener('click', () => {
+    og.hosGeldinSerit.hidden = true;
+  });
+
   /* ---------- HAFTALIK RAPOR ---------- */
   /** Rapor ekranını çiz. TEK VERİ KAYNAĞI `Gecmis.haftaOzeti`;
       buradaki hiçbir sayı yeniden hesaplanmıyor — aynı sayıyı iki
@@ -4577,6 +4655,9 @@
     Math.round(motor.ayarlar.calismaSuresi / 60), motor.ayarlar.molaSuresi);
 
   ekraniCiz(motor.anlikDurum());
+  /* Donus seridi ILK CIZIMDEN SONRA: gecmis ve ayarlar yerine
+     oturmus olmali, yoksa hesap eksik veriyle kosardi. */
+  try { hosGeldinGoster(); } catch {}
   tekSekmeyiKur();
   kipleriKur();
   tanitimiKurGerekirse();
