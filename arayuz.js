@@ -4464,12 +4464,35 @@
       const y = gonderilecek.istatistik;
       if (e && y && e.gun && e.gun === y.gun) {
         const buyuk = (a, b) => Math.max(a | 0, b | 0);
+        /* SAATLIK DIZI DE BIRLESTIRILIYOR — ONCE LISTENIN DISINDAYDI.
+
+           Skaler sayaclar `max` ile birlestirilirken `saatlik` dizisi
+           `...y` ile YAZAN SEKMENIN bellegimden geliyordu. Sabah
+           acilmis bir sekme, ogleden sonra liderligi devralinca
+           09 kovasindan otesi SIFIR olan donmus diziyi diske yaziyor:
+           ekranda "bugun 8 mola · 6 sa 20 dk ekran" yazarken saatlik
+           grafik bombos kaliyordu. Ayni gunun ayni verisi, iki ayri
+           yerde iki ayri sey soyluyordu.
+
+           Kural `gunuIsle` ile ayni: bir gunun saatlik degeri geri
+           gidemez, kova kova buyuk olan kalir. */
+        const saatlikBirlestir = () => {
+          const a = Array.isArray(e.saatlik) ? e.saatlik : [];
+          const b = Array.isArray(y.saatlik) ? y.saatlik : [];
+          if (!a.length && !b.length) return y.saatlik;
+          const c = new Array(24);
+          for (let s = 0; s < 24; s++) {
+            c[s] = Math.max(+a[s] || 0, +b[s] || 0);
+          }
+          return c;
+        };
         gonderilecek.istatistik = {
           ...y,
           tamamlananMola: buyuk(e.tamamlananMola, y.tamamlananMola),
           atlananMola: buyuk(e.atlananMola, y.atlananMola),
           ekranSuresi: buyuk(e.ekranSuresi, y.ekranSuresi),
           uzunMola: buyuk(e.uzunMola, y.uzunMola),
+          saatlik: saatlikBirlestir(),
         };
       }
     } catch { }

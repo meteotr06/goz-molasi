@@ -824,7 +824,16 @@ class MolaMotoru {
   kalanSaniye() {
     // Henüz başlamadıysa tam süreyi göster (00:00 değil)
     if (this.durum === 'hazir') return this.ayarlar.calismaSuresi;
-    if (this.durum === 'duraklatildi' || this.durum === 'bosta') {
+    /* 'saatDisi' DE DONMUS DEGERI GOSTERIR.
+
+       Calisma saati disina cikilirken `kalanDondurulmus` kuruluyor ama
+       bu liste onu icermiyordu: ekrandaki buyuk sayi duvar saatinden
+       hesaplanmaya devam ediyor, sekmeye her donuste biraz daha
+       dusuyor ve sonunda "Calisma saati disi · 00:00" goruluyordu.
+       00:00 uygulamanin her yerinde "mola simdi" demek; burada
+       hicbir sey olmuyor. */
+    if (this.durum === 'duraklatildi' || this.durum === 'bosta'
+        || this.durum === 'saatDisi') {
       return this.kalanDondurulmus ?? 0;
     }
     return Math.max(0, (this.hedefZaman - Date.now()) / 1000);
@@ -832,9 +841,20 @@ class MolaMotoru {
 
   /** 0..1 arası ilerleme — halka animasyonu için */
   ilerleme() {
-    const toplam = this.durum === 'mola'
-      ? this.ayarlar.molaSuresi
-      : this.ayarlar.calismaSuresi;
+    /* ASAMANIN GERCEK SURESINDEN. Eskiden `ayarlar.molaSuresi`
+       kullaniliyordu; UZUN MOLADA (300 sn) bu 20 demek, yani halka
+       280 saniye boyunca bombos kalip son 20 saniyede aniden
+       doluyordu. Kullanici halkaya bakip "donmus" saniyordu.
+       Ayni hesap, Windows koprusunden uzun bir sayac devralininca
+       ana halkayi da bozuyordu.
+
+       `asamaSuresi` her asama gecisinde saklaniyor (tek kaynak);
+       yoksa eski davranisa dusuyoruz. */
+    const asama = +this.asamaSuresi;
+    const toplam = (Number.isFinite(asama) && asama > 0)
+      ? asama
+      : (this.durum === 'mola' ? this.ayarlar.molaSuresi
+                               : this.ayarlar.calismaSuresi);
     return 1 - Math.min(1, this.kalanSaniye() / toplam);
   }
 
