@@ -2562,6 +2562,15 @@
      sunmaktir. */
   /* Vurgu rengi ANINDA uygulaniyor: kullanici secerken sonucu gorsun,
      "Kaydet"e basana kadar beklemesin. Kalicilik yine kaydetmede. */
+  /* Surukleme sirasinda sayi guncellensin. Penceredeki OTEKI BES
+     kaydirici aninda guncelleniyordu; yalniz bu biri pencere
+     ACILIRKEN yazilip birakilmisti, yani kullanici kac sectigini
+     ekrandan okuyamiyordu. */
+  og.ayHedef?.addEventListener('input', () => {
+    const h = Math.min(30, Math.max(1, +og.ayHedef.value || 8));
+    og.ayHedefDeger.textContent = CS(`${SAYI(h)} mola`, `${SAYI(h)} breaks`);
+  });
+
   og.ayKarartma?.addEventListener('input', () => {
     og.ayKarartmaDeger.textContent = og.ayKarartma.value + '%';
     /* ANINDA UYGULANIYOR: karartmayi secerken sonucu gormek gerekir,
@@ -4169,8 +4178,50 @@
        aciliyor, mola arkada sayiyor ve "alinmis" sayiliyordu. */
     if (molaAcik) return;
     ayarlariPencereyeYaz();
+    ayarAnlikAl();          // "Vazgec" buraya donecek
     og.pencere.showModal();
   });
+  /* "VAZGEC" GERCEKTEN VAZGECSIN.
+
+     Ayar penceresindeki uc sey ANINDA uygulaniyor ki kullanici sonucu
+     gorsun: kendi vurgu rengi, aksam kipi, mola ekrani karartmasi.
+     Ama hicbir yerde ESKI HAL saklanmiyordu; "Vazgec"e basinca renk ve
+     filtre ekranda kaliyor, on bes saniyelik otomatik kayit da onlari
+     DISKE yaziyordu. Yani "Vazgec" adli dugme, degisikligi KALICI
+     yapiyordu.
+
+     Karartmada daha da sinsiydi: kutu "%15" gosterirken mola ekrani
+     %55 ile aciliyordu -- kutu ile motor birbirini yalanliyordu.
+
+     Cozum: pencere ACILIRKEN anlik goruntu alinir, kapanista geri
+     yuklenir. "Kaydet" goruntu`yu dusurur, boylece geri yukleme onu
+     etkilemez. `close` olayi Esc ve disari tiklamayi da kapsiyor. */
+  let ayarAnlik = null;
+
+  function ayarAnlikAl() {
+    ayarAnlik = {
+      kendiVurgu,
+      aksamKipi,
+      aksamSaat,
+      molaKarartma: motor.ayarlar.molaKarartma,
+      molaIcerik: motor.ayarlar.molaIcerik,
+    };
+  }
+
+  function ayarAnlikGeriYukle() {
+    if (!ayarAnlik) return;
+    kendiVurgu = ayarAnlik.kendiVurgu;
+    aksamKipi = ayarAnlik.aksamKipi;
+    aksamSaat = ayarAnlik.aksamSaat;
+    motor.ayarlar.molaKarartma = ayarAnlik.molaKarartma;
+    motor.ayarlar.molaIcerik = ayarAnlik.molaIcerik;
+    ayarAnlik = null;
+    try { kendiVurguyuUygula(); } catch {}
+    try { aksamiUygula(); } catch {}
+    try { molaGorunumuUygula(); } catch {}
+  }
+
+  og.pencere.addEventListener('close', ayarAnlikGeriYukle);
   og.ayarVazgec.addEventListener('click', () => og.pencere.close());
   og.ayarKaydet.addEventListener('click', async () => {
     /* AİLE KİPİNDE SINIRLARI DEĞİŞTİRMEK ŞİFRE İSTER.
@@ -4296,6 +4347,8 @@
     }
     kaydet();
     kipleriTazele();
+    // Kaydedildi: artik geri donulecek bir "eski hal" yok.
+    ayarAnlik = null;
     og.pencere.close();
   });
 
