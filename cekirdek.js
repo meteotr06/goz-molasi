@@ -463,7 +463,19 @@ class MolaMotoru {
       this.ekranKilitlendi = false;
       if (gercektenUzaklasti) {
         this.istatistik.kesintisizSure = 0;   // gerçekten dinlenildi
-        this._duyur('dinlenildi', Math.round(uzaktaKalinan / 1000));
+        /* SIFIRLANDI MI, OLAYLA BIRLIKTE GIDIYOR.
+
+           Olay sifirlama KARARINDAN ONCE yayiliyordu ve arayuz
+           kosulsuz "sayac bastan basladi" yaziyordu. Telefon
+           varsayilaninda (`uzakKalincaSifirla: false`) o dalda
+           `sifirla()` degil `devamEt()` cagriliyor - yani sayac
+           kaldigi yerden devam etmisken kullaniciya sifirlandigi
+           soyleniyordu. Kullanicinin aylardir bildirdigi "sayac
+           sifirlaniyor" sikayetinin bir kismi bu CUMLEDEN geliyor
+           olabilir: sayi dogru, cumle yanlis. */
+        const sifirlanacak = this.ayarlar.uzakKalincaSifirla !== false;
+        this._duyur('dinlenildi', Math.round(uzaktaKalinan / 1000),
+                    sifirlanacak);
         /* AYARA BAK — "uzun süre uzak kalınca sıfırla" KAPALI olabilir.
 
            Bu canlı yol o ayara HİÇ bakmıyordu. `sayaciGeriYukle` (kapat-aç
@@ -553,6 +565,20 @@ class MolaMotoru {
 
   askidanCikar() {
     this.askida = false;
+    /* GUN DEGISIMI BURADA DA DENETLENIYOR.
+
+       `_gunuTazele()` YALNIZ `tik()` icinden cagriliyordu ve o cagri
+       `askida` denetiminin ARDINDAYDI: askiya alinmis bir sekme gun
+       degisimini HIC gormuyordu. Aksamdan acik kalmis ikinci sekme
+       ertesi gun hala `istatistik.gun = DUN` tasiyor; liderligi
+       devralinca dunun sayilariyla yazmaya basliyordu. Gun damgalari
+       uyusmadigi icin `kaydet()`in "artan sayaclar azalmaz"
+       birlestirmesi de atlaniyor - koruma tam ihtiyac duyulan anda
+       devre disi kaliyordu.
+
+       Askidan cikmak, "bu sekme yeniden sorumlu" demek; sorumlulugu
+       almadan once hangi gunde oldugunu bilmeli. */
+    if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
   }
 
   tik() {

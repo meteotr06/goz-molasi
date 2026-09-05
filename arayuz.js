@@ -2962,16 +2962,23 @@
                         'Your eyes have rested. You can carry on.'));
       bitisKartiniGoster(motor.istatistik);
     })
-    .uzerine('dinlenildi', (sn) => {
+    .uzerine('dinlenildi', (sn, sifirlandi) => {
       const dk = Math.max(1, Math.round(sn / 60));
       /* CS SART: bu mesaj ana ekranin aciklama satirini SEKIZ SANIYE
          boyunca Turkceye ceviriyordu ve ekran okuyucuya da Turkce
          gidiyordu. Icinde degisen bir sayi var, sozluge konamaz. */
-      const mesaj = CS(
-        `${dk} dakika ekrandan uzak kaldın — gözlerin zaten dinlendi, `
-        + 'sayaç baştan başladı.',
-        `You were away from the screen for ${dk} minutes — your eyes have `
-        + 'already rested, so the timer started over.');
+      /* CUMLE OLCUME UYUYOR. Kosulsuz "sayac bastan basladi"
+         diyordu; telefon varsayilaninda sayac KALDIGI YERDEN devam
+         ediyor. Sifirlanip sifirlanmadigi artik olayla geliyor. */
+      const mesaj = sifirlandi
+        ? CS(`${dk} dakika ekrandan uzak kaldın — gözlerin zaten dinlendi, `
+             + 'sayaç baştan başladı.',
+             `You were away from the screen for ${dk} minutes — your eyes have `
+             + 'already rested, so the timer started over.')
+        : CS(`${dk} dakika ekrandan uzak kaldın — gözlerin dinlendi. `
+             + 'Sayaç kaldığı yerden devam ediyor.',
+             `You were away from the screen for ${dk} minutes — your eyes have `
+             + 'rested. The timer continues where it left off.');
       og.okuyucu.textContent = mesaj;
       const eski = og.aciklama.textContent;
       og.aciklama.textContent = mesaj;
@@ -3371,6 +3378,42 @@
       kisayollariGoster();
     }
   });
+
+  /* ODAK TUZAGI — MOLA EKRANI GERCEKTEN KAPALI OLSUN.
+
+     Ekran `role="dialog" aria-modal="true"` diyor ama duz bir `div`;
+     `<dialog>` degil, yani tarayicinin ust katman/odak yalitimi YOK.
+     Tab'a basan biri odagi mola ekraninin DISINA, arka plandaki
+     gorunmez dugmelere tasiyabiliyordu. Fareyle mumkun degil (ortu
+     tiklamayi yutuyor) - yalniz klavye kullanani vuruyordu, yani
+     korumanin delik oldugu yer tam da en az fark edilecek yerdi.
+
+     `aria-modal` SOZ VERIYOR, kod TUTMUYORDU: bu depoda "yalan
+     soyleyen arayuz" sinifi, burada erisilebilirlik tarafinda. */
+  document.addEventListener('keydown', (e) => {
+    if (!molaAcik || e.key !== 'Tab') return;
+    const kap = og.molaEkran;
+    if (!kap) return;
+    const odaklanabilir = [...kap.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]')]
+      .filter((x) => !x.disabled && x.tabIndex >= 0
+                     && getComputedStyle(x).visibility !== 'hidden'
+                     && x.offsetParent !== null);
+    /* Iceride odaklanacak hicbir sey yoksa (atla dugmesi gizliyken
+       olan durum) odagi ekranin KENDISINDE tutuyoruz - disari
+       kacmasindansa hicbir yere gitmesin. */
+    if (!odaklanabilir.length) {
+      e.preventDefault();
+      try { kap.focus(); } catch {}
+      return;
+    }
+    const ilk = odaklanabilir[0];
+    const son = odaklanabilir[odaklanabilir.length - 1];
+    const su = document.activeElement;
+    if (!kap.contains(su)) { e.preventDefault(); ilk.focus(); return; }
+    if (e.shiftKey && su === ilk) { e.preventDefault(); son.focus(); }
+    else if (!e.shiftKey && su === son) { e.preventDefault(); ilk.focus(); }
+  }, true);
 
   /* Mola ekranı açıkken Esc ile kaçış yok — atlamak için basılı tutulmalı */
   document.addEventListener('keydown', (e) => {
@@ -3859,7 +3902,15 @@
     og.ayKilitAlan.value = '';
     kilitDurumunuGoster();
   }
-  og.ayarAc.addEventListener('click', () => { ayarlariPencereyeYaz(); og.pencere.showModal(); });
+  og.ayarAc.addEventListener('click', () => {
+    /* MOLA SURERKEN AYARLAR ACILMAZ. Fareyle zaten mumkun degildi
+       (ortu tiklamayi yutuyor); klavyeyle Tab'layip Enter'a basan biri
+       icin mola korumasi tumden delikti - pencere molanin USTUNDE
+       aciliyor, mola arkada sayiyor ve "alinmis" sayiliyordu. */
+    if (molaAcik) return;
+    ayarlariPencereyeYaz();
+    og.pencere.showModal();
+  });
   og.ayarVazgec.addEventListener('click', () => og.pencere.close());
   og.ayarKaydet.addEventListener('click', async () => {
     /* AİLE KİPİNDE SINIRLARI DEĞİŞTİRMEK ŞİFRE İSTER.
