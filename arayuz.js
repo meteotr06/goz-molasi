@@ -3878,8 +3878,12 @@
   function kendiVurguyuUygula() {
     const kok = document.documentElement;
     if (!kendiVurgu) {
+      /* ERKEN DONMUYOR ARTIK. Eskiden burada `--vurgu-yazi` silinip
+         cikiliyordu: kendi rengini SECMEYEN kullanici -- yani
+         cogunluk -- hicbir zaman hesaplanmis bir yazi rengi
+         gormuyordu. */
       kok.style.removeProperty('--vurgu');
-      kok.style.removeProperty('--vurgu-yazi');
+      vurguYazisiniTazele();
       return;
     }
     kok.style.setProperty('--vurgu', kendiVurgu);
@@ -3899,17 +3903,101 @@
 
        Çözüm: rengin parlaklığından siyah/beyaz seçiliyor. Sabit bir
        renk yazmak, seçeneklerin yarısını okunmaz bırakırdı. */
-    const m = kendiVurgu.match(/^#(..)(..)(..)$/);
-    if (m) {
-      const kanal = (h) => {
-        const v = parseInt(h, 16) / 255;
-        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-      };
-      const L = 0.2126 * kanal(m[1]) + 0.7152 * kanal(m[2]) + 0.0722 * kanal(m[3]);
-      const beyazla = 1.05 / (L + 0.05);
-      const siyahla = (L + 0.05) / 0.05;
-      kok.style.setProperty('--vurgu-yazi', beyazla >= siyahla ? '#ffffff' : '#000000');
+    vurguYazisiniTazele();
+  }
+
+  /** RENGI TARAYICIYA COZDUR — her renk uzayi icin.
+
+      Eski hesap yalnizca `#rrggbb` ayristiriyordu. HAZIR TEMALARIN
+      vurgu renkleri `oklch()` ile yazili, yani o dallar HIC
+      hesaplanmiyordu: `--vurgu-yazi` bos kaliyor ve dugme her temada
+      ayni koyu yedek rengi (#001a16) kullaniyordu.
+
+      Bir pikseli boyayip geri okumak oklch/hsl/color()/alfa fark
+      etmeksizin kesin RGB verir. Ayristirmaya calismak, yeni bir renk
+      uzayi kullanildigi anda sessizce yanlis sonuc uretirdi. */
+  let _tuvalCtx = null;
+  function renginRGBsi(renk) {
+    if (!renk) return null;
+    try {
+      if (!_tuvalCtx) {
+        const tuval = document.createElement('canvas');
+        tuval.width = 1; tuval.height = 1;
+        _tuvalCtx = tuval.getContext('2d', { willReadFrequently: true });
+      }
+      if (!_tuvalCtx) return null;
+      /* Once BILINEN bir taban boyaniyor: gecersiz bir renk
+         `fillStyle`i degistirmez ve onceki degeri okurduk - sessizce
+         yanlis cevap. Taban siyah oldugu icin gecersiz renk
+         "0,0,0" doner ve asagidaki esik onu beyaz yaziya cevirir,
+         yani en kotu ihtimalde okunur bir sonuc. */
+      _tuvalCtx.fillStyle = '#000000';
+      _tuvalCtx.fillRect(0, 0, 1, 1);
+      _tuvalCtx.fillStyle = renk;
+      _tuvalCtx.fillRect(0, 0, 1, 1);
+      const d = _tuvalCtx.getImageData(0, 0, 1, 1).data;
+      return [d[0], d[1], d[2]];
+    } catch { return null; }
+  }
+
+  /** Vurgu renginin USTUNDEKI yazi rengi — HER temada yeniden.
+
+      K-87: turetilmis bir renk bir kez hesaplanip birakilirsa bayatlar.
+      Burada tam o oluyordu: deger yalnizca kullanici KENDI rengini
+      secince hesaplaniyordu; tema degistiginde `--vurgu` degisiyor,
+      turetilen yazi rengi degismiyordu.
+
+      OLCULDU (05.09.2026, on dokuz temanin hepsi, renk tarayiciya
+      cozdurulerek): ana dugmenin karsitligi BES temada esik altinda -
+      en kotusu 2,9 (koyu yesil vurgu). Yalniz varsayilan temayi
+      olcseydik gorunmezdi (K-85). */
+  /** Vurgu renginin KULLANILAN degeri.
+
+      `getComputedStyle(:root)['--vurgu']` YETMIYOR: temalar goreli renk
+      sozdizimi kullaniyor ve degisken ham metniyle geliyor --
+      `oklch(from #0f8c78  l calc(c * 1) h)`. Canvas boyle bir metni
+      cozemez, `fillStyle` sessizce degismez ve onceki rengi okuruz.
+
+      Cozum: rengi GERCEKTEN KULLANAN bir oge uzerinden okumak. Tarayici
+      `background-color` hesaplanmis degerini mutlak renge indirger. */
+  function vurguRengi() {
+    try {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;left:-9999px;top:0;'
+        + 'width:1px;height:1px;pointer-events:none;background:var(--vurgu)';
+      document.body.appendChild(probe);
+      const renk = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return renk;
+    } catch { return ''; }
+  }
+
+  function vurguYazisiniTazele() {
+    const kok = document.documentElement;
+    const rgb = renginRGBsi(vurguRengi());
+    if (!rgb) {
+      kok.style.removeProperty('--vurgu-yazi');
+      /* ACILISTA BIR KEZ TEKRAR DENE. Bayrak islevin KENDI uzerinde
+         duruyor: `let` ile modul duzeyinde tutunca, islev acilista
+         (tanimdan once) cagrildigi icin TDZ hatasi veriyordu -- ve o
+         hata butun acilisi kirdi. Islev bildirimleri tumuyle
+         yukseltilir, ozellikleri de oyle. */
+      if (!vurguYazisiniTazele.tekrarlandi
+          && typeof requestAnimationFrame === 'function') {
+        vurguYazisiniTazele.tekrarlandi = true;
+        requestAnimationFrame(() => { try { vurguYazisiniTazele(); } catch {} });
+      }
+      return;
     }
+    const kanal = (v) => {
+      const u = v / 255;
+      return u <= 0.03928 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4);
+    };
+    const L = 0.2126 * kanal(rgb[0]) + 0.7152 * kanal(rgb[1]) + 0.0722 * kanal(rgb[2]);
+    const beyazla = 1.05 / (L + 0.05);
+    const siyahla = (L + 0.05) / 0.05;
+    kok.style.setProperty('--vurgu-yazi',
+                          beyazla >= siyahla ? '#ffffff' : '#000000');
   }
 
   /** Mola ekrani gorunumu: karartma + icerik secimi.
