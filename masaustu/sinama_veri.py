@@ -313,14 +313,31 @@ def gecmis_dayanikli_mi(hatalar):
                     "bir istisna _tik döngüsünü yeniden kurulmadan keser, "
                     "sayaç KALICI donar" % (islev_adi, cagri))
 
-    # 7) Geçmiş uyarısı: iki dalda da AYNI metin olmalı. sinama_yerlesim
-    #    yalnız düz metin dönüşlerini ölçebiliyor, o yüzden değişkene
-    #    alınamıyor — kopyaların ayrışmadığını burada denetliyoruz.
+    # 7) Geçmiş uyarısı EKRANDA GÖRÜNMELİ — ama YALNIZ bir yerde.
+    #
+    #    BEKLENTI 06.09.2026'DA DEGISTI. Once "en az IKI dönüş" aranıyordu:
+    #    biri `ayar_uyarisi()` (ipucu satırı), biri `engel_sebebi()`.
+    #    İkincisi ZARARLIYDI ve bu sınama onu ŞART KOŞUYORDU.
+    #
+    #    `engel_sebebi` sözleşmesi "(tur, baslik, aciklama) ya da None"
+    #    diyor; oraya konan METİN, çağıran tarafta demet sanılıp
+    #    `sebep[1]`/`sebep[2]` olarak okundu. Sonuç: geçmiş dosyası bir
+    #    kez bozulunca, aile kipi KAPALI olan sıradan kullanıcının
+    #    ekranını kaplayan, başlığı bir BOŞLUK, açıklaması tek harf "G"
+    #    olan, KENDİ KENDİNE KAPANMAYAN bir kilit ekranı. Çıkış yolu
+    #    yalnızca Görev Yöneticisi. Bu depoda kullanıcıyı kendi
+    #    oturumunda kilitlemek açıkça yasak.
+    #
+    #    Uyarının yeri ipucu satırı; engel işlevi ENGEL döndürür.
+    #    Bu beklentiyi "düzeltip" ikiye çıkaran, kilidi geri getirir.
     uyarilar = re.findall(r'return "([^"]*Geçmiş dosyası[^"]*)"', kaynak)
-    if len(uyarilar) < 2:
-        hatalar.append("geçmiş bozulunca ekranda uyarı yok (ayar_uyarisi "
-                       "içinde %d dönüş) — sessizce düzeltmek hata sayılıyor"
-                       % len(uyarilar))
+    if len(uyarilar) < 1:
+        hatalar.append("geçmiş bozulunca ekranda uyarı yok (%d dönüş) — "
+                       "sessizce düzeltmek hata sayılıyor" % len(uyarilar))
+    elif len(uyarilar) > 1:
+        hatalar.append("geçmiş uyarısı %d yerde dönüyor — biri ENGEL "
+                       "işlevindeyse kullanıcı boş bir kilit ekranında "
+                       "kalır" % len(uyarilar))
     elif len(set(uyarilar)) > 1:
         hatalar.append("geçmiş uyarısı %d yerde FARKLI yazılmış — kullanıcı "
                        "aynı olayı iki ayrı cümleyle görüyor" % len(set(uyarilar)))

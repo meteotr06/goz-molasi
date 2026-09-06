@@ -1683,11 +1683,31 @@ class Uygulama:
         return tam
 
     def _sayaci_kaydet(self):
+        """Sayac durumunu ATOMIK yazar.
+
+        Once `open(yol, "w")` kullaniliyordu ve bu dosya dosyayi
+        yazmadan ONCE buduyor. Yazma yarida kesilirse (elektrik,
+        taskkill, Windows kapanisi) diskte 0 baytlik ya da yarim bir
+        dosya kaliyor. Bir sonraki acilista `_sayaci_geri_yukle`
+        `json.load`da istisna alip TAM sureyi donuyor: kullanici on
+        sekiz dakikadir calisiyor olsa bile panelde 20:00 goruyor ve
+        o mola tumden dusuyor.
+
+        Bu, projenin ana sikayetinin ta kendisi: "sure basa sarmasin".
+
+        Ayni gerekce `atomik_yaz`in kendi aciklamasinda zaten YAZILI ve
+        komsu uc dosyanin ucu de (ayarlar.json, istatistik.json,
+        gecmis.json) atomik yaziliyordu; yalniz BU dosya atlanmisti --
+        ustelik `cik()` icinde de yaziliyor, yani surecin oldurulme
+        riskinin EN YUKSEK oldugu anda.
+        """
         try:
             os.makedirs(KAYIT_KLASOR, exist_ok=True)
-            with open(DURUM_DOSYA, "w", encoding="utf-8") as f:
-                json.dump({"hedef": self.hedef, "kayit_ani": time.time(),
-                           "durum": self.durum}, f)
+            gcm.atomik_yaz(DURUM_DOSYA, {
+                "hedef": self.hedef,
+                "kayit_ani": time.time(),
+                "durum": self.durum,
+            })
         except Exception:
             pass
 
@@ -2850,14 +2870,31 @@ class Uygulama:
         akşam biraz daha" diyebilmek gerekiyor.
         """
         if not aile_kipinde_mi(self.ayar):
-            # Gecmis uyarisi aile kipine BAGLI DEGIL: 120 gunluk
-            # gecmisin kenara alinmasi her kullaniciyi ilgilendirir.
-            # Metin asagidaki dalla AYNI olmak zorunda - sinama_yerlesim
-            # yalniz duz metin donuslerini olcebiliyor, degiskene
-            # alinirsa genislik olcumunun disinda kalir; sinama_veri
-            # ikisinin ayrismadigini denetliyor.
-            if gcm.son_bozulma:
-                return "⚠ Geçmiş dosyası bozuktu — yedeği .bozuk olarak duruyor"
+            """UYARI DONDURMUYOR — BU ISLEV ENGEL DONDURUR.
+
+               Burada `gcm.son_bozulma` icin bir METIN donuluyordu.
+               Sozlesme (yukarida): "(tur, baslik, aciklama) ya da
+               None". Cagiran taraf donen seyi DEMET saniyor:
+               `EngelEkrani(self, sebep[1], sebep[2])`. Bir metnin 1. ve
+               2. karakteri " " ve "G" oldugu icin IndexError bile
+               cikmiyor.
+
+               KULLANICININ GORDUGU: gecmis dosyasi bir kez bozulunca
+               (elektrik kesintisi, yarim yazma) ekrani tamamen
+               kaplayan, basligi BIR BOSLUK, aciklamasi tek harf "G"
+               olan koyu bir kilit ekrani. Alt+F4, Esc ve Ctrl+W bagli;
+               pencere 400 ms'de bir kendini one aliyor. Tek dugme
+               "Ebeveyn: ek sure ver" ama bireysel kipte hicbir sey
+               yapmiyor. Ekran KENDI KENDINE HIC KAPANMIYOR -- cikis
+               yolu yalnizca Gorev Yoneticisi.
+
+               Aile kipi KAPALI, sifre YOK, kullanici KENDI
+               bilgisayarinda. Bu depoda kullaniciyi kendi oturumunda
+               kilitlemek acikca yasak.
+
+               Bozulma uyarisi zaten `ayar_uyarisi()` icinde, ipucu
+               satirinda gosteriliyor -- yeri orasi. Buradaki kopya
+               yalnizca zarar veriyordu."""
             return None
         # Ebeveyn ek süre verdiyse hiçbir engel yok.
         # `float(...)` burada da coker: "abc" -> ValueError, [1] -> TypeError.
@@ -3170,6 +3207,22 @@ class Uygulama:
         self._aile_kipini_saglamlastir()
         """Engel gerekiyorsa ekranı aç, gerekmiyorsa kapat."""
         sebep = self.engel_sebebi()
+        """SEKIL DENETIMI — KILIT EKRANI ASLA BOS ACILMASIN.
+
+           `engel_sebebi` sozlesmeye gore uc elemanli bir demet ya da
+           None donmeli. Bir kez METIN dondu ve `sebep[1]`/`sebep[2]`
+           metnin harfleri oldugu icin ekrani kaplayan, basligi bir
+           BOSLUK olan, kapanmayan bir kilit ekrani acildi. IndexError
+           bile cikmadi -- yani hicbir `try/except` bunu yakalayamazdi.
+
+           O kusur kaynagında kapatildi; bu denetim IKINCI KATMAN.
+           Kullaniciyi kendi oturumunda kilitleyen bir yol, "artik
+           olmaz" denip tek bir yerde birakilamaz: sekli tutmayan bir
+           sebep ENGEL SAYILMIYOR.
+           """
+        if sebep is not None and not (
+                isinstance(sebep, (tuple, list)) and len(sebep) == 3):
+            sebep = None
         if sebep and self.engel_ekrani is None:
             # Mola ekranı açıkken engel açmıyoruz — üst üste iki tam
             # ekran, ikisi de topmost, sonsuz döngüye giriyor.
@@ -3700,8 +3753,38 @@ class Uygulama:
             mesaj = "%d saniye sonra göz molası" % (int(kalan) + 1)
             if self.durum != "uyari":
                 self.durum = "uyari"
-                ses.cal("uyari", self.ayar.get("ses", True))
-                self.balon = Balon(self.kok, mesaj)
+                """TAM EKRANDA BALON DA CIKMAZ.
+
+                   Bugun tam ekranda mola SORMAYI kaldirip sessiz
+                   ertelemeye gectim -- ama ON UYARI BALONUNDA tam
+                   ekran denetimi HIC YOKTU ve bu, kesintiyi
+                   azaltmak yerine DORT KATINA CIKARDI:
+
+                     once : balon calisma suresi kadar bir arayla
+                            (20 dakikada bir)
+                     sonra: sessiz erteleme hedefi 5 dakikaya
+                            kurdugu icin BES DAKIKADA BIR
+
+                   Balon `overrideredirect` + `-topmost` bir pencere
+                   ve yaninda can caliyor; tam ekran bir DirectX
+                   oyununda bu tam olarak kullanicinin sikayet ettigi
+                   sey. Kullanici bugun mac ortasinda yazdi: "valoranti
+                   bolme ona geliyor", "oldum".
+
+                   Bir kusuru duzeltirken olcmedigim komsu yol, kusuru
+                   buyuttu. Duzeltmenin sikayeti cozdugunu kanitlamak,
+                   duzeltmeyi yazmaktan ayri bir istir.
+                   """
+                rahatsizEtme = False
+                if self.ayar.get("tam_ekranda_sor"):
+                    try:
+                        rahatsizEtme = (iz.tam_ekran_mi()
+                                        or iz.toplantida_mi()[0])
+                    except Exception:
+                        rahatsizEtme = False
+                if not rahatsizEtme:
+                    ses.cal("uyari", self.ayar.get("ses", True))
+                    self.balon = Balon(self.kok, mesaj)
             elif self.balon:
                 self.balon.guncelle(mesaj)
         elif self.balon and kalan > self.ayar["uyari_sn"]:
