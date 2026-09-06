@@ -4081,6 +4081,44 @@
     } catch { return ''; }
   }
 
+  /** TARAYICININ CIZDIGI YUZEYLER DE TEMAYI IZLESIN (K-93).
+
+      `color-scheme` hicbir yerde tanimli degildi: on yedi temanin
+      hepsinde `normal` cikiyordu. Sayfanin kendi ciziimi olculuyor ve
+      iyi -- ama acilir listenin KENDISI, saat secici, renk kutusu,
+      kaydirma cubugu ve odak halkasi tarayici tarafindan ciziliyor ve
+      onlar sayfanin renklerini bilmiyor. Koyu temada acik bir acilir
+      liste, olcmedigimiz bir renktir.
+
+      SABIT LISTE YOK: hangi temanin koyu oldugu, govdenin GERCEK
+      zemininden hesaplaniyor. Yarin bir tema eklenince liste
+      guncellemeyi unutmak diye bir sey olmasin (K-87: bir kez
+      yazilan tureti bayatlar). */
+  function renkSemasiniTazele() {
+    const kok = document.documentElement;
+    const rgb = renginRGBsi(getComputedStyle(document.body).backgroundColor);
+    if (!rgb) {
+      /* ILK BOYAMADA govde zemini henuz cozulmemis olabiliyor -- ayni
+         sey `--vurgu-yazi`de de yasandi ve olcumde ILK SATIR "normal"
+         cikiyordu. Bir kez tekrar deniyoruz; bayrak islevin kendi
+         ozelligi (modul duzeyinde `let` TDZ hatasi veriyor, bu dosyada
+         iki kez dustum). */
+      if (!renkSemasiniTazele.tekrarlandi
+          && typeof requestAnimationFrame === 'function') {
+        renkSemasiniTazele.tekrarlandi = true;
+        requestAnimationFrame(() => { try { renkSemasiniTazele(); } catch {} });
+      }
+      return;
+    }
+    const kanal = (v) => {
+      const u = v / 255;
+      return u <= 0.03928 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4);
+    };
+    const L = 0.2126 * kanal(rgb[0]) + 0.7152 * kanal(rgb[1])
+            + 0.0722 * kanal(rgb[2]);
+    kok.style.colorScheme = L < 0.35 ? 'dark' : 'light';
+  }
+
   function vurguYazisiniTazele() {
     const kok = document.documentElement;
     const rgb = renginRGBsi(vurguRengi());
@@ -4126,6 +4164,13 @@
       .getPropertyValue('--zemin').trim() || '#141130';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', renk);
     kendiVurguyuUygula();
+    /* BURAYA -- `kendiVurguyuUygula` ICINE DEGIL.
+
+       Once oraya koymustum ve HIC calismadi: o islev kendi vurgu rengi
+       SECILMEMISSE erken donuyor, yani cogunluk hicbir zaman
+       ugramiyordu. Ayni tuzaga bu dosyada ucuncu dususum; olcum
+       (`inline: ''`) gosterdi. */
+    renkSemasiniTazele();
     aksamiUygula();
     molaGorunumuUygula();
   }
