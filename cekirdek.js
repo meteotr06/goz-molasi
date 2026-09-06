@@ -827,7 +827,19 @@ class MolaMotoru {
 
        Molanin kendisi de gizliyken acilmiyor -- yukarida ayrica
        yazili. */
-    if (this.durum === 'calisiyor' && kalan <= this.ayarlar.uyariSuresi) {
+    /* "0 = UYARMA" GERCEKTEN UYARMASIN.
+
+       Ayarin kendi aciklamasi "Molaya kac saniye kala haber verilsin
+       (0 = uyarma)" diyor. Ama `kalan <= 0` kosulu sifirda da
+       tutuyordu: mola aninda arka arkaya IKI bildirim dusuyordu --
+       once "Ekran birazdan kararacak - 0 saniye sonra", hemen ardindan
+       mola bildirimi. Kullanici hic uyari almayacagini saniyordu.
+
+       "Toplanti" ve "Film · oyun" kipleri de `uyariSuresi: 0`
+       kuruyor; yani tam da rahatsiz edilmek istemeyen kullanici iki
+       kat rahatsiz oluyordu. */
+    if (this.durum === 'calisiyor' && this.ayarlar.uyariSuresi > 0
+        && kalan <= this.ayarlar.uyariSuresi) {
       this.durum = 'uyari';
       const gorunuyor = (typeof document === 'undefined')
         || document.visibilityState !== 'hidden';

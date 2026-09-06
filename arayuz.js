@@ -1307,7 +1307,20 @@
     rozet(1);
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     navigator.serviceWorker?.ready
-      .then((kayitli) => kayitli.active?.postMessage({ tur: 'bildirim', baslik, metin }))
+      /* TITRESIM AYARI BILDIRIME DE GECIYOR.
+
+         `titret()` ayara bakiyordu ama servis iscisinin gosterdigi her
+         bildirim SABIT bir titresim deseni tasiyordu (sw.js:
+         `vibrate: veri.titresim || [140,70,140]`). Yani "Titresim"i
+         kapatan kullanicinin telefonu her bildirimde yine titriyordu
+         -- ayarin sozu tutulmuyordu.
+
+         Bos dizi "titresim yok" demek; alani hic gondermemek varsayilan
+         deseni geri getirirdi. */
+      .then((kayitli) => kayitli.active?.postMessage({
+        tur: 'bildirim', baslik, metin,
+        titresim: titresimAcik ? [140, 70, 140] : [],
+      }))
       .catch(() => {});
   }
 

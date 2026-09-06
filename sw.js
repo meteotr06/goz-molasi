@@ -1,6 +1,6 @@
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v228';
+const SURUM = 'goz-molasi-v229';
 
 const DOSYALAR = [
   './',
@@ -170,8 +170,18 @@ self.addEventListener('message', (e) => {
          (31.08.2026): "bildirimlerimizi yogunlastir". */
       requireInteraction: true,
       silent: false,
-      /* Telefon sessizdeyken tek fark edilme yolu titresim. */
-      vibrate: veri.titresim || [140, 70, 140],
+      /* TITRESIM AYARA BAGLI.
+
+         Once burada sabit bir desen vardi (`|| [140,70,140]`) ve
+         arayuzdeki "Titresim" anahtari bildirimlere HIC ulasmiyordu:
+         kapatan kullanicinin telefonu her bildirimde yine titriyordu.
+
+         Bos dizi geldiginde alani HIC KOYMUYORUZ. `vibrate: []` bazi
+         tarayicilarda "desen yok" diye anlasilmiyor; alani koymamak
+         her yerde ayni anlama geliyor. */
+      ...(Array.isArray(veri.titresim) && veri.titresim.length === 0
+          ? {}
+          : { vibrate: veri.titresim || [140, 70, 140] }),
     });
   }
 });
