@@ -597,6 +597,10 @@
 
   function lideriDevral() {
     liderMiyim = true;
+    // Ortu kapaniyor: arka plan yeniden kullanilabilir olmali.
+    try {
+      for (const c of document.body.children) c.inert = false;
+    } catch {}
     try { motor.askidanCikar(); } catch {}
     liderDamgala();
     og.ikinciSekme.hidden = true;
@@ -670,6 +674,25 @@
   function liderligiBirak() {
     liderMiyim = false;
     og.ikinciSekme.hidden = false;
+    /* ORTU ACILINCA ODAK ICERI, ARKA PLAN KAPALI.
+
+       Ortu ekrani kapliyordu ama odak bulundugu yerde kaliyor, hicbir
+       sey duyurulmuyor ve arka plan hala sekmelenebiliyordu: klavye
+       kullanicisi gormedigi dugmelere basabiliyordu -- bugun uyari
+       balonunda kapattigim kusurun aynisi.
+
+       `inert` govdeyi odak sirasindan ve erisilebilirlik agacindan
+       cikariyor; ortunun kendisi disarida birakiliyor. */
+    try {
+      for (const c of document.body.children) {
+        if (c !== og.ikinciSekme) c.inert = true;
+      }
+      og.ikinciSekme.focus();
+    } catch {}
+    okuyucuyaSoyle(CS(
+      'Göz Molası başka bir sekmede açık. Bu sekmede devam etmek için '
+      + '"Buradan devam et" düğmesine bas.',
+      'Eye Break is open in another tab. Press "Continue here" to take over.'));
     /* Sayaç bu sekmede işlemesin; ölçüm çift sayılmasın.
        Yalnızca kalp atışını durdurmak YETMİYORDU: `_asamayaGec()`
        her durum geçişinde onu yeniden başlatıyor. Ölçüldü — ikinci
@@ -3172,7 +3195,17 @@
              + 'Sayaç kaldığı yerden devam ediyor.',
              `You were away from the screen for ${dk} minutes — your eyes have `
              + 'rested. The timer continues where it left off.');
-      og.okuyucu.textContent = mesaj;
+      /* `okuyucuyaSoyle` KULLANILIYOR, dogrudan yazma DEGIL.
+
+         `og.okuyucu` mola ekraninin ICINDE duruyor. Mola kapaliyken o
+         ekran `visibility:hidden` oluyor ve gorunmez bir kapsayicinin
+         icindeki `aria-live` alani EKRAN OKUYUCUYA ULASMIYOR. Yani
+         goren kullanici sebebi sekiz saniye okuyor, gormeyen HICBIR
+         SEY duymuyordu: sayac sebepsiz sifirlanmis gibi geliyordu.
+
+         `okuyucuyaSoyle` once alani temizleyip sonra yaziyor; ayni
+         metin ust uste gelirse de duyurulsun diye. */
+      okuyucuyaSoyle(mesaj);
       const eski = og.aciklama.textContent;
       og.aciklama.textContent = mesaj;
       setTimeout(() => { og.aciklama.textContent = eski; }, 8000);

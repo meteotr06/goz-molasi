@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v231">
+<link rel="stylesheet" href="stil.css?s=v232">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -569,7 +569,11 @@
        Aynı anda birden çok sekme sayarsa ekran süresi kat kat
        sayılıyor ve sekmeler birbirinin kaydını eziyor. WhatsApp Web
        gibi: tek sekme sayar, diğerleri "buradan devam et" der. -->
+  <!-- `aria-modal` VE odak: ortu ekrani kapliyor ama klavye
+       kullanicisi arkasindaki dugmelere sekmeyle gidebiliyordu ve
+       ekran okuyucu ortunun varligini hic duymuyordu. -->
   <div class="ikinci-sekme" id="ikinciSekme" hidden role="dialog"
+       aria-modal="true" tabindex="-1"
        aria-labelledby="ikinciBaslik">
     <div class="ikinci-kutu">
       <h2 id="ikinciBaslik">Göz Molası başka bir sekmede açık</h2>
@@ -645,8 +649,23 @@
       <p class="mola-ipucu" id="molaIpucu" hidden role="status"></p>
     </div>
 
-    <p class="gizli-metin" id="ekranOkuyucu" aria-live="polite"></p>
   </div>
+
+  <!-- EKRAN OKUYUCU ALANI — MOLA EKRANININ DISINDA.
+
+       Once mola ekraninin ICINDEYDI. Mola kapaliyken o ekran
+       `visibility: hidden` oluyor ve GORUNMEZ bir kapsayicinin
+       icindeki `aria-live` alani ekran okuyucuya ULASMIYOR.
+
+       OLCULDU (06.09.2026): "gozlerin dinlendi, sayac bastan basladi"
+       duyurusu alana yaziliyordu ama kapsayici `visibility: hidden`
+       idi. Goren kullanici sebebi sekiz saniye okuyor, gormeyen
+       HICBIR SEY duymuyordu -- sayac sebepsiz sifirlanmis gibi
+       geliyordu.
+
+       Bu alan uygulamanin TEK duyuru kanali; hicbir seyin icinde
+       durmamali. -->
+  <p class="gizli-metin" id="ekranOkuyucu" aria-live="polite"></p>
 
   <!-- AYARLAR -->
   <dialog class="ayarlar" id="ayarPencere">
@@ -1085,11 +1104,16 @@
            alanı buluyordu. Ebeveyn kendi kilidini açamazsa özellik
            işe yaramaz. -->
       <input type="password" id="sifreAlan" inputmode="numeric" autocomplete="off"
-             aria-label="Şifre" aria-describedby="sifreAciklama"
+             aria-label="Şifre" aria-describedby="sifreAciklama sifreHata"
              style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--cizgi);
                     background:var(--zemin);color:var(--yazi);font:inherit;
                     text-align:center;letter-spacing:6px;font-size:1.25rem">
-      <p style="margin:0;font-size:0.8125rem;color:#f87171;min-height:18px" id="sifreHata"></p>
+      <!-- HATA DUYURULUYOR. Once duz bir <p> idi: yanlis sifre giren
+           veli alanin bosaldigini goruyor ama SEBEBINI duymuyordu.
+           `role="alert"` ile ekran okuyucu metni ANINDA okuyor;
+           `aria-describedby` ile alan da hataya bagli. -->
+      <p style="margin:0;font-size:0.8125rem;color:#f87171;min-height:18px"
+         id="sifreHata" role="alert" aria-live="assertive"></p>
       <button type="button" class="dugme sade kucuk" id="sifreUnuttum"
               style="align-self:flex-start">Şifremi unuttum</button>
       <div style="display:flex;gap:10px;justify-content:flex-end">
@@ -1099,17 +1123,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v231"></script>
-  <script src="dil.js?s=v231"></script>
-  <script src="bilgiler.js?s=v231"></script>
-  <script src="bilgiler_en.js?s=v231"></script>
-  <script src="dunya.js?s=v231"></script>
-  <script src="egzersiz.js?s=v231"></script>
-  <script src="reklam.js?s=v231"></script>
-  <script src="kopru.js?s=v231"></script>
-  <script src="cekirdek.js?s=v231"></script>
-  <script src="mola_icerik.js?s=v231"></script>
-  <script src="arayuz.js?s=v231"></script>
+  <script src="degisiklikler.js?s=v232"></script>
+  <script src="dil.js?s=v232"></script>
+  <script src="bilgiler.js?s=v232"></script>
+  <script src="bilgiler_en.js?s=v232"></script>
+  <script src="dunya.js?s=v232"></script>
+  <script src="egzersiz.js?s=v232"></script>
+  <script src="reklam.js?s=v232"></script>
+  <script src="kopru.js?s=v232"></script>
+  <script src="cekirdek.js?s=v232"></script>
+  <script src="mola_icerik.js?s=v232"></script>
+  <script src="arayuz.js?s=v232"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
