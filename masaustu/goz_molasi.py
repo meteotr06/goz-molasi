@@ -3458,25 +3458,37 @@ class Uygulama:
             tam_ekran = iz.tam_ekran_mi()
 
             if toplantida or tam_ekran:
-                if toplantida:
-                    baslik = "Görüşmede gibisin"
-                    metin = ("Şu anda %s açık. Toplantı ya da görüntülü görüşme "
-                             "olabilir.\n\nMolayı 5 dakika erteleyeyim mi?" % kim)
-                else:
-                    _, program = iz.on_pencere()
-                    baslik = "Tam ekran bir şey açık"
-                    metin = ("Şu anda %s tam ekran çalışıyor. Sunum, video ya da "
-                             "oyun olabilir.\n\nMolayı 5 dakika erteleyeyim mi?"
-                             % (program or "bir program"))
+                # Sebebi KAYDEDIYORUZ ama SORMUYORUZ -- asagida anlatildi.
+                self.sessiz_erteleme_sebebi = (
+                    ('gorusme', kim) if toplantida else ('tam-ekran', None))
 
-                # Cevap gelmezse MOLA VERİLİR — varsayılan hep molanın lehine
-                if Soru(self.kok, baslik, metin, evet_yazi="5 dk ertele",
-                        hayir_yazi="Hayır, molayı ver",
-                        geri_sayim=12, varsayilan=False).bekle():
-                    self.ist["ertelenen"] += 1
-                    self.durum = "calisiyor"
-                    self.hedef = time.time() + 5 * 60
-                    return
+                """TAM EKRANDA SORU SORMAK, SORUNUN KENDİSİDİR.
+
+                   Burada 12 saniyelik geri sayımlı bir soru kutusu
+                   açılıyordu ve cevap gelmezse mola YİNE veriliyordu.
+                   Ama tam ekran bir oyunda o kutunun kendisi ODAĞI
+                   ÇALIYOR: kullanıcı daha soruyu okuyamadan oyundan
+                   düşüyor.
+
+                   KULLANICI, maçın ortasında (06.09.2026):
+                   "valorantı bölme ona geliyor" · "dikkat et oyundan
+                   atıyor" · "öldüm" · "atma oyundan".
+
+                   Yani "sorup ertelemek" nazik görünen ama zararı
+                   veren yoldu. Tam ekran bir şey açıksa SESSİZCE
+                   erteliyoruz: kutu yok, odak çalınmıyor, ses yok.
+                   Mola kaybolmuyor — beş dakika sonra yeniden
+                   deneniyor ve o sırada tam ekran kapanmışsa normal
+                   veriliyor.
+
+                   Kaç kez ertelendiğini sayıyoruz ki kullanıcı
+                   ekranda görebilsin; sessiz ertelemek "hiç olmamış"
+                   demek değil."""
+                self.ist["ertelenen"] += 1
+                self.durum = "calisiyor"
+                self.hedef = time.time() + 5 * 60
+                self.sessiz_ertelendi = getattr(self, "sessiz_ertelendi", 0) + 1
+                return
 
         self.uzun_mola_mi = False
         # Bir önceki mola atlandıysa bu sefer daha kısa mola veriyoruz.
