@@ -349,3 +349,63 @@ basıyordum; uygulama zaten kendiliğinden başladığı için o basış sayacı
 ölçecektim. Artık ölçüm, durum `calisiyor` olmadan **başlamıyor**. Ayrıca üç
 seçicinin üçü de yanlıştı (`#sayac`, `#baslatDur`, `#molaEkrani`) — kısa
 prova koşulmasaydı bir saat boyunca hiçbir şey ölçmemiş olacaktım.
+
+
+## SAYAÇ SİSTEMİ DENETİMİ — 06.09.2026 (78 alt görev)
+
+Altı ayrı mercek (durum makinesi · gün dönümü · ekranda yazan sayı ·
+köprü/masaüstü · yaşam döngüsü · aile sınırı) bulguları çıkardı; her
+bulgu ÜÇ bağımsız çürütücüden geçti (ikisi çürütürse düşüyor).
+**23 bulgu ayakta kaldı, 1 çürütüldü.**
+
+### v237–v238'de kapatılanlar (13)
+
+- [AGIR] Tamamlanan UZUN mola hiçbir mola sayısına girmiyor: ne ekrandaki kutucuğa, ne 7 gün grafiğine, ne seriye, ne de kalıcı geçmişe yazılıyor
+- [AGIR] Köprü açıkken "takip edilen süre" kutucuğu tarayıcının ölçüsünü, hemen altındaki saatlik grafik Windows'un ölçüsünü gösteriyor — Windows'tan gelen ekran_sn hiçbir yerde okunmuyor
+- [AGIR] Ana ekrandaki "günde ortalama mola" ile Rapor ekranındaki "günde ortalama" aynı 7 gün için farklı bölen kullanıyor; aynı anda iki farklı sayı gösteriyorlar.
+- [AGIR] Windows köprüsünün bugün için gösterdiği saatlik dizi hiçbir yere arşivlenmiyor; ertesi gün aynı gün "‹ Dün" ile açılınca çok daha küçük bir sayı çıkıyor.
+- [AGIR] Ana ekrandaki sure kutusu tarayicinin olcusunu, hemen altindaki saatlik grafik Windows'un olcusunu gosteriyor -- ayni gun, iki sayi.
+- [AGIR] 'Bugun X mola' yazisi bugunun degil SON 7 GUNUN toplamini yaziyor.
+- [AGIR] Windows sürümü kapanınca aynı "Bugün" grafiği 5 sa 0 dk'dan 1 dk'ya düşüyor ve o gün bir daha geri gelmiyor
+- [AGIR] aileyiTazele() saniye sayısını Date biçimleyicisi saatYaz()'a veriyor; istisna atıyor ve Ayarlar penceresi hiç açılmıyor.
+- [AGIR] Engel ekranında kalan süre saniye olarak saatYaz()'a veriliyor; yasak saatinde engel hiç çıkmıyor ve bütün ekran donuyor.
+- [AGIR] Bugünün saatlik grafiği Windows'un ölçüsünü, günlük sınır ve "bugünkü durum" kutucuğu tarayıcının ölçüsünü kullanıyor.
+- [ORTA] Aynı kartta iki farklı "en yoğun saat": alışkanlık etiketi tarayıcı ölçümünden, grafiğin alt yazısı Windows köprüsünden okuyor.
+- [ORTA] Ayni etiketli 'gunde ortalama' iki sekmede iki farkli bolenle hesaplaniyor.
+- [ORTA] "En yoğun saat" aynı ekranda iki ayrı kaynaktan hesaplanıp iki farklı saat gösteriyor.
+
+### AÇIK — sıradaki iş (10)
+
+- **[AGIR]** Bir saati kesintisiz ekranda geçiren kullanıcıda o saatin kovası 3600'ü aşıyor; sayfa yenilenince istatistikSuz o saati SIFIRLIYOR
+  - yer: `cekirdek.js:221` · mercek: durum-makinesi
+  - doğrusu: O saatin çubuğu 60 dk; saatlik kovaların toplamı ekranSuresi ile tutmalı (133 dk'lık günde 133 dk). Şu an grafik bir tam saati eksik gösteriyor.
+- **[AGIR]** Windows sayilariyla cizilen bugunun saatlik grafigi diske hic yazilmiyor; yarin ayni gune 'Dun' diye bakinca sayilar kuculuyor.
+  - yer: `arayuz.js:2813` · mercek: ekranda-yazan
+  - doğrusu: Dun icin 6 sa 10 dk. Ekranda gosterilen kova dizisi hangisiyse gunluk gecmise de o yazilmali (ya da kaynak isaretiyle birlikte ayri saklanmali).
+- **[AGIR]** Çubuğa tıklayıp gün değiştirince ayrıntı satırı eski günün sayısını göstermeye devam ediyor — kaydı olmayan bir gün için "ölçülen 50 dk" yazıyor
+  - yer: `arayuz.js:2713` · mercek: kopru-masaustu
+  - doğrusu: O gün için kayıt yok (ayrıntı satırı temizlenmeli); ekranda 50 dk yazıyor
+- **[AGIR]** Masaüstünün tik döngüsü ölürse köprü hâlâ "sayiyor: true, kalan_sn: 0" diyor; tarayıcı bunu devralıp sonsuz sahte mola veriyor
+  - yer: `goz_molasi.py:2556` · mercek: kopru-masaustu
+  - doğrusu: Sahte mola sayısı 0 olmalı; ölçülen ~2 mola/dakika (40 sn'de 1) ve hepsi istatistiğe kalıcı yazılıyor
+- **[AGIR]** lideriDevral() devralirken `puan` diskten YENIDEN OKUNMUYOR; bayat deger once ekrana ciziliyor sonra diski eziyor
+  - yer: `arayuz.js:663` · mercek: yasam-dongusu
+  - doğrusu: Ekranda ve diskte 240 puan (ve o puana karsilik gelen seviye) kalmaliydi. lideriDevral, `kilitOzeti`/`kilitTuz` icin yaptigi seyi `puan` icin yapmiyor.
+- **[AGIR]** Devralan sekme `arkaPlanAcik` ayarini da geri yuklemiyor; ayar sessizce KAPANIYOR ve arka planda ekran suresi hic sayilmiyor
+  - yer: `arayuz.js:4916` · mercek: yasam-dongusu
+  - doğrusu: Ayar ACIK kalmali, Worker 250 ms'de bir tiklamali ve o bir saat `ekranSuresi`ne +3600 sn olarak girmeliydi (ekranda 'X + 60 dk'). Gorulen: +0 dk.
+- **[AGIR]** kaydiDuzelt(), devralma sirasinda diskteki `uzakKalincaSifirla` ayarini sekmenin KENDI bayat degeriyle EZIYOR
+  - yer: `arayuz.js:298` · mercek: yasam-dongusu
+  - doğrusu: Ayar KAPALI kaldigi icin esik Infinity olmali, sayac 30 dakika oncekinden devam etmeliydi (ornek: 07:12). Gorulen: 20:00 ve anahtar yeniden acik.
+- **[ORTA]** Tanıtım (örnek) molası ATLANINCA bayrak temizlenmiyor: sahte bir "atlanan mola" kalıcı geçmişe yazılıyor ve bir sonraki GERÇEK tamamlanan mola sayıdan düşülüyor
+  - yer: `arayuz.js:3399` · mercek: durum-makinesi
+  - doğrusu: Tanıtım molası ne atlanan ne tamamlanan sayılmalı: "atlanan mola" 0 (şu an 1, kalıcı), "tamamlanan mola" ilk gerçek moladan sonra 1 (şu an 0).
+- **[ORTA]** Bir saatlik kova 3600 saniyeyi birkaç yüz milisaniye aşabiliyor; sayfa yenilenince istatistikSuz o kovayı kırpmak yerine SIFIRLIYOR ve bir saatlik ölçülmüş süre grafikten tümüyle siliniyor.
+  - yer: `cekirdek.js:221` · mercek: gun-donumu
+  - doğrusu: 11:00 kovası 1 sa (3600 sn) görünmeli ve grafiğin toplamı "takip edilen süre" ile tutmalı. Şu an o saat 0 sn, günün toplamı bir saat eksik.
+- **[ORTA]** `pagehide` lider damgasini siliyor ama `liderMiyim` true kaliyor: bfcache'ten donen sekme, gercek liderin sayacini bayat degeriyle diske yazip eziyor
+  - yer: `arayuz.js:745` · mercek: yasam-dongusu
+  - doğrusu: B'de sayac 18:00'den devam etmeliydi; A donunce 'baska sekmede acik' ortusunu gosterip hic yazmamaliydi. Gorulen: B'de 00:00 + gecikmis mola seridi.
+
+> Bulguların tam gerekçesi ve çürütme hükümleri iş akışı günlüğünde;
+> buraya BAŞLIK + YER yazıldı ki arama tekrarlanmasın.

@@ -218,7 +218,24 @@ function istatistikSuz(ham) {
     if (Array.isArray(h)) {
       for (let i = 0; i < 24; i++) {
         const v = Number(h[i]);
-        c24[i] = (Number.isFinite(v) && v >= 0 && v <= 3600) ? v : 0;
+        if (!Number.isFinite(v) || v < 0) { c24[i] = 0; continue; }
+        /* 3600'U KIL PAYI ASAN DEGER KIRPILIR, SIFIRLANMAZ.
+
+           Yanindaki sayilarda kural "kirpma, sifirla" -- cunku oradaki
+           sinirlar MAKULLUK sinirlari ve kirpilmis bir sayi ("1000
+           mola") bozuk veriden uretilmis ama inandirici olur.
+
+           Burasi baska: bir saat gercekten 3600 saniyedir, bu ARITMETIK
+           bir sinir. Kesintisiz bir saat ekranda kalan kullanicinin
+           kovasi, delta toplamalarinin yuvarlanmasiyla 3600,4 olabiliyor
+           ve eski kural o saati SIFIRLIYORDU: gercekten olculmus bir
+           saat, sayfa yenilenince grafikten tumuyle siliniyor ve gunun
+           toplami bir saat eksiliyordu.
+
+           Tolerans dar (bir saniye): gercek bozulma hala sifirlanir. */
+        if (v <= 3600) c24[i] = v;
+        else if (v <= 3601) c24[i] = 3600;
+        else c24[i] = 0;
       }
     }
     return c24;
@@ -775,8 +792,10 @@ class MolaMotoru {
       this.istatistik.saatlik = new Array(24).fill(0);
     }
     const saat = new Date().getHours();
-    this.istatistik.saatlik[saat] =
-      (this.istatistik.saatlik[saat] || 0) + delta;
+    // KAYNAKTA DA SINIRLI: bir saat 3600 saniyedir. Yuvarlama artiklari
+    // birike birike kovayi sinirin ustune cikariyordu.
+    this.istatistik.saatlik[saat] = Math.min(
+      3600, (this.istatistik.saatlik[saat] || 0) + delta);
     return delta;
   }
 
