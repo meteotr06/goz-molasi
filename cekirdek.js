@@ -578,7 +578,29 @@ class MolaMotoru {
        olmuyor: dönüşte devamEt() 'calisiyor' yapıyor, ilk tik() kalanı
        uyarı eşiğinin altında görüp yeniden 'uyari'ye geçiriyor. */
     if (this.durum !== 'calisiyor' && this.durum !== 'uyari') return;
-    this._dondur();
+    /* SAYAC ARTIK DONMUYOR — KULLANICI KARARI (06.09.2026).
+
+       Once burada `_dondur()` vardi. OLCULDU (canlida, telefon kipinde,
+       gercek kullanim oturumu): iki dakikalik calisma suresiyle 163
+       GERCEK saniye gecti, sayac yalnizca 75 saniye ilerledi ve MOLA
+       HIC GELMEDI. Cunku sure yalnizca uygulamaya BAKARKEN isliyordu;
+       yirmi dakikalik mola icin yirmi dakika bu ekrana bakmak
+       gerekiyordu ve telefonda bu hic olmuyor.
+
+       Kullanicinin uc ayri cumlesi ayni seyi soyluyordu: "molayi hic
+       goremeden sifirliyor", "bu sadece ben bakarken artiyor la",
+       "hala sifirlanip duruyor".
+
+       Telefonda BASKA UYGULAMAYA GECMEK de ekrana bakmaktir: goz
+       dinlenmiyor. O yuzden sayac isliyor. Gizlenme ANI yine
+       kaydediliyor -- `hareketVar` gercek yoklugu ondan olcuyor ve
+       gercekten uzaklasma (ekran kilidi, uzun yokluk) hala
+       sifirliyor.
+
+       Molanin PUSU kurmasi ayri bir sey ve ayri cozuldu: mola gizliyken
+       dolarsa asagida `molaBekliyor` durumuna geciliyor, mola ekrani
+       kendiliginden acilmiyor. */
+    this.gizlenmeAni = Date.now();
   }
 
   /** Sayacı olduğu yerde dondur. gizlendi() ve tik()'in gizli dalı
@@ -728,9 +750,20 @@ class MolaMotoru {
          HİÇ gelmemesi, yani uygulamanın işini hiç yapmaması. */
       const ekrandaMi = (typeof document === 'undefined')
         || document.visibilityState !== 'hidden';
-      if (!ekrandaMi
-          && simdi - this.sonHareket > this.ayarlar.bostaEsigi * 1000) {
-        this._dondur();
+      /* SAYFA GIZLIYKEN MOLA DOLDUYSA PUSU KURMA.
+
+         Sayac artik gizliyken de isliyor, yani mola arka planda
+         dolabiliyor. Mola ekranini o anda acmak, kullanici geri
+         donduğunde "kendisi acti" demek olurdu -- 03.09'da tam bunu
+         sikayet etmisti. Durum `molaBekliyor` oluyor: sayac ne
+         sifirlaniyor ne de mola dayatiliyor; ana dugme "Molaya basla"
+         diyor ve karar kullanicida. */
+      if (!ekrandaMi && this.kalanSaniye() <= 0) {
+        this.hedefZaman = simdi;
+        this.asamaSuresi = 0;
+        this.durum = 'molaBekliyor';
+        this.gecikmisMola = { dakika: 0 };
+        this._duyur('degisti', this.anlikDurum());
         return;
       }
       /* EKRAN SURESI DUVAR SAATIYLE OLCULUR, TIK SAYISIYLA DEGIL.
@@ -777,10 +810,28 @@ class MolaMotoru {
 
     const kalan = (this.hedefZaman - simdi) / 1000;
 
-    // Çalışma → Uyarı geçişi
+    /* CALISMA -> UYARI GECISI, AMA SAYFA GIZLIYKEN SESSIZ.
+
+       KULLANICI, oyun ortasinda: "valoranti bolme ona geliyor" ·
+       "dikkat et oyundan atiyor".
+
+       Sayac artik arka planda da isliyor (dogru: baska uygulamaya
+       gecmek de ekrana bakmaktir). Ama isleyen sayacin UYARI
+       yaymasi, tam ekran bir oyunun ustune bildirim/ses dusurmek
+       demek. Uyari kullaniciya "birazdan mola" demek icin var;
+       ekrani gormeyen birine soylenecek bir sey degil.
+
+       Durum yine 'uyari'ya geciyor (sayac dogru ilerlesin), ama
+       DUYURU yapilmiyor: ne bildirim, ne ses, ne titresim. Kullanici
+       geri donunce zaten 'molaBekliyor' ile karsilasiyor.
+
+       Molanin kendisi de gizliyken acilmiyor -- yukarida ayrica
+       yazili. */
     if (this.durum === 'calisiyor' && kalan <= this.ayarlar.uyariSuresi) {
       this.durum = 'uyari';
-      this._duyur('uyari', Math.ceil(kalan));
+      const gorunuyor = (typeof document === 'undefined')
+        || document.visibilityState !== 'hidden';
+      if (gorunuyor) this._duyur('uyari', Math.ceil(kalan));
       this._duyur('degisti', this.anlikDurum());
     }
 
