@@ -2084,10 +2084,30 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   grid-template-columns: repeat(24, 1fr);
   gap: 2px;
   margin-top: 4px;
-  font-size: .625rem;
-  color: var(--yazi-soluk);
+  font-size: .6875rem;
+  /* SOLUK DEGIL. Kullanici "surdaki saatleri belirginlestir" dedi;
+     saat etiketi grafigin susu degil, okunmasini saglayan sey. */
+  color: var(--yazi);
+  font-variant-numeric: tabular-nums;
 }
 .saatlik-eksen span { text-align: center; }
+/* Etiketli saatin altinda kucuk bir cizik: hangi sutunun hangi saate
+   denk geldigi sayilmadan gorulsun. */
+.saatlik-eksen span[data-etiketli="1"] { position: relative; }
+.saatlik-eksen span[data-etiketli="1"]::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: -4px;
+  width: 1px; height: 3px;
+  background: var(--cizgi);
+}
+/* En yogun saat: ustteki "en yogun saat 07:00" cumlesinin grafikteki
+   karsiligi. Renk TEK BASINA anlam tasimiyor - ayni bilgi kalin yazi
+   ve yazinin kendisiyle de veriliyor. */
+.saatlik-eksen span[data-yogun="1"] {
+  color: var(--vurgu);
+  font-weight: 700;
+}
 
 .hafta-ozet { display: block; margin-top: 2px; font-size: 0.75rem; font-weight: 400; color: var(--yazi-soluk); }
 

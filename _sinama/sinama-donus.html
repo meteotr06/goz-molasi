@@ -273,11 +273,23 @@
   // ---- 2) KULLANICININ ŞİKÂYETİ: mola uzaktayken geldi ----
   // Eskiden pencere 60 saniyeydi; telefonda hiç tutmuyordu ve ekran
   // 20:00'a dönüyordu. "Sayaç hep yeniden başlıyor" tam buydu.
+  /* BEKLENTI 06.09.2026'DA GUNCELLENDI — sebebi `sinama-web.html`
+     içinde uzun uzun yazılı. Özet: "dönünce mola hemen düşsün"
+     sözleşmesi 03.09'da BİLEREK terk edildi (kullanıcı: "bak yine en
+     başta açtığımda kendisi açtı"). Artık sayaç normal süresiyle
+     başlıyor ve kaçan mola ŞERİTLE teklif ediliyor.
+     Ekranda aranan şey: 20:00 görünsün AMA teklif şeridi de çıksın —
+     ikisi birden. Yalnız 20:00'a bakan bir sınama, molanın kaybolduğu
+     gerçek kusurdan haberdar olamazdı. */
   ekle('3 dk uzakta, mola 2 dk önce düştü', function (D) {
     return kur('calisiyor', 3, 60).then(function (f) {
       var e = ekran(f);
-      D('20:00 OLMASIN (mola gelsin)', e.sure,
-        e.sure !== '20:00' && e.acildi);
+      var d = f.contentDocument;
+      var serit = d.getElementById('gecikmisMolaSerit');
+      var teklif = !!serit && !serit.hidden;
+      D('sayaç 20:00 + kaçan mola TEKLİF edilsin',
+        e.sure + (teklif ? ' + teklif var' : ' + TEKLİF YOK'),
+        e.acildi && teklif);
     });
   });
 
@@ -330,11 +342,24 @@
      Ayar kapatıldığında uzak kalma süresi sayacı SIFIRLAMAMALI.
      5 saat, çünkü asıl şikâyet "uygulamayı kapatıp açınca baştan
      başlıyor"du. */
+  /* BEKLENTI 06.09.2026'DA GUNCELLENDI — ayni sebep: "pusu kurma,
+     teklif et". Burada aranan sey sayacin KUCUK olmasi degil; ayarin
+     KAPALI kalmasi, sifirlanma SEBEBI olmamasi ve kacan molanin
+     TEKLIF edilmesi.
+     OLCULDU (06.09.2026, gercek sayfada): motorAyar=false ·
+     sifirlanmaSebebi=null · gecikmisMola={dakika:300} · serit gorunur
+     ve aynen "Sayac sifirlanmadi ve mola kaybolmadi" yaziyor.
+     Sayacin 20:00 gostermesi kusur DEGIL: kullanici "bak yine en
+     basta actigimda kendisi acti" dedigi icin pusu bilerek kaldirildi. */
   ekle('Ayar KAPALI, 5 saat uzakta', function (D) {
     return kur('calisiyor', 300, 60, { uzakSifirla: false }).then(function (f) {
       var e = ekran(f);
-      D('sıfırlanmasın, mola verilsin', e.sure,
-        e.sure !== '20:00' && e.acildi);
+      var d = f.contentDocument;
+      var serit = d.getElementById('gecikmisMolaSerit');
+      var teklif = !!serit && !serit.hidden;
+      D('sıfırlanmasın + kaçan mola TEKLİF edilsin',
+        e.sure + (teklif ? ' + teklif var' : ' + TEKLİF YOK'),
+        e.acildi && teklif);
     });
   });
 

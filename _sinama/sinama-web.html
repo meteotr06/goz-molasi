@@ -140,16 +140,37 @@ window.__cekirdekHazir = window.__onbellekHazir.then(function () {
         sonuc === true && kalan >= 12 && kalan <= 14);
   }());
 
-  // ---- 2) Mola uzaktayken geldi, PENCERE İÇİNDE ----
-  // Hatanın ta kendisi: bu pencere 60 SANİYEYDİ, telefonda hiç tutmuyordu.
+  /* ---- 2) Mola uzaktayken geldi, PENCERE İÇİNDE ----
+
+     Hatanın ta kendisi: bu pencere 60 SANİYEYDİ, telefonda hiç
+     tutmuyordu.
+
+     BEKLENTI 06.09.2026'DA GUNCELLENDI. Eskiden `kalanSn <= 30`
+     aranıyordu, yani "dönünce mola HEMEN düşsün". O sözleşme
+     03.09.2026'da BİLEREK terk edildi: kullanıcı "bak yine en başta
+     açtığımda kendisi açtı" diye bildirdi. Bugünkü sözleşme
+     `sayaciGeriYukle` içinde yazılı — "PUSU KURMA, TEKLİF ET":
+
+       · sayaç sıfırlanmıyor (`sonuc === true`, sebep yok)
+       · sayaç NORMAL süresiyle başlıyor (pusu yok)
+       · kaçan mola `gecikmisMola` ile TEKLİF ediliyor, kaybolmuyor
+
+     Sınama eskisini ölçmeye devam ediyordu ve 1/25 kalıyordu; ÖLÇÜLDÜ
+     (06.09.2026): sonuc=true · kalan=1200 sn · gecikmisMola={dakika:3}
+     · sifirlanmaSebebi=null. Yani kod doğru, sınama bayattı.
+
+     BU BEKLENTİYİ "DÜZELTİP" 30 saniyeye geri çeken biri, kullanıcının
+     şikâyet ettiği pusuyu geri getirir. */
   (function () {
     var m = motorKur();
     var sonuc = m.sayaciGeriYukle(kayit('calisiyor', 3, 60));
     var kalanSn = Math.round((m.hedefZaman - Date.now()) / 1000);
     yaz('3 dk uzakta, mola 2 dk önce düştü',
-        'mola verilsin, sıfırlanmasın',
-        sonuc ? 'mola ' + kalanSn + ' sn sonra' : 'SIFIRLANDI',
-        sonuc === true && kalanSn > 0 && kalanSn <= 30 && !!m.gecikmisMola);
+        'mola TEKLİF edilsin, sayaç sıfırlanmasın, pusu kurulmasın',
+        (sonuc ? 'devam + sayaç ' + kalanSn + ' sn' : 'SIFIRLANDI')
+          + (m.gecikmisMola ? ' + mola teklif edildi' : ' + TEKLİF YOK'),
+        sonuc === true && !!m.gecikmisMola && !m.sifirlanmaSebebi
+          && kalanSn > 60);
   }());
 
   // ---- 3) Aynı durum, ESKİ 60 sn penceresiyle sıfırlanırdı ----

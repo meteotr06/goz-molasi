@@ -2711,7 +2711,12 @@
         og.saatlikEksen.innerHTML = '';
         for (let s = 0; s < 24; s++) {
           const e = document.createElement('span');
-          e.textContent = (s % 6 === 0) ? String(s).padStart(2, '0') : '';
+          /* UC SAATTE BIR ETIKET. Alti saatte bir yaziyordu ve
+             kullanici "surdaki saatleri belirginlestir" dedi: 06 ile
+             12 arasindaki bir cubugun hangi saate ait oldugunu
+             saymadan anlamanin yolu yoktu. */
+          e.textContent = (s % 3 === 0) ? String(s).padStart(2, '0') : '';
+          if (s % 3 === 0) e.dataset.etiketli = '1';
           og.saatlikEksen.appendChild(e);
         }
       }
@@ -2735,7 +2740,24 @@
       /* EN YOGUN SAAT ISARETLENIYOR. Ustteki yazi zaten "en yogun saat
          13:00" diyor; grafikte bunun karsiligi yoktu, yani yazi bir
          seyi gosteriyor ama gosterdigi sey gorunmuyordu. */
+      /* EN YOGUN SAATIN EKSEN ETIKETI DE ISARETLENIYOR. Ustteki yazi
+         "en yogun saat 07:00" diyor; grafikte o saati GOZLE bulmanin
+         yolu olmaliydi. */
+      const eksenOge = og.saatlikEksen && og.saatlikEksen.children[s];
       const yogun = (gercekEnCok > 0 && deger === gercekEnCok);
+      if (eksenOge) {
+        if (yogun) {
+          if (eksenOge.dataset.yogun !== '1') {
+            eksenOge.dataset.yogun = '1';
+            // Etiketsiz saatlerde bile saati YAZ: en yogun saat
+            // okunamiyorsa "en yogun saat" cumlesinin karsiligi yok.
+            eksenOge.textContent = String(s).padStart(2, '0');
+          }
+        } else if (eksenOge.dataset.yogun) {
+          delete eksenOge.dataset.yogun;
+          eksenOge.textContent = (s % 3 === 0) ? String(s).padStart(2, '0') : '';
+        }
+      }
       if (yogun) { if (sutun.dataset.yogun !== '1') sutun.dataset.yogun = '1'; }
       else if (sutun.dataset.yogun) delete sutun.dataset.yogun;
 
