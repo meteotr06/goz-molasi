@@ -69,14 +69,31 @@ def uygulama_tarafi(kontrol):
     sinama_yalitim.yalit(gm)
 
     class Sahte(gm.Uygulama):
-        def __init__(self, ist, kalan=493):
+        def __init__(self, ist, kalan=493, son_tik=None):
             self.ayar = dict(gm.VARSAYILAN)
             self.ist = ist
             self.durum = "calisiyor"
             self.hedef = time.time() + kalan
+            # TIK DONGUSU CANLI. Kopru artik "son tik ne zamandi" diye
+            # de soruyor; canli program bu alani her 250 ms'de
+            # tazeliyor. Varsayilani BURADA kurmak sart, yoksa sinama
+            # olu bir dongu taklit eder ve gercek davranisi olcmez.
+            self._son_tik_ani = time.time() if son_tik is None else son_tik
 
     d = Sahte({"tamamlanan": 3, "ekran_sn": 7420.7})._kopru_verisi()
     kontrol("paket: kaynak windows", d.get("kaynak") == "windows")
+
+    # OLU DONGU: durum 'calisiyor'da DONUYOR ve `kalan_sn` sifira
+    # dusuyor. Eski paket hala "sayiyor: true" diyordu ve tarayici
+    # bunu devralip ardarda SAHTE MOLA veriyordu. Dongunun canli
+    # oldugunu soyleyen tek kanit dongunun kendisi.
+    olu = Sahte({}, kalan=0, son_tik=time.time() - 30)._kopru_verisi()
+    kontrol("olu tik dongusunde sayiyor=False (sahte mola yok)",
+            olu.get("sayiyor") is False,
+            "durum calisiyor, son tik 30 sn once")
+    canli = Sahte({}, kalan=493)._kopru_verisi()
+    kontrol("KONTROL — canli dongude sayiyor=True (kapi hep kapali degil)",
+            canli.get("sayiyor") is True)
 
     # ---------------- DURUMLAR ----------------
     # 27.08.2026, bagimsiz denetimde bulundu: bu sinama YALNIZCA

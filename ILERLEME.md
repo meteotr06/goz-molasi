@@ -374,7 +374,16 @@ bulgu ÜÇ bağımsız çürütücüden geçti (ikisi çürütürse düşüyor).
 - [ORTA] Ayni etiketli 'gunde ortalama' iki sekmede iki farkli bolenle hesaplaniyor.
 - [ORTA] "En yoğun saat" aynı ekranda iki ayrı kaynaktan hesaplanıp iki farklı saat gösteriyor.
 
-### AÇIK — sıradaki iş (10)
+### KAPANDI — hepsi v237–v240'ta (10/10)
+
+Aşağıdaki liste tarihçe olarak duruyor. **Denetimin bıraktığı 23
+bulgunun 23'ü de kapandı**; ölçümleri `scratchpad/olc_arkada.py`
+içinde (40 kontrol, her biri kendi karşı-kontrolüyle).
+
+Üçü zaten v238–v239'da kapanmıştı (saatlik kova taşması, köprü
+verisinin arşivlenmemesi); kalan yedisi v240'ta.
+
+### Kapatılan maddeler (eski "açık" listesi)
 
 - **[AGIR]** Bir saati kesintisiz ekranda geçiren kullanıcıda o saatin kovası 3600'ü aşıyor; sayfa yenilenince istatistikSuz o saati SIFIRLIYOR
   - yer: `cekirdek.js:221` · mercek: durum-makinesi

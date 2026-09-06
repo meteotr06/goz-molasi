@@ -289,8 +289,26 @@
 
       Degerler CAGRI ANINDA okunuyor: kullanici ayari degistirirse
       yeni deger gecerli olsun. */
-  function kaydiDuzelt(ham) {
+  /** Depodan okunan kaydi, SEKMENIN kendi kararlariyla duzeltir.
+
+      `ilkAcilis` YANLISSA AYAR EZILMEZ.
+
+      Bu islev iki yerden cagriliyor: acilista ve LIDERLIGI DEVRALIRKEN.
+      Acilista dogru -- telefon gocu (dokunmatik cihazda "uzak kalinca
+      sifirla" varsayilani kapali) tam burada uygulaniyor.
+
+      Devralmada YANLISTI: bu sekmenin belleginde ACILDIGI ANDAN kalma
+      bir deger var; diskteki degeri o sirada oteki sekme degistirmis
+      olabilir. Ayari kapatan kullanici, ikinci sekme devralinca ayari
+      geri ACIK buluyor ve sayac yirmi dakikalik bir yoklukta basa
+      donuyordu -- kullanicinin aylardir bildirdigi "telde yine en
+      bastan aciliyor" sikayetinin sebeplerinden biri.
+
+      Devralma yolunda dogru sira: once diskteki ayarlar motora
+      yuklenir, SONRA modul degiskenleri ondan tazelenir. */
+  function kaydiDuzelt(ham, ilkAcilis = true) {
     if (!ham || typeof ham !== 'object') return ham;
+    if (!ilkAcilis) return ham;
     return {
       ...ham,
       ayarlar: {
@@ -678,7 +696,9 @@
        yuzunden korumasiz GORUNEN bir erisim, gozle ayirt edilemez.) */
     try {
       const hamKayit = JSON.parse(localStorage.getItem(KAYIT_ANAHTARI) || '{}');
-      const kayitli = kaydiDuzelt(hamKayit);
+      // `false`: devralirken diskteki ayar EZILMEZ (gerekcesi
+      // `kaydiDuzelt` basinda).
+      const kayitli = kaydiDuzelt(hamKayit, false);
       const temiz = istatistikSuz(kayitli.istatistik);
       if (temiz.gun && temiz.gun === motor._bugun()) motor.istatistik = temiz;
 
@@ -707,8 +727,42 @@
       kilitOzeti = kayitli.kilitOzeti || null;
       kilitTuz = kayitli.kilitTuz || null;
 
+      /* MODUL DUZEYINDEKI HER AYAR DA GERI YUKLENIYOR.
+
+         `kilitOzeti`/`kilitTuz` icin yapilan sey otekiler icin
+         yapilmiyordu. Bunlar `motor.ayarlar` icinde degil, modul
+         duzeyinde duruyor; diske yaziliyorlar ama devralmada
+         OKUNMUYORLARDI. Bu sekmenin bellegindeki bayat deger once
+         EKRANA ciziliyor, sonra ilk `kaydet()` ile diski eziyordu.
+
+         En agiri `puan`: seviye geri gidiyor, ve puan birikimli
+         oldugu icin kayip geri alinamiyor.
+
+         `arkaPlanAcik` ise kapaninca SESSIZCE olcumu durduruyor --
+         Worker tikleri gelmez, bosluk buyur, ekran suresi sayilmaz
+         (bkz. cekirdek.js/TIK_BOSLUK_SINIRI). */
+      if (Number.isFinite(+kayitli.puan) && +kayitli.puan >= 0
+          && +kayitli.puan <= 1e7) {
+        puan = Math.floor(+kayitli.puan);
+      }
+      otomatikBasla = kayitli.otomatikBasla !== false;
+      titresimAcik = kayitli.titresimAcik !== false;
+      const arkaPlanEskisi = arkaPlanAcik;
+      arkaPlanAcik = kayitli.arkaPlanAcik === true;
+      if (arkaPlanAcik !== arkaPlanEskisi) {
+        try { arkaPlanKipi(arkaPlanAcik); } catch {}
+      }
+
+      /* AYAR MOTORA YUKLENDI; SIMDI MODUL DEGISKENLERI ONDAN TAZELENIR.
+         Ters sirada, asagidaki `sayaciGeriYukle` bu sekmenin BAYAT
+         ayariyla karar verirdi. */
+      uzakSifirla = motor.ayarlar.uzakKalincaSifirla !== false;
+      uzakSifirlaSecildi = kayitli.uzakSifirlaSecildi === true;
+      bostaAcik = Number(motor.ayarlar.bostaEsigi) < 1e9;
+
       motor.sayaciGeriYukle(kayitli);
       ayarlariPencereyeYaz();   // ekran depoyla yeniden aynı olsun
+      seviyeCiz();              // puan degismis olabilir
     } catch {}
     motor._kalpAtisiBaslat();
     ekraniCiz(motor.anlikDurum());
@@ -773,6 +827,20 @@
       liderDamgala();
     } else if (!baskaLiderVar()) {
       lideriDevral();          // lider öldü, boşluğu doldur
+    } else if (og.ikinciSekme && og.ikinciSekme.hidden) {
+      /* LIDER DEGILIZ, BASKASI CANLI, AMA ORTU DE YOK.
+
+         Bu dal bostu. `pagehide` liderligi biraktiktan sonra (damga
+         silinip bayrak dusunce) sayfa bfcache'ten geri donuyor ve bu
+         sekme ne lider oluyor ne de "ikinci sekme" oldugunu soyluyor:
+         ekranda normal bir sayac duruyor, hicbir sey saymiyor ve
+         hicbir sey yazmiyor. "Calisiyor gibi gorunen ama calismayan
+         arayuz" -- bu depoda yalan soyleyen arayuz sinifi.
+
+         `liderligiBirak()` ortuyu gosterip motoru askiya aliyor;
+         ortu zaten aciksa bu dala hic girilmiyor, yani sesli okuyucuya
+         iki saniyede bir tekrar duyurulmuyor. */
+      liderligiBirak();
     }
   }
 
@@ -786,7 +854,19 @@
     liderZaman = setInterval(liderNobeti, LIDER_ARALIK);
     // Sekme kapanırken bayrağı bırak ki diğeri hemen devralsın
     window.addEventListener('pagehide', () => {
-      if (liderMiyim) { try { localStorage.removeItem(LIDER_ANAHTAR); } catch {} }
+      if (liderMiyim) {
+        try { localStorage.removeItem(LIDER_ANAHTAR); } catch {}
+        /* DAMGAYI SILDIYSEK ARTIK LIDER DEGILIZ.
+
+           `liderMiyim` true kaliyordu: sayfa bfcache'ten geri
+           dondugunde bu sekme kendini hala lider saniyor ve
+           `kaydet()` (lider olmayan yazmaz kurali ona uymuyor)
+           gercek liderin sayacini bayat degeriyle diske yaziyordu.
+           Damgayi birakmak liderligi birakmaktir; bayrak da onunla
+           birlikte dusmeli. Geri donuste nobet zaten yeniden
+           kuruluyor. */
+        liderMiyim = false;
+      }
     });
 
     // Arka plandaki sekmenin zamanlayıcısı da kısılıyor: lider sekme
@@ -2766,6 +2846,12 @@
     const yeni = Math.min(SAATLIK_EN_GERI, Math.max(0, saatlikGeriGun + adim));
     if (yeni === saatlikGeriGun) return;
     saatlikGeriGun = yeni;
+    /* GUN DEGISTI: ACIK AYRINTI SATIRI ESKI GUNUN SAYISINI ANLATIYOR.
+
+       Temizlenmeseydi kaydi olmayan bir gun icin "olculen 50 dk"
+       yazmaya devam ederdi -- ekranda duran, hicbir seye karsilik
+       gelmeyen bir sayi. */
+    try { saatiSec(-1); } catch {}
     saatlikCiz();
   }
   /* CUBUGA TIKLAYINCA O SAATIN AYRINTISI.
@@ -3476,6 +3562,24 @@
     .uzerine('uzunMolaOnerisi', (kesintisizSn) => uzunMolaOner(kesintisizSn))
     .uzerine('molaAtlandi', () => {
       molaEkraniKapat();
+      /* TANITIM MOLASI ATLANINCA DA SAYILMAZ.
+
+         Tamamlanma yolunda bayrak dusuruluyor ve sahte mola geri
+         aliniyordu; ATLAMA yolunda ikisi de yapilmiyordu. Sonucu:
+         alti saniyelik ornek mola "atlanan mola" diye KALICI gecmise
+         yaziliyor, ustelik bayrak true kaldigi icin bir SONRAKI
+         gercek tamamlanan mola sayidan dusuluyordu.
+
+         Ornek mola ne atlanan ne tamamlanan sayilir: o bir tanitim,
+         kullanicinin gunu degil. */
+      if (tanitimMolasi) {
+        tanitimMolasi = false;
+        motor.istatistik.atlananMola =
+          Math.max(0, (motor.istatistik.atlananMola | 0) - 1);
+        kaydet();
+        ekraniCiz(motor.anlikDurum());
+        return;
+      }
       og.okuyucu.textContent = C('Mola atlandı.');
       bitisKartiniGoster(motor.istatistik, true);
     });

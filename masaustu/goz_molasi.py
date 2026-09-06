@@ -2528,8 +2528,14 @@ class Uygulama:
             # Tarayici bu iki alani OKUMAK ZORUNDA. Eskiden pakete
             # konuyor ama hic okunmuyordu; butun hayalet mola hatasi
             # buradan cikti - veri gonderilmis, karar verilmemisti.
+            # DONGU CANLI MI? Durum tek basina yetmiyor: donmus bir
+            # dongude durum 'calisiyor' kalir ve kalan sure sifira
+            # duser. Iki tik arasi 250 ms; bes saniye, yavas bir
+            # makinede bile fazlasiyla genis.
             "sayiyor": (self.durum in ("calisiyor", "uyari")
-                        and not self._engel_acik_mi()),
+                        and not self._engel_acik_mi()
+                        and (time.time()
+                             - getattr(self, "_son_tik_ani", 0)) <= 5),
             "donmus": donmus,
             "surum": SURUM,
             "an": time.time(),
@@ -3633,6 +3639,12 @@ class Uygulama:
     # ---------------- Kalp atışı ----------------
     def _tik(self):
         simdi = time.time()
+        # SON TIK ANI -- kopru bunu okuyor.
+        # `sayiyor` yalnizca `self.durum`a bakiyordu; Tkinter dongusu
+        # durursa durum 'calisiyor'da DONUYOR ve `kalan_sn` sifira
+        # dusuyor. Tarayici bunu devralip ardarda sahte mola veriyordu.
+        # Dongunun canli oldugunu SOYLEYEN tek kanit, dongunun kendisi.
+        self._son_tik_ani = simdi
 
         # Bu tik ekran suresi SAYDI MI? Asagida sayim yerinde True olur.
         # Yalnizca ARDISIK iki sayim arasindaki sure ekran suresidir.
