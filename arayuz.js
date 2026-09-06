@@ -305,6 +305,50 @@
   let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
   let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
+
+  /* WINDOWS SURUMUNUN OLCUMU + BUGUNUN TEK KAYNAGI.
+
+     BURADA TANIMLI, asagida degil: `ekraniCiz` ve `etiketleriCiz` bu
+     degerleri okuyor ve ikisi de bu satirdan ONCE tanimlanan
+     islevlerden cagrilabiliyor. Bu depoda `let`in gecici olu bolgesi
+     acilisi bir kez tumden cokertmisti; ayni tuzaga bir daha
+     dusmemek icin okuyandan once duruyor.
+
+     `an` alani sart: kopru koparsa (Windows surumu kapandi) eski
+     sayilari canliymis gibi gostermeye devam etmek, tam da
+     kacindigimiz sey olurdu.
+     `gun` alani sart: gece yarisi Windows tarafinda gun donerken
+     tarayici hala eski gunun dizisini elinde tutabilir. */
+  const masaustuOlcum = { saatlik: null, gun: '', ekran: 0, an: 0 };
+  const MASAUSTU_TAZELIK = 60000;
+
+  function masaustuTazeMi() {
+    const m = masaustuOlcum;
+    return !!m.saatlik
+      && (Date.now() - m.an) <= MASAUSTU_TAZELIK
+      && m.gun === motor._bugun();
+  }
+
+  /** BUGUNUN SAAT DAGILIMI -- ekrandaki HER yer buradan okur.
+      Doner: { kovalar, masaustundan }. */
+  function bugunSaatlik() {
+    if (masaustuTazeMi()) {
+      return { kovalar: masaustuOlcum.saatlik, masaustundan: true };
+    }
+    const k = motor.istatistik && motor.istatistik.saatlik;
+    return { kovalar: Array.isArray(k) ? k : new Array(24).fill(0),
+             masaustundan: false };
+  }
+
+  /** BUGUNUN EKRAN SURESI (saniye) -- iki olcunun BUYUGU.
+
+      Kucugunu almak "ekranda daha az kaldin" demek olurdu; aile
+      kipinde sinir, Windows surumu kapatilarak gerileyebilirdi.
+      Toplamak ayni sureyi iki kez saymak olurdu. */
+  function bugunEkranSn() {
+    const tarayici = Number(motor.istatistik && motor.istatistik.ekranSuresi) || 0;
+    return masaustuTazeMi() ? Math.max(tarayici, masaustuOlcum.ekran) : tarayici;
+  }
   // İlk açılışta beyaz. Ana ekranın aydınlık olması mola ekranıyla
   // çelişmiyor: mola ekranı her temada koyu kalıyor.
   /* AKSAM KIPI VE KENDI VURGU — `temaUygula`DAN ONCE tanimlanmali.
@@ -1875,7 +1919,11 @@
     // Sayılar dilin yazımıyla: Türkçede 1000 -> "1.000".
     og.istMola.textContent = SAYI(d.istatistik.tamamlananMola);
     og.istAtlanan.textContent = SAYI(d.istatistik.atlananMola);
-    og.istSure.textContent = SAYI(Math.floor(d.istatistik.ekranSuresi / 60))
+    /* KUTUCUK DE GRAFIKLE AYNI KAYNAKTAN. Once dogrudan
+       `d.istatistik.ekranSuresi` yaziyordu: kopru acikken ust kutucuk
+       tarayicinin, hemen altindaki grafik Windows'un sayisini
+       gosteriyordu -- ayni gun, ayni ekran, iki sayi. */
+    og.istSure.textContent = SAYI(Math.floor(bugunEkranSn() / 60))
                            + CS(' dk', ' min');
     // Etiket dürüst olsun: izin yoksa bu sayı cihazın değil, sekmenin süresi
     if (og.istSureEtiket) {
@@ -2587,7 +2635,10 @@
     }
 
     // 2) YOGUN SAAT — bugun, o saatte en az 10 dakika varsa
-    const s24 = Array.isArray(ist.saatlik) ? ist.saatlik : [];
+    /* ETIKETLER DE GRAFIGIN KOVALARINDAN. Once `ist.saatlik`
+       okuyordu: kopru acikken etiket "sen sabahcisin" derken grafigin
+       alt yazisi bambaska bir "en yogun saat" yaziyordu. */
+    const s24 = bugunSaatlik().kovalar;
     if (s24.length === 24) {
       const enCok = Math.max(...s24.map((x) => +x || 0));
       if (enCok >= 600) {
@@ -2701,29 +2752,6 @@
 
   /* Kacinci gune bakiyoruz: 0 = bugun, 1 = dun, ... En fazla alti gun
      geriye, cunku gunluk gecmis yedi gun saklaniyor. */
-  /* WINDOWS SURUMUNUN OLCUMU.
-
-     Tarayici sekmesi gizliyken hicbir sey sayamiyor; Windows surumu
-     tepside durup `GetLastInputInfo` ile sistem genelinde olcuyor.
-     Kopru aciksa BUGUNUN grafigi onun sayilariyla ciziliyor.
-
-     `an` alani sart: kopru koparsa (uygulama kapandi) eski sayilari
-     canliymis gibi gostermeye devam etmek, tam da kacindigimiz sey
-     olurdu. Bir dakika taze degilse dusuyoruz.
-
-     `gun` alani sart: gece yarisi Windows tarafinda gun donerken
-     tarayici hala eski gunun dizisini elinde tutabilir. */
-  const masaustuOlcum = { saatlik: null, gun: '', ekran: 0, an: 0 };
-  const MASAUSTU_TAZELIK = 60000;
-
-  function masaustuSaatligi() {
-    const m = masaustuOlcum;
-    if (!m.saatlik) return null;
-    if (Date.now() - m.an > MASAUSTU_TAZELIK) return null;
-    if (m.gun !== motor._bugun()) return null;
-    return m.saatlik;
-  }
-
   /* Ayrinti satiri, cizimin KULLANDIGI kovalari okumali -- kendisi
      yeniden turetseydi iki yer ayrisirdi (bu depoda bilinen sinif:
      ayni sayi iki yerde ayri hesaplaniyor). */
@@ -2851,9 +2879,9 @@
       /* BUGUN: Windows surumu aciksa ONUN sayilari. Gizli sekmede
          tarayicinin olcusu 0 kaliyor (bilerek); gercek ekran suresini
          yalnizca Windows tarafi biliyor. */
-      const masaustu = masaustuSaatligi();
-      if (masaustu) { ham = masaustu; masaustundan = true; }
-      else ham = motor.istatistik && motor.istatistik.saatlik;
+      const kaynak = bugunSaatlik();
+      ham = kaynak.kovalar;
+      masaustundan = kaynak.masaustundan;
     } else {
       const anahtarlar = Gecmis.gunAnahtarlari(SAATLIK_EN_GERI + 1);
       const anahtar = anahtarlar[anahtarlar.length - 1 - saatlikGeriGun];
@@ -5418,6 +5446,22 @@
       masaustuOlcum.gun = String(veri.gun || '');
       masaustuOlcum.ekran = Math.max(0, +veri.ekran_sn || 0);
       masaustuOlcum.an = Date.now();
+      /* GUNLUK GECMISE DE YAZ.
+
+         Yazilmasaydi kopruden gelen sayilar yalniz EKRANDA yasardi:
+         ertesi gun ayni gune "‹ Dun" ile bakinca yalnizca tarayicinin
+         kendi kucuk olcusu gorunur, sayi sessizce kuculurdu.
+
+         `gunuIsle` "artan sayac" kuraliyla (Math.max) birlestiriyor,
+         yani buyuk olan kaliyor ve mola sayaclarina sifir yazmak
+         onlari geri almiyor. */
+      try {
+        Gecmis.gunuIsle(masaustuOlcum.gun, {
+          tamamlananMola: 0, atlananMola: 0,
+          ekranSuresi: masaustuOlcum.ekran,
+          saatlik: masaustuOlcum.saatlik,
+        });
+      } catch {}
       try { saatlikCiz(); } catch {}
     };
 
