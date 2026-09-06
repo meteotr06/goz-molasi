@@ -80,8 +80,33 @@ def uret(gecici):
         return None, "playwright kurulu değil"
     try:
         with sync_playwright() as p:
-            t = p.chromium.launch(channel="msedge")
-            s = t.new_page(viewport={"width": 512, "height": 512})
+            # CIZIM BELIRLENIMLI OLMALI.
+            #
+            # Bu arac SVG'yi tarayiciyla cizip PNG uretiyor ve sonucu
+            # depodaki dosyayla BAYT BAYT karsilastiriyor. Donanim
+            # hizlandirma acikken kenar yumusatmasi makinenin o anki
+            # durumuna gore degisiyor: ayni kaynak, farkli bayt.
+            #
+            # OLCULDU (06.09.2026): ayni komut ust uste IKI KEZ GECTI,
+            # sonra takimin icinde (baska tarayicilar kostuktan sonra)
+            # IKI KEZ KALDI. Ikon dosyalari git'te degismemisti -- yani
+            # eser dogruydu, oynayan sey OLCUMDU.
+            #
+            # Kararsiz bir nobetci, susan nobetciden kotudur: bir
+            # sonraki gercek "simge ayrismis" bulgusu bu gurultunun
+            # icinde kaybolur.
+            #
+            # Yazilim cizimi + sabit olcek: ayni kaynak her makinede,
+            # her kosuda ayni baytlari versin.
+            t = p.chromium.launch(channel="msedge", args=[
+                "--disable-gpu",
+                "--disable-gpu-compositing",
+                "--disable-lcd-text",
+                "--force-color-profile=srgb",
+                "--disable-font-subpixel-positioning",
+            ])
+            s = t.new_page(viewport={"width": 512, "height": 512},
+                           device_scale_factor=1)
 
             def cek(kod, yol):
                 s.set_content('<body style="margin:0">%s</body>' % kod)

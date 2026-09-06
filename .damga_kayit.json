@@ -1,10 +1,10 @@
 {
- "surum": "v227",
+ "surum": "v228",
  "ozetler": {
-  "index.html": "33ede9fa9b077cae",
-  "gizlilik.html": "c2e1b277efedf0c7",
-  "rehber.html": "4df0d2d3a0ee341c",
-  "guide.html": "fd7f9d1cb06636e8",
+  "index.html": "4cd66d33763a1781",
+  "gizlilik.html": "ebfaeb6a98084a2c",
+  "rehber.html": "5dbd3dbe611c12ff",
+  "guide.html": "b250e6b88b70d8e8",
   "stil.css": "c1188bd921f48913",
   "dil.js": "495d9e4815406b3f",
   "cekirdek.js": "bf0702d4bb64c370",
@@ -20,9 +20,9 @@
   "manifest.json": "39f557e01dbc2c58",
   "yazi/fraunces-latin.woff2": "170a928c701ef00e",
   "yazi/fraunces-latinext.woff2": "fffaa1960497be87",
-  "ikon-192.png": "816a8cce7545cb89",
-  "ikon-512.png": "fdabc8ee6ff79586",
-  "ikon-maskeli.png": "039cfb1b23b3932a",
+  "ikon-192.png": "23973a61b36f804d",
+  "ikon-512.png": "1b02ed6c5748ec6c",
+  "ikon-maskeli.png": "e2968276882742dc",
   "onizleme.png": "a4a45c2b6ed35ebe",
   "onizleme-en.png": "de544c1c4d629a0d"
  }
