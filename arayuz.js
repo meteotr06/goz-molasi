@@ -1144,7 +1144,10 @@
           MolaIcerik.sehirSec(y);
           og.sehirSonuc.innerHTML = '';
           og.sehirAlan.value = '';
-          havaDurumunuGoster(y.ad + ' seçildi.');
+          /* CS: `C()` TAM eslesme ariyor; icinde sehir adi olan bu
+             cumle sozluge konamaz. Ingilizce kipte "London secildi."
+             cikiyordu. */
+          havaDurumunuGoster(CS(`${y.ad} seçildi.`, `${y.ad} selected.`));
         });
         og.sehirSonuc.appendChild(d);
       });
@@ -1382,19 +1385,31 @@
      Telefonda cihazın kendi paylaşım penceresi açılır (WhatsApp,
      Telegram…). Masaüstünde o pencere yok, linki panoya kopyalıyoruz.
      ============================================================ */
-  const PAYLASIM = {
-    title: 'Göz Molası — 20·20·20',
-    text: 'Her 20 dakikada 20 saniyelik göz molası hatırlatıyor, molada ne yapman '
-        + 'gerektiğini gösteriyor. Kurulum yok:',
+  /* PAYLASIM METNI DILE GORE.
+
+     Sabit Turkceydi: Ingilizce kullanan biri paylas dugmesine
+     basinca cihazin paylasim penceresine ve panoya TURKCE metin
+     gidiyordu -- yani uygulamayi tanitmak icin baskasina gonderilen
+     sey, alicinin okuyamayacagi bir dilde oluyordu.
+
+     Nesne olarak degil ISLEV olarak: dil calisma aninda degisebiliyor
+     ve bir kez kurulan sabit bayatlardi (K-87). */
+  const PAYLASIM = () => ({
+    title: CS('Göz Molası — 20·20·20', 'Eye Break — 20·20·20'),
+    text: CS('Her 20 dakikada 20 saniyelik göz molası hatırlatıyor, molada ne yapman '
+             + 'gerektiğini gösteriyor. Kurulum yok:',
+             'Reminds you to rest your eyes for 20 seconds every 20 minutes, and '
+             + 'shows you what to do during the break. No installation:'),
     url: 'https://meteotr06.github.io/goz-molasi/',
-  };
+  });
 
   og.paylas.addEventListener('click', async () => {
     if (navigator.share) {
-      try { await navigator.share(PAYLASIM); return; } catch { /* iptal etti */ return; }
+      try { await navigator.share(PAYLASIM()); return; } catch { /* iptal etti */ return; }
     }
     try {
-      await navigator.clipboard.writeText(`${PAYLASIM.text} ${PAYLASIM.url}`);
+      const p = PAYLASIM();
+      await navigator.clipboard.writeText(`${p.text} ${p.url}`);
       const eski = og.paylas.textContent;
       og.paylas.textContent = '✓';
       og.paylas.title = C('Link kopyalandı');
@@ -1425,7 +1440,7 @@
       $('durumNotuSimge').textContent = '🔗';
       $('durumNotuBaslik').textContent = CS('Linki kopyala', 'Copy the link');
       const metin = $('durumNotuMetin');
-      metin.textContent = PAYLASIM.url;
+      metin.textContent = PAYLASIM().url;
       metin.style.userSelect = 'all';
       not.hidden = false;
       // Bir dokunuşta seçili gelsin: kopyalamak tek adım kalsın.
@@ -3273,8 +3288,13 @@
         ? BILGILER_EN : BILGILER;
       parcalar.push(bilgiBolumu(
         C('Göz sağlığı'), dizi.length,
-        C('Molalarda karşına çıkan kartlar. Kanıtı zayıf olanlarda bunu '
-          + 'açıkça yazıyoruz — abartılı sağlık iddiası yok.'),
+        /* CS: bu iki not `C()` ile geciyordu ama sozluk TAM ESLESME
+           ariyor ve bu uzun cumleler sozlukte YOKTU -- Ingilizce kipte
+           oldugu gibi Turkce kaliyorlardi. */
+        CS('Molalarda karşına çıkan kartlar. Kanıtı zayıf olanlarda bunu '
+           + 'açıkça yazıyoruz — abartılı sağlık iddiası yok.',
+           'The cards you see during breaks. Where the evidence is weak we '
+           + 'say so plainly — no exaggerated health claims.'),
         dizi.map((b) => bilgiOgesi(b.baslik, b.metin, b.kaynak))));
     } catch {}
 
@@ -3291,7 +3311,7 @@
     try {
       parcalar.push(bilgiBolumu(
         C('Molalardaki egzersizler'), CIKAN_EGZERSIZLER.length,
-        C('Mola ekranında sırayla çıkarlar. "Uzağa bak" asıl olan; '
+        CS('Mola ekranında sırayla çıkarlar. "Uzağa bak" asıl olan; '
           + 'diğerleri ekranın ezberlenip görünmez olmasını önlüyor.'),
         CIKAN_EGZERSIZLER.map((E) => bilgiOgesi(C(E.ad), C(E.yonerge), ''))));
     } catch {}
