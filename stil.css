@@ -575,6 +575,31 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   padding: 16px 18px;
 }
 .bilgi-kart h3 { margin: 0 0 6px; font-size: 0.9375rem; }
+
+/* "NELER DEGISTI" KARTI. `index.html` ve `arayuz.js` `.kutu` ve
+   `.kutu-baslik` siniflarini kullaniyordu ama stil dosyasinda BU
+   SECICILER HIC YOKTU: bolum, ustundeki butun bilgi kartlarinin
+   aksine cercevesiz, zeminsiz ve genisligi sinirsiz duruyordu.
+   Ayni gorunum icin ayni degerler -- `.bilgi-kart` ile birebir. */
+.kutu {
+  width: 100%;
+  max-width: 720px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-left: 4px solid var(--vurgu);
+  border-radius: var(--yuvarlak);
+  padding: 16px 18px;
+}
+.kutu-baslik { margin: 0 0 6px; font-size: 0.9375rem; }
+
+/* SAAT CIFTI. Ucu de ayni isi yapiyor ama ikisi satir ici stille,
+   biri hic stilsiz yazilmisti: hafta sonu cifti bosluksuz ve
+   ayirac siz duruyordu. Tek tanim, uc yer. */
+.saat-ikili {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .bilgi-kart p  { margin: 0; font-size: 0.875rem; line-height: 1.55; color: var(--yazi-soluk); }
 .kaynak { display: block; margin-top: 8px; font-size: 0.71875rem; color: var(--yazi-soluk); opacity: 0.85; }
 

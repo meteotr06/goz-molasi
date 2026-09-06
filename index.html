@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v229">
+<link rel="stylesheet" href="stil.css?s=v230">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -198,7 +198,7 @@
        Sadece uzun süre kapalı kalındıysa görünür. Sessizce sıfırlanan
        sayaç "uygulama bozuk" izlenimi veriyordu; sebebi söylenince
        beklenen bir davranışa dönüşüyor. -->
-  <section class="durum-notu uzun-mola-karti" id="uzunMolaKarti" hidden
+  <section class="durum-notu" id="uzunMolaKarti" hidden
            role="status" aria-live="polite">
     <span class="durum-notu-simge" aria-hidden="true">☕</span>
     <div class="uzun-mola-govde">
@@ -807,8 +807,11 @@
       <div class="satir gizli" id="ayHsSatir">
         <label for="ayHsBas">Hafta sonu saatleri</label>
         <span class="saat-ikili">
-          <input type="time" id="ayHsBas" value="11:00">
-          <input type="time" id="ayHsBit" value="20:00" aria-label="Hafta sonu bitiş saati">
+          <input type="time" id="ayHsBas" value="11:00"
+                 aria-label="Hafta sonu saatleri — başlangıç">
+          <span style="color:var(--yazi-soluk)" aria-hidden="true">—</span>
+          <input type="time" id="ayHsBit" value="20:00"
+                 aria-label="Hafta sonu saatleri — bitiş">
         </span>
       </div>
 
@@ -844,7 +847,7 @@
       </div>
       <div class="satir gizli" id="saatAyar">
         <label for="ayBasSaat">Saat aralığı</label>
-        <span style="display:flex;gap:8px;align-items:center">
+        <span class="saat-ikili">
           <!-- İKİ YARISI DA ADLANDIRILIR.
                Ölçüldü: `ayBasSaat`in `<label for>`i vardı, `ayBitSaat`in
                HİÇBİR ŞEYİ yoktu (`labels.length = 0`). Ekran okuyucu
@@ -893,7 +896,7 @@
       </div>
       <div class="satir gizli" id="aileYasakSaat">
         <label for="ayYasakBas">Yasak aralığı</label>
-        <span style="display:flex;gap:8px;align-items:center">
+        <span class="saat-ikili">
           <input type="time" id="ayYasakBas" value="21:00"
                  aria-label="Yasak saatler — başlangıç">
           <span style="color:var(--yazi-soluk)" aria-hidden="true">—</span>
@@ -969,7 +972,11 @@
       </div>
 
       <div class="satir">
-        <label for="ayEtkinlik">Cihaz etkinliğini izle
+        <!-- ETIKET GERCEK DENETIME BAGLI. `for="ayEtkinlik"` diye bir oge
+           HIC YOKTU: penceredeki oteki butun satirlarda etiket yazisina
+           dokunmak anahtari degistiriyor, bu satirda hicbir sey
+           olmuyordu. Buradaki denetim bir anahtar degil dugme. -->
+        <label for="etkinlikDugme">Cihaz etkinliğini izle
           <small id="etkinlikDurum">Sekme arka plandayken de çalışsın</small>
         </label>
         <button type="button" class="dugme kucuk" id="etkinlikDugme">İzin ver</button>
@@ -1092,17 +1099,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v229"></script>
-  <script src="dil.js?s=v229"></script>
-  <script src="bilgiler.js?s=v229"></script>
-  <script src="bilgiler_en.js?s=v229"></script>
-  <script src="dunya.js?s=v229"></script>
-  <script src="egzersiz.js?s=v229"></script>
-  <script src="reklam.js?s=v229"></script>
-  <script src="kopru.js?s=v229"></script>
-  <script src="cekirdek.js?s=v229"></script>
-  <script src="mola_icerik.js?s=v229"></script>
-  <script src="arayuz.js?s=v229"></script>
+  <script src="degisiklikler.js?s=v230"></script>
+  <script src="dil.js?s=v230"></script>
+  <script src="bilgiler.js?s=v230"></script>
+  <script src="bilgiler_en.js?s=v230"></script>
+  <script src="dunya.js?s=v230"></script>
+  <script src="egzersiz.js?s=v230"></script>
+  <script src="reklam.js?s=v230"></script>
+  <script src="kopru.js?s=v230"></script>
+  <script src="cekirdek.js?s=v230"></script>
+  <script src="mola_icerik.js?s=v230"></script>
+  <script src="arayuz.js?s=v230"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,
