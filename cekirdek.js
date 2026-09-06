@@ -166,6 +166,22 @@ const ISTATISTIK_SINIRLARI = {
   kesintisizSure: 86400,
 };
 
+/* IKI TIK ARASI EN COK BU KADAR SANIYE OLABILIR.
+
+   Sayac 250 ms'de bir tikliyor. Bosluk bunun cok ustundeyse arada ne
+   oldugunu BILMIYORUZ: tarayici arka plandaki sekmeyi kismis,
+   bilgisayar uyumus ya da telefon uygulamayi dondurmus olabilir.
+
+   NIYE 2 SANIYE: normal boslugun sekiz kati -- yavas bir makinede
+   kacan birkac tik hala sayiliyor, ama kisilmis bir sekmenin
+   dakikalik boslugu sayilmiyor.
+
+   ONEMLI: bu bir UST SINIR DEGIL. Eskiden `Math.min(2, gecen)` yaziyordu
+   ve bir dakikalik bosluga "2 saniye" diyordu; bilmedigi araligi
+   kirpip sayiya cevirmek olcum degil TAHMINDIR. Simdi ya oluyoruz ya
+   da sifir yaziyoruz. */
+const TIK_BOSLUK_SINIRI = 2;
+
 const GUN_BICIMI = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Depodan gelen istatistiği süzer.
@@ -686,12 +702,78 @@ class MolaMotoru {
     if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
   }
 
+  /** EKRAN SURESINI OLCEN TEK YER.
+
+      Once iki ayri yerde artiyordu (biri yalniz aile kipinde) ve
+      ikisi de sayacin DURUMUNA bagliydi. Tek nokta olmasinin sebebi
+      bu depoda yasanmis: ayni sayiyi iki yerde artirmak, biri
+      kacirdiginda toplamlarin sessizce uyusmamasi demek.
+
+      SAYIYORUZ <=> sayfa gorunur VE mola ekrani kapali.
+      Sayacin hazir/duraklatildi/bosta/saatDisi olmasi ilgisiz:
+      ekran suresi molanin degil EKRANIN olcusudur.
+
+      Donen deger: eklenen saniye (0 ise cagiran duyuru yapmasin). */
+  _ekranSuresiIsle() {
+    /* MOLADA SAYILMAZ. Molanin amaci ekrandan bakmamak; o sureyi
+       ekran suresi saymak molayi cezalandirmak olurdu. */
+    if (this.durum === 'mola' || this.durum === 'uzunMola') {
+      this._sonEkranTik = 0;
+      return 0;
+    }
+    /* GORUNURLUK KAPISI YOK -- BILEREK.
+
+       Ilk yazdigimda "sayfa gizliyse sayma" diye bir kapi koymustum.
+       YANLISTI: bu, ayarlardaki "Arka planda calismaya devam et"
+       sozunu ("Bilgisayarda baska pencereye gecsen de sayac doner")
+       kodun icinden bozuyordu. Kullanicinin acikca actigi bir ayari,
+       daha temiz gorundugu icin gecersiz kilmak.
+
+       Karari BOSLUK KURALI zaten dogru veriyor:
+         · ayar ACIK  -> sayac Worker'da doner, tikler gizliyken de
+                         250 ms'de bir gelir, bosluk kucuk, sure
+                         TAM sayilir.
+         · ayar KAPALI-> tarayici sekmeyi kisar, bosluk dakikalara
+                         cikar, hicbir sey sayilmaz.
+       Yani tek bir kural iki ayari da dogru uyguluyor; ikinci bir
+       kapiya gerek yok ve ikinci kapi yanlis cevabi veriyordu. */
+    const simdi = Date.now();
+    const onceki = this._sonEkranTik || simdi;
+    this._sonEkranTik = simdi;
+    // Ayni bosluk kurali (bkz. TIK_BOSLUK_SINIRI): olcemedigimiz
+    // araligi kirpmiyoruz, saymiyoruz.
+    const bosluk = Math.max(0, (simdi - onceki) / 1000);
+    const delta = bosluk <= TIK_BOSLUK_SINIRI ? bosluk : 0;
+    if (delta <= 0) return 0;
+
+    this.istatistik.ekranSuresi += delta;
+    /* Saatlik kova AYNI SATIRDA artiyor: ayri yerlerde artsalardi
+       biri kacirdiginda gunun toplami ile grafik uyusmaz olurdu. */
+    if (!Array.isArray(this.istatistik.saatlik)) {
+      this.istatistik.saatlik = new Array(24).fill(0);
+    }
+    const saat = new Date().getHours();
+    this.istatistik.saatlik[saat] =
+      (this.istatistik.saatlik[saat] || 0) + delta;
+    return delta;
+  }
+
   tik() {
     if (this.askida) return;
+    /* EKRAN SURESI HER SEYDEN ONCE OLCULUYOR -- asagidaki erken
+       donuslerin hicbiri onu atlamasin. Kullanicinin sikayeti tam
+       buydu: "Basla"ya basmadan ya da duraklatilmis dururken sayi
+       hic artmiyordu. */
+    const ekranDelta = this._ekranSuresiIsle();
     /* BEKLEYEN MOLA KENDILIGINDEN BASLAMAZ. Durum burada duruyor ve
        kullanicinin dokunusunu bekliyor -- pusu kurmamanin karsiligi
        bu. `molayaGec()` her durumdan calisiyor. */
-    if (this.durum === 'molaBekliyor') return;
+    if (this.durum === 'molaBekliyor') {
+      // Molasi bekleyen kullanici EKRANA BAKIYOR; sure sayilir,
+      // yalnizca mola dayatilmaz.
+      if (ekranDelta) this._duyur('degisti', this.anlikDurum());
+      return;
+    }
     if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
 
     // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile
@@ -721,25 +803,20 @@ class MolaMotoru {
 
        Sayfa gizliyse yine saymiyoruz -- o kural degismedi. */
     if (this.durum === 'duraklatildi' || this.durum === 'hazir') {
-      if (this.ayarlar.kip === 'aile') {
-        const gorunur = (typeof document === 'undefined')
-          || document.visibilityState !== 'hidden';
-        if (gorunur) {
-          const oncekiAn = this._sonAileTik || Date.now();
-          this._sonAileTik = Date.now();
-          const fark = Math.min(2, Math.max(0, (Date.now() - oncekiAn) / 1000));
-          this.istatistik.ekranSuresi += fark;
-          const saat = new Date().getHours();
-          if (Array.isArray(this.istatistik.saatlik)) {
-            this.istatistik.saatlik[saat] =
-              (this.istatistik.saatlik[saat] || 0) + fark;
-          }
-          this._duyur('degisti', this.anlikDurum());
-        }
-      }
+      /* SURE BURADA DA SAYILIYOR -- artik yalniz aile kipinde degil.
+
+         Bu blok once aile kipine ozeldi: duraklatilmis bir sayacin
+         onunde oturan cocuk gunluk siniri doldurmuyordu. Ayni kusur
+         BIREYSEL kipte de vardi, yalniz orada "sinir" degil "gunun
+         ekran suresi" yanlis cikiyordu ve kimse fark etmiyordu.
+         Kullanici 06.09.2026'da fark etti: "araliksiz kullaniyorum
+         olcmuyor".
+
+         Olcum artik `_ekranSuresiIsle()` icinde, tik'in en basinda.
+         Burada yalnizca EKRANI TAZELIYORUZ. */
+      if (ekranDelta) this._duyur('degisti', this.anlikDurum());
       return;
     }
-    this._sonAileTik = Date.now();
 
     const simdi = Date.now();
 
@@ -830,18 +907,52 @@ class MolaMotoru {
          otekinden kayardi - bu depoda bilinen sinif. */
       const oncekiTik = this._sonTikAni || simdi;
       this._sonTikAni = simdi;
-      const delta = Math.min(2, Math.max(0, (simdi - oncekiTik) / 1000));
+      /* OLCEMEDIGIMIZ ARAYI SAYMIYORUZ -- KIRPMIYORUZ.
 
-      this.istatistik.ekranSuresi += delta;
+         KULLANICI (06.09.2026): "sabahtan beri bakiyorum hic
+         hesaplamiyor" -- saatlik grafik butun bir sabah icin
+         "toplam 2 dk" diyordu.
+
+         KOK SEBEP: eski satir `Math.min(2, gecen)` idi. Iki tik arasi
+         bir DAKIKA gectiginde (tarayici arka plandaki sekmeyi kisar;
+         bilgisayar uyur; telefon uygulamayi dondurur) bu satir
+         "2 saniye" YAZIYORDU. Bilmedigi bir araligi kirpip sayiya
+         cevirmek, olcum degil TAHMINDIR.
+
+         Iki yonlu yanlis, ve iki yanlis birbirini GIZLIYORDU: sayi
+         artmaya devam ettigi icin "sayiyor ama az" saniliyordu -- bu
+         depoda en tehlikeli sinif, uygulama calisir sayi yanlistir.
+
+         YENI KURAL: bosluk normal tik araliginin (250 ms) cok
+         ustundeyse o arada ne oldugunu BILMIYORUZ; sifir yaziyoruz.
+         Kirpilmis 2 saniye "az ama dogru" degildi, uydurmaydi.
+
+         "ARKA PLANDA CALISMAYA DEVAM ET" BOZULMUYOR: o ayar acikken
+         sayac bir Worker'da donuyor ve tikler gizliyken de 250 ms'de
+         bir geliyor (bkz. yukarida "NEDEN WORKER"). Bosluk kucuk
+         kaldigi icin sure TAM sayiliyor. Ayar kapaliyken tikler
+         dakikada bire duser, bosluk buyur ve sayilmaz -- yani ayarin
+         verdigi soz artik gercekten ayara bagli.
+
+         GERI SAYIM ETKILENMEZ: mola `hedefZaman` ile duvar saatinden
+         hesaplaniyor, tik sayisindan degil. Mola arka planda dolmaya
+         devam ediyor -- 03.09'da duzeltilen davranis korunuyor.
+
+         GERCEK EKRAN SURESI: bir web sayfasi, gizliyken kullanicinin
+         ekran basinda olup olmadigini BILEMEZ. Bunu yalnizca Windows
+         surumu olcebilir (`GetLastInputInfo`); o sayi kopruden
+         geliyor -- bkz. arayuz.js/masaustuOlcum. */
+      const bosluk = Math.max(0, (simdi - oncekiTik) / 1000);
+      const delta = bosluk <= TIK_BOSLUK_SINIRI ? bosluk : 0;
+
+      /* YALNIZ `kesintisizSure` BURADA.
+
+         `ekranSuresi` ve saatlik kova buradan CIKTI: onlar sayacin
+         durumuna bagli olmamali (bkz. `_ekranSuresiIsle`). Burada
+         kalan sayi gercekten calisma sayacinin turevi -- "ne kadardir
+         ara vermeden calisiyorum" -- ve duraklatilinca durmasi
+         DOGRU. */
       this.istatistik.kesintisizSure += delta;
-      /* Saatlik kova. `ekranSuresi` ile ayni satirda artiyor: ikisi
-         ayri yerlerde artsaydi biri kacirdiginda toplamlar sessizce
-         uyusmaz olurdu. */
-      const saat = new Date().getHours();
-      if (!Array.isArray(this.istatistik.saatlik)) {
-        this.istatistik.saatlik = new Array(24).fill(0);
-      }
-      this.istatistik.saatlik[saat] = (this.istatistik.saatlik[saat] || 0) + delta;
     }
     if (this.durum === 'bosta') return;
 

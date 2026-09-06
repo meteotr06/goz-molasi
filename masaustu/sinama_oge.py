@@ -70,7 +70,12 @@ def id_denetle():
     js = "\n".join(oku(a) for a in dosyalar(".js"))
     istenen = set(re.findall(r"\$\(\s*'([A-Za-z][\w-]*)'\s*\)", ay))
     varolan = set(re.findall(r'\bid\s*=\s*"([^"]+)"', html))
-    varolan |= set(re.findall(r"""id=[\\'"]+([A-Za-z][\w-]*)""", js))
+    # ESITTIRIN ETRAFINDA BOSLUK OLABILIR.
+    # Eski desen yalniz `id="x"` (HTML bicimi) goruyordu; JS'te oge
+    # `d.id = 'x'` diye kurulur ve arac bunu GORMUYORDU -- saglam bir
+    # dugmeyi "konmamis oge" diye kirmiziya dusurdu (06.09.2026).
+    # Yanlis alarm veren nobetci, bir sure sonra umursanmayan nobetci.
+    varolan |= set(re.findall(r"""id\s*=\s*[\\'"]+([A-Za-z][\w-]*)""", js))
     return sorted(istenen - varolan), len(istenen)
 
 
@@ -171,7 +176,29 @@ def kendini_sina():
                 '<label for="sahteOlmayanId">x</label></body>', 1))
         d = "sahte-tanimsiz-sinif" in kullanilan_sinif_denetle()[0]
         e = "sahteOlmayanId" in etiket_denetle()[0]
-        return a and d and e
+
+        # B: TERS YON — SAGLAM OLANI KUSUR SANMASIN.
+        #
+        # Ustteki uc denetim "kusuru buluyor mu" diye soruyor. Bu
+        # dorduncusu tam tersini soruyor: JS'in KENDI urettigi bir
+        # ogeyi "konmamis" saniyor mu? 06.09.2026'da tam bu oldu --
+        # desen esittirin etrafindaki boslugu gormedigi icin
+        # `d.id = 'durumNotuCikis'` satiri yok sayildi ve saglam bir
+        # dugme kirmiziya dustu. Iki yanilgi ayri seydir ve ikisi de
+        # yasandi; ikisi de sinaniyor.
+        ayYol = os.path.join(KOK, "arayuz.js")
+        ayAsil = io.open(ayYol, encoding="utf-8").read()
+        try:
+            io.open(ayYol, "w", encoding="utf-8", newline="\n").write(
+                ayAsil + "\n/* kendini sinama */\n"
+                "const _sn = document.createElement('b');\n"
+                "_sn.id = 'sahteUretilenOge';\n"
+                "$('sahteUretilenOge');\n")
+            b = "sahteUretilenOge" not in id_denetle()[0]
+        finally:
+            io.open(ayYol, "w", encoding="utf-8", newline="\n").write(ayAsil)
+
+        return a and b and d and e
     finally:
         io.open(stilYol, "w", encoding="utf-8", newline="\n").write(stilAsil)
         io.open(htmlYol, "w", encoding="utf-8", newline="\n").write(htmlAsil)

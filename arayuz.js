@@ -2676,6 +2676,29 @@
 
   /* Kacinci gune bakiyoruz: 0 = bugun, 1 = dun, ... En fazla alti gun
      geriye, cunku gunluk gecmis yedi gun saklaniyor. */
+  /* WINDOWS SURUMUNUN OLCUMU.
+
+     Tarayici sekmesi gizliyken hicbir sey sayamiyor; Windows surumu
+     tepside durup `GetLastInputInfo` ile sistem genelinde olcuyor.
+     Kopru aciksa BUGUNUN grafigi onun sayilariyla ciziliyor.
+
+     `an` alani sart: kopru koparsa (uygulama kapandi) eski sayilari
+     canliymis gibi gostermeye devam etmek, tam da kacindigimiz sey
+     olurdu. Bir dakika taze degilse dusuyoruz.
+
+     `gun` alani sart: gece yarisi Windows tarafinda gun donerken
+     tarayici hala eski gunun dizisini elinde tutabilir. */
+  const masaustuOlcum = { saatlik: null, gun: '', ekran: 0, an: 0 };
+  const MASAUSTU_TAZELIK = 60000;
+
+  function masaustuSaatligi() {
+    const m = masaustuOlcum;
+    if (!m.saatlik) return null;
+    if (Date.now() - m.an > MASAUSTU_TAZELIK) return null;
+    if (m.gun !== motor._bugun()) return null;
+    return m.saatlik;
+  }
+
   let saatlikGeriGun = 0;
   const SAATLIK_EN_GERI = 6;
 
@@ -2700,8 +2723,14 @@
        surumden onceki gunler icin yanlis olurdu. */
     let ham;
     let kayitYok = false;
+    let masaustundan = false;
     if (saatlikGeriGun === 0) {
-      ham = motor.istatistik && motor.istatistik.saatlik;
+      /* BUGUN: Windows surumu aciksa ONUN sayilari. Gizli sekmede
+         tarayicinin olcusu 0 kaliyor (bilerek); gercek ekran suresini
+         yalnizca Windows tarafi biliyor. */
+      const masaustu = masaustuSaatligi();
+      if (masaustu) { ham = masaustu; masaustundan = true; }
+      else ham = motor.istatistik && motor.istatistik.saatlik;
     } else {
       const anahtarlar = Gecmis.gunAnahtarlari(SAATLIK_EN_GERI + 1);
       const anahtar = anahtarlar[anahtarlar.length - 1 - saatlikGeriGun];
@@ -2723,6 +2752,25 @@
     }
     if (og.saatlikGeri) og.saatlikGeri.disabled = saatlikGeriGun >= SAATLIK_EN_GERI;
     if (og.saatlikIleri) og.saatlikIleri.disabled = saatlikGeriGun <= 0;
+
+    /* SAYININ KAYNAGI EKRANDA YAZIYOR.
+       Ayni cizim iki ayri sey anlatabiliyor: tarayicinin olcusu "bu
+       uygulamayi ne kadar actim", Windows surumununki "bilgisayar
+       basinda ne kadar gectim". Hangisine baktigi yazmazsa kullanici
+       kucuk sayiyi "uygulama saymiyor" diye okur -- 06.09.2026'da tam
+       bu oldu. */
+    if (og.saatlikAmac) {
+      const amac = masaustundan
+        ? CS('🖥 Windows sürümünden: bilgisayarındaki gerçek ekran süresi. '
+             + 'Göz Molası saatin yanında açık olduğu sürece ölçülür.',
+             '🖥 From the Windows app: real screen time on this computer, '
+             + 'measured whenever Eye Break is running in the tray.')
+        : CS('Yalnızca bu uygulama açıkken geçen süreyi ölçebiliyoruz — '
+             + 'telefonun toplam ekran süresini bir web uygulaması göremez.',
+             'We can only measure the time this app itself is open — a web '
+             + 'app cannot see your phone\u2019s total screen time.');
+      if (og.saatlikAmac.textContent !== amac) og.saatlikAmac.textContent = amac;
+    }
     /* IKI AYRI SAYI, BILEREK.
        `enCok` cubuk yuksekligini olceklemek icin; sifira bolmemek
        adina tabani 1. Ama o taban dizide OLMAYAN bir deger uretir ve
@@ -3672,7 +3720,31 @@
       if (e.key === 'Escape') kisayolPencere.close();
       return;
     }
-    if (og.pencere.open || og.sifrePencere.open) return;
+    /* AYARLAR ACIKKEN `A` KAPATIR -- ac/kapa.
+
+       KULLANICI (06.09.2026): "ayarlari tustan ac kapa yapin".
+       Eskiden bu satir ayarlar acikken butun kisayollari susturuyordu,
+       yani `A` yalnizca ACIYORDU. Bir ac/kapa tusunun yarisi
+       calisiyordu.
+
+       Kapatma Esc ile AYNI yoldan gidiyor (`close()`): iki kapatma
+       yolunun iki ayri sonucu olsaydi, hangi tusla kapattigina gore
+       ayarlarin kaydedilip kaydedilmedigi degisirdi.
+
+       Yazi alanindayken calismaz: en ustteki `input, select, textarea`
+       denetimi zaten donuyor -- "20" yazarken `a` harfine basan biri
+       pencereyi kapatmasin. */
+    if (og.pencere.open) {
+      if (!e.ctrlKey && !e.altKey && !e.metaKey
+          && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        og.pencere.close();
+      }
+      return;
+    }
+    // Sifre penceresi ACIKKEN tek tusla kapatma YOK: sorulan seyden
+    // kacmanin kolay yolu olurdu (aile kipi).
+    if (og.sifrePencere.open) return;
     if (molaAcik) return;                             // mola sırasında kısayol yok
 
     if (e.key === ' ') { e.preventDefault(); og.baslat.click(); return; }
@@ -4929,6 +5001,21 @@
        uzun yokluk → baştan); burası yalnız doğru değeri saklıyor. */
     if (document.hidden) {
       motor.gizlendi();
+      /* GIZLENIRKEN DISKE YAZ -- TELEFONDAKI SIFIRLANMANIN YARISI BU.
+
+         `kaydet()` yalnizca `pagehide` olayina ve 15 saniyelik
+         zamanlayiciya bagliydi. Telefonda `pagehide` GARANTI DEGIL:
+         isletim sistemi arka plandaki sayfayi haber vermeden atabilir.
+         `visibilitychange` ise gonderiliyor -- ama kayit yazmiyordu.
+
+         Sonucu: disk 15 saniyeye kadar bayat kaliyor. En kotu hali,
+         mola basinda yazilan `durum:'mola'` kaydinin mola bittikten
+         sonra guncellenememesi: sonraki acilista `sayaciGeriYukle`
+         "mola sirasinda kapanmis" deyip sayaci BASA aliyor.
+
+         Yani uygulama kendi ogudunu cezalandiriyordu: "gozunu ekrandan
+         ayir" diyor, kullanici ayiriyor, sayac sifirlaniyor. */
+      try { kaydet(); } catch {}
       return;
     }
     motor.hareketVar();
@@ -5103,8 +5190,28 @@
       }
     };
 
-    window.Kopru.ilkDurum().then(uygula);
-    window.Kopru.dinle(uygula);
+    /* OLCUM, SAYACTAN AYRI ALINIYOR.
+
+       `uygula` uc kapidan donuyor: mola ekrani acikken, Windows
+       saymiyorken, sayac donmusken. Bunlarin hicbiri SAAT DAGILIMINI
+       gecersiz kilmaz -- Windows bostayken bile o gun icinde gecmis
+       saatler dogrudur. Olcumu `uygula`nin icine koysaydim, tam da
+       kullanicinin bakmak istedigi durumlarda (uygulama duraklatilmis,
+       mola ekrani acik) grafik bos kalirdi. */
+    const olcumuAl = (veri) => {
+      if (!veri || !Array.isArray(veri.saatlik) || veri.saatlik.length !== 24) return;
+      masaustuOlcum.saatlik = veri.saatlik.map(
+        (x) => Math.max(0, Math.min(3600, +x || 0)));
+      masaustuOlcum.gun = String(veri.gun || '');
+      masaustuOlcum.ekran = Math.max(0, +veri.ekran_sn || 0);
+      masaustuOlcum.an = Date.now();
+      try { saatlikCiz(); } catch {}
+    };
+
+    const gelen = (veri) => { olcumuAl(veri); uygula(veri); };
+
+    window.Kopru.ilkDurum().then(gelen);
+    window.Kopru.dinle(gelen);
   })();
 
   // Kaydedilmiş arka plan tercihini uygula (ses ancak dokunuştan sonra açılır)
@@ -5276,6 +5383,42 @@
     $('durumNotuBaslik').textContent = CS('Sayaç sıfırdan başladı',
                                           'The timer started over');
     $('durumNotuMetin').textContent = metin;
+
+    /* "BIR DAHA SIFIRLAMA" -- notun icinde, tek dokunus.
+
+       Telefonda "Uzun sure uzak kalinca sayaci sifirla" ayari acik
+       kalmis olabiliyor: varsayilani dokunmatik cihazda kapali ama
+       kullanici bir kez ayarlari kaydettiyse gocu bir daha kosmuyor.
+       O ayar acikken 20 dakikadan uzun her uzaklasma sayaci basa
+       aliyor -- kullanicinin aylardir bildirdigi "yine en bastan
+       aciliyor" tam bu.
+
+       AYARI SESSIZCE KAPATMIYORUZ: kendi sectigi bir ayari, biz dogru
+       bildigimiz icin geri almak olurdu. Ne oldugunu soyleyen not,
+       cozumu de veriyor; basip basmamak kullanicinin. */
+    const eskiCikis = $('durumNotuCikis');
+    if (eskiCikis) eskiCikis.remove();
+    if (sebep && sebep.tur === 'uzun-kapali' && motor.ayarlar.uzakKalincaSifirla !== false) {
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.id = 'durumNotuCikis';
+      d.className = 'dugme kucuk';
+      d.style.marginTop = '8px';
+      d.textContent = CS('Bir daha sıfırlama', 'Stop resetting it');
+      d.addEventListener('click', () => {
+        motor.ayarlar.uzakKalincaSifirla = false;
+        uzakSifirla = false;
+        uzakSifirlaSecildi = true;      // artik kullanicinin secimi
+        kaydet();
+        d.disabled = true;
+        d.textContent = CS('Kapatıldı', 'Turned off');
+        okuyucuyaSoyle(CS(
+          'Uzun süre uzak kalınca sıfırlama kapatıldı.',
+          'Reset after a long absence is now off.'));
+      }, { once: true });
+      $('durumNotuMetin').after(d);
+    }
+
     not.hidden = false;
     $('durumNotuKapat')?.addEventListener('click', () => { not.hidden = true; });
   })();

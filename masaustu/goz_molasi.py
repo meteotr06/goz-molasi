@@ -1736,7 +1736,8 @@ class Uygulama:
     @staticmethod
     def ist_baslangic():
         """Bos bir gunun istatistigi. Sayac alanlari TEK kaynaktan."""
-        yeni = {"gun": time.strftime("%Y-%m-%d"), "programlar": {}}
+        yeni = {"gun": time.strftime("%Y-%m-%d"), "programlar": {},
+                "saatlik": [0.0] * 24}
         for ad, (_, tam) in Uygulama.IST_ALANLARI.items():
             yeni[ad] = 0 if tam else 0.0
         return yeni
@@ -1777,6 +1778,28 @@ class Uygulama:
         for ad, d in ham.items():
             if ad not in Uygulama.IST_ALANLARI:
                 temiz[ad] = d
+        # SAATLIK DIZI HAM GECMEZ. Ustteki dongu "sayi alani degilse
+        # oldugu gibi tasi" diyor; bozuk bir dosya buradan 24 yerine 3
+        # elemanli ya da icinde None olan bir dizi sokabilirdi ve
+        # grafigi cizen taraf bunu sessizce yanlis cizerdi.
+        temiz["saatlik"] = Uygulama.saatlik_suz(ham.get("saatlik"))
+        return temiz
+
+    # Bir saat kovasi en fazla 3600 saniye tutabilir. Daha buyugu
+    # bozuk veridir; KIRPILMAZ, SIFIRLANIR -- kirpilmis bir sayi
+    # ("60 dk") bozuk veriden uretilmis ama INANDIRICI olur.
+    SAATLIK_EN_COK = 3600
+
+    @staticmethod
+    def saatlik_suz(ham):
+        """Gunun saat dagilimi: her zaman 24 elemanli, her elemani sayi."""
+        temiz = [0.0] * 24
+        if not isinstance(ham, (list, tuple)):
+            return temiz
+        for s in range(min(24, len(ham))):
+            d = sayi_oku(ham[s], None)
+            if d is not None and 0 <= d <= Uygulama.SAATLIK_EN_COK:
+                temiz[s] = float(d)
         return temiz
 
     def _istatistik_oku(self):
@@ -2523,6 +2546,11 @@ class Uygulama:
             "gun": time.strftime("%Y-%m-%d"),
             "tamamlanan": tam(self.ist.get("tamamlanan")),
             "ekran_sn": tam(self.ist.get("ekran_sn")),
+            # SAAT DAGILIMI TARAYICIYA. Tarayici sekmesi gizliyken
+            # HICBIR SEY sayamiyor (gerekcesi cekirdek.js icinde);
+            # gercek ekran suresini yalnizca bu taraf biliyor. Kopru
+            # yine tek yonlu ve salt okunur.
+            "saatlik": [tam(x) for x in self.saatlik_suz(self.ist.get("saatlik"))],
         }
 
     def _kopru_kalan(self):
@@ -3722,6 +3750,15 @@ class Uygulama:
         gecen = self._sayim_araligi(onceki_saydi)
         self.ist["ekran_sn"] += gecen
         self.ist["kesintisiz_sn"] += gecen
+        # SAAT DAGILIMI, `ekran_sn` ILE AYNI YERDE ARTIYOR.
+        # Ayri bir yerde artsaydi biri kacirdiginda toplamlar sessizce
+        # uyusmaz olurdu -- bu depoda bilinen sinif. Tarayici surumu de
+        # ayni kurali uyguluyor (cekirdek.js: "ayni satirda artiyor").
+        kova = self.ist.get("saatlik")
+        if not isinstance(kova, list) or len(kova) != 24:
+            kova = self.saatlik_suz(kova)
+            self.ist["saatlik"] = kova
+        kova[time.localtime().tm_hour] += gecen
 
         if self.ayar.get("analiz_izni"):
             _, program = iz.on_pencere()

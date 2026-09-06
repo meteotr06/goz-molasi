@@ -392,6 +392,7 @@ const SOZLUK = {
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
   'Rapor': 'Report',
+  'Ayarları aç / kapat': 'Open / close settings',
   'Gün içinde uygulamayı açtığın saatler': 'Hours you had the app open',
   'Yalnızca bu uygulama açıkken geçen süreyi ölçebiliyoruz — telefonun toplam ekran süresini bir web uygulaması göremez.':
     'We can only measure time with this app open — a web app cannot see your phone total screen time.',
