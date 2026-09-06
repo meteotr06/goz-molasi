@@ -213,14 +213,20 @@ function istatistikSuz(ham) {
 
      Bozuk kova sifirlanir, kirpilmaz - yanindaki sayilarla ayni
      gerekce: sinira cekmek "makul gorunen bir yalan" uretir. */
-  const s24 = ham && ham.saatlik;
-  c.saatlik = new Array(24).fill(0);
-  if (Array.isArray(s24)) {
-    for (let i = 0; i < 24; i++) {
-      const v = Number(s24[i]);
-      c.saatlik[i] = (Number.isFinite(v) && v >= 0 && v <= 3600) ? v : 0;
+  const kova24 = (h) => {
+    const c24 = new Array(24).fill(0);
+    if (Array.isArray(h)) {
+      for (let i = 0; i < 24; i++) {
+        const v = Number(h[i]);
+        c24[i] = (Number.isFinite(v) && v >= 0 && v <= 3600) ? v : 0;
+      }
     }
-  }
+    return c24;
+  };
+  c.saatlik = kova24(ham && ham.saatlik);
+  // Olculemeyen sure de ayni kuralla suzuluyor: iki kova ayri
+  // suzulseydi biri bozuk veriyi gecirebilirdi.
+  c.olculemeyen = kova24(ham && ham.olculemeyen);
   const g = ham && ham.gun;
   c.gun = (typeof g === 'string' && GUN_BICIMI.test(g)) ? g : null;
   return c;
@@ -250,6 +256,14 @@ class MolaMotoru {
       /* Saatlik dagilim: 24 kova, her biri o saatte gecen saniye.
          `ekranSuresi` ile AYNI yerde artiyor ki ikisi ayrisamasin. */
       saatlik: new Array(24).fill(0),
+      /* OLCULEMEYEN SURE -- 24 kova, saniye.
+
+         Bir tarayici sekmesi arka plandayken kisiliyor: iki tik arasi
+         dakikalara cikiyor ve o araligi olcemiyoruz. O sureyi ekran
+         suresi saymak UYDURMAK olur; sessizce dusurmek ise kullaniciya
+         "uygulama saymiyor" gibi gorunur -- 06.09.2026'da tam bu oldu.
+         Bilmedigimizi BILIYORUZ; burada onu tutuyoruz. */
+      olculemeyen: new Array(24).fill(0),
       gun: this._bugun(),
     };
     this.uzunMoladaMi = false;
@@ -658,6 +672,7 @@ class MolaMotoru {
     this.istatistik.ekranSuresi = 0;
     this.istatistik.uzunMola = 0;
     this.istatistik.saatlik = new Array(24).fill(0);
+    this.istatistik.olculemeyen = new Array(24).fill(0);
     // `kesintisizSure` SIFIRLANMAZ: gece yarısı geçti diye kişinin
     // kesintisiz çalışması bitmiş olmuyor.
     return true;
@@ -743,7 +758,14 @@ class MolaMotoru {
     // Ayni bosluk kurali (bkz. TIK_BOSLUK_SINIRI): olcemedigimiz
     // araligi kirpmiyoruz, saymiyoruz.
     const bosluk = Math.max(0, (simdi - onceki) / 1000);
-    const delta = bosluk <= TIK_BOSLUK_SINIRI ? bosluk : 0;
+    if (bosluk > TIK_BOSLUK_SINIRI) {
+      /* OLCEMEDIK -- VE BUNU YAZIYORUZ.
+         Sessizce dusurmek, sessizce uydurmak kadar kotu: sayi
+         durunca kullanici "uygulama saymiyor" saniyor. */
+      this._olculemeyenEkle(onceki, simdi);
+      return 0;
+    }
+    const delta = bosluk;
     if (delta <= 0) return 0;
 
     this.istatistik.ekranSuresi += delta;
@@ -758,8 +780,40 @@ class MolaMotoru {
     return delta;
   }
 
+  /** Olculemeyen araligi SAAT SAAT dagitir.
+
+      Tumunu su anki saate yazmak yanlis olurdu: gece boyunca acik kalan
+      bir sekmede sabah tek bir saatte "8 saat olculemedi" gorunurdu.
+      Aralik hangi saatlere dusuyorsa oraya bolunuyor.
+
+      UST SINIR BIR GUN: daha eskisini bugunun kovalarina yazmak,
+      dunku bilinmezligi bugune tasimak olur. */
+  _olculemeyenEkle(baslangic, bitis) {
+    if (!Array.isArray(this.istatistik.olculemeyen)) {
+      this.istatistik.olculemeyen = new Array(24).fill(0);
+    }
+    let t = Math.max(baslangic, bitis - 86400000);
+    let adim = 0;
+    while (t < bitis && adim++ < 30) {
+      const d = new Date(t);
+      const saatSonu = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+                                d.getHours() + 1).getTime();
+      const parca = Math.min(bitis, saatSonu) - t;
+      if (parca <= 0) break;
+      const s = d.getHours();
+      this.istatistik.olculemeyen[s] = Math.min(
+        3600, (this.istatistik.olculemeyen[s] || 0) + parca / 1000);
+      t += parca;
+    }
+  }
+
   tik() {
     if (this.askida) return;
+    /* GUN ONCE TAZELENIYOR, SONRA OLCULUYOR.
+       Ters sirada, gece yarisindan sonraki ilk tikin suresi DUNUN
+       kovalarina yazilirdi. Kucuk bir sayi, ama bu depoda "bugun 0
+       gorunuyor, dun sisiyor" sinifi zaten bir kez yasandi. */
+    if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
     /* EKRAN SURESI HER SEYDEN ONCE OLCULUYOR -- asagidaki erken
        donuslerin hicbiri onu atlamasin. Kullanicinin sikayeti tam
        buydu: "Basla"ya basmadan ya da duraklatilmis dururken sayi
@@ -774,7 +828,6 @@ class MolaMotoru {
       if (ekranDelta) this._duyur('degisti', this.anlikDurum());
       return;
     }
-    if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
 
     // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile
     // sayaç duraklamış kalıyordu — `tik` duraklatıldı durumunda hemen
@@ -1525,18 +1578,29 @@ const Gecmis = {
 
        Artan sayac kurali burada da gecerli - bir gunun saatlik degeri
        geri gidemez; hangi sekme yazarsa yazsin buyuk olan kalir. */
-    const eskiSaatlik = Array.isArray(eski.saatlik) ? eski.saatlik : [];
-    const yeniSaatlik = Array.isArray(istatistik.saatlik) ? istatistik.saatlik : [];
-    const saatlik = new Array(24);
-    for (let s = 0; s < 24; s++) {
-      saatlik[s] = buyuk(Math.round(+eskiSaatlik[s] || 0),
-                         Math.round(+yeniSaatlik[s] || 0));
-    }
+    const kovaBirlestir = (a, b) => {
+      const ea = Array.isArray(a) ? a : [];
+      const eb = Array.isArray(b) ? b : [];
+      const c = new Array(24);
+      for (let s = 0; s < 24; s++) {
+        c[s] = buyuk(Math.round(+ea[s] || 0), Math.round(+eb[s] || 0));
+      }
+      return c;
+    };
+    const saatlik = kovaBirlestir(eski.saatlik, istatistik.saatlik);
+    /* OLCULEMEYEN SURE DE GUNLUK GECMISE YAZILIYOR.
+
+       Yazilmasaydi yalniz bellekte dururdu ve gun degisince silinirdi;
+       "dun ne kadarini olcemedik" sorusunun cevabi hic olmazdi. Ayni
+       gerekce `saatlik` icin de yaziliydi -- iki kova ayni yerde
+       tutulmali ki biri otekinden ayrisamasin. */
+    const olculemeyen = kovaBirlestir(eski.olculemeyen, istatistik.olculemeyen);
     veri[gun] = {
       mola: buyuk(eski.mola, istatistik.tamamlananMola),
       atlanan: buyuk(eski.atlanan, istatistik.atlananMola),
       ekran: buyuk(eski.ekran, Math.round(istatistik.ekranSuresi || 0)),
       saatlik,
+      olculemeyen,
     };
     this.yaz(veri);
   },
@@ -1568,11 +1632,22 @@ const Gecmis = {
       "o gun hic ekranda degildin" ile "o gunun kaydi yok" ayri seyler
       ve arayuz ikisini ayri gostermeli. */
   saatlikGun(anahtar) {
+    return this._kovaGun(anahtar, 'saatlik');
+  },
+
+  /** Bir gunun OLCULEMEYEN dagilimi. Kayit yoksa `null`. */
+  olculemeyenGun(anahtar) {
+    return this._kovaGun(anahtar, 'olculemeyen');
+  },
+
+  /* Iki kova AYNI yoldan okunuyor: ayri ayri yazilsalardi biri
+     duzeltildiginde oteki eski kalirdi -- bu depoda bilinen sinif. */
+  _kovaGun(anahtar, alan) {
     const veri = this.oku();
     const k = veri[anahtar];
-    if (!k || !Array.isArray(k.saatlik)) return null;
+    if (!k || !Array.isArray(k[alan])) return null;
     const c = new Array(24);
-    for (let s = 0; s < 24; s++) c[s] = Math.max(0, +k.saatlik[s] || 0);
+    for (let s = 0; s < 24; s++) c[s] = Math.max(0, +k[alan][s] || 0);
     return c;
   },
 

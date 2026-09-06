@@ -2070,6 +2070,26 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   white-space: nowrap;
 }
 
+.saatlik-ayrinti {
+  margin: 6px 2px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--cizgi);
+  border-radius: 10px;
+  background: var(--kart2, var(--kart));
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+.saatlik-sutun { cursor: pointer; }
+.saatlik-sutun:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; }
+.saatlik-sutun[data-secili="1"] .saatlik-cubuk { outline: 2px solid var(--vurgu); }
+/* Olculemeyen sure, cubugun ustunde soluk bir golge olarak duruyor:
+   "burada bir sey vardi ama olcemedik" demenin gorsel hali. */
+.saatlik-olculemeyen {
+  background: repeating-linear-gradient(
+    45deg, var(--cizgi), var(--cizgi) 2px, transparent 2px, transparent 5px);
+  border-radius: 3px 3px 0 0;
+}
+
 /* SAATLIK GRAFIK — 24 cubuk. Telefonda 24 etiket sigmaz, o yuzden
    yalniz 0/6/12/18 yaziliyor; oteki saatler `title` ve ekran okuyucu
    metniyle veriliyor. Sayi RENKLE degil YAZIYLA da soyleniyor. */

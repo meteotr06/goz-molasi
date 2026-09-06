@@ -73,6 +73,7 @@
     seviyeCubuk: $('seviyeCubuk'),
     seviyeSonraki: $('seviyeSonraki'),
     saatlikAlt: $('saatlikAlt'),
+    saatlikAyrinti: $('saatlikAyrinti'),
     seriRozet: $('seriRozet'),
     haftaOzet: $('haftaOzet'),
     haftaBuyuk: $('haftaBuyuk'),
@@ -2699,6 +2700,13 @@
     return m.saatlik;
   }
 
+  /* Ayrinti satiri, cizimin KULLANDIGI kovalari okumali -- kendisi
+     yeniden turetseydi iki yer ayrisirdi (bu depoda bilinen sinif:
+     ayni sayi iki yerde ayri hesaplaniyor). */
+  let saatlikSonKovalar = null;
+  let saatlikSonOlcusuz = null;
+  let masaustundanSon = false;
+
   let saatlikGeriGun = 0;
   const SAATLIK_EN_GERI = 6;
 
@@ -2708,6 +2716,97 @@
     saatlikGeriGun = yeni;
     saatlikCiz();
   }
+  /* CUBUGA TIKLAYINCA O SAATIN AYRINTISI.
+
+     KULLANICI (06.09.2026): "uzerine tikladiginda ayrintili verileri
+     doksun". Donmus bir sayinin sebebini sormak zorunda kalmasin diye.
+
+     TEK DINLEYICI, izgaranin kendisinde. Yirmi dort ayri dinleyici
+     baglanmis olsaydi grafik her yeniden kuruldugunda birikirdi -- bu
+     depoda yasanmis sinif (kopru zincirleri). */
+  let secilenSaat = -1;
+
+  function saatiAnlat(s) {
+    const e = og.saatlikAyrinti;
+    if (!e) return;
+    if (s < 0 || s > 23) { e.classList.add('gizli'); return; }
+
+    const kova = saatlikSonKovalar || new Array(24).fill(0);
+    const olcusuzKova = saatlikSonOlcusuz || new Array(24).fill(0);
+    const olculen = +kova[s] || 0;
+    const olcusuz = +olcusuzKova[s] || 0;
+    const saatYazi = String(s).padStart(2, '0') + ':00–'
+      + String((s + 1) % 24).padStart(2, '0') + ':00';
+
+    const satirlar = [];
+    satirlar.push(saatYazi + ' · ' + CS('ölçülen', 'measured') + ' '
+                  + sureMetni(olculen));
+    if (olcusuz > 0) {
+      satirlar.push(CS('ölçülemeyen', 'not measured') + ' ' + sureMetni(olcusuz));
+    }
+
+    const aciklama = [];
+    aciklama.push(masaustundanSon
+      ? CS('Kaynak: Windows sürümü — bilgisayarındaki gerçek ekran süresi.',
+           'Source: the Windows app — real screen time on this computer.')
+      : CS('Kaynak: bu sekme — yalnızca uygulama açıkken geçen süre.',
+           'Source: this tab — only the time this app itself was open.'));
+    if (olcusuz > 0) {
+      /* SEBEBI YAZIYORUZ. Sessizce dusurulen sure, sessizce uydurulan
+         sure kadar kotu: ikisinde de kullanici ekrandaki sayinin ne
+         anlama geldigini bilmiyor. */
+      aciklama.push(CS(
+        'Bu sürede tarayıcı arka plandaki sekmeyi dondurdu; ne kadarını '
+        + 'ekran başında geçirdiğini bilemeyiz, o yüzden saymadık. '
+        + 'Bilgisayarındaki gerçek süre için Windows sürümünü açık tut.',
+        'During this time the browser froze the background tab; we cannot '
+        + 'know how much of it you spent at the screen, so we did not count '
+        + 'it. Keep the Windows app running for real screen time.'));
+    }
+    e.textContent = satirlar.join(' · ') + ' — ' + aciklama.join(' ');
+    e.classList.remove('gizli');
+    okuyucuyaSoyle(e.textContent);
+  }
+
+  /** Saat secimi TEK yerden: tiklama da klavye de burayi cagiriyor. */
+  function saatiSec(s) {
+    secilenSaat = s;
+    [...og.saatlikGrafik.children].forEach((x, i) => {
+      if (i === secilenSaat) x.dataset.secili = '1';
+      else if (x.dataset.secili) delete x.dataset.secili;
+    });
+    saatiAnlat(secilenSaat);
+  }
+
+  og.saatlikGrafik?.addEventListener('click', (olay) => {
+    const sutun = olay.target.closest && olay.target.closest('.saatlik-sutun');
+    if (!sutun || !og.saatlikGrafik.contains(sutun)) return;
+    const s = [...og.saatlikGrafik.children].indexOf(sutun);
+    // Ayni cubuga tekrar tiklamak KAPATIR: acilan bir seyi kapatmanin
+    // yolu, onu acan hareketin kendisi olmali.
+    saatiSec(s === secilenSaat ? -1 : s);
+  });
+  /* IZGARA TEK BIR SECIM ALETI. Ok tuslariyla saat degisiyor; her
+     cubugu ayri odak durağı yapmak hem 24 adsiz dugme uretiyordu hem de
+     dokunma esigini asamiyordu (bkz. yukaridaki aritmetik). */
+  if (og.saatlikGrafik) {
+    og.saatlikGrafik.tabIndex = 0;
+    og.saatlikGrafik.setAttribute('role', 'group');
+  }
+  og.saatlikGrafik?.addEventListener('keydown', (olay) => {
+    const yon = { ArrowRight: 1, ArrowLeft: -1, ArrowUp: 1, ArrowDown: -1 }[olay.key];
+    if (yon === undefined) {
+      if (olay.key === 'Escape' && secilenSaat >= 0) {
+        olay.preventDefault();
+        saatiSec(-1);
+      }
+      return;
+    }
+    olay.preventDefault();
+    const baslangic = secilenSaat < 0 ? (yon > 0 ? -1 : 24) : secilenSaat;
+    saatiSec(Math.min(23, Math.max(0, baslangic + yon)));
+  });
+
   og.saatlikGeri?.addEventListener('click', () => saatlikGunuKaydir(1));
   og.saatlikIleri?.addEventListener('click', () => saatlikGunuKaydir(-1));
 
@@ -2807,8 +2906,26 @@
         const deger = document.createElement('span');
         deger.className = 'saatlik-deger';
         sutun.appendChild(deger);
+        /* OLCULEMEYEN SURE, olculenin USTUNDE tarali govde olarak.
+           Dolu renkle cizilseydi olculmus gibi gorunurdu; hic
+           cizilmeseydi kullanici yine "uygulama saymiyor" derdi. */
+        const olcusuz = document.createElement('div');
+        olcusuz.className = 'saatlik-olculemeyen';
+        sutun.appendChild(olcusuz);
         sutun.appendChild(document.createElement('div'))
              .className = 'saatlik-cubuk';
+        /* HER CUBUK AYRI DUGME DEGIL -- BILEREK.
+
+           Once her sutuna `role="button"` ve `tabIndex` vermistim;
+           yerlesim nobetcisi hakli olarak 24 kusur bildirdi: telefonda
+           bir cubuk 11 piksel, dokunma esigi 44. Bu aritmetik, ihmal
+           degil -- 24 x 44 = 1056 piksel, 390 piksellik ekrana sigmaz.
+           Ustelik her biri ADSIZ bir dugme oluyordu.
+
+           Cozum: secim izgaranin KENDISINDE. Tiklama her yerden
+           calisiyor (buyuk hedef), klavyede ok tuslariyla saat
+           degisiyor, secilen saati `#saatlikAyrinti` (role=status)
+           sesli okuyucuya soyluyor. */
         og.saatlikGrafik.appendChild(sutun);
       }
       /* SAAT EKSENI de burada, bir kez. Telefonda 24 etiket yan yana
@@ -2828,11 +2945,47 @@
         }
       }
     }
+    /* OLCULEMEYEN KOVALAR yalniz BUGUN ve yalniz TARAYICININ kendi
+       olcusu icin var: kopruden gelen Windows verisinde bosluk diye bir
+       sey yok (o taraf surekli acik), gecmis gunlerde de kaydi yok.
+       Olmayan yerde sifir gostermek dogru -- "olculemeyen sure yok"
+       demek, o gunler icin gercekten dogru degil ama UYDURMA da degil:
+       elimizde kayit yok ve grafikte iddia etmiyoruz. */
+    saatlikSonKovalar = kovalar;
+    masaustundanSon = masaustundan;
+    /* OLCULEMEYEN KOVALAR.
+
+       Windows kaynagiyla cizerken YOK: o taraf surekli acik, bosluk
+       diye bir seyi yok. Tarayici olcusunde ise BELLEK ile GECMIS'in
+       buyugu aliniyor -- `saatlik` icin de gecerli olan "artan sayac"
+       kurali. Yalniz bellege bakmak yetmiyordu: olculdu (06.09.2026),
+       sayfa yenilendiginde bellekteki kova sifirlaniyor ve gunun
+       olculemeyen suresi sessizce kayboluyordu; gecmise yazilan
+       `saatlik` ise sag kaliyordu. Iki kovanin ayni yoldan gelmesi
+       sarti tam bu yuzden var. */
+    let olcusuzKovalar = new Array(24).fill(0);
+    if (!masaustundan) {
+      const anahtarlar = Gecmis.gunAnahtarlari(SAATLIK_EN_GERI + 1);
+      const anahtar = anahtarlar[anahtarlar.length - 1 - saatlikGeriGun];
+      let gecmisKova = null;
+      try { gecmisKova = Gecmis.olculemeyenGun(anahtar); } catch {}
+      const bellek = (saatlikGeriGun === 0
+        && Array.isArray(motor.istatistik && motor.istatistik.olculemeyen))
+        ? motor.istatistik.olculemeyen : null;
+      for (let s = 0; s < 24; s++) {
+        olcusuzKovalar[s] = Math.max(
+          bellek ? (+bellek[s] || 0) : 0,
+          gecmisKova ? (+gecmisKova[s] || 0) : 0);
+      }
+    }
+
     /* En yogun uc saatin esigi. Ucten az dolu saat varsa hepsi
        yaziliyor. */
     const doluDegerler = kovalar.map((x) => +x || 0)
       .filter((x) => x > 0).sort((a, b) => b - a);
     const esik = doluDegerler.length ? doluDegerler[Math.min(2, doluDegerler.length - 1)] : 0;
+
+    saatlikSonOlcusuz = olcusuzKovalar;
 
     for (let s = 0; s < 24; s++) {
       const deger = +kovalar[s] || 0;
@@ -2840,6 +2993,16 @@
       const cubuk = sutun.lastElementChild;
       const yuk = Math.round((deger / enCok) * 100) + '%';
       if (cubuk.style.height !== yuk) cubuk.style.height = yuk;
+      /* OLCULEMEYEN GOVDE. Ayni olcegi kullaniyor ki iki sure goz
+         kararıyla karsilastirilabilsin; olcek ayri olsaydi "az
+         olculemedi" gibi gorunurdu. */
+      const olcusuz = +olcusuzKovalar[s] || 0;
+      const olcusuzOge = sutun.children[1];
+      if (olcusuzOge) {
+        const oy = olcusuz > 0
+          ? Math.max(2, Math.round((olcusuz / enCok) * 100)) + '%' : '0%';
+        if (olcusuzOge.style.height !== oy) olcusuzOge.style.height = oy;
+      }
       const etiket = `${String(s).padStart(2, '0')}:00 — ` + sur(deger);
       if (cubuk.title !== etiket) cubuk.title = etiket;
       if (deger > 0) { if (sutun.dataset.bos) delete sutun.dataset.bos; }
@@ -5018,10 +5181,33 @@
       try { kaydet(); } catch {}
       return;
     }
+    donusuIsle();
+  });
+  /** KULLANICI GERI DONDU -- iki yol da (visibilitychange, pageshow)
+      ayni seyi yapmali. Ayri ayri yazilsalardi biri duzeltilip oteki
+      unutulurdu; bu depoda bilinen sinif. */
+  function donusuIsle() {
     motor.hareketVar();
     motor.tik();
+    /* BEKLEYEN MOLA HEMEN BASLIYOR.
+
+       KULLANICI (06.09.2026): "bu mola beklemesin ya, direkt yapsin".
+
+       `molaBekliyor` durumu 03.09'da su sikayet icin konmustu: mola
+       arka planda dolunca ekran KENDILIGINDEN aciliyor ve kullanici
+       onu tam ekran oyunun ustunde buluyordu ("valoranti bolme, oyundan
+       atiyor"). O kural DURUYOR -- sayfa gizliyken hicbir sey acilmiyor.
+
+       Degisen su: kullanici uygulamaya DONDUGUNDE artik bir dugmeye
+       basmasi beklenmiyor. Ekrana bakan kisiye "molan hazir, basar
+       misin" demek, molayi bir ise daha cevirmekti.
+
+       Iki sikayet celismiyor: biri "sen yokken dayatma", oteki "ben
+       gelince bekletme". Sinir GORUNURLUK. */
+    if (motor.durum === 'molaBekliyor') motor.molayaGec();
     ekraniCiz(motor.anlikDurum());
-  });
+  }
+
   /* `pagehide` DE DONDURUR — iOS'ta gerekli.
      iOS Safari sayfayı bfcache'e alırken `visibilitychange`
      göndermeyebiliyor; `pagehide` ise gönderiliyor. İkisi de
@@ -5035,9 +5221,7 @@
      `hareketVar()` çözer ve "kısa yokluk mu, gerçekten uzaklaşma mı"
      ayrımını da o yapar. */
   window.addEventListener('pageshow', () => {
-    motor.hareketVar();
-    motor.tik();
-    ekraniCiz(motor.anlikDurum());
+    donusuIsle();
   });
 
   /* ============================================================
