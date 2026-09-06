@@ -1806,8 +1806,32 @@ const Gecmis = {
       toplamMola,
       toplamAtlanan: topla(dolu, 'atlanan'),
       toplamEkran: topla(dolu, 'ekran'),
-      ortalama: dolu.length
-        ? Math.round((toplamMola / dolu.length) * 10) / 10 : null,
+      /* ORTALAMA TEK TANIMDAN.
+
+         Burasi `dolu.length`e (kaydi olan gun sayisi) boluyordu; ana
+         ekran ise `ortalamaTabani`ya (ilk dolu gunden bugune kadarki
+         gun sayisi). Ayni yedi gun icin ayni anda IKI ayri "gunde
+         ortalama" gorunuyordu -- kullanicinin ana ekranda 5,0, rapor
+         ekraninda 3,6 gormesi bu.
+
+         Dogru bolen `ortalamaTabani`: uygulamanin kullanildigi ilk
+         gunden bugune kadar gecen HER gun sayilir. Hic acilmamis bir
+         gun de bir gundur ve o gun mola verilmemistir; onu bolenden
+         dusurmek ortalamayi yapay olarak yukseltir.
+
+         `ortalamaTabani` `{sayi}` alani bekliyor, buradaki gunlerde o
+         alan `mola` -- kopyalarken cevriliyor. */
+      ortalama: (() => {
+        // `this.` -- yanindaki `gunlukKarsilastirma` da boyle
+        // cagiriyor; nesne adina baglamak, nesne yeniden
+        // adlandirilinca sessizce kirilirdi.
+        const taban = this.ortalamaTabani(
+          gunler.map((g) => ({ sayi: g.mola | 0, bugunMu: g.bugunMu })));
+        return taban.length
+          ? Math.round((taban.reduce((t, g) => t + (g.sayi | 0), 0)
+                        / taban.length) * 10) / 10
+          : null;
+      })(),
       enIyi,
       enSakin,
       hedefTutan: dolu.filter((g) => g.mola >= hedef).length,

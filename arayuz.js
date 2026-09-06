@@ -1778,10 +1778,23 @@
     } else {
       baslik = C('Şimdi bilgisayar zamanı değil');
       aciklama = CS(
+        /* SURE BICIMLEYICISI, SAAT BICIMLEYICISI DEGIL.
+
+           Burada `saatYaz(e.kalanSn)` yaziyordu. `saatYaz` bir DATE
+           bekliyor (dil.js:616, `tarih.toLocaleTimeString`); sayi
+           verilince once o cagri, sonra `catch` icindeki
+           `tarih.getHours()` patliyor ve TypeError fonksiyondan DISARI
+           cikiyordu.
+
+           SONUCU: yasak saatinde engel ekrani HIC cizilmiyordu --
+           `engelBaslik`/`engelAciklama` yazilmadan istisna atiyor,
+           `engelEkran.classList.remove('gizli')` satirina hic
+           gelinmiyor. Yani aile kipinin en sert korumasi, tam
+           uygulanmasi gereken anda sessizce yoktu. */
         `Yasak saatler: ${motor.ayarlar.yasakBas} — ${motor.ayarlar.yasakBit}. `
-        + `Kalan: ${saatYaz(e.kalanSn)}.`,
+        + `Kalan: ${sureMetni(e.kalanSn)}.`,
         `Blocked hours: ${motor.ayarlar.yasakBas} — ${motor.ayarlar.yasakBit}. `
-        + `Left: ${saatYaz(e.kalanSn)}.`);
+        + `Left: ${sureMetni(e.kalanSn)}.`);
     }
     og.engelBaslik.textContent = baslik;
     og.engelAciklama.textContent = aciklama;
@@ -1995,11 +2008,19 @@
     const ortalama = taban.length
       ? Math.round((taban.reduce((t, g) => t + (g.sayi | 0), 0) / taban.length) * 10) / 10
       : 0;
+    /* "BUGUN" DIYEN CUMLE BUGUNUN SAYISINI YAZSIN.
+
+       Burada `toplam` yaziyordu; `toplam` YEDI GUNUN toplami
+       (arayuz.js: `gunler.reduce(...)`). Yani bugun hic mola
+       vermemis biri "Bugun 5 mola" goruyordu. Ayni kartta bir de
+       "bugun ortalamanin ustunde" yaziyor -- iki cumle bugunden
+       bahsedip iki ayri sayiya dayaniyordu. */
+    const bugunSayi = (gunler.find((g) => g && g.bugunMu) || {}).sayi | 0;
     if (doluGun <= 1) {
       og.haftaOzet.textContent = CS(
-        `Bugün ${toplam} mola · geçmiş birikiyor`,
+        `Bugün ${bugunSayi} mola · geçmiş birikiyor`,
         // "1 breaks" olmasin: Turkcede sorun yok, Ingilizcede var.
-        `${toplam} break${toplam === 1 ? '' : 's'} today`
+        `${bugunSayi} break${bugunSayi === 1 ? '' : 's'} today`
         + ' · history is building up');
     } else {
       /* BUGUN ORTALAMAYA GORE NEREDE?
@@ -2021,9 +2042,12 @@
         ekEn = ' · today at your average';
       }
       // Ondalık ayırıcı dile göre: Türkçe "6,7" · İngilizce "6.7"
+      /* HANGI DONEM OLDUGU YAZIYOR. Once yalniz "5 mola" diyordu ve
+         yanindaki cumle "bugun ortalamanin ustunde" -- okuyan, 5'i
+         bugunun sayisi saniyordu. Sayi yedi gunun toplami. */
       og.haftaOzet.textContent = CS(
-        `${SAYI(toplam)} mola${ek}`,
-        `${SAYI(toplam)} breaks${ekEn}`);
+        `Son 7 günde ${SAYI(toplam)} mola${ek}`,
+        `${SAYI(toplam)} breaks in the last 7 days${ekEn}`);
       /* Ortalama artik BUYUK sayida. Kucuk satirda da yazmak tekrar
          olurdu; kullanicinin istegi "karisik olmasin" idi. */
       og.haftaOrtalama.textContent = SAYI(ortalama, 1);
@@ -4177,7 +4201,12 @@
     og.aileYasakSatir.classList.toggle('gizli', !acik);
     og.aileYasakSaat.classList.toggle('gizli', !acik || !og.ayYasak.checked);
     const dk = +og.aySinir.value || 0;
-    og.aySinirDeger.textContent = dk ? saatYaz(dk * 60) : C('sınır yok');
+    /* AYNI KUSUR BURADA DA: `saatYaz` DATE bekliyor, buraya SANIYE
+       veriliyordu ve TypeError atiyordu. `aileyiTazele` ayarlar
+       penceresi acilirken cagriliyor -- yani gunluk sinir sifirdan
+       farkliysa AYARLAR PENCERESI HIC ACILMIYORDU. Ebeveyn kurdugu
+       sinira bir daha bakamiyor, degistiremiyor. */
+    og.aySinirDeger.textContent = dk ? sureMetni(dk * 60) : C('sınır yok');
   }
   og.aySinir.addEventListener('input', aileyiTazele);
   og.ayYasak.addEventListener('change', aileyiTazele);
