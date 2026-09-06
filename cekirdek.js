@@ -702,7 +702,44 @@ class MolaMotoru {
       this._duyur('degisti', this.anlikDurum());
       return;
     }
-    if (this.durum === 'duraklatildi' || this.durum === 'hazir') return;
+    /* AILE SINIRI DURAKLATMADAN ETKILENMEZ.
+
+       "⏸ Duraklat" (ve bosluk tusu) sifre sormuyor -- dogru, mola
+       sayacini duraklatmak mesru bir istek. Ama bu satir her seyi
+       birden durduruyordu: gunluk ekran suresi sayaci da donuyor,
+       engel denetimi de hic kosmuyordu.
+
+       Cocuk ana ekranda tek dokunusla "Duraklat"a basiyor, uygulamayi
+       acik birakiyor: "Bugunun ekran suresi doldu" engeli HIC gelmiyor
+       ve saat 21:00'i gecse bile yasak ekrani acilmiyordu. Ebeveynin
+       koydugu kural, sifresiz bir dugmeyle kalkiyordu.
+
+       Cozum duraklatmayi yasaklamak DEGIL: aile kipinde ekran suresi
+       ve engel denetimi duraklatmadan BAGIMSIZ isliyor. Ekran suresi
+       molanin degil EKRANIN olcusu; duraklatilmis bir sayacin onunde
+       oturmak da ekran suresidir.
+
+       Sayfa gizliyse yine saymiyoruz -- o kural degismedi. */
+    if (this.durum === 'duraklatildi' || this.durum === 'hazir') {
+      if (this.ayarlar.kip === 'aile') {
+        const gorunur = (typeof document === 'undefined')
+          || document.visibilityState !== 'hidden';
+        if (gorunur) {
+          const oncekiAn = this._sonAileTik || Date.now();
+          this._sonAileTik = Date.now();
+          const fark = Math.min(2, Math.max(0, (Date.now() - oncekiAn) / 1000));
+          this.istatistik.ekranSuresi += fark;
+          const saat = new Date().getHours();
+          if (Array.isArray(this.istatistik.saatlik)) {
+            this.istatistik.saatlik[saat] =
+              (this.istatistik.saatlik[saat] || 0) + fark;
+          }
+          this._duyur('degisti', this.anlikDurum());
+        }
+      }
+      return;
+    }
+    this._sonAileTik = Date.now();
 
     const simdi = Date.now();
 

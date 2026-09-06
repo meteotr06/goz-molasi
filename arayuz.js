@@ -4414,11 +4414,30 @@
        kullanıcıyı kendi ayarlarından kilitlemenin âlemi yok. */
     if (motor.ayarlar.kip === 'aile' && kilitOzeti) {
       const yeniSinir = Math.max(0, +og.aySinir.value || 0);
+      /* CALISMA SAATLERI DE KORUNUYOR.
+
+         Bu listede YOKTU ve sonucu agirdi: "Calisma saatleri"ni
+         kapatmak `saatUygunMu()`yu her saat icin false yapiyor,
+         `tik()` erken donuyor ve gunluk sure sayaci HIC ARTMIYOR --
+         yani gunluk sinir da yasak saat de UYGULANMIYOR.
+
+         Ebeveyn ayarlarda "Gunluk sinir: 60 dk" ve "Yasak 21:00-07:00"
+         goruyor, aile kipi acik, sifre kurulu. Ama sayac saatlerce
+         0 dk'da duruyor ve engel HIC cikmiyor. Ekranda hicbir hata
+         yok: koruma VAR GORUNUYOR, YOK.
+
+         Sifresiz degistirilebilen her ayar, aile kipini kapatmanin
+         bir yolu olabilir; olcut "bu ayar aile kurallarindan mi"
+         degil, "bu ayar kurallarin UYGULANMASINI etkiliyor mu". */
       const aileDegisti =
         yeniSinir !== (motor.ayarlar.gunlukSinirDk || 0) ||
         og.ayYasak.checked !== !!motor.ayarlar.yasakAcik ||
         (og.ayYasakBas.value || '21:00') !== motor.ayarlar.yasakBas ||
         (og.ayYasakBit.value || '07:00') !== motor.ayarlar.yasakBit ||
+        og.aySaatler.checked !== !!motor.ayarlar.saatlerAcik ||
+        (og.ayBasSaat.value || '09:00') !== motor.ayarlar.basSaat ||
+        (og.ayBitSaat.value || '18:00') !== motor.ayarlar.bitSaat ||
+        og.ayHaftaSonu.value !== (motor.ayarlar.haftaSonu || 'ayni') ||
         og.ayMolaKilit.checked !== molaKilit ||
         og.ayAtla.checked !== !!motor.ayarlar.molaAtlanabilir;
       if (aileDegisti &&
