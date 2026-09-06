@@ -2679,7 +2679,9 @@
        "En yogun saat"i bulmak icin dizinin GERCEK en buyugu
        kullaniliyor. */
     const gercekEnCok = Math.max(0, ...kovalar.map((x) => +x || 0));
-    const enCok = Math.max(1, gercekEnCok);
+    /* Cubuk yuksekligi bu degere gore. Taban asagida tanimli
+       `OLCEK_TABANI`; burada tekrar yazmiyoruz ki ikisi ayrismasin. */
+    const enCok = Math.max(1, gercekEnCok, 600);
     const toplam = kovalar.reduce((t, x) => t + (+x || 0), 0);
 
     /* IZGARA BİR KEZ KURULUR, SONRA YALNIZCA GÜNCELLENİR.
@@ -2803,15 +2805,26 @@
        gizleniyor ve ne oldugu duz cumleyle yaziliyor. Esik iki dakika:
        bir saatlik kovanin yuzde uc bucugu; bunun altinda "yogun saat"
        diye bir sey yok. */
-    const AZ_VERI_ESIGI = 120;
-    const azVeri = gercekEnCok > 0 && gercekEnCok < AZ_VERI_ESIGI;
-    og.saatlikGrafik.classList.toggle('gizli', azVeri);
-    if (og.saatlikEksen) og.saatlikEksen.classList.toggle('gizli', azVeri);
+    /* OLCEGIN TABANI VAR — GRAFIK GIZLENMIYOR.
+
+       Once esigin altinda grafigi tumden gizlemistim; kullanici
+       "bunu kaldirmissin / niye" dedi. Gizlemek cozum degildi: grafik
+       GORUNSUN ama YALAN SOYLEMESIN.
+
+       Asil kusur cubuklarin YALNIZCA en buyuk degere gore
+       olceklenmesiydi: 29 saniye, bir saatlik kullanimla birebir ayni
+       yukseklikte ciziliyordu. Artik olcek `max(gercekEnCok, TABAN)`;
+       taban on dakika. 29 saniye tabanin yuzde besi olarak kucucuk bir
+       cubuk oluyor -- yani goruluyor AMA buyuklugu de dogru. Gun
+       doldukca taban asiliyor ve olcek gercek en buyuge geciyor. */
+    const OLCEK_TABANI = 600;
 
     if (og.saatlikOlcek) {
-      og.saatlikOlcek.textContent = (gercekEnCok > 0 && !azVeri)
-        ? CS(`en yüksek saat: ${sureMetni(gercekEnCok)}`,
-             `busiest hour: ${sureMetni(gercekEnCok)}`)
+      og.saatlikOlcek.textContent = gercekEnCok > 0
+        ? CS(`ölçek: 0 – ${sureMetni(Math.max(gercekEnCok, OLCEK_TABANI))} · `
+             + `en yüksek saat ${sureMetni(gercekEnCok)}`,
+             `scale: 0 – ${sureMetni(Math.max(gercekEnCok, OLCEK_TABANI))} · `
+             + `busiest hour ${sureMetni(gercekEnCok)}`)
         : '';
     }
 
@@ -2826,14 +2839,6 @@
         og.saatlikAlt.textContent = CS(
           'Bu günün saat dağılımı kaydedilmemiş.',
           'No hourly breakdown was recorded for this day.');
-      } else if (azVeri) {
-        /* Sayiyi SAKLAMIYORUZ, olcegi saklamiyoruz -- yalnizca yanlis
-           olcekli cubuklari cizmiyoruz. */
-        og.saatlikAlt.textContent = CS(
-          `${gunSozu}: toplam ${sureMetni(toplam)}. Grafik için henüz çok az; `
-          + 'uygulama açık kaldıkça saatler dolmaya başlar.',
-          `${gunSozu}: ${sureMetni(toplam)} in total. Too little for a chart yet; `
-          + 'the hours fill up as the app stays open.');
       } else if (toplam < 1 || gercekEnCok <= 0) {
         og.saatlikAlt.textContent = saatlikGeriGun === 0
           ? CS('Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
