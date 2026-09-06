@@ -392,10 +392,11 @@ const SOZLUK = {
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
   'Rapor': 'Report',
+  'Gün içinde uygulamayı açtığın saatler': 'Hours you had the app open',
+  'Yalnızca bu uygulama açıkken geçen süreyi ölçebiliyoruz — telefonun toplam ekran süresini bir web uygulaması göremez.':
+    'We can only measure time with this app open — a web app cannot see your phone total screen time.',
   'Molan bekliyor — başlatmana hazır': 'Your break is waiting — ready when you are',
   '▶ Molaya başla': '▶ Start break',
-  'Hangi saatlerde ekran başındasın. En yoğun saatlerini bilirsen molanı ona göre kurabilirsin.':
-    'Which hours you spend at the screen. Knowing your busiest hours lets you plan your breaks around them.',
   'Bugün': 'Today',
   'Dün': 'Yesterday',
   'Bu hafta': 'This week',

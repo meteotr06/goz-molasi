@@ -2791,8 +2791,25 @@
        olcegi soylemezsek 23 saniyelik bir gun 23 saatlik bir gunle
        AYNI gorunur. Kullanici tam bunu bildirdi: "burasi hic
        anlasilmiyor". */
+    /* AZ VERIDE GRAFIK CIZILMIYOR.
+
+       Cubuklar EN BUYUK degere gore olcekleniyor. Kullanici ekran
+       goruntusu gonderdi: 17 sn ve 29 sn iki KOCA cubuk olarak
+       ciziliyordu -- bir saatlik kullanimla ayni gorunuyor. "sn filan
+       diyor, bunun olcek olayi da cok yanlis."
+
+       Yirmi dokuz saniyeyi bir saatin yanina koyan grafik bilgi
+       vermiyor, YANLIS bilgi veriyor. Esigin altinda cubuklar
+       gizleniyor ve ne oldugu duz cumleyle yaziliyor. Esik iki dakika:
+       bir saatlik kovanin yuzde uc bucugu; bunun altinda "yogun saat"
+       diye bir sey yok. */
+    const AZ_VERI_ESIGI = 120;
+    const azVeri = gercekEnCok > 0 && gercekEnCok < AZ_VERI_ESIGI;
+    og.saatlikGrafik.classList.toggle('gizli', azVeri);
+    if (og.saatlikEksen) og.saatlikEksen.classList.toggle('gizli', azVeri);
+
     if (og.saatlikOlcek) {
-      og.saatlikOlcek.textContent = gercekEnCok > 0
+      og.saatlikOlcek.textContent = (gercekEnCok > 0 && !azVeri)
         ? CS(`en yüksek saat: ${sureMetni(gercekEnCok)}`,
              `busiest hour: ${sureMetni(gercekEnCok)}`)
         : '';
@@ -2809,6 +2826,14 @@
         og.saatlikAlt.textContent = CS(
           'Bu günün saat dağılımı kaydedilmemiş.',
           'No hourly breakdown was recorded for this day.');
+      } else if (azVeri) {
+        /* Sayiyi SAKLAMIYORUZ, olcegi saklamiyoruz -- yalnizca yanlis
+           olcekli cubuklari cizmiyoruz. */
+        og.saatlikAlt.textContent = CS(
+          `${gunSozu}: toplam ${sureMetni(toplam)}. Grafik için henüz çok az; `
+          + 'uygulama açık kaldıkça saatler dolmaya başlar.',
+          `${gunSozu}: ${sureMetni(toplam)} in total. Too little for a chart yet; `
+          + 'the hours fill up as the app stays open.');
       } else if (toplam < 1 || gercekEnCok <= 0) {
         og.saatlikAlt.textContent = saatlikGeriGun === 0
           ? CS('Bugün henüz ölçülen süre yok — uygulama açıkken birikir.',
