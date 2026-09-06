@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>Sifirlanma sinamasi</title>
+<style>body{font:14px system-ui;padding:20px}.g{color:#0a0}.k{color:#c00;font-weight:700}h1{font-size:18px}</style>
+<script>
+/* ONBELLEK KIRICI — K-96'nin ucuncu hali.
+   06.09.2026: sayfa yenilendi, "7 kaldi" ayni cikti ve duzeltmenin
+   ise yaramadigi sanildi. Oysa tarayici ESKI cekirdek.js'i veriyordu.
+   Damga her yuklemede degisir; boylece olculen kod her zaman diskteki
+   koddur. */
+var damga = Date.now() + '-' + Math.random().toString(36).slice(2);
+document.write('<scr' + 'ipt src="../cekirdek.js?kir=' + damga + '"></scr' + 'ipt>');
+document.write('<scr' + 'ipt src="sinama-sifirlanma.js?kir=' + damga + '"></scr' + 'ipt>');
+</script>

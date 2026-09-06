@@ -222,6 +222,7 @@ class MolaMotoru {
     // Date.now() farkı ise her koşulda doğrudur.
     this.hedefZaman = 0;      // bu aşamanın biteceği an (ms)
     this.asamaBaslangic = 0;  // bu aşamanın başladığı an (ms)
+    this.gizlenmeAni = null;  // sayfanın gizlendiği an (ms) — yokluk BURADAN ölçülür
     this.sonHareket = Date.now();
 
     this.istatistik = {
@@ -353,8 +354,14 @@ class MolaMotoru {
   devamEt() {
     if (this.durum !== 'duraklatildi' && this.durum !== 'bosta') return;
     this.duraklatmaBitis = 0;
-    const kalan = this.kalanDondurulmus ?? this.ayarlar.calismaSuresi;
-    this._asamayaGec('calisiyor', kalan);
+    /* `??` SIFIRI YAKALAMAZ ama sıfır anlamlı bir değerdir: sayaç tam
+       biterken gizlendiyse mola HAK EDİLMİŞTİR, borç silinmemeli. */
+    const donmus = this.kalanDondurulmus;
+    const kalan = (donmus == null) ? this.ayarlar.calismaSuresi : donmus;
+    if (kalan <= 0) { this.molayaGec(); return; }
+    // Aşamanın TOPLAM süresi korunur; kalan süre onun yerine geçmez.
+    const toplam = (+this.asamaSuresi > 0) ? +this.asamaSuresi : this.ayarlar.calismaSuresi;
+    this._asamayaGec('calisiyor', kalan, toplam);
   }
 
   sifirla() {
@@ -444,7 +451,28 @@ class MolaMotoru {
       kaldığı yerden değil, baştan saymaya başlar. */
   hareketVar() {
     const simdi = Date.now();
-    const uzaktaKalinan = simdi - this.sonHareket;
+    /* YOKLUK SÜRESİ VEKİL ÖLÇÜDEN ALINMAZ (06.09.2026 — ana hata).
+
+       Eskiden `simdi - this.sonHareket` idi: yani "en son ne zaman
+       dokundu". Ama bu programın kendi kuralı (aşağıda, tik() içinde)
+       "EKRAN GÖRÜNÜYORSA GÖZ ÇALIŞIYOR — DOKUNMASA DA" diyor. Aynı
+       sessizliği tik 'çalışıyor', hareketVar 'dinlendi' sayıyordu;
+       tek programda iki zıt "kullanıcı gitti mi" tanımı vardı.
+
+       Sonucu kullanıcı bildirdi: 16 dakika okuyup hiç tuşa basmayan
+       biri 3 saniyeliğine sekme değiştirince sayaç 20:00'a dönüyor ve
+       `kesintisizSure` sıfırlanıyordu — yani mola HİÇ gelmiyordu.
+       Ölçüldü (_sinama/sinama-sifirlanma.js S-1): kalan 240 sn
+       beklenirken 1200 dönüyordu.
+
+       Artık yokluk, sayfanın gerçekten gizli kaldığı süredir.
+       `gizlenmeAni` yoksa (hiç gizlenmeden gelen hareket) eski ölçüye
+       düşülür; ekran kilidi kanıtı ve gerçek uzun yokluk hâlâ
+       sıfırlar — S-1c bunu koruyor. */
+    const uzaktaKalinan = (this.gizlenmeAni != null)
+      ? (simdi - this.gizlenmeAni)
+      : (simdi - this.sonHareket);
+    this.gizlenmeAni = null;
     this.sonHareket = simdi;
 
     if (this.durum === 'bosta') {
@@ -542,8 +570,23 @@ class MolaMotoru {
    * DOĞRU değeri dondurur.
    */
   gizlendi() {
-    if (this.durum !== 'calisiyor') return;
+    /* 'uyari' DA DONDURULUR (06.09.2026).
+
+       Eskiden ilk satır yalnız 'calisiyor' kabul ediyordu. Molaya son
+       15 saniyede gizlenen sayfa hiç donmuyor, dönüşte hedef geçmişte
+       kaldığı için 00:00 çıkıp mola pusuya yatıyordu. Durum kaybı
+       olmuyor: dönüşte devamEt() 'calisiyor' yapıyor, ilk tik() kalanı
+       uyarı eşiğinin altında görüp yeniden 'uyari'ye geçiriyor. */
+    if (this.durum !== 'calisiyor' && this.durum !== 'uyari') return;
+    this._dondur();
+  }
+
+  /** Sayacı olduğu yerde dondur. gizlendi() ve tik()'in gizli dalı
+      aynı işi iki ayrı yerde yapıyordu; `gizlenmeAni` eklenince ikinci
+      kopya sessizce eksik kalırdı (K-87: kopyalanan değer bayatlar). */
+  _dondur() {
     this.kalanDondurulmus = this.kalanSaniye();
+    this.gizlenmeAni = Date.now();
     this.durum = 'bosta';
     this._duyur('degisti', this.anlikDurum());
   }
@@ -623,6 +666,10 @@ class MolaMotoru {
 
   tik() {
     if (this.askida) return;
+    /* BEKLEYEN MOLA KENDILIGINDEN BASLAMAZ. Durum burada duruyor ve
+       kullanicinin dokunusunu bekliyor -- pusu kurmamanin karsiligi
+       bu. `molayaGec()` her durumdan calisiyor. */
+    if (this.durum === 'molaBekliyor') return;
     if (this._gunuTazele()) this._duyur('degisti', this.anlikDurum());
 
     // SÜRELİ DURAKLATMA BİTTİ Mİ? Bu satır olmadan süre dolsa bile
@@ -683,9 +730,7 @@ class MolaMotoru {
         || document.visibilityState !== 'hidden';
       if (!ekrandaMi
           && simdi - this.sonHareket > this.ayarlar.bostaEsigi * 1000) {
-        this.kalanDondurulmus = this.kalanSaniye();
-        this.durum = 'bosta';
-        this._duyur('degisti', this.anlikDurum());
+        this._dondur();
         return;
       }
       /* EKRAN SURESI DUVAR SAATIYLE OLCULUR, TIK SAYISIYLA DEGIL.
@@ -826,12 +871,12 @@ class MolaMotoru {
   kopruyuBenimse(kalanSn) {
     const kalan = Number(kalanSn);
     if (!Number.isFinite(kalan) || kalan < 0) return false;
-    this._asamayaGec('calisiyor', kalan);
+    this._asamayaGec('calisiyor', kalan, this.ayarlar.calismaSuresi);
     return true;
   }
 
   /* ---------- Yardımcılar ---------- */
-  _asamayaGec(yeniDurum, saniye) {
+  _asamayaGec(yeniDurum, saniye, toplamSure) {
     this.durum = yeniDurum;
     /* ASAMANIN GERCEK SURESI — TEK KAYNAK.
 
@@ -847,10 +892,20 @@ class MolaMotoru {
 
        Suresi saklanan tek yer burasi; her asama gecisi buradan geciyor,
        yani ikinci bir kaynak dogmasi mumkun degil. */
-    this.asamaSuresi = saniye;
+    /* KALAN SÜRE, AŞAMANIN SÜRESİ DEĞİLDİR (06.09.2026).
+
+       `devamEt()` buraya KALAN süreyi veriyordu ve burası onu aşamanın
+       TOPLAM süresi sanıp yazıyordu: 20 dakikalık aşama, her geri
+       dönüşte kalan kadar (12 dk, sonra 9 dk...) küçülüyordu.
+       `ilerleme() = 1 - kalan/asamaSuresi` bu yüzden hep 0 çıkıyor ve
+       ilerleme halkası her uygulama değişiminde TAMAMEN DOLUYA geri
+       sıçrıyordu — kullanıcının gördüğü "kendini sıfırladı".
+       Ölçüldü (S-2): ilerleme 0,400 → 0,000; asamaSuresi 1200 → 720. */
+    this.asamaSuresi = (toplamSure == null) ? saniye : toplamSure;
     this.asamaBaslangic = Date.now();
     this.hedefZaman = this.asamaBaslangic + saniye * 1000;
     this.kalanDondurulmus = null;
+    this.gizlenmeAni = null;
     // Kalp atışı BURADA başlıyor, yalnızca basla() içinde değil.
     // Önceden yalnızca basla() başlatıyordu; sayaç kayıttan geri
     // yüklendiğinde basla() çalışmadığı için kalp atışı hiç
@@ -872,6 +927,8 @@ class MolaMotoru {
        dusuyor ve sonunda "Calisma saati disi · 00:00" goruluyordu.
        00:00 uygulamanin her yerinde "mola simdi" demek; burada
        hicbir sey olmuyor. */
+    // Bekleyen molada kalan sure YOK: mola SIMDI borclu.
+    if (this.durum === 'molaBekliyor') return 0;
     if (this.durum === 'duraklatildi' || this.durum === 'bosta'
         || this.durum === 'saatDisi') {
       return this.kalanDondurulmus ?? 0;
@@ -1159,8 +1216,23 @@ class MolaMotoru {
          (pusu yok), `gecikmisMola` yine kuruluyor ve arayuz kullaniciya
          DUGMEYLE soruyor. Mola kaybolmuyor, dayatilmiyor. Karar
          kullanicida -- zaten uygulamanin butun mantigi bu. */
-      this.hedefZaman = simdi + this.ayarlar.calismaSuresi * 1000;
-      this.durum = 'calisiyor';
+      /* SAYAC BASTAN KURULMUYOR — KULLANICI ISTEGI (06.09.2026).
+
+         Eskiden burada `hedefZaman = simdi + calismaSuresi` vardi:
+         donunce ekran 20:00 gosteriyordu. Kullanicinin gordugu sey
+         tam olarak buydu -- "kendini sifirlayip duruyor", ustelik
+         "molayi hic goremeden". Telefonda yirmi dakikadan uzun uzak
+         kalmak normal oldugu icin bu NEREDEYSE HER DONUSTE oluyordu.
+
+         Molayi kendiliginden acmak da secenek degildi: kullanici
+         03.09'da "bak yine en basta actigimda kendisi acti" demisti.
+
+         Ucuncu yol: sayac ne sifirlaniyor ne de mola dayatiliyor.
+         Durum "mola bekliyor" oluyor, ana dugme "Molaya basla"ya
+         donusuyor ve karar kullanicida kaliyor. */
+      this.hedefZaman = simdi;
+      this.asamaSuresi = 0;
+      this.durum = 'molaBekliyor';
       this.sonHareket = simdi;
       this.gecikmisMola = { dakika: Math.round(kapaliKalan / 60) };
       return true;
