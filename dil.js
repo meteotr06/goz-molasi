@@ -392,6 +392,8 @@ const SOZLUK = {
   /* ---- Kurulum ---- */
   'Ana ekrana ekle': 'Add to home screen',
   'Rapor': 'Report',
+  'Molan bekliyor — başlatmana hazır': 'Your break is waiting — ready when you are',
+  '▶ Molaya başla': '▶ Start break',
   'Hangi saatlerde ekran başındasın. En yoğun saatlerini bilirsen molanı ona göre kurabilirsin.':
     'Which hours you spend at the screen. Knowing your busiest hours lets you plan your breaks around them.',
   'Bugün': 'Today',

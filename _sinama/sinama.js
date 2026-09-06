@@ -59,10 +59,30 @@
        Sınama bu yüzden artık TAM ÇEVRİM bekliyor. Eski beklenti
        ürünün değil, eski tasarımın kaydıydı; bayat bir sınama, geri
        alınmış bir kusuru "doğru" diye savunur. */
+    /* BEKLENTI 06.09.2026'DA YENIDEN DEGISTI — KULLANICI KARARI.
+
+       "Tam cevrim" beklentisi (yukarida anlatilan) bir sonraki adimda
+       kullanicinin sikayetine donustu: "ya bu goz uygulamasi gercekten
+       kendini sifirlayip duruyot" ve "knk ama molayi HIC GOREMEDEN
+       sifirliyor". Telefonda yirmi dakikadan uzun uzak kalmak normal
+       oldugu icin tam cevrim NEREDEYSE HER DONUSTE olusuyordu; sayacin
+       20:00'a donmesi kullanici icin "sifirlandi" demekti.
+
+       Kullaniciya uc secenek sunuldu, sectigi: sayac 20:00'a DONMESIN,
+       "mola bekliyor" desin. Bugunku sozlesme:
+         · durum 'molaBekliyor', kalan 0 (mola SIMDI borclu)
+         · sayac kendiliginden ne baslar ne sifirlanir (pusu yok)
+         · ana dugme "Molaya basla" olur; serit de teklif eder
+         · serit kapatilirsa "simdi degil" sayilir ve normal cevrim
+           yeniden baslar
+
+       UC BEKLENTI, UC AYRI TASARIM -- her biri kullanicinin bir
+       sikayetinin cevabi. Bunu "duzeltip" birine geri donen, oteki
+       sikayeti geri getirir. */
     r = dene({ hedefZaman: s - 30e3, durum: 'calisiyor', kayitAni: s - 40e3 });
-    ekle('sayaç', 'kaçan mola, kısa kapanma → pusu YOK, tam çevrim',
-         r.ok && yakin(r.kalan, A.calismaSuresi, 5),
-         r.ok ? `${r.kalan} sn` : 'reddetti');
+    ekle('sayaç', 'kaçan mola, kısa kapanma → mola BEKLER (pusu yok, sıfırlama yok)',
+         r.ok && r.durum === 'molaBekliyor' && r.kalan === 0,
+         r.ok ? `${r.durum} · ${r.kalan} sn` : 'reddetti');
 
     /* Teklifin KENDİSİ duruyor mu: şerit sayfadan kaldırılırsa kaçan
        mola sessizce kaybolur ve üstteki senaryo yine "geçti" der. */

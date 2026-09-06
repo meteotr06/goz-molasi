@@ -1681,6 +1681,9 @@
     duraklatildi: 'Duraklatıldı',
     bosta: 'Boşta — sayaç durdu',
     saatDisi: 'Çalışma saati dışı',
+    /* Mola sen yokken dustu ve BEKLIYOR. Sayac sifirlanmiyor, mola da
+       dayatilmiyor -- karar kullanicida. */
+    molaBekliyor: 'Molan bekliyor — başlatmana hazır',
   };
 
   function ss(saniye) {
@@ -1790,8 +1793,11 @@
       og.halka.style.strokeDashoffset = CEVRE_ANA * d.ilerleme;
     }
 
-    og.baslat.textContent =
-      C(d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat');
+    /* Bekleyen molada dugme "Molaya basla" oluyor: serit gozden
+       kacabilir, ana dugme kacmaz. */
+    og.baslat.textContent = d.durum === 'molaBekliyor'
+      ? C('▶ Molaya başla')
+      : C(d.durum === 'calisiyor' || d.durum === 'uyari' ? '⏸ Duraklat' : '▶ Başlat');
 
     // Molanın son üç saniyesi. Burada da yapıyoruz çünkü egzersiz
     // döngüsü requestAnimationFrame ile sürülüyor ve o arka plan
@@ -3124,6 +3130,11 @@
      DÜĞMELER VE KISAYOLLAR
      ============================================================ */
   og.baslat.addEventListener('click', async () => {
+    if (motor.durum === 'molaBekliyor') {
+      /* Bekleyen mola TEK DOKUNUSLA basliyor. */
+      motor.molayaGec();
+      return;
+    }
     if (motor.durum === 'calisiyor' || motor.durum === 'uyari') {
       motor.duraklat();
     } else if (motor.durum === 'duraklatildi' || motor.durum === 'bosta') {
@@ -5060,8 +5071,18 @@
           if (motor.durum === 'hazir') motor.basla();
           motor.molayaGec();
         }, { once: true });
-        $('gecikmisMolaKapat')?.addEventListener(
-          'click', () => { serit.hidden = true; }, { once: true });
+        $('gecikmisMolaKapat')?.addEventListener('click', () => {
+          serit.hidden = true;
+          /* KAPATMAK "SIMDI DEGIL" DEMEK -- sonsuza kadar 00:00'da
+             beklemek degil. Serit kapatilinca sayac normal calisma
+             suresiyle yeniden basliyor; bekleyen mola dusuyor.
+             Kullanici molayi gormeden gecmis olmuyor: gormedi, GORDU
+             ve "simdi degil" dedi. */
+          if (motor.durum === 'molaBekliyor') {
+            motor.devamEt();
+            motor.sifirla();
+          }
+        }, { once: true });
         serit.hidden = false;
       }
       /* Ustteki ortak kutu bu durumda HIC kullanilmiyor: iki kutu birden
