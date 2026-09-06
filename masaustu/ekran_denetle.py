@@ -90,11 +90,48 @@ class _Sessiz(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-def sunucu_baslat(port):
-    """Sunucu AYRI SÜREÇ DEĞİL: daemon iş parçacığı, betikle birlikte ölür."""
+# Sunucunun kendi kendini kapatacağı süre. Ölçüm betiklerinin hiçbiri
+# on dakikadan uzun sürmüyor; bundan uzun yaşayan bir sunucu, unutulmuş
+# bir sunucudur.
+SUNUCU_EN_FAZLA_SANIYE = 600
+
+
+def sunucu_baslat(port, enFazlaSaniye=SUNUCU_EN_FAZLA_SANIYE):
+    """Ölçüm sunucusu — KENDİ KENDİNİ KAPATIR.
+
+    Eski açıklama "daemon iş parçacığı, betikle birlikte ölür" diyordu
+    ve bu YANLIŞTI. Daemon iş parçacığı süreç ölünce ölür; sorun
+    sürecin ölmemesiydi.
+
+    ÖLÇÜLDÜ (06.09.2026, kullanıcının makinesinde): ölçüm betiklerim
+    `timeout 200 python ...` ile koşuyordu. Windows'ta o zaman aşımı
+    Python sürecini güvenilir biçimde öldürmüyor; birkaç betiğim
+    çöküp/asılıp kalınca ARKADA İKİ HTTP SUNUCUSU yaşamaya devam etti.
+    Kullanıcı tam ekran VALORANT oynarken bunlar makineyi yordu ve
+    oyundan atıldı. Yani bu, kâğıt üzerinde bir kaynak sızıntısı değil,
+    kullanıcıya doğrudan zarar veren bir kusurdu.
+
+    `try/finally` de yetmezdi: süreç hiç ölmezse `finally` de koşmaz.
+    Bu yüzden karar sunucunun KENDİSİNDE: süre dolunca kapanıyor.
+
+    Bıraktığın süreç senin sorumluluğun.
+    """
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
     srv = socketserver.ThreadingTCPServer(("127.0.0.1", port), _Sessiz)
     srv.daemon_threads = True
     threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    def _sureDolunca():
+        try:
+            srv.shutdown()
+            srv.server_close()
+        except Exception:
+            pass
+
+    zamanlayici = threading.Timer(max(30, enFazlaSaniye), _sureDolunca)
+    zamanlayici.daemon = True
+    zamanlayici.start()
+    srv._kapanmaZamanlayicisi = zamanlayici
     return srv
 
 
