@@ -442,3 +442,46 @@ ekranda 2 dakika yazar. Bu, bu depoda **sessiz yanlış sayı** sınıfıdır.
 2. `_kopru_verisi` → bugünün yanında DÜNÜN dağılımını da yayınla.
 3. `arayuz.js/olcumuAl` → geleni `Gecmis.gunuIsle` ile birleştir
    (yol zaten var, v238'de bugün için yazıldı).
+
+
+## MOBİLDE UYGULAMA BAŞINA ÖLÇÜM — 07.09.2026 kararı
+
+**Kullanıcı:** "arka planda sayaç var ama uygulamaları ve ekranı kaç
+kere ne kadar olduğunu sayabilen bir şey yok" · "bunu öbürü gibi
+yapamıyor muyuz mobilde de"
+
+**Durum.** Masaüstü sürümü bunu YAPIYOR (ölçüldü, ekran görüntüsüyle:
+Brave 19 dk %74, Claude 6 dk %23...). Web sürümü YAPAMAZ.
+
+**Neden yapamaz — bu bir hata değil, sınır.** Android, uygulama
+kullanım istatistiklerini (`UsageStatsManager`) yalnızca
+`PACKAGE_USAGE_STATS` izni verilmiş KURULU uygulamalara açıyor.
+Tarayıcıya vermiyor. StayFree yerli bir Android uygulaması, o yüzden
+yapabiliyor; PWA aynı kutuda değil. Aynı sebeple "ekran kaç kere
+açıldı" da web'den ölçülemez.
+
+**TWA TEK BAŞINA YETMEZ** — bu önemli, çünkü ilk akla gelen o.
+TWA bir Chrome sekmesini uygulama kabuğuna koyuyor; içerik yine
+tarayıcı korumalı alanında koşuyor ve JS köprüsü YOK. Yani izin
+alınsa bile veriyi sayfaya geçirecek yol olmuyor.
+
+**Gereken mimari (bounded, sıfırdan yazım DEĞİL):**
+1. `WebView` taşıyan küçük bir yerli Android uygulaması — mevcut arayüz
+   olduğu gibi içine giriyor.
+2. `UsageStatsManager` + `PACKAGE_USAGE_STATS` → uygulama başına süre
+   ve ekran açılma sayısı.
+3. Ön plan servisi (foreground service) → telefonda gerçek arka plan
+   sayımı; tarayıcının donma sınırı ortadan kalkar.
+4. `@JavascriptInterface` köprüsü → veriler mevcut grafiklere akar.
+
+**BUGÜNKÜ ENGEL — ölçüldü:** bu makinede Android araç zinciri YOK.
+`gradle`, `adb`, `sdkmanager`, `node` yok; Android SDK klasörü yok.
+Yalnız `java` var (JRE). Yani derlenemez; önce ~1-2 GB'lık bir kurulum
+gerekiyor ve o kullanıcının kararı.
+
+**Play Store notu:** kullanım erişimi isteyen uygulamalar ek incelemeye
+giriyor, gerekçe beyanı isteniyor. Arsa Rehberi'yle Play deneyimi ve
+25$ ücreti zaten ödenmiş durumda.
+
+**Şimdilik kapatılmadı, PARK EDİLDİ.** Karar kullanıcının: yerli
+Android uygulaması ayrı bir proje.
