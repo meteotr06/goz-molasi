@@ -47,6 +47,15 @@ import ekran_denetle as ED
 
 sonuc = []
 
+# KAC OLCUM KOSMALI. Bu sayi olmadan "TAMAM — 19 olcum" ile
+# "TAMAM — 24 olcum" ayni gorunur: sessizce KOSMAYAN bir kontrol,
+# GECEN bir kontrol gibi okunur. Merkez bugun ayni acigi kendi
+# aracinda buldu (K-89) ve haber verdi; burada da vardi.
+#
+# Yeni olcum ekleyince bu sayiyi da buyut -- bilerek zahmetli:
+# sayiyi guncellemek, kontrolun kostugunu ONAYLAMAK demek.
+BEKLENEN_OLCUM = 24
+
 
 def kontrol(ad, gecti, ayrinti=""):
     sonuc.append((gecti, ad, ayrinti))
@@ -385,6 +394,13 @@ def calistir():
 
     kotu = [a for g, a, _ in sonuc if not g]
     print()
+    if len(sonuc) < BEKLENEN_OLCUM:
+        print("BASARISIZ — %d olcum kosmasi gerekirken %d kostu."
+              % (BEKLENEN_OLCUM, len(sonuc)))
+        print("  Eksik kontrol SESSIZCE atlandi. Bir oge adi degismis ya da")
+        print("  bir dal hic girilmemis olabilir; 'gecti' diyen satirlar bu")
+        print("  yuzden hicbir sey ifade etmiyor.")
+        return False
     if kotu:
         print("BAŞARISIZ — %d ölçüm tutmadı:" % len(kotu))
         for a in kotu:
