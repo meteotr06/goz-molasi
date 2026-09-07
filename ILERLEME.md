@@ -418,3 +418,27 @@ verisinin arşivlenmemesi); kalan yedisi v240'ta.
 
 > Bulguların tam gerekçesi ve çürütme hükümleri iş akışı günlüğünde;
 > buraya BAŞLIK + YER yazıldı ki arama tekrarlanmasın.
+
+
+## BİLİNEN AÇIK: masaüstünün saat dağılımı arşivlenmiyor (06.09.2026)
+
+`ARSIV_ALANLARI` üç sayı arşivliyor (`mola`, `uzun`, `ekran_sn`);
+bugün eklenen `saatlik` dizisi arşivlenmiyor. Gece yarısı
+`ist_baslangic()` ile sıfırlanıyor ve **o günün saat dağılımı kalıcı
+olarak siliniyor.**
+
+**Neden bugün kapatılmadı:** masaüstü penceresinde saatlik grafik
+sekmesi yok (yalnız *Programlar* | *7 gün*), yani arşivlenen veriyi
+gösteren bir yer de yok. Okunmayan veri biriktirmek, ölçülmeyen bir
+kural yazmak gibidir.
+
+**Ne zaman ACİL olur:** kullanıcı gün boyu yalnız masaüstünü açık
+tutar, tarayıcıyı hiç açmazsa — ertesi gün web'de "‹ Dün"e bakınca
+yalnızca tarayıcının küçük ölçüsü görünür. Masaüstü 6 saat ölçmüştür,
+ekranda 2 dakika yazar. Bu, bu depoda **sessiz yanlış sayı** sınıfıdır.
+
+**Kapatmanın yolu (üç küçük adım):**
+1. `masaustu/gecmis.py` → `ALANLAR`'a dizi desteği + `saatlik`.
+2. `_kopru_verisi` → bugünün yanında DÜNÜN dağılımını da yayınla.
+3. `arayuz.js/olcumuAl` → geleni `Gecmis.gunuIsle` ile birleştir
+   (yol zaten var, v238'de bugün için yazıldı).
