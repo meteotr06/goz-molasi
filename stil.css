@@ -677,6 +677,22 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
    tanimlamak ikisinin ayrismasi demekti. */
 :root { --soluk: var(--yazi-soluk); }
 
+/* VURGU RENKLI YAZI ICIN AYRI TOKEN — TEK TANIM.
+
+   `--vurgu` bir ZEMIN/CERCEVE rengi olarak tasarlandi; zeminin
+   uzerinde YAZI olarak kullanildiginda on yedi temanin cogunda
+   4,5 esigini tutmuyor (olculdu: baglantilar 3,23, `td.evet` 3,46).
+
+   Vurguyu tumden birakmak o yazilarin kimligini siler; karisim hue'yu
+   koruyup yaziya dogru cekiyor, yani her temada zeminden uzaklasiyor.
+   Oran tahminle degil OLCULEREK secildi (17 tema supurmesi).
+
+   NIYE TEK TOKEN: ayni karisimi her kurala elle yazmak, K-102'nin ta
+   kendisi olurdu -- biri degisir, otekiler geride kalir. Simge,
+   cerceve ve buyuk baslik gibi 4,5 esigine tabi OLMAYAN yerler
+   `--vurgu` kullanmaya devam ediyor. */
+:root { --vurgu-metin: color-mix(in oklab, var(--vurgu) 55%, var(--yazi)); }
+
 [hidden] { display: none !important; }
 
 /* "Uygulama başlamadı" uyarısı. Stil dosyası gelmemiş olabilir diye
@@ -1749,7 +1765,7 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    birakmak baglantilarin kimligini siler; `color-mix` hue'yu koruyup
    yaziya dogru cekiyor, yani her temada zeminden uzaklasiyor. Oran
    olculerek secildi, tahminle degil. */
-.alt-bilgi a { color: color-mix(in oklab, var(--vurgu) 55%, var(--yazi)); }
+.alt-bilgi a { color: var(--vurgu-metin); }
 
 /* ---------------- Erişilebilirlik ---------------- */
 /* Hareket hassasiyeti olan kullanıcılar için tüm animasyonları kes */
@@ -2189,7 +2205,11 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    karsiligi. Renk TEK BASINA anlam tasimiyor - ayni bilgi kalin yazi
    ve yazinin kendisiyle de veriliyor. */
 .saatlik-eksen span[data-yogun="1"] {
-  color: var(--vurgu);
+  /* Olculdu: `var(--vurgu)` ile 3,23 (Acik tema) -- ve bu bir SAAT
+     ETIKETI, yani okunmasi gereken sey. Ustundeki yorum "saat etiketi
+     grafigin susu degil" diyor; en yogun saat, en cok okunmasi
+     gereken etiket olup en dusuk karsitliga sahipti. */
+  color: var(--vurgu-metin);
   font-weight: 700;
 }
 
@@ -2486,7 +2506,8 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   color: var(--yazi-soluk); font-weight: 600; white-space: nowrap;
 }
 .karsilastirma tbody tr:last-child td { border-bottom: 0; }
-.karsilastirma td.evet  { color: var(--vurgu); font-weight: 600; }
+/* Olculdu: `var(--vurgu)` ile 3,46 (Acik tema). Yazi, zemin uzerinde. */
+.karsilastirma td.evet  { color: var(--vurgu-metin); font-weight: 600; }
 .karsilastirma td.hayir { color: var(--yazi-soluk); }
 .kucuk-not { font-size: 0.78125rem !important; line-height: 1.6; }
 .karsilastirma .dugme { align-self: flex-start; }
