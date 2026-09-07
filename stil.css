@@ -836,7 +836,18 @@ h1, h2, h3, h4, .marka > div {
   transition: background .15s, color .15s;
 }
 .sekme:hover { color: var(--yazi); }
-.sekme.secili { background: var(--vurgu); color: var(--ana-yazi, #0d2b28); }
+/* SECILI SEKME YAZISI, DUGMEYLE AYNI KAYNAKTAN.
+
+   Burada `var(--ana-yazi, #0d2b28)` yaziyordu ve `--ana-yazi` BUTUN
+   depoda baska hicbir yerde tanimli degildi: her tema sessizce
+   #0d2b28 yedegine dusuyordu. Olculdu -- zeytin vurgusunda 2,41:1,
+   varsayilan vurguda 3,62:1; ikisi de 4,5 esiginin altinda.
+
+   `--vurgu-yazi` ise CALISAN mekanizma: vurgunun parlakligindan
+   siyah/beyaz secen JS her tema degisiminde onu kuruyor
+   (arayuz.js/vurguYazisiniTazele). Ikinci bir renk degiskeni
+   uretmek, ayrismasi icin ikinci bir firsat uretmek demek. */
+.sekme.secili { background: var(--vurgu); color: var(--vurgu-yazi, #001a16); }
 
 .bilgiler-giris {
   max-width: 720px;
@@ -992,7 +1003,10 @@ kbd {
 }
 .uzun-mola-evet {
   background: var(--vurgu);
-  color: var(--zemin);
+  /* `--zemin` DEGIL: zemin, vurgunun uzerinde okunaklı olmak zorunda
+     degil. Olculdu -- beyaz temada 4,16:1, Acik temada 3,23:1.
+     Vurgu zeminli her yazi ayni kaynaktan: `--vurgu-yazi`. */
+  color: var(--vurgu-yazi, #001a16);
   border: 1px solid var(--vurgu);
   font-weight: 600;
 }
@@ -1955,7 +1969,12 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .rapor-buyuk b { font-size: 2.6rem; line-height: 1; color: var(--vurgu); }
 .rapor-buyuk span { font-size: .9375rem; color: var(--yazi-soluk); }
 .rapor-fark { margin: 8px 0 0; font-size: .875rem; }
-.rapor-fark[data-yon="artis"] { color: var(--basari, var(--vurgu)); }
+/* HAYALET DEGISKEN KALDIRILDI. `--basari` hicbir temada tanimli
+   degil; uygulanan renk HER ZAMAN yedekti, yani `var(--vurgu)`.
+   Tanimsiz bir degiskeni birakmak "bir basari rengimiz var" izlenimi
+   verir ve bir sonraki kisi onu aramaya cikar. Palette boyle bir renk
+   YOK; olan neyse o yaziliyor. */
+.rapor-fark[data-yon="artis"] { color: var(--vurgu); }
 .rapor-kutucuklar {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2075,7 +2094,13 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   padding: 8px 10px;
   border: 1px solid var(--cizgi);
   border-radius: 10px;
-  background: var(--kart2, var(--kart));
+  /* `--kart2` DEGIL `--kart-2`. Butun temalar `--kart-2` tanimliyor
+     (stil.css:59, 67, 75, 84...); buradaki tiresiz yazim hicbir yerde
+     yok, yani kural sessizce yedege dusuyor ve bu oge KART ile AYNI
+     zemini aliyordu -- ayirt edilsin diye konan ikinci ton hic
+     uygulanmiyordu. Tek harflik fark, gozle bulunmasi en zor kusur
+     turu; nobetci buldu. */
+  background: var(--kart-2, var(--kart));
   font-size: .8125rem;
   line-height: 1.5;
 }

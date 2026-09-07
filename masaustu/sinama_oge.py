@@ -119,6 +119,37 @@ def kullanilan_sinif_denetle():
     return aday, len(kullanilan)
 
 
+def degisken_denetle():
+    """F. `var(--x)` ile ISTENEN ama HICBIR YERDE tanimlanmayan degisken.
+
+    Tanimsiz bir degiskene basvuran bildirim GECERSIZ sayilir ve yedek
+    deger (varsa) uygulanir; yedek yoksa oge devraldigi rengi alir.
+    Ikisi de SESSIZ: ekranda hata yok, yalnizca yanlis renk.
+
+    BU DENETIM BIR OLCUMDEN DOGDU (07.09.2026): `.sekme.secili`
+    `var(--ana-yazi, #0d2b28)` yaziyordu ve `--ana-yazi` butun depoda
+    baska hicbir yerde YOKTU. Her tema sessizce yedege dusuyor,
+    karsitlik 2,41:1'e kadar iniyordu -- ve kontrast sinamasi bunu
+    goremiyordu cunku o, ekranda olmayan baska bir cifti olcuyordu.
+    Ayni sinif daha once `--soluk` icin de yasandi.
+
+    JS'in KURDUGU degiskenler de tanim sayilir (`setProperty('--x')`).
+    """
+    # YORUMLAR SAYILMAZ. Ilk kosusta bu denetim kendi ACIKLAMAMI
+    # kusur diye bildirdi: duzeltilen degiskenin adi yorumda geciyordu.
+    # Kendi belgesini kusur sanan bir nobetci, guveni once kendi
+    # yikar -- bagiran nobetci, susan nobetciden kotudur.
+    css = re.sub(r"/\*.*?\*/", "", oku("stil.css"), flags=re.S)
+    js = "\n".join(oku(a) for a in dosyalar(".js"))
+    html = "\n".join(oku(a) for a in dosyalar(".html"))
+    istenen = set(re.findall(r"var\(\s*(--[\w-]+)", css))
+    # Tanim: `--x:` bir kural icinde, ya da JS'ten setProperty ile.
+    varolan = set(re.findall(r"(--[\w-]+)\s*:", css))
+    varolan |= set(re.findall(r"""setProperty\(\s*['"](--[\w-]+)""", js))
+    varolan |= set(re.findall(r"""setProperty\(\s*['"](--[\w-]+)""", html))
+    return sorted(istenen - varolan), len(istenen)
+
+
 def etiket_denetle():
     """E. `<label for="X">` var ama X diye bir oge YOK.
 
@@ -198,7 +229,12 @@ def kendini_sina():
         finally:
             io.open(ayYol, "w", encoding="utf-8", newline="\n").write(ayAsil)
 
-        return a and b and d and e
+        # F: tanimsiz degiskeni buluyor mu?
+        io.open(stilYol, "w", encoding="utf-8", newline="\n").write(
+            stilAsil + "\n.sahte-f { color: var(--sahte-tanimsiz-degisken); }\n")
+        f = "--sahte-tanimsiz-degisken" in degisken_denetle()[0]
+
+        return a and b and d and e and f
     finally:
         io.open(stilYol, "w", encoding="utf-8", newline="\n").write(stilAsil)
         io.open(htmlYol, "w", encoding="utf-8", newline="\n").write(htmlAsil)
@@ -245,6 +281,13 @@ def calistir():
                     "TANIMLI DEGIL - gorunum hic uygulanmiyor" % s)
 
     oluEtiket, toplamEtiket = etiket_denetle()
+    tanimsiz, degSayisi = degisken_denetle()
+    for d in tanimsiz:
+        hata.append("stil.css `%s` degiskenini kullaniyor ama onu "
+                    "hicbir yer TANIMLAMIYOR — kural sessizce gecersiz "
+                    "olur, oge devraldigi rengi alir" % d)
+    print("  F. CSS degiskeni: %d kullanilan, %d tanimsiz"
+          % (degSayisi, len(tanimsiz)))
     print("  E. <label for>: %d tane, %d karsiliksiz"
           % (toplamEtiket, len(oluEtiket)))
     for e_ in oluEtiket:

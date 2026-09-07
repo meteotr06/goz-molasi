@@ -551,6 +551,30 @@
       for (const v of [60, 100, 150]) {
         kok.style.setProperty('--canlilik', (v/100).toFixed(2)); n++;
         const o = [
+          /* BU SATIR EKRANDA OLMAYAN BIR CIFTI OLCUYOR — BILINEN ACIK.
+
+             `--vurgu-koyu` hicbir CSS kuralinda kullanilmiyor. Gercek
+             cift, vurgu zeminli yazi (`--vurgu-yazi` / `--vurgu`):
+             `.dugme.ana`, `.sekme.secili`, `.uzun-mola-evet`. Yani bu
+             sinama yesil verirken `.sekme.secili`nin 3,62:1'i yillarca
+             gorunmedi.
+
+             DUZELTMEYI DENEDIM VE GERI ALDIM (07.09.2026). Cifti
+             degistirmek 51 kombinasyonun 9'unu kirmiziya dusurdu ama o
+             kirmizi GERCEK DEGILDI, olcumun kendisi bozuktu:
+               · `--vurgu-yazi`yi JS kuruyor (vurguYazisiniTazele) ve
+                 bu dongu temayi `kok.dataset.tema` ile ELLE
+                 degistiriyor, yani o JS hic kosmuyor; degisken bos
+                 kaliyor.
+               · `al(...)` her zaman bir dizi donduruyor, dolayisiyla
+                 `|| yedek` yazmak da ise yaramiyor.
+             Sahte kirmizi, sahte yesilden daha az zararli degil: ikisi
+             de sinamaya olan guveni bitirir.
+
+             DOGRU DUZELTME: dongu temayi uygulamanin KENDI yolundan
+             gecirmeli (tema dugmesine `.click()`), bir kare beklemeli,
+             sonra olcmeli. O zaman `--vurgu-yazi` gercekten kurulur ve
+             cikan sayi ekranda gorunen sayi olur. */
           K(al('var(--vurgu-koyu)'), al('var(--vurgu)')),
           K(al('var(--yazi)'), al('var(--zemin)')),
           K(al('var(--yazi-soluk)'), al('var(--kart)')),
