@@ -257,6 +257,50 @@ def sayim_dogrulugu(kontrol):
             abs(getattr(u2, "olculemeyen_sn", 0.0) - 2 * 3600) < 2,
             "%.0f sn" % getattr(u2, "olculemeyen_sn", 0.0))
 
+    # ---- SAAT DAGILIMI: `ekran_sn` ile AYNI YERDE artiyor mu? ----
+    #
+    # Bu sayi bugun eklendi ve kullanicinin bilgisayardaki GERCEK ekran
+    # suresini gosteren tek kaynak olacak; tarayici sekmesi gizliyken
+    # hicbir sey olcemiyor. Yanlis olursa kimse fark etmez: grafik
+    # inandirici gorunur, toplam tutmaz.
+    u9 = SahteUygulama(saat)
+    u9.ist["saatlik"] = [0.0] * 24
+    for _ in range(40):
+        u9._ekran_suresine_ekle(1.5)
+    toplam_kova = sum(u9.ist["saatlik"])
+    kontrol("saat dagiliminin toplami `ekran_sn` ile tutuyor",
+            abs(toplam_kova - u9.ist["ekran_sn"]) < 0.01,
+            "kovalar %.1f · ekran_sn %.1f" % (toplam_kova, u9.ist["ekran_sn"]))
+    kontrol("sure ICINDE BULUNULAN saatin kovasina yaziliyor",
+            u9.ist["saatlik"][gm.time.localtime().tm_hour] > 0,
+            "saat %d" % gm.time.localtime().tm_hour)
+
+    # BOZUK DIZI ONARILIYOR, GUN SILINMIYOR.
+    u10 = SahteUygulama(saat)
+    u10.ist["saatlik"] = "bozuk"
+    u10._ekran_suresine_ekle(5.0)
+    kontrol("bozuk saatlik dizisi onariliyor (24 kova)",
+            isinstance(u10.ist["saatlik"], list) and len(u10.ist["saatlik"]) == 24,
+            str(type(u10.ist["saatlik"]).__name__))
+
+    # BIR SAAT 3600 SANIYEDIR. Ustune cikan bir kova, okuyan tarafta
+    # "bozuk" sayilip SIFIRLANIYOR -- yani olculmus bir saat tumden
+    # silinirdi.
+    u11 = SahteUygulama(saat)
+    u11.ist["saatlik"] = [0.0] * 24
+    u11.ist["saatlik"][gm.time.localtime().tm_hour] = 3599.5
+    u11._ekran_suresine_ekle(10.0)
+    kontrol("kova 3600 saniyeyi asmiyor",
+            u11.ist["saatlik"][gm.time.localtime().tm_hour] <= 3600.0,
+            "%.1f sn" % u11.ist["saatlik"][gm.time.localtime().tm_hour])
+
+    # KONTROL: sifir eklemek hicbir sayiyi degistirmemeli.
+    u12 = SahteUygulama(saat)
+    u12.ist["saatlik"] = [0.0] * 24
+    u12._ekran_suresine_ekle(0)
+    kontrol("KONTROL — sifir eklemek sayilari degistirmiyor",
+            u12.ist["ekran_sn"] == 0.0 and sum(u12.ist["saatlik"]) == 0.0)
+
     # TERS DAL: arada mola/bosta vardiysa o bosluk ekran suresi degil.
     u3 = SahteUygulama(saat)
     u3._sayim_araligi(False)

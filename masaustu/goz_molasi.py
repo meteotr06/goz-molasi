@@ -1790,6 +1790,35 @@ class Uygulama:
     # ("60 dk") bozuk veriden uretilmis ama INANDIRICI olur.
     SAATLIK_EN_COK = 3600
 
+    def _ekran_suresine_ekle(self, gecen):
+        """UC SAYI TEK YERDE ARTAR: ekran / kesintisiz / saat dagilimi.
+
+        Ayri yerlerde artsalardi biri kacirdiginda toplamlar sessizce
+        uyusmaz olurdu -- bu depoda bilinen sinif ve tarayici surumu de
+        ayni kurali uyguluyor (cekirdek.js: "ayni satirda artiyor").
+
+        AYRI BIR METOT OLMASININ SEBEBI OLCULEBILIRLIK: satirlar
+        `_tik` icinde gomuluyken kurali sinamanin tek yolu butun tik
+        dongusunu taklit etmekti, o da Tkinter istiyordu. Olculemeyen
+        bir kural, kural degil temennidir.
+        """
+        if not gecen:
+            return
+        self.ist["ekran_sn"] += gecen
+        self.ist["kesintisiz_sn"] += gecen
+        kova = self.ist.get("saatlik")
+        if not isinstance(kova, list) or len(kova) != 24:
+            # Bozuk/eksik dizi SESSIZCE onarilir; burada sifirlamak
+            # gunun olculmus saatlerini silmek olurdu.
+            kova = self.saatlik_suz(kova)
+            self.ist["saatlik"] = kova
+        s = time.localtime().tm_hour
+        # BIR SAAT 3600 SANIYEDIR. Yuvarlama artiklari birike birike
+        # kovayi sinirin ustune cikarabiliyor; okuyan taraf da
+        # sinir disini bozuk sayip sifirliyor (bkz. cekirdek.js
+        # kova24) -- yani olculmus bir saat tumden silinirdi.
+        kova[s] = min(3600.0, kova[s] + gecen)
+
     @staticmethod
     def saatlik_suz(ham):
         """Gunun saat dagilimi: her zaman 24 elemanli, her elemani sayi."""
@@ -3760,17 +3789,7 @@ class Uygulama:
         # `_sayim_araligi` icinde: 250 ms'lik dongu 258-260 ms'de
         # donuyor ve fark hep sayacin ALEYHINE isliyordu.
         gecen = self._sayim_araligi(onceki_saydi)
-        self.ist["ekran_sn"] += gecen
-        self.ist["kesintisiz_sn"] += gecen
-        # SAAT DAGILIMI, `ekran_sn` ILE AYNI YERDE ARTIYOR.
-        # Ayri bir yerde artsaydi biri kacirdiginda toplamlar sessizce
-        # uyusmaz olurdu -- bu depoda bilinen sinif. Tarayici surumu de
-        # ayni kurali uyguluyor (cekirdek.js: "ayni satirda artiyor").
-        kova = self.ist.get("saatlik")
-        if not isinstance(kova, list) or len(kova) != 24:
-            kova = self.saatlik_suz(kova)
-            self.ist["saatlik"] = kova
-        kova[time.localtime().tm_hour] += gecen
+        self._ekran_suresine_ekle(gecen)
 
         if self.ayar.get("analiz_izni"):
             _, program = iz.on_pencere()
