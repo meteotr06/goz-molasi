@@ -61,6 +61,39 @@ BUGUN_JS = """
 """
 
 
+def yeni_olcum_baglami(t, port, arka_plan_acik):
+    """Arka plan ayarı belli bir değere KURULMUŞ taze oturum."""
+    bg = t.new_context(viewport={"width": 390, "height": 844}, locale="tr-TR")
+    # OLCULEMEYEN SURE DEPODAN GELIYOR, sayfa acildiktan sonra
+    # motora elle yazilarak DEGIL: cizim kendi ic degiskeninden okuyor
+    # ve disaridan yazilan dizi hic gorunmuyordu -- ilk yazimda tam bu
+    # oldu ve olcum "cumle yok" dedi, oysa senaryo hic kurulmamisti.
+    bg.add_init_script("""
+      try {
+        const g = new Date();
+        const s = g.getHours();
+        const kova = new Array(24).fill(0);
+        const olcusuz = new Array(24).fill(0);
+        kova[s] = 600;          // 10 dk olculdu
+        olcusuz[s] = 1800;      // 30 dk olculemedi
+        const gun = g.getFullYear() + '-'
+          + String(g.getMonth() + 1).padStart(2, '0') + '-'
+          + String(g.getDate()).padStart(2, '0');
+        localStorage.setItem('goz-molasi-v1', JSON.stringify({
+          arkaPlanAcik: %s,
+          istatistik: { gun: gun, ekranSuresi: 600,
+                        saatlik: kova, olculemeyen: olcusuz },
+        }));
+      } catch (e) {}
+    """ % ("true" if arka_plan_acik else "false"))
+    s = bg.new_page()
+    hata = []
+    s.on("pageerror", lambda e: hata.append(str(e)[:120]))
+    s.goto("http://127.0.0.1:%d/index.html" % port, wait_until="load", timeout=30000)
+    s.wait_for_timeout(2000)
+    return bg, s, hata
+
+
 def olc(t, port):
     """Bütün ölçümler AYRI oturumlarda: biri ötekinin deposunu görmesin."""
 
@@ -173,6 +206,30 @@ def olc(t, port):
             "1000000" not in sure_yazi.replace(".", "").replace(",", ""),
             "ekranda: " + sure_yazi)
     bg.close()
+
+    # ---------------------------------------------------------------
+    # 3c. "NEDEN SAYMIYOR" SORUSUNUN CEVABI EKRANDA MI?
+    #
+    #     Kullanıcı (07.09.2026): "neden saymayı bırakıyor uygulama ya".
+    #     Sayfa "ölçemedik" diyordu ama bunu DÜZELTEN ayarı
+    #     söylemiyordu. Sebebi yazmak, çareyi yazmadan yarım kalıyor.
+    #
+    #     Ayar AÇIKSA cümle çıkmamalı: zaten yapmış birine "şunu yap"
+    #     demek okunmayan bir uyarı üretir.
+    # ---------------------------------------------------------------
+    for acik, beklenen in ((False, True), (True, False)):
+        bg, s, hata = yeni_olcum_baglami(t, port, acik)
+        s.eval_on_selector_all(".saatlik-sutun",
+                               "els => { const s = new Date().getHours();"
+                               " els[s] && els[s].click(); }")
+        s.wait_for_timeout(400)
+        yazi = s.eval_on_selector("#saatlikAyrinti", "e => e.textContent")
+        var = "Arka planda çalışmaya devam et" in yazi
+        kontrol("arka plan ayarı %s iken çare cümlesi %s"
+                % ("KAPALI" if not acik else "AÇIK",
+                   "yazıyor" if beklenen else "yazmıyor"),
+                var is beklenen, yazi.strip()[-90:] or "boş")
+        bg.close()
 
     # ---------------------------------------------------------------
     # 4. DEVRALAN SEKME DİSKTEKİ AYARLARI EZMİYOR

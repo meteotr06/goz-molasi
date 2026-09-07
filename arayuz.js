@@ -2900,11 +2900,39 @@
          anlama geldigini bilmiyor. */
       aciklama.push(CS(
         'Bu sürede tarayıcı arka plandaki sekmeyi dondurdu; ne kadarını '
-        + 'ekran başında geçirdiğini bilemeyiz, o yüzden saymadık. '
-        + 'Bilgisayarındaki gerçek süre için Windows sürümünü açık tut.',
+        + 'ekran başında geçirdiğini bilemeyiz, o yüzden saymadık.',
         'During this time the browser froze the background tab; we cannot '
-        + 'know how much of it you spent at the screen, so we did not count '
-        + 'it. Keep the Windows app running for real screen time.'));
+        + 'know how much of it you spent at the screen, so we did not '
+        + 'count it.'));
+      /* NE YAPACAGINI DA SOYLE.
+ 
+         KULLANICI (07.09.2026): "neden saymayi birakiyor uygulama ya".
+ 
+         Sebebi yazmak yetmiyordu: sayfa "olcemedik" diyor ama
+         kullanicinin elinde bunu DUZELTEN bir dugme oldugunu
+         soylemiyordu. "Arka planda calismaya devam et" acikken sayac
+         bir Worker'da doner ve tikler gizli sekmede de 250 ms'de bir
+         gelir; bosluk kucuk kaldigi icin sure TAM sayilir. Kapaliyken
+         tarayici sekmeyi kisar, bosluk dakikalara cikar ve hicbir sey
+         sayilmaz -- kullanicinin gordugu tam olarak bu.
+ 
+         Ayar ACIKSA bu cumle YAZILMIYOR: zaten yapmis birine "sunu
+         yap" demek, okunmayan bir uyari uretir.
+ 
+         Windows cumlesi yalniz masaustunde: telefonda "Windows
+         surumunu ac" demek, yapilamayacak bir sey onermektir. */
+      if (!arkaPlanAcik) {
+        aciklama.push(CS(
+          'Ayarlardan “Arka planda çalışmaya devam et”i açarsan bu süre de '
+          + 'ölçülür.',
+          'Turn on “Keep running in the background” in Settings and this '
+          + 'time will be measured too.'));
+      }
+      if (!/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+        aciklama.push(CS(
+          'Bilgisayarındaki gerçek ekran süresi için Windows sürümünü açık tut.',
+          'Keep the Windows app running for real screen time on this computer.'));
+      }
     }
     e.textContent = satirlar.join(' · ') + ' — ' + aciklama.join(' ');
     e.classList.remove('gizli');
