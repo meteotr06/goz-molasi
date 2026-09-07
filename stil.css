@@ -601,7 +601,11 @@ body[data-durum="uyari"] .halka .dolu { stroke: var(--uyari); }
   align-items: center;
 }
 .bilgi-kart p  { margin: 0; font-size: 0.875rem; line-height: 1.55; color: var(--yazi-soluk); }
-.kaynak { display: block; margin-top: 8px; font-size: 0.71875rem; color: var(--yazi-soluk); opacity: 0.85; }
+/* CIFT SOLDURMA YOK. `--yazi-soluk` zaten karsitligi olculmus
+   soluk bir token; ustune `opacity` binince ekranda gorunen renk
+   baska bir renk oluyor ve olcum 4,02-4,32'ye dusuyordu (esik 4,5).
+   Solukluk isteniyorsa yeri token, saydamlik degil. */
+.kaynak { display: block; margin-top: 8px; font-size: 0.71875rem; color: var(--yazi-soluk); }
 
 /* ---------------- Uyarı balonu ---------------- */
 .uyari-balon {
@@ -1049,8 +1053,11 @@ kbd {
   margin: 12px 0 0;
   text-align: center;
   font-size: 0.75rem;
+  /* CIFT SOLDURMA YOK (bkz. `.kaynak`). `--yazi-soluk` zaten soluk;
+     ustune 0,75 saydamlik binince olculen karsitlik 3,28'e dusuyordu.
+     Surum numarasi kucuk bir yazi, ama okunamayan bir surum numarasi
+     "hangi surumdeyim" sorusunu cevaplamaz. */
   color: var(--yazi-soluk);
-  opacity: 0.75;
 }
 
 .konum-notu {
@@ -1705,7 +1712,7 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--yazi-soluk);
-  opacity: 0.75;
+  /* opacity KALDIRILDI — cift soldurma; olculdu 3,35 (esik 4,5). */
   margin-bottom: 6px;
 }
 .reklam-alani ins { max-width: 100%; }
@@ -1735,7 +1742,14 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   max-width: 620px;
   line-height: 1.6;
 }
-.alt-bilgi a { color: var(--vurgu); }
+/* BAGLANTI RENGI VURGUDAN TURETILIYOR AMA YAZIYA DOGRU CEKILIYOR.
+
+   Duz `var(--vurgu)` olculdu: 3,23 (esik 4,5) -- on yedi temanin
+   bircogunda vurgu, zemine gore yeterince ayrilmiyor. Vurguyu tumden
+   birakmak baglantilarin kimligini siler; `color-mix` hue'yu koruyup
+   yaziya dogru cekiyor, yani her temada zeminden uzaklasiyor. Oran
+   olculerek secildi, tahminle degil. */
+.alt-bilgi a { color: color-mix(in oklab, var(--vurgu) 55%, var(--yazi)); }
 
 /* ---------------- Erişilebilirlik ---------------- */
 /* Hareket hassasiyeti olan kullanıcılar için tüm animasyonları kes */
@@ -2547,7 +2561,7 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   padding: 8px 10px;
   font-size: 0.82rem;
   line-height: 1.45;
-  opacity: 0.85;
+  /* opacity KALDIRILDI — cift soldurma (bkz. `.kaynak`). */
   border-left: 3px solid var(--vurgu, #7c6cf0);
   border-radius: 4px;
 }
