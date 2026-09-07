@@ -69,6 +69,13 @@ SINAMALAR = [
     # boyle bir denetim yakalar. Arac kendini de sinar.
     ("oge", "sinama_oge.py",
      "Söz verilen öğe konmuş mu (stil/id/olay karşılıksız kalmasın)"),
+    # KULLANICININ AYLARDIR BILDIRDIGI TEK SINIF: "sifirlaniyor".
+    # Dort ayri sebebi cikti ve dordu de duzeltildi; olcumleri bugune
+    # kadar gecici bir klasorde duruyordu, yani bir sonraki oturumda
+    # YOK olacaklardi. Duzeltilen bir hata sinifi, kalici bir olcumle
+    # kapatilmadikca kapanmis sayilmaz.
+    ("sifirlanma", "sinama_sifirlanma.py",
+     "Gunluk sayilar sifirlaniyor mu (dort sebep de kapali mi)"),
 ]
 
 # Bunlar exe gerektirir; "hizli" kipinde atlanır
