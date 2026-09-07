@@ -320,6 +320,10 @@
   }
 
   motor.iceAktar(kaydiDuzelt(kayit));
+  /* ANLIK KAYIT KAYBOLDUYSA BUGUNU ARSIVDEN GERI AL.
+     Gerekcesi cekirdek.js/arsivdenTazele icinde: iki ayri anahtar,
+     iki ayri dayaniklilik; biri gidince oteki ayakta. */
+  try { motor.arsivdenTazele(); } catch {}
   let otomatikBasla = kayit.otomatikBasla !== false;   // varsayılan: açık
   let titresimAcik = kayit.titresimAcik !== false;     // varsayılan: açık (telefonda)
   let arkaPlanAcik = kayit.arkaPlanAcik === true;      // varsayılan: KAPALI (pil)
@@ -761,6 +765,7 @@
       bostaAcik = Number(motor.ayarlar.bostaEsigi) < 1e9;
 
       motor.sayaciGeriYukle(kayitli);
+      try { motor.arsivdenTazele(); } catch {}
       ayarlariPencereyeYaz();   // ekran depoyla yeniden aynı olsun
       seviyeCiz();              // puan degismis olabilir
     } catch {}

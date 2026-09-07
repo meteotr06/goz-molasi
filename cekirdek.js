@@ -695,6 +695,53 @@ class MolaMotoru {
     return true;
   }
 
+  /** BUGUNUN SAYILARI ARSIVIN ALTINA DUSMEZ.
+
+      KULLANICININ AYLARDIR BILDIRDIGI SEY: "sifirlaniyor".
+
+      Gunluk sayilar IKI AYRI ANAHTARDA yasiyor:
+        `goz-molasi-v1`      -> anlik kayit (ayarlar + bugunun sayaclari)
+        `goz-molasi-gecmis`  -> gunluk arsiv (Math.max ile birlesir)
+
+      Anlik kayit KAYBOLABILIYOR: tarayici depoyu bosaltir, kayit bozuk
+      gelir ve suzgecten sifir olarak cikar, bayat bir sekme uzerine
+      yazar, telefon uygulamayi oldururken yarim yazma olur. O anda
+      bugunun butun sayilari sifira duser -- oysa ARSIVDE duruyorlar.
+
+      Windows surumu bu korumayi zaten yapiyor (goz_molasi.py: acilista
+      `gunun_arsivi(bugun)` okunup `ekran_sn` ondan geri aliniyor);
+      tarayici surumunde yoktu. Ayni sayi, ayni gun, iki govdede iki
+      farkli dayaniklilik.
+
+      YALNIZ YUKARI: hicbir sayi arsiv yuzunden AZALMAZ; artan sayac
+      kurali (bkz. `Gecmis.gunuIsle`) burada da gecerli. Kullanici
+      verisini kendi sildiyse arsiv de silindigi icin (arayuz.js'teki
+      iki silme yolu ikisini birden siler) bu yol OLU veriyi geri
+      getirmez. */
+  arsivdenTazele() {
+    let kayit = null;
+    try { kayit = Gecmis.gunKaydi(this._bugun()); } catch { return false; }
+    if (!kayit) return false;
+    const enBuyuk = (canli, arsiv, sinir) => {
+      const a = Number(arsiv);
+      if (!Number.isFinite(a) || a < 0 || a > sinir) return canli;
+      return Math.max(Number(canli) || 0, a);
+    };
+    const o = this.istatistik;
+    o.tamamlananMola = enBuyuk(o.tamamlananMola, kayit.mola, 1000);
+    o.atlananMola = enBuyuk(o.atlananMola, kayit.atlanan, 1000);
+    o.ekranSuresi = enBuyuk(o.ekranSuresi, kayit.ekran, 86400);
+    for (const [alan, kaynak] of [['saatlik', kayit.saatlik],
+                                  ['olculemeyen', kayit.olculemeyen]]) {
+      if (!Array.isArray(kaynak)) continue;
+      if (!Array.isArray(o[alan])) o[alan] = new Array(24).fill(0);
+      for (let s = 0; s < 24; s++) {
+        o[alan][s] = enBuyuk(o[alan][s], kaynak[s], 3600);
+      }
+    }
+    return true;
+  }
+
   /* ASKIYA ALMA — bu sekme sayacı İŞLETMESİN.
 
      Neden gerekli: `liderligiBirak()` ikinci sekmede kalp atışını
@@ -1652,6 +1699,12 @@ const Gecmis = {
       ve arayuz ikisini ayri gostermeli. */
   saatlikGun(anahtar) {
     return this._kovaGun(anahtar, 'saatlik');
+  },
+
+  /** Bir gunun HAM kaydi. Kayit yoksa `null`. */
+  gunKaydi(anahtar) {
+    const k = this.oku()[anahtar];
+    return (k && typeof k === 'object') ? k : null;
   },
 
   /** Bir gunun OLCULEMEYEN dagilimi. Kayit yoksa `null`. */
