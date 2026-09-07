@@ -148,6 +148,33 @@ def olc(t, port):
     bg.close()
 
     # ---------------------------------------------------------------
+    # 3b. TAVAN HER OKUMA YOLUNDA (K-102)
+    #
+    #     `istatistikSuz` günlük sayılara tavan koyuyor — ama YALNIZ
+    #     diskten okuma yolunda. Kalıcı arşive yazan yol ondan
+    #     geçmiyordu: bozuk tek bir kayıt ("ekran: 1e9") arşive girip
+    #     her okuyanda öyle görünürdü. Korumayı yazmak yetmez, her
+    #     kullanım yerine taşımak gerekir.
+    # ---------------------------------------------------------------
+    bg, s, hata = yeni("""
+      try {
+        %s
+        localStorage.setItem('goz-molasi-gecmis', JSON.stringify({
+          [bugun]: { mola: 999999, atlanan: 0, ekran: 1e9 },
+        }));
+        localStorage.removeItem('goz-molasi-v1');
+      } catch (e) {}
+    """ % BUGUN_JS)
+    mola_yazi = yaz(s, "istMola")
+    sure_yazi = yaz(s, "istSure")
+    kontrol("arşivdeki TAVAN ÜSTÜ mola sayısı ekrana çıkmıyor",
+            not mola_yazi.startswith("999"), "ekranda: " + mola_yazi)
+    kontrol("arşivdeki tavan üstü ekran süresi ekrana çıkmıyor",
+            "1000000" not in sure_yazi.replace(".", "").replace(",", ""),
+            "ekranda: " + sure_yazi)
+    bg.close()
+
+    # ---------------------------------------------------------------
     # 4. DEVRALAN SEKME DİSKTEKİ AYARLARI EZMİYOR
     #
     #    Sıfırlanmanın üçüncü sebebi: ikinci sekme devralınca kendi

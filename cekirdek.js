@@ -1631,6 +1631,26 @@ const Gecmis = {
   gunuIsle(gun, istatistik) {
     const veri = this.oku();
     const eski = veri[gun] || {};
+    /* TAVAN BURADA DA UYGULANIYOR (K-102).
+
+       `istatistikSuz` gunluk sayilara zaten tavan koyuyor (mola 1000,
+       ekran 86400, kova 3600) -- ama o koruma YALNIZ DISKTEN OKUMA
+       yolunda. Kalici arsive yazan bu yol ondan gecmiyordu.
+
+       Bugun acilan somut delik: kopruden gelen `ekran_sn` dogrudan
+       buraya yaziliyor. Bozuk ya da kotu niyetli tek bir paket
+       ("ekran_sn: 1e9") arsive kalici olarak girerdi ve `Gecmis.oku()`
+       ham donduugu icin her okuyan onu oldugu gibi gosterirdi. Yazma
+       tarafini kapatmak okuma tarafini kapatmaz; tersi de dogru --
+       burada tersi yasandi.
+
+       Tavani asan deger KIRPILMIYOR, ALINMIYOR: kirpilmis bir sayi
+       ("24 saat ekran suresi") bozuk veriden uretilmis ama inandirici
+       olur. Eski dogru deger korunuyor. */
+    const tavanli = (d, tavan) => {
+      const s = Math.round(Number(d) || 0);
+      return (Number.isFinite(s) && s >= 0 && s <= tavan) ? s : 0;
+    };
     const buyuk = (a, b) => Math.max(a | 0, b | 0);
     /* SAATLIK DAGILIM DA SAKLANIYOR.
 
@@ -1649,7 +1669,7 @@ const Gecmis = {
       const eb = Array.isArray(b) ? b : [];
       const c = new Array(24);
       for (let s = 0; s < 24; s++) {
-        c[s] = buyuk(Math.round(+ea[s] || 0), Math.round(+eb[s] || 0));
+        c[s] = buyuk(tavanli(ea[s], 3600), tavanli(eb[s], 3600));
       }
       return c;
     };
@@ -1662,9 +1682,12 @@ const Gecmis = {
        tutulmali ki biri otekinden ayrisamasin. */
     const olculemeyen = kovaBirlestir(eski.olculemeyen, istatistik.olculemeyen);
     veri[gun] = {
-      mola: buyuk(eski.mola, istatistik.tamamlananMola),
-      atlanan: buyuk(eski.atlanan, istatistik.atlananMola),
-      ekran: buyuk(eski.ekran, Math.round(istatistik.ekranSuresi || 0)),
+      mola: buyuk(tavanli(eski.mola, 1000),
+                  tavanli(istatistik.tamamlananMola, 1000)),
+      atlanan: buyuk(tavanli(eski.atlanan, 1000),
+                     tavanli(istatistik.atlananMola, 1000)),
+      ekran: buyuk(tavanli(eski.ekran, 86400),
+                   tavanli(istatistik.ekranSuresi, 86400)),
       saatlik,
       olculemeyen,
     };

@@ -5553,7 +5553,14 @@
       masaustuOlcum.saatlik = veri.saatlik.map(
         (x) => Math.max(0, Math.min(3600, +x || 0)));
       masaustuOlcum.gun = String(veri.gun || '');
-      masaustuOlcum.ekran = Math.max(0, +veri.ekran_sn || 0);
+      /* KOPRU DE AYNI TAVANDAN GECIYOR (K-102).
+         `istatistikSuz` ekran suresini 86400 ile sinirliyor; bu okuma
+         yolu o korumadan gecmiyordu. Buradan gelen sayi hem EKRANA
+         ciziliyor hem KALICI arsive yaziliyor -- yani tek bir bozuk
+         paket kalici bir yanlis sayi birakirdi. */
+      const gelenEkran = Math.round(Number(veri.ekran_sn) || 0);
+      masaustuOlcum.ekran = (gelenEkran >= 0 && gelenEkran <= 86400)
+        ? gelenEkran : 0;
       masaustuOlcum.an = Date.now();
       /* GUNLUK GECMISE DE YAZ.
 
