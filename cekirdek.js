@@ -809,11 +809,17 @@ class MolaMotoru {
        daha temiz gorundugu icin gecersiz kilmak.
 
        Karari BOSLUK KURALI zaten dogru veriyor:
-         · ayar ACIK  -> sayac Worker'da doner, tikler gizliyken de
-                         250 ms'de bir gelir, bosluk kucuk, sure
-                         TAM sayilir.
-         · ayar KAPALI-> tarayici sekmeyi kisar, bosluk dakikalara
-                         cikar, hicbir sey sayilmaz.
+         · ayar ACIK  -> sayfa duyulmayan bir ses calar; tarayici
+                         sekmeyi "medya oynatiyor" sayip KISMIYOR,
+                         tikler 250 ms'de bir gelmeye devam eder,
+                         bosluk kucuk kalir ve sure TAM sayilir.
+         · ayar KAPALI-> tarayici gizli sekmeyi kisar/dondurur,
+                         bosluk dakikalara cikar, hicbir sey sayilmaz.
+
+         DUZELTME (07.09.2026): burada once "ayar acikken sayac
+         Worker'da doner" yaziyordu. YANLISTI -- Worker HER ZAMAN
+         calisiyor (`_kalpAtisiBaslat`), ayarin actigi sey sessiz ses.
+         Yanlis yorum, yanlis duzeltme dogurur.
        Yani tek bir kural iki ayari da dogru uyguluyor; ikinci bir
        kapiya gerek yok ve ikinci kapi yanlis cevabi veriyordu. */
     const simdi = Date.now();

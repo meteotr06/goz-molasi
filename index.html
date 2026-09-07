@@ -34,7 +34,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Göz Molası">
-<link rel="stylesheet" href="stil.css?s=v243">
+<link rel="stylesheet" href="stil.css?s=v244">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -383,6 +383,13 @@
               aria-label="Sonraki gün" disabled>›</button>
     </div>
     <p class="saatlik-alt" id="saatlikAlt"></p>
+    <!-- TEK DOKUNUSLA COZUM. Kullanici (07.09.2026): "arkada sayma
+         olayini coz, arka planda bi sekilde calissin". Ayari tarif
+         etmek yetmiyordu; dugme ayarin KENDISI. Ses ancak kullanici
+         hareketiyle baslayabildigi icin dugmeye basmak zaten dogru
+         an. Yalniz olculemeyen sure VARKEN ve ayar KAPALIYKEN
+         gorunuyor. -->
+    <button type="button" class="dugme ana kucuk gizli" id="arkaPlanAc"></button>
     <!-- CUBUGA TIKLAYINCA O SAATIN AYRINTISI. Kullanici 06.09.2026'da
          "uzerine tikladiginda ayrintili verileri doksun" dedi; donuk
          bir sayinin sebebini sormak zorunda kalmasin. -->
@@ -1127,17 +1134,17 @@
     </form>
   </dialog>
 
-  <script src="degisiklikler.js?s=v243"></script>
-  <script src="dil.js?s=v243"></script>
-  <script src="bilgiler.js?s=v243"></script>
-  <script src="bilgiler_en.js?s=v243"></script>
-  <script src="dunya.js?s=v243"></script>
-  <script src="egzersiz.js?s=v243"></script>
-  <script src="reklam.js?s=v243"></script>
-  <script src="kopru.js?s=v243"></script>
-  <script src="cekirdek.js?s=v243"></script>
-  <script src="mola_icerik.js?s=v243"></script>
-  <script src="arayuz.js?s=v243"></script>
+  <script src="degisiklikler.js?s=v244"></script>
+  <script src="dil.js?s=v244"></script>
+  <script src="bilgiler.js?s=v244"></script>
+  <script src="bilgiler_en.js?s=v244"></script>
+  <script src="dunya.js?s=v244"></script>
+  <script src="egzersiz.js?s=v244"></script>
+  <script src="reklam.js?s=v244"></script>
+  <script src="kopru.js?s=v244"></script>
+  <script src="cekirdek.js?s=v244"></script>
+  <script src="mola_icerik.js?s=v244"></script>
+  <script src="arayuz.js?s=v244"></script>
 <!-- UYGULAMA GERÇEKTEN BAŞLADI MI?
 
      Ölçüldü: önbellekte tek bir dosya eksik olunca (çevrimdışı,

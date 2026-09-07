@@ -224,11 +224,40 @@ def olc(t, port):
                                " els[s] && els[s].click(); }")
         s.wait_for_timeout(400)
         yazi = s.eval_on_selector("#saatlikAyrinti", "e => e.textContent")
-        var = "Arka planda çalışmaya devam et" in yazi
+        var = "Arka planda çalışmaya devam edersem" in yazi
         kontrol("arka plan ayarı %s iken çare cümlesi %s"
                 % ("KAPALI" if not acik else "AÇIK",
                    "yazıyor" if beklenen else "yazmıyor"),
-                var is beklenen, yazi.strip()[-90:] or "boş")
+                var is beklenen, yazi.strip()[-80:] or "boş")
+
+        # DUGME: care sorunun YANINDA mi, ayarlar penceresinde mi?
+        dugme = s.evaluate("() => { const b = document.getElementById"
+                           "('arkaPlanAc');"
+                           " return !!b && !b.classList.contains('gizli'); }")
+        kontrol("arka plan ayarı %s iken tek dokunuşluk düğme %s"
+                % ("KAPALI" if not acik else "AÇIK",
+                   "görünüyor" if beklenen else "görünmüyor"),
+                dugme is beklenen, "düğme görünür: %s" % dugme)
+
+        if beklenen:
+            # BASINCA GERCEKTEN ACIYOR MU? Ayni yolu ayarlar
+            # penceresindeki anahtar da kullaniyor.
+            s.eval_on_selector("#arkaPlanAc", "e => e.click()")
+            s.wait_for_timeout(500)
+            durum = s.evaluate("""() => {
+              const h = JSON.parse(localStorage.getItem('goz-molasi-v1') || '{}');
+              const b = document.getElementById('arkaPlanAc');
+              const k = document.getElementById('ayArkaPlan');
+              return { diskte: h.arkaPlanAcik === true,
+                       dugmeGizli: !!b && b.classList.contains('gizli'),
+                       anahtar: !!k && k.checked };
+            }""")
+            kontrol("düğmeye basınca ayar DİSKE yazılıyor",
+                    durum["diskte"] is True, "diskte: %s" % durum["diskte"])
+            kontrol("ayarlar penceresindeki anahtar da işaretleniyor",
+                    durum["anahtar"] is True, "anahtar: %s" % durum["anahtar"])
+            kontrol("iş bitince düğme kayboluyor (tekrar sormuyor)",
+                    durum["dugmeGizli"] is True)
         bg.close()
 
     # ---------------------------------------------------------------

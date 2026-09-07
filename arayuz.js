@@ -146,6 +146,7 @@
     ayOtomatik: $('ayOtomatik'),
     ayTitresim: $('ayTitresim'),
     ayArkaPlan: $('ayArkaPlan'),
+    arkaPlanAc: $('arkaPlanAc'),
     arkaPlanNot: $('arkaPlanNot'),
     temaSeridi: $('temaSeridi'),
     ayCanlilik: $('ayCanlilik'),
@@ -2923,10 +2924,8 @@
          surumunu ac" demek, yapilamayacak bir sey onermektir. */
       if (!arkaPlanAcik) {
         aciklama.push(CS(
-          'Ayarlardan “Arka planda çalışmaya devam et”i açarsan bu süre de '
-          + 'ölçülür.',
-          'Turn on “Keep running in the background” in Settings and this '
-          + 'time will be measured too.'));
+          'Arka planda çalışmaya devam edersem bu süre de ölçülür.',
+          'If I keep running in the background, this time gets measured too.'));
       }
       if (!/android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
         aciklama.push(CS(
@@ -2936,8 +2935,43 @@
     }
     e.textContent = satirlar.join(' · ') + ' — ' + aciklama.join(' ');
     e.classList.remove('gizli');
+    /* COZUM AYARLAR PENCERESINDE DEGIL, SORUNUN YANINDA.
+
+       Once "Ayarlardan sunu ac" yaziyordu. Dogru bilgi, yanlis yer:
+       kullanici sayinin durdugunu BURADA goruyor ve care uc dokunus
+       oteye saklanmisti. Dugme ayarin kendisi -- ustelik ses ancak
+       kullanici hareketiyle baslayabildigi icin, basilan dugme zaten
+       gereken hareket. */
+    if (og.arkaPlanAc) {
+      const gerek = olcusuz > 0 && !arkaPlanAcik;
+      og.arkaPlanAc.classList.toggle('gizli', !gerek);
+      if (gerek) {
+        og.arkaPlanAc.textContent = CS('⏱ Arka planda da say',
+                                       '⏱ Keep counting in the background');
+      }
+    }
     okuyucuyaSoyle(e.textContent);
   }
+
+  /* Dugme, ayarlar penceresindeki anahtarla AYNI yolu kullaniyor;
+     ikisi ayri kod olsaydi biri duzelirken oteki geride kalirdi. */
+  og.arkaPlanAc?.addEventListener('click', () => {
+    arkaPlanAcik = true;
+    if (og.ayArkaPlan) og.ayArkaPlan.checked = true;
+    try { arkaPlanKipi(true); } catch {}
+    kaydet();
+    og.arkaPlanAc.classList.add('gizli');
+    const soz = CS(
+      'Tamam — arka planda da saymaya devam edeceğim. '
+      + 'Kapatmak istersen ayarlardan aynı anahtarı kullan.',
+      'Done — I will keep counting in the background. '
+      + 'Use the same switch in Settings to turn it off.');
+    if (og.saatlikAyrinti) {
+      og.saatlikAyrinti.textContent = soz;
+      og.saatlikAyrinti.classList.remove('gizli');
+    }
+    okuyucuyaSoyle(soz);
+  });
 
   /** Saat secimi TEK yerden: tiklama da klavye de burayi cagiriyor. */
   function saatiSec(s) {
