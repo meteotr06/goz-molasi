@@ -221,11 +221,44 @@ def gunu_isle(klasor, gun, istatistik):
         # olurdu. Bu tur atlanır — 30 saniye sonra yeniden denenecek.
         return veri
     eski = veri.get(gun)
-    veri[gun] = {
+    kayit = {
         ad: max(sayac_oku(istatistik, ist_ad, en_cok),
                 sayac_oku(eski, ad, en_cok))
         for ad, (ist_ad, en_cok) in ALANLAR.items()
     }
+
+    # SOZLUK ALANLAR DA ARSIVLENIYOR: uygulama dagilimi ve "kac kez".
+    #
+    # OLCULDU (07.09.2026, kullanicinin ekran goruntusuyle): program
+    # yeniden baslayinca panelde "1 sa 19 dk ekran" yazarken uygulama
+    # listesi "TOPLAM 26 DK OLCULDU" diyordu. Sebep: `ekran_sn`
+    # arsivden geri geliyordu ama `programlar` GELMIYORDU -- arsivde
+    # yoktu. Ayni gun, ayni ekran, iki sayi; kullanicinin "sifirlaniyor"
+    # dedigi seylerden biri tam olarak buydu.
+    #
+    # Ayni "geri gitmez" kurali burada da gecerli: anahtar anahtar
+    # BUYUK olan kaliyor. Yeni bir program listede yoksa eklenir.
+    for alan, en_cok in (("programlar", 86400), ("program_acilis", 10000)):
+        birlesik = {}
+        for kaynak in (eski or {}, istatistik or {}):
+            d = kaynak.get(alan) if isinstance(kaynak, dict) else None
+            if not isinstance(d, dict):
+                continue
+            for ad, deger in d.items():
+                if not isinstance(ad, str):
+                    continue
+                try:
+                    s = float(deger)
+                except (TypeError, ValueError):
+                    continue
+                if s != s or s < 0 or s > en_cok:   # nan / sinir disi
+                    continue
+                if s > birlesik.get(ad, 0):
+                    birlesik[ad] = s
+        if birlesik:
+            kayit[alan] = birlesik
+
+    veri[gun] = kayit
     yaz(klasor, veri)
     return veri
 

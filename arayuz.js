@@ -2520,6 +2520,36 @@
   }
 
   function molaEkraniAc() {
+    /* ASKIYA ALINMIS SEKME MOLA EKRANI ACMAZ — KULLANICI ORADA KILITLENIR.
+
+       Ikinci sekme oldugunu anlayan sekme motoru askiya aliyor
+       (`liderligiBirak` -> `askiyaAl`). Askidayken `_kalpAtisiBaslat`
+       erken donuyor, yani TIK HIC KOSMUYOR. Ama mola ekranini acan
+       yol tikten gecmiyor: `_asamayaGec` 'molaBasladi' yayiyor ve
+       burasi ekrani aciyor.
+
+       SONUC: tam ekran mola perdesi aciliyor, sayi ilk degerinde
+       DONUYOR (ilerletecek tik yok), ve "Buradan devam et" dugmesi
+       perdenin ALTINDA kaliyor. Kullanicinin cikis yolu yok --
+       uygulamanin kendi kullanicisini kilitlemesi, bu depodaki en agir
+       sinif (K-24 ile ayni aile).
+
+       Ulasilabilir: 'm' kisayolu ve `?eylem=mola` adresi ikinci
+       sekmede de calisiyordu. Ikisini ayri ayri kapatmak yerine kapi
+       BURAYA konuyor: mola ekranini acan butun yollar buradan geciyor.
+
+       Ekran acilmiyor; bunun yerine "baska sekmede acik" ortusu
+       gosteriliyor -- yani kullanici sessiz bir hicligle degil,
+       devam edebilecegi bir dugmeyle karsilasiyor. */
+    if (motor.askida) {
+      try { og.ikinciSekme.hidden = false; } catch {}
+      okuyucuyaSoyle(CS(
+        'Göz Molası başka bir sekmede açık; mola orada başladı. '
+        + 'Buradan devam etmek için "Buradan devam et" düğmesine bas.',
+        'Eye Break is open in another tab and the break started there. '
+        + 'Press "Continue here" to take over.'));
+      return;
+    }
     molaAcik = true;
     molaCikisKorumasiKur();
     const sn = Math.round(molaSuresiAl());

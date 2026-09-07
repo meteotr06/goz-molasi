@@ -1737,7 +1737,7 @@ class Uygulama:
     def ist_baslangic():
         """Bos bir gunun istatistigi. Sayac alanlari TEK kaynaktan."""
         yeni = {"gun": time.strftime("%Y-%m-%d"), "programlar": {},
-                "saatlik": [0.0] * 24}
+                "program_acilis": {}, "saatlik": [0.0] * 24}
         for ad, (_, tam) in Uygulama.IST_ALANLARI.items():
             yeni[ad] = 0 if tam else 0.0
         return yeni
@@ -1783,6 +1783,17 @@ class Uygulama:
         # elemanli ya da icinde None olan bir dizi sokabilirdi ve
         # grafigi cizen taraf bunu sessizce yanlis cizerdi.
         temiz["saatlik"] = Uygulama.saatlik_suz(ham.get("saatlik"))
+        # ACILIS SAYILARI DA SUZULUYOR. Ham gecseydi bozuk bir dosya
+        # ekrana "brave.exe — cok kez" yazdirabilirdi; bu depoda ayni
+        # sinif `programlar` icin bir kez yasandi.
+        ham_acilis = ham.get("program_acilis")
+        temiz_acilis = {}
+        if isinstance(ham_acilis, dict):
+            for ad, d in ham_acilis.items():
+                s = sayi_oku(d, None)
+                if isinstance(ad, str) and s is not None and 0 <= s <= 10000:
+                    temiz_acilis[ad] = int(s)
+        temiz["program_acilis"] = temiz_acilis
         return temiz
 
     # Bir saat kovasi en fazla 3600 saniye tutabilir. Daha buyugu
@@ -1869,11 +1880,38 @@ class Uygulama:
         # sayac SIFIRDAN baslardi - gun icinde yapilan atlatmanin
         # (`_gunu_tazele`) program yeniden acilarak isleyen ikizi.
         # Arsivdeki sayi uydurma degil, kendi yazdigimiz kayit.
-        arsivdeki = (self.gunun_arsivi(bugun) or {}).get("ekran_sn")
+        arsiv_bugun = self.gunun_arsivi(bugun) or {}
+        arsivdeki = arsiv_bugun.get("ekran_sn")
         if arsivdeki is not None and arsivdeki > simdiki + self.ISARET_TOLERANSI_SN:
             self.ist["ekran_sn"] = arsivdeki
             simdiki = arsivdeki
             self.gun_atlatildi = True
+
+        # UYGULAMA DAGILIMI DA ARSIVDEN GERI GELIYOR.
+        #
+        # OLCULDU (07.09.2026, kullanicinin ekran goruntusuyle): program
+        # yeniden baslayinca panelde "1 sa 19 dk ekran" yazarken
+        # uygulama listesi "TOPLAM 26 DK OLCULDU" diyordu. `ekran_sn`
+        # arsivden geri geliyordu, `programlar` GELMIYORDU: ayni gun,
+        # ayni ekran, birbirini tutmayan iki sayi.
+        #
+        # YALNIZ YUKARI, anahtar anahtar: acilistan sonra sayilan sure
+        # arsivdekinden buyukse o kaliyor. Boylece ne kayip olur ne de
+        # arsiv canli sayimi geri ceker.
+        for alan in ("programlar", "program_acilis"):
+            eskisi = arsiv_bugun.get(alan)
+            if not isinstance(eskisi, dict):
+                continue
+            simdikiler = self.ist.setdefault(alan, {})
+            for ad, deger in eskisi.items():
+                try:
+                    s = float(deger)
+                except (TypeError, ValueError):
+                    continue
+                if s != s or s < 0:
+                    continue
+                if s > float(simdikiler.get(ad, 0) or 0):
+                    simdikiler[ad] = s if alan == "programlar" else int(s)
 
         isaret = self.ayar.get("ekran_isareti")
         if isinstance(isaret, dict) and isaret.get("gun") == bugun:
@@ -3798,6 +3836,25 @@ class Uygulama:
                 # yuzdelerin toplami ekran suresini tutmaz.
                 self.ist["programlar"][program] = self.ist["programlar"].get(program, 0) + gecen
 
+                # KAC KERE ACILDI.
+                #
+                # KULLANICI (07.09.2026): "uygulamalari ve ekrani kac
+                # kere ne kadar oldugunu sayabilen bir sey yok". "Ne
+                # kadar" vardi, "kac kere" yoktu.
+                #
+                # OLCUT: ON PENCERE DEGISIMI. Programin kendisinin
+                # acilip kapanmasi degil -- kullanicinin ona KAC KEZ
+                # DONDUGU. Arka planda saatlerce acik duran bir program
+                # "bir kez kullanildi" degildir; StayFree'nin saydigi
+                # sey de budur.
+                #
+                # Ilk goruste de bir sayiliyor (onceki `None`), yoksa
+                # program acilistan beri ondeyse hic sayilmazdi.
+                if program != getattr(self, "_onceki_on_program", None):
+                    self._onceki_on_program = program
+                    sayac = self.ist.setdefault("program_acilis", {})
+                    sayac[program] = int(sayac.get(program, 0)) + 1
+
         # SESSİZ ÖLÇÜM: yukarıdaki sayaçlar işledi, aşağıdaki mola/uyarı
         # mantığı hiç çalışmıyor. Program açık kalır, ekrana bir şey
         # çıkmaz, mola verilmez — ama ölçüm sürer.
@@ -4039,8 +4096,13 @@ class Uygulama:
             return
 
         sirali = sorted(self.ist["programlar"].items(), key=lambda x: -x[1])[:5]
+        # IMZAYA "KAC KEZ" DE GIRIYOR. Girmezse sayi artar ama ekran
+        # tazelenmez: dogru sayiyi tutup YANLIS gosteren bir arayuz,
+        # hic gostermemekten kotudur.
+        _acilis = self.ist.get("program_acilis") or {}
         imza = ("prog", self.ayar.get("analiz_izni"),
-                tuple((a, int(s / 15)) for a, s in sirali))
+                tuple((a, int(s / 15), int(_acilis.get(a, 0)))
+                      for a, s in sirali))
         if imza == self.grafik_imza:
             return
         self.grafik_imza = imza
@@ -4095,8 +4157,15 @@ class Uygulama:
                      P["kart2"], gor.GRAFIK_RENKLERI[i % len(gor.GRAFIK_RENKLERI)],
                      etiket="grafik")
             yuzde = round(100.0 * sn / olculen) if olculen else 0
+            # KAC KERE DONULDU. Kullanicinin istedigi ikinci sayi:
+            # "kac kere ne kadar". Sifirsa yazilmiyor -- "0 kez" diye
+            # bir bilgi yok, olcemedigimiz bir sey var demektir.
+            kez = int((self.ist.get("program_acilis") or {}).get(ad, 0))
             self.t.create_text(ic_x + etiket_g + cubuk_g + o(10), y + yuk / 2, anchor="w",
-                               text="%s  ·  %%%d" % (sure_okunakli(sn), yuzde),
+                               text=("%s  ·  %%%d  ·  %d kez"
+                                     % (sure_okunakli(sn), yuzde, kez))
+                                    if kez > 0 else
+                                    ("%s  ·  %%%d" % (sure_okunakli(sn), yuzde)),
                                fill=P["soluk"], font=(yt, 9), tags="grafik")
         # Çubuklar kartın üstüne çizildi; etiketleri öne al
         for oge in self.t.find_withtag("grafik"):

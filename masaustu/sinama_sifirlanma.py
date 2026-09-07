@@ -54,7 +54,7 @@ sonuc = []
 #
 # Yeni olcum ekleyince bu sayiyi da buyut -- bilerek zahmetli:
 # sayiyi guncellemek, kontrolun kostugunu ONAYLAMAK demek.
-BEKLENEN_OLCUM = 24
+BEKLENEN_OLCUM = 27
 
 
 def kontrol(ad, gecti, ayrinti=""):
@@ -73,6 +73,10 @@ BUGUN_JS = """
 def yeni_olcum_baglami(t, port, arka_plan_acik):
     """Arka plan ayarı belli bir değere KURULMUŞ taze oturum."""
     bg = t.new_context(viewport={"width": 390, "height": 844}, locale="tr-TR")
+    # KOPRU KAPALI — gerekcesi `olc/yeni` icinde: Windows surumu acikken
+    # sayfa gercek ekran suresini aliyor, olculemeyen sure kalmiyor ve
+    # bu olcumun aradigi cozum cumlesi/dugmesi hic cikmiyor.
+    bg.route("**://127.0.0.1:8452/**", lambda r: r.abort())
     # OLCULEMEYEN SURE DEPODAN GELIYOR, sayfa acildiktan sonra
     # motora elle yazilarak DEGIL: cizim kendi ic degiskeninden okuyor
     # ve disaridan yazilan dizi hic gorunmuyordu -- ilk yazimda tam bu
@@ -108,6 +112,15 @@ def olc(t, port):
 
     def yeni(tohum=""):
         bg = t.new_context(viewport={"width": 390, "height": 844}, locale="tr-TR")
+        # KOPRU KAPATILIYOR — OLCUM YALITILMIS OLMALI.
+        # Windows surumu o sirada ACIKSA kopru sayfaya GERCEK ekran
+        # suresini besliyor ve butun beklentiler kayiyor: "90 dk" 92
+        # oluyor, kaynak yazisi degisiyor, olculemeyen sure kalmadigi
+        # icin cozum dugmesi hic cikmiyor. Sonucu alakasiz bir programin
+        # acik olup olmamasina bagli olan sey SINAMA DEGILDIR.
+        # (Kopru yolunun kendisi `sinama_kopru.py` ile ayrica olculuyor.)
+        bg.route("**://127.0.0.1:8452/**", lambda r: r.abort())
+
         if tohum:
             # TOHUM `add_init_script` ILE EKILIYOR, sayfa acildiktan
             # sonra DEGIL. Sayfanin kendi `kaydet()`i (pagehide /
@@ -268,6 +281,46 @@ def olc(t, port):
             kontrol("iş bitince düğme kayboluyor (tekrar sormuyor)",
                     durum["dugmeGizli"] is True)
         bg.close()
+
+    # ---------------------------------------------------------------
+    # 3d. ASKIDAKİ SEKME MOLA EKRANI AÇMIYOR (telefon bulgusu 15)
+    #
+    #     İkinci sekme motoru askıya alıyor; askıdayken tik hiç
+    #     koşmuyor. Mola ekranını açan yol tikten geçmediği için tam
+    #     ekran perde açılıyor, sayı ilk değerinde donuyor ve "Buradan
+    #     devam et" düğmesi perdenin ALTINDA kalıyordu: çıkışı olmayan
+    #     bir kilit. Uygulamanın kendi kullanıcısını kilitlemesi, bu
+    #     depodaki en ağır sınıf.
+    # ---------------------------------------------------------------
+    bg, s, hata = yeni("""
+      try {
+        localStorage.setItem('goz-molasi-lider', JSON.stringify(
+          { kimlik: 'baska-sekme-olcum', an: Date.now() }));
+      } catch (e) {}
+    """)
+    askida = s.evaluate("() => !!(window.molaMotoru && molaMotoru.askida)")
+    kontrol("KONTROL — sekme gerçekten askıya alındı", askida is True,
+            "alınmadıysa bu ölçüm hiçbir şey ölçmez")
+    s.evaluate("() => { try { molaMotoru.molayaGec(); } catch (e) {} }")
+    s.wait_for_timeout(700)
+    perde = s.evaluate(
+        "() => { const e = document.getElementById('molaEkran');"
+        " return !!e && !e.classList.contains('gizli')"
+        " && getComputedStyle(e).visibility !== 'hidden'; }")
+    kontrol("askıdaki sekmede mola perdesi AÇILMIYOR", perde is False,
+            "açılırsa kullanıcı tam ekranda kilitlenir")
+    # CIKIS YOLU: ortu gorunur VE perdenin ustunde olmali.
+    cikis = s.evaluate("""() => {
+      const o = document.getElementById('ikinciSekme');
+      const b = document.getElementById('buradaDevamDugme');
+      if (!o || o.hidden || !b) return 'ortu yok';
+      const r = b.getBoundingClientRect();
+      const ust = document.elementFromPoint(
+        Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2));
+      return (ust === b || b.contains(ust)) ? 'BASILIR' : 'ustunde baska sey var';
+    }""")
+    kontrol("çıkış düğmesi görünür ve BASILABİLİR", cikis == "BASILIR", str(cikis))
+    bg.close()
 
     # ---------------------------------------------------------------
     # 4. DEVRALAN SEKME DİSKTEKİ AYARLARI EZMİYOR

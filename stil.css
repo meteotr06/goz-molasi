@@ -2518,7 +2518,13 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 .ikinci-sekme {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  /* MOLA PERDESININ USTUNDE (100 > 90 idi).
+
+     Ikinci kat guvenlik: birinci kat, askidaki sekmenin mola ekranini
+     hic acmamasi (arayuz.js/molaEkraniAc). Yine de bir yoldan acilirsa
+     cikis dugmesi perdenin ALTINDA kalmamali -- kullanicinin kacis
+     yolu, kacmasi gereken seyin altinda duramaz. */
+  z-index: 110;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2609,3 +2615,20 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
    yapmıyor, kural yalnızca yer daraldığında devreye giriyor. */
 #sekmeSayac *,
 #sekmeBilgiler * { min-width: 0; }
+
+/* DOKUNMA HEDEFI, TASMA DUZELTMESINDEN SONRA GERI ALINIYOR.
+
+   Ustteki `#sekmeSayac * / #sekmeBilgiler *` kurali tasmayi onlemek
+   icin kondu ve ise yariyor -- ama id tasidigi icin tek sinifli
+   `.durum-notu-kapat { min-width: 44px }` kuralindan GUCLU ve onu
+   sessizce geciyor. Olculdu (07.09.2026): kapatma dugmesi 24x44
+   piksel, WCAG 2.5.8 alt siniri 44x44.
+
+   Bir duzeltmenin baska bir duzeltmeyi ezmesi, ikisi de dogru
+   yazilmis olsa bile olur; yakalayan sey `sinama_cekirdek`in dokunma
+   hedefi denetimi oldu. Genel kurali daraltmak yerine (tasma geri
+   gelirdi) hedef yeniden bildiriliyor -- yalniz DUGMELER icin. */
+#sekmeSayac .durum-notu-kapat,
+#sekmeBilgiler .durum-notu-kapat,
+#sekmeSayac .durum-notu-kapat *,
+#sekmeBilgiler .durum-notu-kapat * { min-width: 44px; }
