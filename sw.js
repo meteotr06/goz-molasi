@@ -1,3 +1,20 @@
+/* TAZE AL -- `cache.add`/`addAll` KULLANMA.
+   Istek TARAYICININ HTTP onbelleginden karsilanabilir; yeni damgayla
+   kurulan isci ESKI index.html'i gomer, o index eski `?v=` adreslerini
+   ister ve kullanici surum artsa da ESKI kodu calistirir. Damga
+   denetleyicileri bunu goremez: kaynagin tutarliligina bakarlar,
+   iscinin ne gomdugune degil.
+   Arsa oturumu buldu (08.09.2026). `{cache:"reload"}` HTTP onbellegini
+   atlar; `c.ok` denetimi 404 govdesinin gomulmesini engeller -- `add`
+   bunu kendisi yapar, `put` yapmaz.
+   ATAR (throw): boylece eski `add` davranisi korunur -- cagri
+   yerlerindeki `.catch(...)` ve `try/catch` oldugu gibi calisir. */
+const tazeAl = async (k, u) => {
+    const c = await fetch(u, { cache: "reload" });
+    if (!c || !c.ok) throw new Error("alinamadi: " + u);
+    await k.put(u, c);
+};
+
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
 const SURUM = 'goz-molasi-v249';
@@ -59,7 +76,7 @@ self.addEventListener('install', (e) => {
     const c = await caches.open(SURUM);
     const dusenler = [];
     await Promise.all(DOSYALAR.map(async (d) => {
-      try { await c.add(d); } catch { dusenler.push(d); }
+      try { await tazeAl(c, d); } catch { dusenler.push(d); }
     }));
     const cekirdekDustu = dusenler.some((d) => CEKIRDEK_DOSYALAR.includes(d));
     if (cekirdekDustu) {
