@@ -2211,6 +2211,27 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
   font-variant-numeric: tabular-nums;
 }
 .saatlik-eksen span { text-align: center; }
+
+/* ALTI SAATLIK KUSAKLAR — "hangi cubuk hangi saat" sorusu icin.
+
+   KULLANICI, dort turdur acik maddesi: "hangi cubugun hangi saate ait
+   oldugu net degil". Etiketler yalniz 03/06/09... saatlerinde yaziyor
+   (24 etiket 390 piksele sigmiyor, okunmayan etiket olmayandan
+   kotudur) -- ama etiketsiz cubuklarin hangi araliga dustugu gozle
+   izlenemiyordu.
+
+   Cozum cubuklara DEGIL, arkalarina: her alti saat bir kusak. Goz
+   "bu, ogleden sonraki obek" diye okuyor ve etiketten cubuga elle
+   saymak gerekmiyor. Renk TEK BASINA anlam tasimiyor -- ayni bilgi
+   etiketlerde ve tiklaninca cikan ayrintida da var.
+
+   Salt CSS: `nth-child` araliklariyla. JS'in ciktigi kova sayisi
+   sabit 24 oldugu icin sira numarasi saatin ta kendisi. */
+.saatlik-grafik .saatlik-sutun:nth-child(n+7):nth-child(-n+12),
+.saatlik-grafik .saatlik-sutun:nth-child(n+19):nth-child(-n+24) {
+  background: color-mix(in oklab, var(--vurgu) 7%, transparent);
+  border-radius: 3px;
+}
 /* Etiketli saatin altinda kucuk bir cizik: hangi sutunun hangi saate
    denk geldigi sayilmadan gorulsun. */
 .saatlik-eksen span[data-etiketli="1"] { position: relative; }
