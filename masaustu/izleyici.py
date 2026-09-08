@@ -45,17 +45,38 @@ def dpi_farkindaligi_ac():
     büyütür, pencere içeriği taşar ve GetSystemMetrics gerçek piksel yerine
     küçültülmüş değer döndürür (1920x1200 ekran 1536x960 görünür).
     Mola ekranının tüm ekranı kaplaması için gerçek piksel şart.
+
+    ÖLÇÜLDÜ (08.09.2026, kullanıcının ekran görüntüsüyle): çalışan
+    süreç DPI **farkındasız**, ekran %125 ölçekli — Windows pencereyi
+    bit eşlem olarak büyütüyordu ve kullanıcı "piksel piksel duruyor,
+    çok kötü görünüyor" dedi. Yani bu işlev vardı ama İŞE YARAMIYORDU.
+
+    İKİ SEBEP, İKİSİ DE DÜZELTİLDİ
+      1. Modern API denenmiyordu. `SetProcessDpiAwareness` eski yol;
+         Windows 10 1703'ten beri doğru olan `PER_MONITOR_AWARE_V2`
+         (-4) ve o, ötekinin başarısız olduğu durumlarda da tutuyor.
+      2. BAŞARISIZLIK SESSİZCE YUTULUYORDU. `except: return False` —
+         ve dönen değere kimse bakmıyordu. Bir korumanın çalışmadığını
+         söylemeyen kod, korumasızlıktan kötüdür: koruma var sanılır.
+         Artık hangi yolun tuttuğunu döndürüyor.
     """
+    # PER_MONITOR_AWARE_V2 — en keskin sonuç, önce bu denenir.
+    try:
+        if ctypes.windll.user32.SetProcessDpiAwarenessContext(
+                ctypes.c_void_p(-4)):
+            return "v2"
+    except Exception:
+        pass
     try:
         # 2 = PROCESS_PER_MONITOR_DPI_AWARE (Windows 8.1+)
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        return True
+        return "shcore"
     except Exception:
         try:
             user32.SetProcessDPIAware()
-            return True
+            return "eski"
         except Exception:
-            return False
+            return None
 
 
 def olcek():
