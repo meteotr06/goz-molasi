@@ -17,7 +17,7 @@ const tazeAl = async (k, u) => {
 
 /* Servis işçisi — uygulamanın çevrimdışı çalışmasını sağlar.
    Sürümü değiştirirsen tarayıcı eski dosyaları atar. */
-const SURUM = 'goz-molasi-v250';
+const SURUM = 'goz-molasi-v251';
 
 const DOSYALAR = [
   './',

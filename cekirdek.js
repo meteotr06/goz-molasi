@@ -1464,9 +1464,33 @@ class MolaMotoru {
     if (kapaliKalan < 0 || kapaliKalan > esik) {
       // Kullanıcıya NEDEN sıfırlandığını söyleyebilmek için sebebi
       // tutuyoruz. Sessizce sıfırlanan sayaç "bozuk" gibi duruyor.
+      /* GECE GECTIYSE BU BIR SIFIRLANMA DEGIL, YENI GUNDUR.
+
+         KULLANICI (08.09.2026), ekran goruntusuyle: "bu ne kanka" --
+         sabah uygulamayi acinca "Sayac sifirdan basladi · Uygulama 969
+         dakika kapaliydi" diye kocaman bir uyari cikiyordu. 969 dakika
+         on alti saat: dun geceden bu sabaha. Sayacin yeni gunde
+         sifirdan baslamasi DOGRU davranis; onu kusur gibi duyurmak,
+         aylardir "sifirlaniyor" diyen kullaniciya "yine sifirlandi"
+         demek oluyor. Kurt masali anlatan uyari, gercek uyariyi da
+         degersizlestirir.
+
+         DAHA AGIRI: o uyarinin altindaki "Bir daha sifirlama" dugmesi
+         burada TUTAMAYACAGI bir soz veriyor. Ayari kapatmak gun
+         donumunde hicbir sey degistirmez -- gunluk sayaclar zaten her
+         gun sifirlanir. Yani dugme, yapamayacagi seyi vaat ediyordu.
+
+         Gun degistiyse sebep YAZILMIYOR: not da cikmiyor, dugme de.
+         Ayni gun icindeki sasirtici sifirlanmalar (asil sikayet) ise
+         eskisi gibi aciklanmaya devam ediyor. */
+      const kayitliGun = veri.istatistik && veri.istatistik.gun;
+      const gunDegisti = typeof kayitliGun === 'string'
+        && kayitliGun !== '' && kayitliGun !== this._bugun();
       this.sifirlanmaSebebi = saatDegisti
         ? { tur: 'saat-degisti' }
-        : { tur: 'uzun-kapali', dakika: Math.round(kapaliKalan / 60) };
+        : (gunDegisti
+            ? null
+            : { tur: 'uzun-kapali', dakika: Math.round(kapaliKalan / 60) });
       return false;
     }
 
