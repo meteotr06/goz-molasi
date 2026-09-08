@@ -1801,6 +1801,26 @@ dialog.ayarlar::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blu
 }
 
 /* ---------------- Geniş ekran ---------------- */
+/* GENIS PENCEREDE GENISLIGI KULLAN.
+
+   KULLANICI (07.09.2026), yerelden acilan uygulama penceresi icin:
+   "o guzel gozukmuyor".
+
+   OLCULDU: `.bat` pencereyi 900x780 aciyor, icerik 720 pikselde
+   kaliyor -- 180 piksel bos kenar, ve sayfa 2269 piksel uzunlugunda.
+   Telefon icin dogru olan dar sutun, masaustu penceresinde bosluga
+   bakmak ve bosuna kaydirmak demek.
+
+   Kartlarin GENISLIGI tek yerden geliyor ki biri buyurken oteki
+   geride kalmasin (bu depoda bilinen sinif). Dar ekranda hicbir sey
+   degismiyor: kural yalniz 900 pikselin ustunde acilir. */
+@media (min-width: 900px) {
+  .ust, .sayac-kart, .istatistik, .hafta-kart, .bilgi-kart, .kutu,
+  .kurulum-serit, .durum-notu, .kip-dugmeler {
+    max-width: 860px;
+  }
+}
+
 @media (min-width: 780px) {
   body { padding-top: 34px; gap: 20px; }
   .sayac-kart { flex-direction: row; padding: 30px 34px; gap: 34px; }

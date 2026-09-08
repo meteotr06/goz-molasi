@@ -1622,7 +1622,16 @@
   const KURULUM_KAPATILDI = 'goz-molasi-kurulum-kapatildi';
 
   /** Zaten uygulama olarak açıldıysa hiçbir davet gösterme */
+  /* `minimal-ui` DE UYGULAMA KIPIDIR.
+
+     Masaustunde uygulama penceresi `--app=` ile aciliyor ve tarayiciya
+     gore `standalone` ya da `minimal-ui` raporlanabiliyor. Yalniz
+     birincisine bakinca, zaten uygulama penceresinde olan kullaniciya
+     "uygulama olarak kur" daveti cikiyordu -- yapilmis bir isi
+     onermek, okunmayan bir uyari uretir. */
   const uygulamaKipi = window.matchMedia('(display-mode: standalone)').matches
+    || window.matchMedia('(display-mode: minimal-ui)').matches
+    || window.matchMedia('(display-mode: window-controls-overlay)').matches
     || window.navigator.standalone === true;
 
   const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);

@@ -485,3 +485,20 @@ giriyor, gerekçe beyanı isteniyor. Arsa Rehberi'yle Play deneyimi ve
 
 **Şimdilik kapatılmadı, PARK EDİLDİ.** Karar kullanıcının: yerli
 Android uygulaması ayrı bir proje.
+
+
+## KARARSIZ NÖBETÇİ: `sinama_aile` takım yükünde düşüyor (08.09.2026)
+
+**Gözlem.** `sinama_aile.py` tek başına iki kez 62/62 geçti; tam takım
+içinde iki koşuda düştü, üçüncüde geçti. Düşen madde: *"bekçi pes
+edince ekranda iz bırakıyor"* — süreç açıp öldüren, zamanlamaya dayalı
+bir sınama.
+
+**Neden yazıyorum.** Kararsız bir nöbetçi, iki yönde birden zarar
+verir: kırmızısı gerçek kusuru aramaya zorlar (bugün iki kez oldu),
+yeşili de bir şey ifade etmez. "Bazen geçiyor" ile "geçiyor" aynı şey
+değildir.
+
+**Yapılacak.** Bekçi sınamasının bekleme toleransı yükün altında
+ölçülmeli; sabit bir `sleep` yerine "süreç göründü mü" diye yoklayan
+bir bekleyiş gerekiyor. Kod kusuru DEĞİL, sınama kusuru.
